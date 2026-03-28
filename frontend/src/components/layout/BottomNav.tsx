@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, Users, GraduationCap, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { APP_ROUTES } from "@/constants/routes";
 
@@ -36,7 +37,7 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
+    <nav className="sticky bottom-0 left-0 right-0 z-50">
       <div
         className={cn(
           "glass-dock flex justify-around items-center px-4 pb-6 pt-3",
@@ -55,17 +56,29 @@ export function BottomNav() {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center px-4 py-1.5",
-                "transition-all active:scale-90 duration-150",
-                isActive
-                  ? "bg-secondary-container rounded-xl text-primary"
-                  : "text-on-surface-variant hover:text-primary"
+                "relative flex-1 flex flex-col items-center justify-center px-4 py-1.5",
+                "transition-all duration-150",
+                isActive ? "text-primary" : "text-slate-400 hover:text-primary"
               )}
             >
-              <Icon className="size-5" />
-              <span className="font-label text-[9px] font-semibold uppercase tracking-wider mt-1">
-                {item.label}
-              </span>
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-secondary-container rounded-xl"
+                  initial={false}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 22,
+                  }}
+                />
+              )}
+              <div className="relative z-10 flex flex-col items-center">
+                <Icon className="size-5" />
+                <span className="font-label text-[9px] font-semibold uppercase tracking-wider mt-1">
+                  {item.label}
+                </span>
+              </div>
             </Link>
           );
         })}
