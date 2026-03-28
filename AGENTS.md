@@ -11,3 +11,11 @@ This file is for AI agents and LLMs working in this repo. It links to project co
 3. **Link** — If you added a new convention doc, add a row to the [Project docs](#project-docs) table below and link it here.
 
 Do this as the last step before considering the task complete.
+
+## Project Docs
+
+| Doc | Description |
+|-----|-------------|
+| [Design System](docs/design.md) | Academic Atelier design system - colors, typography, components, and design principles |
+
+
