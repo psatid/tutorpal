@@ -1,0 +1,425 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed-variant": "#2a006c",
+              error: "#a8364b",
+              "surface-tint": "#6b46c1",
+              "tertiary-fixed-dim": "#e8b4d7",
+              "on-tertiary-container": "#623b57",
+              "primary-dim": "#5f39b4",
+              "on-tertiary-fixed": "#4c2844",
+              "error-container": "#f97386",
+              "primary-container": "#a480fe",
+              "outline-variant": "#b6b0bb",
+              "tertiary-container": "#f7c2e6",
+              "on-primary-fixed": "#000000",
+              "secondary-fixed": "#e8def8",
+              "inverse-primary": "#a480fe",
+              "surface-container": "#f2ecf5",
+              "on-error-container": "#6e0523",
+              "surface-dim": "#ded8e4",
+              primary: "#6b46c1",
+              "on-tertiary": "#fff7f9",
+              "secondary-container": "#e8def8",
+              "primary-fixed": "#a480fe",
+              "on-tertiary-fixed-variant": "#6c4461",
+              "secondary-fixed-dim": "#dad0ea",
+              "on-secondary-container": "#554e63",
+              outline: "#7d7983",
+              secondary: "#635c71",
+              "surface-container-low": "#f8f1fa",
+              "on-surface-variant": "#615d67",
+              background: "#fdf7fe",
+              "tertiary-dim": "#6e4664",
+              "surface-container-high": "#ece6f0",
+              "surface-variant": "#e7e0ec",
+              "on-surface": "#34313a",
+              "on-primary": "#fdf7ff",
+              "on-secondary": "#fdf7ff",
+              "tertiary-fixed": "#f7c2e6",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed-variant": "#5f586d",
+              "on-secondary-fixed": "#423c50",
+              "inverse-on-surface": "#a09ba1",
+              "on-primary-container": "#1d0051",
+              tertiary: "#7c5270",
+              "inverse-surface": "#0f0d12",
+              surface: "#fdf7fe",
+              "error-dim": "#6b0221",
+              "primary-fixed-dim": "#9673ef",
+              "on-background": "#34313a",
+              "on-error": "#fff7f7",
+              "surface-bright": "#fdf7fe",
+              "secondary-dim": "#565065",
+              "surface-container-highest": "#e7e0ec",
+            },
+            fontFamily: {
+              headline: ["Manrope"],
+              body: ["Inter"],
+              label: ["Inter"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        background-color: #fdf7fe;
+        font-family: "Inter", sans-serif;
+        color: #34313a;
+      }
+    </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface min-h-screen pb-24">
+    <!-- TopAppBar -->
+    <header
+      class="bg-[#fdf7fe]/70 backdrop-blur-xl docked full-width top-0 sticky z-50 shadow-[0px_12px_32px_rgba(107,70,193,0.06)] flex items-center justify-between px-6 py-4 w-full"
+    >
+      <div class="flex items-center gap-4">
+        <button class="text-[#6b46c1] active:scale-95 duration-200">
+          <span class="material-symbols-outlined" data-icon="menu">menu</span>
+        </button>
+        <h1
+          class="font-manrope font-extrabold text-[#6b46c1] tracking-tighter text-xl"
+        >
+          ScholarFlow
+        </h1>
+      </div>
+      <div
+        class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container overflow-hidden ring-2 ring-purple-100"
+      >
+        <img
+          alt="Tutor Profile"
+          class="w-full h-full object-cover"
+          data-alt="Close up portrait of a smiling young professional woman with warm lighting and a soft blurred library background"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4OT6jGN8Fdvlls0WlYNuJHXab-RcexbB-lbmdWaU7B_6-8VGz5HL0FtY9-UEyRNF8Nn8oc73Y2V1Kgcqqg_ZC9xQ08l2HcD9LwvaxH75VJNZuh-0Tvy_jDf0mAMZuQwQs40hJhwW6nl4x9Q1WdmwbUaeEUh84A9TtQI9wCi6nW-k17x4VLjVkS-MVgLfrkyHfryTq4ckZeTlj5BkhzzW1JhyGA8VoPeea8jrtNtPhaysQJUP6Ahf-3tHl-8_yXR2wxsfAXY_VaRo"
+        />
+      </div>
+    </header>
+    <main class="px-6 pt-6">
+      <!-- Editorial Header -->
+      <section class="mb-8">
+        <h2
+          class="font-manrope font-extrabold text-4xl text-on-surface tracking-tight leading-tight"
+        >
+          Student<br /><span class="text-primary">Directory</span>
+        </h2>
+        <p class="font-body text-on-surface-variant mt-2 text-lg">
+          Managing 24 active scholars this term.
+        </p>
+      </section>
+      <!-- Academic Search Input (Custom Field Style) -->
+      <div class="relative mb-10">
+        <span
+          class="material-symbols-outlined absolute left-0 top-1/2 -translate-y-1/2 text-primary"
+          >search</span
+        >
+        <input
+          class="w-full pl-8 pr-4 py-3 bg-surface-container-low border-b-2 border-transparent focus:border-primary focus:ring-0 transition-all font-body text-on-surface placeholder-outline text-lg"
+          placeholder="Search by name or course..."
+          type="text"
+        />
+      </div>
+      <!-- Filter Chips (Curator's Tray style) -->
+      <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar mb-6">
+        <button
+          class="bg-primary text-on-primary px-6 py-2 rounded-full font-label text-sm font-semibold whitespace-nowrap shadow-lg shadow-primary/20"
+        >
+          All Students
+        </button>
+        <button
+          class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-label text-sm font-semibold whitespace-nowrap hover:bg-surface-container-highest transition-colors"
+        >
+          Mathematics
+        </button>
+        <button
+          class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-label text-sm font-semibold whitespace-nowrap hover:bg-surface-container-highest transition-colors"
+        >
+          Literature
+        </button>
+        <button
+          class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-label text-sm font-semibold whitespace-nowrap hover:bg-surface-container-highest transition-colors"
+        >
+          Physics
+        </button>
+      </div>
+      <!-- Student List (Asymmetric Editorial Cards) -->
+      <div class="space-y-6">
+        <!-- Student Card 1 -->
+        <div
+          class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_12px_32px_rgba(107,70,193,0.04)] flex gap-5 items-start"
+        >
+          <div class="relative">
+            <img
+              alt="Student Portrait"
+              class="w-20 h-20 rounded-lg object-cover"
+              data-alt="Young male student with glasses looking thoughtfully away from camera in a bright studio setting with soft purple highlights"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1Qeh9xn5r9ESKlGuPd94K2D9shY7i65nAstEI8t-qjUpQVlZ0YDLb8nadRsOr_TcYOTvrFBRkbg8USmXqQJgXAMzhFIjVuBlEJDXGtXvD_TyPwWeV992B-_wPI53sCYjjxOWe_j-knxueBCAKIU6ru-vukgVB-FAREgy0r7W9i7H11Iaqhk7H0eM0UXrU5DmNXbHFY8XWtJPtiNx78sfbEDciS8VffT4UCSisk0eVbatdomtFtoHF7VbB4BkKPB6HHj09Qhk95fU"
+            />
+            <div
+              class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-surface-container-lowest rounded-full"
+            ></div>
+          </div>
+          <div class="flex-1">
+            <h3
+              class="font-manrope font-bold text-xl text-on-surface leading-none"
+            >
+              Julian Thorne
+            </h3>
+            <p class="font-body text-primary text-sm font-semibold mt-1">
+              Advanced Calculus
+            </p>
+            <div
+              class="flex items-center gap-4 mt-4 text-xs font-label text-outline uppercase tracking-widest"
+            >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >trending_up</span
+                >
+                94%</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >calendar_today</span
+                >
+                2h ago</span
+              >
+            </div>
+          </div>
+          <button class="text-outline hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+        </div>
+        <!-- Student Card 2 -->
+        <div
+          class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_12px_32px_rgba(107,70,193,0.04)] flex gap-5 items-start"
+        >
+          <div class="relative">
+            <img
+              alt="Student Portrait"
+              class="w-20 h-20 rounded-lg object-cover"
+              data-alt="Young woman with curly hair smiling in a sunlit academic courtyard with brick buildings in soft focus"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD08TlFj9xaWQc7pUysDhKG5fLgFFeM1x2v9krf0UlQXyKlAF5bsntQa2cV-jqUZrt7nX-rmSuLn_nRVQnonANelc0j2S1h2lpBYaU_k66C7QHOaHxp-d7-sIidkzpffxS1g8t6nKTesOIxeeNFdmC8GMr8hVaALi0wlYfHQ8m9VkL6v1vYv9EoVaaqLYWBZy8_7voXSaDIw0QNG8lOMamCF5Dnja3oUNirbkzeee5koj0oCEK51Q6V930Fq5YLvnRgT5yLDnS8y9s"
+            />
+            <div
+              class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 border-2 border-surface-container-lowest rounded-full"
+            ></div>
+          </div>
+          <div class="flex-1">
+            <h3
+              class="font-manrope font-bold text-xl text-on-surface leading-none"
+            >
+              Elena Rossi
+            </h3>
+            <p class="font-body text-primary text-sm font-semibold mt-1">
+              Modern Literature
+            </p>
+            <div
+              class="flex items-center gap-4 mt-4 text-xs font-label text-outline uppercase tracking-widest"
+            >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >trending_up</span
+                >
+                88%</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >calendar_today</span
+                >
+                Yesterday</span
+              >
+            </div>
+          </div>
+          <button class="text-outline hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+        </div>
+        <!-- Student Card 3 -->
+        <div
+          class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_12px_32px_rgba(107,70,193,0.04)] flex gap-5 items-start"
+        >
+          <div class="relative">
+            <div
+              class="w-20 h-20 rounded-lg bg-surface-container-high flex items-center justify-center text-primary font-manrope font-bold text-2xl"
+            >
+              MK
+            </div>
+            <div
+              class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-surface-container-lowest rounded-full"
+            ></div>
+          </div>
+          <div class="flex-1">
+            <h3
+              class="font-manrope font-bold text-xl text-on-surface leading-none"
+            >
+              Marcus Kane
+            </h3>
+            <p class="font-body text-primary text-sm font-semibold mt-1">
+              Quantum Physics
+            </p>
+            <div
+              class="flex items-center gap-4 mt-4 text-xs font-label text-outline uppercase tracking-widest"
+            >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >trending_up</span
+                >
+                91%</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >calendar_today</span
+                >
+                4h ago</span
+              >
+            </div>
+          </div>
+          <button class="text-outline hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+        </div>
+        <!-- Student Card 4 -->
+        <div
+          class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_12px_32px_rgba(107,70,193,0.04)] flex gap-5 items-start opacity-70"
+        >
+          <div class="relative">
+            <img
+              alt="Student Portrait"
+              class="w-20 h-20 rounded-lg object-cover grayscale"
+              data-alt="Man in his late twenties wearing a white shirt and laughing, outdoors with soft natural light"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFNOSJWMBAcxPyNdIWFVi0bUqGrgdATykc6QDmHNUEz4ZEO1DO9E61CsB9s1TsnzLKVlDanmN6xs4288aDNHG8N9EO-zBWhDylu2igiOoSfniLpHXZ6pyJkkaRNqldOqqX7eUdD95PBj4gzfbzj8bB0xCgWOXyyqZW6q7Zxw4HubCzMdrNkqroO7m2j-si5TZoKQ3hybXkMMs3kd2asUTW5YcYobuL_Myls0khfa3EM5Smk3wcXValKWoMUAvGF5Ol_YM4aSLuZwg"
+            />
+            <div
+              class="absolute -bottom-1 -right-1 w-4 h-4 bg-outline-variant border-2 border-surface-container-lowest rounded-full"
+            ></div>
+          </div>
+          <div class="flex-1">
+            <h3
+              class="font-manrope font-bold text-xl text-on-surface leading-none"
+            >
+              David Chen
+            </h3>
+            <p class="font-body text-primary text-sm font-semibold mt-1">
+              Economics 101
+            </p>
+            <div
+              class="flex items-center gap-4 mt-4 text-xs font-label text-outline uppercase tracking-widest"
+            >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >trending_up</span
+                >
+                76%</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="material-symbols-outlined text-[14px]"
+                  >calendar_today</span
+                >
+                3 days ago</span
+              >
+            </div>
+          </div>
+          <button class="text-outline hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+        </div>
+      </div>
+      <!-- FAB: Add Student -->
+      <button
+        class="fixed bottom-28 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-xl shadow-[0px_12px_32px_rgba(107,70,193,0.3)] flex items-center justify-center active:scale-90 transition-transform z-40"
+      >
+        <span class="material-symbols-outlined text-3xl">person_add</span>
+      </button>
+    </main>
+    <!-- BottomNavBar -->
+    <nav
+      class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#fdf7fe]/80 backdrop-blur-lg shadow-[0px_-8px_24px_rgba(107,70,193,0.04)] rounded-t-2xl"
+    >
+      <a
+        class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-[#6b46c1] transition-all active:scale-90 duration-150"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="dashboard"
+          >dashboard</span
+        >
+        <span
+          class="font-label text-[11px] font-semibold uppercase tracking-wider mt-1"
+          >Dashboard</span
+        >
+      </a>
+      <a
+        class="flex flex-col items-center justify-center bg-purple-100 dark:bg-purple-900/40 text-[#6b46c1] dark:text-[#a480fe] rounded-xl px-4 py-1.5 transition-all active:scale-90 duration-150"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="group">group</span>
+        <span
+          class="font-label text-[11px] font-semibold uppercase tracking-wider mt-1"
+          >Students</span
+        >
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-[#6b46c1] transition-all active:scale-90 duration-150"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="school">school</span>
+        <span
+          class="font-inter text-[11px] font-semibold uppercase tracking-wider mt-1"
+          >Classes</span
+        >
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-[#6b46c1] transition-all active:scale-90 duration-150"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="calendar_month"
+          >calendar_month</span
+        >
+        <span
+          class="font-inter text-[11px] font-semibold uppercase tracking-wider mt-1"
+          >Schedules</span
+        >
+      </a>
+    </nav>
+  </body>
+</html>

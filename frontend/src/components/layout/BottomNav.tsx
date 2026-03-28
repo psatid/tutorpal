@@ -55,15 +55,15 @@ export function BottomNav() {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex flex-col items-center justify-center px-4 py-1.5",
+                "flex-1 flex flex-col items-center justify-center px-4 py-1.5",
                 "transition-all active:scale-90 duration-150",
                 isActive
                   ? "bg-secondary-container rounded-xl text-primary"
                   : "text-on-surface-variant hover:text-primary"
               )}
             >
-              <Icon className="w-6 h-6" />
-              <span className="font-label text-[11px] font-semibold uppercase tracking-wider mt-1">
+              <Icon className="size-5" />
+              <span className="font-label text-[9px] font-semibold uppercase tracking-wider mt-1">
                 {item.label}
               </span>
             </Link>
