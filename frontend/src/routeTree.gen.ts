@@ -9,50 +9,134 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
+import { Route as LayoutSchedulesRouteImport } from './routes/_layout/schedules'
+import { Route as LayoutClassesRouteImport } from './routes/_layout/classes'
 
-const IndexRoute = IndexRouteImport.update({
+const LayoutRoute = LayoutRouteImport.update({
+  id: '/_layout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutStudentsRoute = LayoutStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSchedulesRoute = LayoutSchedulesRouteImport.update({
+  id: '/schedules',
+  path: '/schedules',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutClassesRoute = LayoutClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => LayoutRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof LayoutIndexRoute
+  '/classes': typeof LayoutClassesRoute
+  '/schedules': typeof LayoutSchedulesRoute
+  '/students': typeof LayoutStudentsRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/classes': typeof LayoutClassesRoute
+  '/schedules': typeof LayoutSchedulesRoute
+  '/students': typeof LayoutStudentsRoute
+  '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_layout': typeof LayoutRouteWithChildren
+  '/_layout/classes': typeof LayoutClassesRoute
+  '/_layout/schedules': typeof LayoutSchedulesRoute
+  '/_layout/students': typeof LayoutStudentsRoute
+  '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/classes' | '/schedules' | '/students'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/classes' | '/schedules' | '/students' | '/'
+  id:
+    | '__root__'
+    | '/_layout'
+    | '/_layout/classes'
+    | '/_layout/schedules'
+    | '/_layout/students'
+    | '/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  LayoutRoute: typeof LayoutRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_layout/': {
+      id: '/_layout/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/students': {
+      id: '/_layout/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof LayoutStudentsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/schedules': {
+      id: '/_layout/schedules'
+      path: '/schedules'
+      fullPath: '/schedules'
+      preLoaderRoute: typeof LayoutSchedulesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/classes': {
+      id: '/_layout/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof LayoutClassesRouteImport
+      parentRoute: typeof LayoutRoute
     }
   }
 }
 
+interface LayoutRouteChildren {
+  LayoutClassesRoute: typeof LayoutClassesRoute
+  LayoutSchedulesRoute: typeof LayoutSchedulesRoute
+  LayoutStudentsRoute: typeof LayoutStudentsRoute
+  LayoutIndexRoute: typeof LayoutIndexRoute
+}
+
+const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutClassesRoute: LayoutClassesRoute,
+  LayoutSchedulesRoute: LayoutSchedulesRoute,
+  LayoutStudentsRoute: LayoutStudentsRoute,
+  LayoutIndexRoute: LayoutIndexRoute,
+}
+
+const LayoutRouteWithChildren =
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  LayoutRoute: LayoutRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

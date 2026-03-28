@@ -1,72 +1,170 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/700.css";
+@import "@fontsource/manrope/800.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@theme {
+  /* Colors - Academic Atelier Design System */
+  --color-primary: #6b46c1;
+  --color-primary-container: #a480fe;
+  --color-primary-dim: #5f39b4;
+  --color-on-primary: #fdf7ff;
+  --color-on-primary-container: #1d0051;
+  --color-primary-fixed: #a480fe;
+  --color-primary-fixed-dim: #9673ef;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #2a006c;
+  
+  --color-secondary: #635c71;
+  --color-secondary-container: #e8def8;
+  --color-secondary-dim: #565065;
+  --color-on-secondary: #fdf7ff;
+  --color-on-secondary-container: #554e63;
+  --color-secondary-fixed: #e8def8;
+  --color-secondary-fixed-dim: #dad0ea;
+  --color-on-secondary-fixed: #423c50;
+  --color-on-secondary-fixed-variant: #5f586d;
+  
+  --color-tertiary: #7c5270;
+  --color-tertiary-container: #f7c2e6;
+  --color-tertiary-dim: #6e4664;
+  --color-on-tertiary: #fff7f9;
+  --color-on-tertiary-container: #623b57;
+  --color-tertiary-fixed: #f7c2e6;
+  --color-tertiary-fixed-dim: #e8b4d7;
+  --color-on-tertiary-fixed: #4c2844;
+  --color-on-tertiary-fixed-variant: #6c4461;
+  
+  --color-surface: #fdf7fe;
+  --color-surface-bright: #fdf7fe;
+  --color-surface-dim: #ded8e4;
+  --color-surface-variant: #e7e0ec;
+  --color-surface-container: #f2ecf5;
+  --color-surface-container-low: #f8f1fa;
+  --color-surface-container-high: #ece6f0;
+  --color-surface-container-highest: #e7e0ec;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-tint: #6b46c1;
+  
+  --color-on-surface: #34313a;
+  --color-on-surface-variant: #615d67;
+  --color-inverse-surface: #0f0d12;
+  --color-inverse-on-surface: #a09ba1;
+  --color-inverse-primary: #a480fe;
+  
+  --color-background: #fdf7fe;
+  --color-on-background: #34313a;
+  
+  --color-outline: #7d7983;
+  --color-outline-variant: #b6b0bb;
+  
+  --color-error: #a8364b;
+  --color-error-container: #f97386;
+  --color-error-dim: #6b0221;
+  --color-on-error: #fff7f7;
+  --color-on-error-container: #6e0523;
+  
+  /* Font families */
+  --font-headline: "Manrope", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-label: "Inter", system-ui, sans-serif;
+  
+  /* Spacing */
+  --spacing-0: 0px;
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1-5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2-5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  
+  /* Border radius */
+  --radius-none: 0px;
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+}
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color: var(--color-on-surface);
+  background-color: var(--color-surface);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Utility classes for glassmorphism */
+.glass {
+  background: rgba(253, 247, 254, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.glass-dock {
+  background: rgba(253, 247, 254, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Ambient shadow */
+.ambient-shadow {
+  box-shadow: 0px 12px 32px rgba(107, 70, 193, 0.06);
+}
+
+.ambient-shadow-lg {
+  box-shadow: 0px 12px 32px rgba(107, 70, 193, 0.1);
+}
+
+/* Primary gradient button */
+.btn-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+}
+
+/* Typography utilities */
+.font-headline {
+  font-family: var(--font-headline);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-label {
+  font-family: var(--font-label);
+}
+
+/* Hide scrollbar for filter chips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
