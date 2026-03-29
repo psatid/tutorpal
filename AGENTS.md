@@ -16,6 +16,9 @@ Do this as the last step before considering the task complete.
 
 | Doc | Description |
 |-----|-------------|
+| [Documentation Hub](docs/README.md) | Central index for all project documentation with quick reference guide |
 | [Design System](docs/design.md) | Academic Atelier design system - colors, typography, components, and design principles |
+| [Frontend Architecture](docs/frontend.md) | Frontend project structure, routing, components, and development workflow |
+| [OpenAPI Workflow](docs/openapi-workflow.md) | Complete guide to generating OpenAPI specs and type-safe API clients |
 
 

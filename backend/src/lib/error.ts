@@ -8,37 +8,37 @@
  * throw AppError.forbidden("FORBIDDEN_ERROR", "Forbidden error");
  */
 export class AppError extends Error {
-  /**
-   * @param errorCode - internal error code, frontend can use this to handle the error
-   * @param message - error message to be returned to the frontend
-   * @param status - HTTP status code
-   */
-  constructor(
-    public errorCode: string,
-    message: string,
-    public status: 200 | 400 | 401 | 403 | 404 | 409 | 500 = 500
-  ) {
-    super(message);
-    this.name = "AppError";
-  }
+	/**
+	 * @param errorCode - internal error code, frontend can use this to handle the error
+	 * @param message - error message to be returned to the frontend
+	 * @param status - HTTP status code
+	 */
+	constructor(
+		public errorCode: string,
+		message: string,
+		public status: 200 | 400 | 401 | 403 | 404 | 409 | 500 = 500,
+	) {
+		super(message);
+		this.name = "AppError";
+	}
 
-  static notFound(errorCode: string, msg: string) {
-    return new AppError(errorCode, msg, 404);
-  }
+	static notFound(errorCode: string, msg: string) {
+		return new AppError(errorCode, msg, 404);
+	}
 
-  static badRequest(errorCode: string, msg: string) {
-    return new AppError(errorCode, msg, 400);
-  }
+	static badRequest(errorCode: string, msg: string) {
+		return new AppError(errorCode, msg, 400);
+	}
 
-  static conflict(errorCode: string, msg: string) {
-    return new AppError(errorCode, msg, 409);
-  }
+	static conflict(errorCode: string, msg: string) {
+		return new AppError(errorCode, msg, 409);
+	}
 
-  static unauthorized(errorCode: string, msg: string) {
-    return new AppError(errorCode, msg, 401);
-  }
+	static unauthorized(errorCode: string, msg: string) {
+		return new AppError(errorCode, msg, 401);
+	}
 
-  static forbidden(errorCode: string, msg: string) {
-    return new AppError(errorCode, msg, 403);
-  }
+	static forbidden(errorCode: string, msg: string) {
+		return new AppError(errorCode, msg, 403);
+	}
 }

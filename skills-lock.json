@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
     },
+    "prisma-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "ef6d7e3d63d9b028bb52112506dc901b2d94a24918f06865914c8e66bda22c63"
+    },
     "tanstack-router": {
       "source": "tanstack-skills/tanstack-skills",
       "sourceType": "github",

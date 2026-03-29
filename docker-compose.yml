@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: tutorpal_postgres
+    environment:
+      - POSTGRES_DB=tutorpal_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - tutorpal-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - tutorpal-network
+
+volumes:
+  tutorpal-db-data:
+
+networks:
+  tutorpal-network:
+    driver: bridge
