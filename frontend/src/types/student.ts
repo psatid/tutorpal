@@ -3,12 +3,8 @@ import { z } from "zod";
 export interface Student {
   id: string;
   name: string;
-  course: string;
-  status: "active" | "warning" | "inactive";
-  performanceScore: number;
-  lastActive: string;
-  initials?: string;
-  image?: string;
+  phoneNumber: string | null;
+  grade: number;
 }
 
 export const studentSchema = z.object({

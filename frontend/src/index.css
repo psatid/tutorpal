@@ -68,6 +68,13 @@
   --color-on-error: #fff7f7;
   --color-on-error-container: #6e0523;
 
+  /* Toast colors */
+  --color-toast-info-bg: #f5f0ff;
+  --color-toast-info-border: #e8def8;
+  --color-toast-info-icon: #6b46c1;
+  --color-toast-info-title: #1d0051;
+  --color-toast-info-close: #a480fe;
+
   /* Font families - using CSS custom properties */
   --font-headline: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;

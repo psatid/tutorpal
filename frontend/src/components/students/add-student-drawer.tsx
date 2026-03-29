@@ -136,18 +136,16 @@ export function AddStudentDrawer({
                   <div className="pt-4 space-y-3">
                     <Button
                       type="submit"
-                      disabled={mutation.isPending}
-                      className="w-full font-headline font-bold py-4 rounded-xl shadow-lg shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                      className="w-full"
+                      loading={mutation.isPending}
+                      leftIcon={UserPlus}
                     >
-                      <UserPlus className="w-5 h-5" />
-                      {mutation.isPending
-                        ? "Creating..."
-                        : "Create Student Profile"}
+                      Create Student Profile
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full text-primary font-label text-sm font-semibold py-3"
+                      className="w-full"
                       onClick={() => onOpenChange(false)}
                     >
                       Cancel
