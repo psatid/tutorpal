@@ -8,17 +8,12 @@ This file is for AI agents and LLMs working in this repo. It links to project co
 
 1. **Check** — Did the change add or change behavior that the docs describe (e.g. new routes, new API surface, new conventions)?
 2. **Update** — If yes, update the relevant doc under `docs/` (and this file if you add a new doc or link).
-3. **Link** — If you added a new convention doc, add a row to the [Project docs](#project-docs) table below and link it here.
+3. **Link** — If you added a new convention doc, add it to the [Documentation Hub](docs/README.md) and link it there.
 
 Do this as the last step before considering the task complete.
 
 ## Project Docs
 
-| Doc | Description |
-|-----|-------------|
-| [Documentation Hub](docs/README.md) | Central index for all project documentation with quick reference guide |
-| [Design System](docs/design.md) | Academic Atelier design system - colors, typography, components, and design principles |
-| [Frontend Architecture](docs/frontend.md) | Frontend project structure, routing, components, and development workflow |
-| [OpenAPI Workflow](docs/openapi-workflow.md) | Complete guide to generating OpenAPI specs and type-safe API clients |
+See [Documentation Hub](docs/README.md) for all project documentation.
 
 

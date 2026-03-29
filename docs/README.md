@@ -25,6 +25,17 @@ Comprehensive guide to the frontend codebase. Covers:
 - Development workflow and commands
 - Design system integration
 
+### ⚙️ Backend Architecture
+**[Backend Project Structure](./backend.md)**
+
+Complete guide to the backend layered architecture. Covers:
+- Service, Repository, Schema, and Types layers
+- Dependency injection and testability patterns
+- Adding new features following the architecture
+- Error handling and DTO patterns
+- Database operations with Prisma
+- Integration with OpenAPI workflow
+
 ### 📡 API Development Workflow
 **[OpenAPI Spec Generation Workflow](./openapi-workflow.md)**
 
