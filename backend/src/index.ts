@@ -5,6 +5,7 @@ import { openAPIRouteHandler } from "hono-openapi";
 import { ENV } from "./lib/env";
 import { errorHandler } from "./middleware/error-handler";
 import { createRoutes } from "./routes";
+import { auth } from "./lib/auth";
 
 const port = Number(ENV.PORT);
 
@@ -16,7 +17,7 @@ app.use(logger());
 // Enable CORS for all routes
 app.use(
 	cors({
-		origin: ENV.CORS_ORIGIN, // Allow all origins (configure for production)
+		origin: ENV.CORS_ORIGIN,
 		allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 		allowHeaders: ["Content-Type", "Authorization"],
 		credentials: true,
@@ -24,7 +25,10 @@ app.use(
 	}),
 );
 
-// Mount routes
+// Mount better-auth routes before other routes
+app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// Mount API routes
 app.route("/", routes).onError(errorHandler);
 
 // Serve OpenAPI spec generated from describeRoute metadata

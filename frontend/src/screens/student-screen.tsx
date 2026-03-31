@@ -1,7 +1,6 @@
 import { AddStudentDrawer } from "@/components/students/add-student-drawer";
 import { Button } from "@/components/ui/button";
 import { useStudents } from "@/hooks/queries/use-students";
-import { showToast } from "@/components/ui/toast";
 import type { Student } from "@/types/student";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
