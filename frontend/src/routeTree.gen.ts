@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
 import { Route as LayoutSchedulesRouteImport } from './routes/_layout/schedules'
 import { Route as LayoutClassesRouteImport } from './routes/_layout/classes'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
@@ -42,11 +48,13 @@ const LayoutClassesRoute = LayoutClassesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
+  '/login': typeof LoginRoute
   '/classes': typeof LayoutClassesRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/students': typeof LayoutStudentsRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LoginRoute
   '/classes': typeof LayoutClassesRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/students': typeof LayoutStudentsRoute
@@ -55,6 +63,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/login': typeof LoginRoute
   '/_layout/classes': typeof LayoutClassesRoute
   '/_layout/schedules': typeof LayoutSchedulesRoute
   '/_layout/students': typeof LayoutStudentsRoute
@@ -62,12 +71,13 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/classes' | '/schedules' | '/students'
+  fullPaths: '/' | '/login' | '/classes' | '/schedules' | '/students'
   fileRoutesByTo: FileRoutesByTo
-  to: '/classes' | '/schedules' | '/students' | '/'
+  to: '/login' | '/classes' | '/schedules' | '/students' | '/'
   id:
     | '__root__'
     | '/_layout'
+    | '/login'
     | '/_layout/classes'
     | '/_layout/schedules'
     | '/_layout/students'
@@ -76,10 +86,18 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout': {
       id: '/_layout'
       path: ''
@@ -137,6 +155,7 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
