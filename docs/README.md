@@ -14,25 +14,21 @@ The creative north star and design philosophy for TutorPal. Covers:
 - Do's and don'ts for maintaining the scholarly aesthetic
 
 ### 🏗️ Frontend Architecture
-**[Frontend Project Structure](./frontend.md)**
+**[Frontend Overview](./frontend/)**
 
-Comprehensive guide to the frontend codebase. Covers:
-- Technology stack and dependencies
-- Directory structure and file organization
-- TanStack Router file-based routing
-- Component organization (layout vs. UI components)
-- Tailwind CSS 4 + CSS variables styling
-- Development workflow and commands
-- Design system integration
+Comprehensive documentation for the frontend codebase organized by topic:
 
-**[Internationalization (i18n)](../frontend/docs/i18n.md)**
-
-Guide to the i18n setup with i18next. Covers:
-- Translation file structure (one file per screen)
-- Using translations in components
-- Interpolation and variables
-- Adding new languages
-- Best practices for organizing translations
+| Document | Description |
+|----------|-------------|
+| **[README](./frontend/README.md)** | Overview, quick start, technology stack |
+| **[Architecture](./frontend/architecture.md)** | Project structure, thin routes pattern, naming conventions |
+| **[Routing](./frontend/routing.md)** | TanStack Router file-based routing patterns |
+| **[API Integration](./frontend/api-integration.md)** | React Query/Mutation patterns, error handling, pagination |
+| **[State Management](./frontend/state-management.md)** | TanStack Query caching, optimistic updates |
+| **[Components](./frontend/components.md)** | Base UI primitives, shadcn/ui, component patterns |
+| **[Forms](./frontend/forms.md)** | React Hook Form, Zod validation |
+| **[Development](./frontend/development.md)** | Dev workflow, config files, troubleshooting |
+| **[i18n](../frontend/docs/i18n.md)** | Internationalization setup with i18next |
 
 ### ⚙️ Backend Architecture
 **[Backend Project Structure](./backend.md)**
@@ -97,6 +93,6 @@ For detailed information, see the [OpenAPI Workflow](./openapi-workflow.md) docu
 When contributing to the project:
 
 1. **Design Changes**: Reference the [Design System](./design.md) for guidelines
-2. **Frontend Code**: Follow the [Frontend Architecture](./frontend.md) patterns
+2. **Frontend Code**: Follow the [Frontend Architecture](./frontend/) patterns
 3. **API Changes**: Update OpenAPI metadata and regenerate clients
 4. **Documentation**: Keep docs in sync with code changes
