@@ -12,6 +12,7 @@ interface SelectProps {
   options: SelectOption[];
   value?: string;
   onChange?: (value: string | null) => void;
+  onBlur?: (event: React.FocusEvent<HTMLButtonElement>) => void;
   placeholder?: string;
   error?: string;
   disabled?: boolean;
@@ -20,7 +21,7 @@ interface SelectProps {
 
 const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
   (
-    { options, value, onChange, placeholder, error, disabled, className },
+    { options, value, onChange, onBlur, placeholder, error, disabled, className },
     ref
   ) => {
     const selectedOption = options.find((opt) => opt.value === value);
@@ -34,6 +35,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         >
           <SelectPrimitive.Trigger
             ref={ref}
+            onBlur={onBlur}
             className={cn(
               "flex w-full items-center justify-between rounded-lg border bg-surface-container-low px-4 py-3.5 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 font-body",
               error

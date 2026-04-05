@@ -4,29 +4,32 @@ import { useStudents } from "@/hooks/queries/use-students";
 import type { Student } from "@/types/student";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function EditorialHeader({ count }: { count: number }) {
+  const { t } = useTranslation(["students"]);
+  
   return (
     <section className="mb-8">
       <h2 className="font-headline font-extrabold text-4xl text-on-surface tracking-tight leading-tight">
-        Student
-        <br />
-        <span className="text-primary">Directory</span>
+        {t("students:title")}
       </h2>
       <p className="font-body text-on-surface-variant mt-2 text-lg">
-        Managing {count} active scholars this term.
+        {t("students:managingCount", { count })}
       </p>
     </section>
   );
 }
 
 function SearchInput() {
+  const { t } = useTranslation(["students"]);
+  
   return (
     <div className="relative mb-10">
       <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
       <input
         type="text"
-        placeholder="Search by name..."
+        placeholder={t("students:searchPlaceholder")}
         className="w-full pl-8 pr-4 py-3 bg-surface-container-low border-b-2 border-transparent focus:border-primary focus:ring-0 transition-all font-body text-on-surface placeholder-outline text-lg outline-none"
       />
     </div>
@@ -34,6 +37,8 @@ function SearchInput() {
 }
 
 function StudentCard({ student }: { student: Student }) {
+  const { t } = useTranslation(["students"]);
+  
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -52,7 +57,7 @@ function StudentCard({ student }: { student: Student }) {
           {student.name}
         </h3>
         <p className="font-body text-primary text-sm font-semibold mt-1">
-          Grade {student.grade}
+          {t("students:grade", { grade: student.grade })}
         </p>
       </div>
     </div>
@@ -72,6 +77,7 @@ function AddStudentFAB({ onClick }: { onClick: () => void }) {
 }
 
 export function StudentScreen() {
+  const { t } = useTranslation(["students"]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { data: students, isLoading } = useStudents();
 
@@ -81,7 +87,7 @@ export function StudentScreen() {
       <SearchInput />
       {isLoading ? (
         <div className="text-center py-8 text-on-surface-variant">
-          Loading students...
+          {t("students:loading")}
         </div>
       ) : (
         <div className="space-y-6">

@@ -1,41 +1,40 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { RHFInputField } from "@/components/form/rhf";
 import { useLogin } from "@/hooks/mutations/use-login";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
 export function LoginScreen() {
+  const { t } = useTranslation(["login", "common"]);
   const navigate = useNavigate();
+  
+  const loginSchema = z.object({
+    email: z.email(t("common:form.invalidEmail")),
+    password: z.string().min(1, t("common:form.required")),
+  });
+  
+  type LoginFormData = z.infer<typeof loginSchema>;
+  
   const {
-    register,
+    control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
 
   const { mutate: login, isPending: isLoginPending } = useLogin();
 
   const onSubmit = async (data: LoginFormData) => {
     login({ email: data.email, password: data.password });
   };
-
-  if (isPending) {
-    return <div>Loading...</div>;
-  }
 
   // Redirect if already authenticated
   if (session) {
@@ -56,10 +55,10 @@ export function LoginScreen() {
 
             <div className="relative z-10">
               <h1 className="font-headline font-extrabold text-5xl text-primary tracking-tight mb-6">
-                TutorPal
+                {t("login:title")}
               </h1>
               <p className="text-2xl text-on-surface-variant font-body mb-12">
-                Elevate Your Tutoring Experience
+                {t("login:tagline")}
               </p>
 
               <div className="space-y-6">
@@ -69,10 +68,10 @@ export function LoginScreen() {
                   </div>
                   <div>
                     <h3 className="font-headline font-semibold text-lg text-on-surface mb-1">
-                      Student Management
+                      {t("login:features.studentManagement.title")}
                     </h3>
                     <p className="text-on-surface-variant text-sm">
-                      Organize and track your students' progress
+                      {t("login:features.studentManagement.description")}
                     </p>
                   </div>
                 </div>
@@ -83,10 +82,10 @@ export function LoginScreen() {
                   </div>
                   <div>
                     <h3 className="font-headline font-semibold text-lg text-on-surface mb-1">
-                      Schedule Classes
+                      {t("login:features.scheduleClasses.title")}
                     </h3>
                     <p className="text-on-surface-variant text-sm">
-                      Plan and manage your teaching sessions
+                      {t("login:features.scheduleClasses.description")}
                     </p>
                   </div>
                 </div>
@@ -97,10 +96,10 @@ export function LoginScreen() {
                   </div>
                   <div>
                     <h3 className="font-headline font-semibold text-lg text-on-surface mb-1">
-                      Class Progress
+                      {t("login:features.classProgress.title")}
                     </h3>
                     <p className="text-on-surface-variant text-sm">
-                      Monitor performance and achievements
+                      {t("login:features.classProgress.description")}
                     </p>
                   </div>
                 </div>
@@ -113,48 +112,36 @@ export function LoginScreen() {
             <div className="max-w-md mx-auto w-full space-y-8">
               <div className="text-center md:text-left">
                 <h2 className="font-headline font-bold text-3xl text-on-surface mb-2">
-                  Welcome back
+                  {t("login:welcomeBack")}
                 </h2>
                 <p className="text-on-surface-variant font-body">
-                  Enter your credentials to access your account
+                  {t("login:enterCredentials")}
                 </p>
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-on-surface mb-2"
-                    >
-                      Email
-                    </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      leftIcon={Mail}
-                      error={errors.email?.message}
-                      {...register("email")}
-                    />
-                  </div>
+                  <RHFInputField
+                    control={control}
+                    name="email"
+                    label={t("common:form.email")}
+                    inputProps={{
+                      type: "email",
+                      placeholder: t("login:emailPlaceholder"),
+                      leftIcon: Mail,
+                    }}
+                  />
 
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium text-on-surface mb-2"
-                    >
-                      Password
-                    </label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      leftIcon={Lock}
-                      error={errors.password?.message}
-                      {...register("password")}
-                    />
-                  </div>
+                  <RHFInputField
+                    control={control}
+                    name="password"
+                    label={t("common:form.password")}
+                    inputProps={{
+                      type: "password",
+                      placeholder: t("login:passwordPlaceholder"),
+                      leftIcon: Lock,
+                    }}
+                  />
                 </div>
 
                 <div className="text-right">
@@ -162,7 +149,7 @@ export function LoginScreen() {
                     type="button"
                     className="text-sm text-primary hover:text-primary-dim transition-colors font-medium"
                   >
-                    Forgot Password?
+                    {t("login:forgotPassword")}
                   </button>
                 </div>
 
@@ -172,7 +159,7 @@ export function LoginScreen() {
                   rightIcon={ArrowRight}
                   className="w-full btn-gradient"
                 >
-                  Sign In
+                  {t("common:buttons.signIn")}
                 </Button>
               </form>
             </div>
@@ -185,48 +172,36 @@ export function LoginScreen() {
             {/* Mobile branding */}
             <div className="text-center">
               <h1 className="font-headline font-extrabold text-4xl text-primary tracking-tight mb-2">
-                TutorPal
+                {t("login:title")}
               </h1>
               <p className="text-on-surface-variant font-body">
-                Elevate Your Tutoring Experience
+                {t("login:tagline")}
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="mobile-email"
-                    className="block text-sm font-medium text-on-surface mb-2"
-                  >
-                    Email
-                  </label>
-                  <Input
-                    id="mobile-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    leftIcon={Mail}
-                    error={errors.email?.message}
-                    {...register("email")}
-                  />
-                </div>
+                <RHFInputField
+                  control={control}
+                  name="email"
+                  label={t("common:form.email")}
+                  inputProps={{
+                    type: "email",
+                    placeholder: t("login:emailPlaceholder"),
+                    leftIcon: Mail,
+                  }}
+                />
 
-                <div>
-                  <label
-                    htmlFor="mobile-password"
-                    className="block text-sm font-medium text-on-surface mb-2"
-                  >
-                    Password
-                  </label>
-                  <Input
-                    id="mobile-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    leftIcon={Lock}
-                    error={errors.password?.message}
-                    {...register("password")}
-                  />
-                </div>
+                <RHFInputField
+                  control={control}
+                  name="password"
+                  label={t("common:form.password")}
+                  inputProps={{
+                    type: "password",
+                    placeholder: t("login:passwordPlaceholder"),
+                    leftIcon: Lock,
+                  }}
+                />
               </div>
 
               <div className="text-right">
@@ -234,7 +209,7 @@ export function LoginScreen() {
                   type="button"
                   className="text-sm text-primary hover:text-primary-dim transition-colors font-medium"
                 >
-                  Forgot Password?
+                  {t("login:forgotPassword")}
                 </button>
               </div>
 
@@ -244,7 +219,7 @@ export function LoginScreen() {
                 rightIcon={ArrowRight}
                 className="w-full btn-gradient"
               >
-                Sign In
+                {t("common:buttons.signIn")}
               </Button>
             </form>
           </div>

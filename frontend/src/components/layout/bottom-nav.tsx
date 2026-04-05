@@ -1,39 +1,41 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, Users, GraduationCap, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { APP_ROUTES } from "@/constants/routes";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const navItems: NavItem[] = [
   {
-    label: "Dashboard",
+    labelKey: "navigation:dashboard",
     href: APP_ROUTES.HOME,
     icon: LayoutDashboard,
   },
   {
-    label: "Students",
+    labelKey: "navigation:students",
     href: APP_ROUTES.STUDENTS,
     icon: Users,
   },
   {
-    label: "Classes",
+    labelKey: "navigation:classes",
     href: APP_ROUTES.CLASSES,
     icon: GraduationCap,
   },
   {
-    label: "Schedules",
+    labelKey: "navigation:schedules",
     href: APP_ROUTES.SCHEDULES,
     icon: Calendar,
   },
 ];
 
 export function BottomNav() {
+  const { t } = useTranslation();
   const location = useLocation();
 
   return (
@@ -76,7 +78,7 @@ export function BottomNav() {
               <div className="relative z-10 flex flex-col items-center">
                 <Icon className="size-5" />
                 <span className="font-label text-[9px] font-semibold uppercase tracking-wider mt-1">
-                  {item.label}
+                  {t(item.labelKey)}
                 </span>
               </div>
             </Link>

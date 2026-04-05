@@ -25,6 +25,15 @@ Comprehensive guide to the frontend codebase. Covers:
 - Development workflow and commands
 - Design system integration
 
+**[Internationalization (i18n)](../frontend/docs/i18n.md)**
+
+Guide to the i18n setup with i18next. Covers:
+- Translation file structure (one file per screen)
+- Using translations in components
+- Interpolation and variables
+- Adding new languages
+- Best practices for organizing translations
+
 ### ⚙️ Backend Architecture
 **[Backend Project Structure](./backend.md)**
 

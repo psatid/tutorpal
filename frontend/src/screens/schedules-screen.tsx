@@ -1,21 +1,24 @@
 import { Calendar, Clock, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function SchedulesScreen() {
+  const { t } = useTranslation(["schedules"]);
+  
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh]">
       <div className="w-20 h-20 rounded-2xl bg-primary-container flex items-center justify-center mb-6">
         <Calendar className="w-10 h-10 text-primary" />
       </div>
       <h2 className="font-headline font-extrabold text-4xl text-on-surface tracking-tight leading-tight mb-2">
-        Schedules
+        {t("schedules:title")}
       </h2>
       <p className="font-body text-on-surface-variant text-lg text-center max-w-xs">
-        View and manage your tutoring calendar and upcoming sessions.
+        {t("schedules:description")}
       </p>
 
       <div className="mt-12 w-full max-w-sm">
         <h3 className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-4">
-          Today, March 29
+          {t("schedules:dateLabel", { date: "March 29" })}
         </h3>
 
         <div className="space-y-3">
@@ -36,11 +39,11 @@ export function SchedulesScreen() {
             <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant">
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                60 min
+                {t("schedules:duration", { minutes: 60 })}
               </span>
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                Room 302
+                {t("schedules:location", { room: "302" })}
               </span>
             </div>
           </div>
@@ -62,11 +65,11 @@ export function SchedulesScreen() {
             <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant">
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                90 min
+                {t("schedules:duration", { minutes: 90 })}
               </span>
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                Room 105
+                {t("schedules:location", { room: "105" })}
               </span>
             </div>
           </div>
@@ -86,11 +89,11 @@ export function SchedulesScreen() {
             <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant">
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                60 min
+                {t("schedules:duration", { minutes: 60 })}
               </span>
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                Online
+                {t("schedules:online")}
               </span>
             </div>
           </div>

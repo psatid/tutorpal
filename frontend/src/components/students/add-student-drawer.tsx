@@ -1,9 +1,8 @@
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { RHFInputField, RHFSelectField } from "@/components/form/rhf";
 import {
   Drawer,
   DrawerPortal,
@@ -36,11 +35,9 @@ export function AddStudentDrawer({
   onOpenChange,
 }: AddStudentDrawerProps) {
   const {
-    register,
     handleSubmit,
     reset,
     control,
-    formState: { errors },
   } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -81,57 +78,38 @@ export function AddStudentDrawer({
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <div>
-                    <label className="font-label text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-2 flex justify-between items-center">
-                      Full Name
-                      <span className="text-primary font-medium normal-case text-xs italic">
-                        Required
-                      </span>
-                    </label>
-                    <Input
-                      {...register("name")}
-                      type="text"
-                      placeholder="e.g. Leo Henderson"
-                      error={errors.name?.message}
-                    />
-                  </div>
+                  <RHFInputField
+                    control={control}
+                    name="name"
+                    label="Full Name"
+                    caption="Required"
+                    inputProps={{
+                      type: "text",
+                      placeholder: "e.g. Leo Henderson",
+                    }}
+                  />
 
-                  <div>
-                    <label className="font-label text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-2 flex justify-between items-center">
-                      Phone Number
-                      <span className="text-outline font-medium normal-case text-xs italic">
-                        Optional
-                      </span>
-                    </label>
-                    <Input
-                      {...register("phone")}
-                      type="tel"
-                      placeholder="081-234-5678"
-                      error={errors.phone?.message}
-                    />
-                  </div>
+                  <RHFInputField
+                    control={control}
+                    name="phone"
+                    label="Phone Number"
+                    caption="Optional"
+                    inputProps={{
+                      type: "tel",
+                      placeholder: "081-234-5678",
+                    }}
+                  />
 
-                  <div>
-                    <label className="font-label text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-2 flex justify-between items-center">
-                      Grade Level
-                      <span className="text-primary font-medium normal-case text-xs italic">
-                        Required
-                      </span>
-                    </label>
-                    <Controller
-                      name="grade"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          options={gradeOptions}
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Select Grade"
-                          error={errors.grade?.message}
-                        />
-                      )}
-                    />
-                  </div>
+                  <RHFSelectField
+                    control={control}
+                    name="grade"
+                    label="Grade Level"
+                    caption="Required"
+                    options={gradeOptions}
+                    selectProps={{
+                      placeholder: "Select Grade",
+                    }}
+                  />
 
                   <div className="pt-4 space-y-3">
                     <Button
