@@ -15,7 +15,39 @@ model Student {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Many-to-many relation with Class through ClassEnrollment
+  classes   ClassEnrollment[]
+
   @@map("students")
+}
+
+model Class {
+  id          String   @id @default(uuid())
+  name        String
+  totalHours  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Many-to-many relation with Student through ClassEnrollment
+  students   ClassEnrollment[]
+
+  @@map("classes")
+}
+
+// Join table for many-to-many relationship
+model ClassEnrollment {
+  id        String   @id @default(uuid())
+  classId   String
+  studentId String
+  createdAt DateTime @default(now())
+
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+  @@index([classId])
+  @@index([studentId])
+  @@map("class_enrollments")
 }
 
 model User {

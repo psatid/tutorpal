@@ -43,10 +43,10 @@
   --color-surface-bright: #fdf7fe;
   --color-surface-dim: #ded8e4;
   --color-surface-variant: #e7e0ec;
-  --color-surface-container: #f2ecf5;
-  --color-surface-container-low: #f8f1fa;
-  --color-surface-container-high: #ece6f0;
-  --color-surface-container-highest: #e7e0ec;
+  --color-surface-container: #ebe5f0;
+  --color-surface-container-low: #f2ecf5;
+  --color-surface-container-high: #e5dfea;
+  --color-surface-container-highest: #e0dae5;
   --color-surface-container-lowest: #ffffff;
   --color-surface-tint: #6b46c1;
 
@@ -129,13 +129,13 @@ body {
 
 /* Utility classes for glassmorphism */
 .glass {
-  background: rgba(253, 247, 254, 0.7);
+  background: rgba(242, 236, 245, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 .glass-dock {
-  background: rgba(253, 247, 254, 0.8);
+  background: rgba(242, 236, 245, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }

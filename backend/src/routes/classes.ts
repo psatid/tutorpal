@@ -2,41 +2,41 @@ import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
-import { studentRepository } from "../repositories";
+import { classRepository } from "../repositories";
 import {
-	CreateStudentSchema,
-	CreateStudentSchemaResolver,
-	StudentListSchemaResolver,
-	StudentSchemaResolver,
-	UpdateStudentSchema,
-	UpdateStudentSchemaResolver,
+	CreateClassSchema,
+	CreateClassSchemaResolver,
+	ClassListSchemaResolver,
+	ClassSchemaResolver,
+	UpdateClassSchema,
+	UpdateClassSchemaResolver,
 } from "../schemas";
-import { StudentService } from "../services";
+import { ClassService } from "../services";
 
 // Initialize service with repository
-const studentService = new StudentService(studentRepository);
+const classService = new ClassService(classRepository);
 
-const studentRoutes = new Hono()
+const classRoutes = new Hono()
 	.use(requireAuth)
-	// Create student
+	// Create class
 	.post(
 		"/",
 		describeRoute({
-			tags: ["students"],
-			description: "Create a new student",
+			tags: ["classes"],
+			description: "Create a new class",
 			requestBody: {
 				content: {
 					"application/json": {
-						schema: CreateStudentSchemaResolver as any,
+						schema: CreateClassSchemaResolver as any,
 					},
 				},
 			},
 			responses: {
 				201: {
-					description: "Student created successfully",
+					description: "Class created successfully",
 					content: {
 						"application/json": {
-							schema: StudentSchemaResolver as any,
+							schema: ClassSchemaResolver as any,
 						},
 					},
 				},
@@ -48,26 +48,26 @@ const studentRoutes = new Hono()
 				},
 			},
 		}),
-		sValidator("json", CreateStudentSchema),
+		sValidator("json", CreateClassSchema),
 		async (c) => {
 			const data = c.req.valid("json");
-			const student = await studentService.createStudent(data);
-			return c.json(student, 201);
+			const classData = await classService.createClass(data);
+			return c.json(classData, 201);
 		},
 	)
 
-	// List all students
+	// List all classes
 	.get(
 		"/",
 		describeRoute({
-			tags: ["students"],
-			description: "Get all students",
+			tags: ["classes"],
+			description: "Get all classes",
 			responses: {
 				200: {
-					description: "List of students",
+					description: "List of classes",
 					content: {
 						"application/json": {
-							schema: StudentListSchemaResolver as any,
+							schema: ClassListSchemaResolver as any,
 						},
 					},
 				},
@@ -77,23 +77,23 @@ const studentRoutes = new Hono()
 			},
 		}),
 		async (c) => {
-			const students = await studentService.getAllStudents();
-			return c.json(students);
+			const classes = await classService.getAllClasses();
+			return c.json(classes);
 		},
 	)
 
-	// Get single student
+	// Get single class
 	.get(
 		"/:id",
 		describeRoute({
-			tags: ["students"],
-			description: "Get a student by ID",
+			tags: ["classes"],
+			description: "Get a class by ID",
 			responses: {
 				200: {
-					description: "Student found",
+					description: "Class found",
 					content: {
 						"application/json": {
-							schema: StudentSchemaResolver as any,
+							schema: ClassSchemaResolver as any,
 						},
 					},
 				},
@@ -101,36 +101,36 @@ const studentRoutes = new Hono()
 					description: "Unauthorized - Authentication required",
 				},
 				404: {
-					description: "Student not found",
+					description: "Class not found",
 				},
 			},
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			const student = await studentService.getStudentById(id);
-			return c.json(student);
+			const classData = await classService.getClassById(id);
+			return c.json(classData);
 		},
 	)
 
-	// Update student
+	// Update class
 	.put(
 		"/:id",
 		describeRoute({
-			tags: ["students"],
-			description: "Update a student by ID",
+			tags: ["classes"],
+			description: "Update a class by ID",
 			requestBody: {
 				content: {
 					"application/json": {
-						schema: UpdateStudentSchemaResolver as any,
+						schema: UpdateClassSchemaResolver as any,
 					},
 				},
 			},
 			responses: {
 				200: {
-					description: "Student updated successfully",
+					description: "Class updated successfully",
 					content: {
 						"application/json": {
-							schema: StudentSchemaResolver as any,
+							schema: ClassSchemaResolver as any,
 						},
 					},
 				},
@@ -138,46 +138,46 @@ const studentRoutes = new Hono()
 					description: "Unauthorized - Authentication required",
 				},
 				404: {
-					description: "Student not found",
+					description: "Class not found",
 				},
 				400: {
 					description: "Validation error",
 				},
 			},
 		}),
-		sValidator("json", UpdateStudentSchema),
+		sValidator("json", UpdateClassSchema),
 		async (c) => {
 			const id = c.req.param("id");
 			const data = c.req.valid("json");
-			const student = await studentService.updateStudent(id, data);
-			return c.json(student);
+			const classData = await classService.updateClass(id, data);
+			return c.json(classData);
 		},
 	)
 
-	// Delete student
+	// Delete class
 	.delete(
 		"/:id",
 		describeRoute({
-			tags: ["students"],
-			description: "Delete a student by ID",
+			tags: ["classes"],
+			description: "Delete a class by ID",
 			responses: {
 				204: {
-					description: "Student deleted successfully",
+					description: "Class deleted successfully",
 				},
 				401: {
 					description: "Unauthorized - Authentication required",
 				},
 				404: {
-					description: "Student not found",
+					description: "Class not found",
 				},
 			},
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			await studentService.deleteStudent(id);
+			await classService.deleteClass(id);
 			return c.body(null, 204);
 		},
 	);
 
-export default studentRoutes;
-export type StudentRoutesType = typeof studentRoutes;
+export default classRoutes;
+export type ClassRoutesType = typeof classRoutes;

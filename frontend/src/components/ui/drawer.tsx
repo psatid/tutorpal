@@ -4,11 +4,45 @@ import { cn } from "@/lib/utils";
 
 const Drawer = DrawerPrimitive.Root;
 
+const DrawerProvider = DrawerPrimitive.Provider;
+
 const DrawerTrigger = DrawerPrimitive.Trigger;
 
 const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerPortal = DrawerPrimitive.Portal;
+
+const DrawerIndentBackground = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.IndentBackground>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.IndentBackground>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.IndentBackground
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-40 bg-surface transition-all duration-300",
+      "data-[active]:scale-[0.96] data-[active]:rounded-3xl",
+      className
+    )}
+    {...props}
+  />
+));
+DrawerIndentBackground.displayName = "DrawerIndentBackground";
+
+const DrawerIndent = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Indent>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Indent>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Indent
+    ref={ref}
+    className={cn(
+      "relative z-50 transition-all duration-300",
+      "data-[active]:scale-[0.96] data-[active]:rounded-3xl data-[active]:overflow-hidden",
+      className
+    )}
+    {...props}
+  />
+));
+DrawerIndent.displayName = "DrawerIndent";
 
 const DrawerBackdrop = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Backdrop>,
@@ -100,6 +134,7 @@ DrawerDescription.displayName = "DrawerDescription";
 
 export {
   Drawer,
+  DrawerProvider,
   DrawerTrigger,
   DrawerClose,
   DrawerPortal,
@@ -109,4 +144,6 @@ export {
   DrawerContent,
   DrawerTitle,
   DrawerDescription,
+  DrawerIndentBackground,
+  DrawerIndent,
 };

@@ -2,22 +2,11 @@
 
 ## 1. Overview & Creative North Star
 
-**Creative North Star: The Curated Scriptory**
-This design system moves away from the sterile, "SaaS-blue" dashboard aesthetic to create a digital workspace that feels like a private library or a high-end atelier. We are building an environment for deep thought, not just data entry.
+DESIGNNesting:\*\* Treat the UI as stacked sheets of fine vellum.
 
-To break the "template" look, we utilize **Editorial Asymmetry**. This means we avoid perfectly centered, symmetrical grids in favor of layouts that feel like a modern academic journal—generous white space, purposeful off-center groupings, and high-contrast typography scales that guide the eye through hierarchy rather than borders.
-
----
-
-## 2. Colors: Tonal Architecture
-
-The palette is rooted in a scholarly purple, but its application is disciplined. We treat color as a functional "wash" rather than a decorative element.
-
-- **The "No-Line" Rule:** Explicitly prohibit the use of 1px solid borders for sectioning. Boundaries are defined solely through background shifts. For instance, a `surface-container-low` (#f8f1fa) sidebar should sit against a `surface` (#fdf7fe) main content area.
-- **Surface Hierarchy & Nesting:** Treat the UI as stacked sheets of fine vellum.
-  - **Level 0 (Base):** `surface` (#fdf7fe)
-  - **Level 1 (Sections):** `surface-container-low` (#f8f1fa)
-  - **Level 2 (Cards):** `surface-container-lowest` (#ffffff)
+- **Level 0 (Base):** `surface` (#fdf7fe)
+- **Level 1 (Sections):** `surface-container-low` (#f8f1fa)
+- **Level 2 (Cards):** `surface-container-lowest` (#ffffff)
 - **The "Glass & Gradient" Rule:** To move beyond a standard flat look, floating elements (like navigation bars or modals) must use **Glassmorphism**. Apply `surface` with a 70% opacity and a `20px` backdrop-blur.
 - **Signature Textures:** For primary CTAs, use a subtle linear gradient from `primary` (#6b46c1) to `primary-container` (#a480fe) at a 135-degree angle. This adds a "soul" to the interactive elements that flat hex codes lack.
 
