@@ -1,8 +1,16 @@
 import { StudentDrawer, type DrawerMode } from "@/components/students/student-drawer";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useStudents } from "@/hooks/queries/use-students";
+import { useDeleteStudent } from "@/hooks/mutations/use-delete-student";
 import type { Student } from "@/types/student";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -39,9 +47,10 @@ function SearchInput() {
 interface StudentCardProps {
   student: Student;
   onClick: () => void;
+  onDelete: () => void;
 }
 
-function StudentCard({ student, onClick }: StudentCardProps) {
+function StudentCard({ student, onClick, onDelete }: StudentCardProps) {
   const { t } = useTranslation(["students"]);
   
   const getInitials = (name: string) => {
@@ -52,9 +61,14 @@ function StudentCard({ student, onClick }: StudentCardProps) {
       .toUpperCase();
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete();
+  };
+
   return (
     <div 
-      className="bg-surface-container-lowest p-6 rounded-xl ambient-shadow flex gap-5 items-center cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+      className="bg-surface-container-lowest p-6 rounded-xl ambient-shadow flex gap-5 items-center cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98] relative"
       onClick={onClick}
     >
       <div className="w-20 h-20 rounded-lg bg-surface-container-high flex items-center justify-center text-primary font-headline font-bold text-2xl">
@@ -68,6 +82,24 @@ function StudentCard({ student, onClick }: StudentCardProps) {
           {t("students:grade", { grade: student.grade })}
         </p>
       </div>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="absolute top-3 right-3 p-2 rounded-full hover:bg-surface-container-high transition-colors outline-none"
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        >
+          <MoreVertical className="w-5 h-5 text-on-surface-variant" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="bottom">
+          <DropdownMenuItem
+            className="text-red-600 focus:text-red-600"
+            onClick={handleDeleteClick}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -89,7 +121,10 @@ export function StudentScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const { data: students, isLoading } = useStudents();
+  const deleteMutation = useDeleteStudent();
 
   const handleCreateClick = () => {
     setDrawerMode("create");
@@ -113,6 +148,22 @@ export function StudentScreen() {
     }
   };
 
+  const handleDeleteClick = (student: Student) => {
+    setStudentToDelete(student);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (studentToDelete) {
+      deleteMutation.mutate(studentToDelete.id, {
+        onSuccess: () => {
+          setIsConfirmOpen(false);
+          setStudentToDelete(null);
+        },
+      });
+    }
+  };
+
   return (
     <div>
       <EditorialHeader count={students?.length ?? 0} />
@@ -124,21 +175,36 @@ export function StudentScreen() {
       ) : (
         <div className="space-y-6">
           {students?.map((student) => (
-            <StudentCard 
-              key={student.id} 
-              student={student} 
+            <StudentCard
+              key={student.id}
+              student={student}
               onClick={() => handleStudentClick(student.id)}
+              onDelete={() => handleDeleteClick(student)}
             />
           ))}
         </div>
       )}
       <AddStudentFAB onClick={handleCreateClick} />
-      <StudentDrawer 
-        isOpen={isDrawerOpen} 
+      <StudentDrawer
+        isOpen={isDrawerOpen}
         onOpenChange={handleDrawerClose}
         mode={drawerMode}
         studentId={selectedStudentId}
         onModeChange={setDrawerMode}
+      />
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        title="Delete Student"
+        description={studentToDelete
+          ? `Are you sure you want to delete "${studentToDelete.name}"? This action cannot be undone.`
+          : "Are you sure you want to delete this student? This action cannot be undone."
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteMutation.isPending}
+        variant="danger"
       />
     </div>
   );
