@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { RHFInputField } from "@/components/form/rhf";
+import { RHFInputField } from "@/components/ui/form/rhf";
 import { useLogin } from "@/hooks/mutations/use-login";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,14 +12,14 @@ import { z } from "zod";
 export function LoginScreen() {
   const { t } = useTranslation(["login", "common"]);
   const navigate = useNavigate();
-  
+
   const loginSchema = z.object({
     email: z.email(t("common:form.invalidEmail")),
     password: z.string().min(1, t("common:form.required")),
   });
-  
+
   type LoginFormData = z.infer<typeof loginSchema>;
-  
+
   const {
     control,
     handleSubmit,

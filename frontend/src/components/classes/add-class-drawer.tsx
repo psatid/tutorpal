@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, ChevronRight, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FormDrawer } from "@/components/ui/form-drawer";
-import { RHFInputField } from "@/components/form/rhf";
+import { RHFInputField } from "@/components/ui/form/rhf";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useStudents } from "@/hooks/queries/use-students";
 import { classSchema, type ClassFormData } from "@/types/class";

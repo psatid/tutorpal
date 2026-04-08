@@ -2,13 +2,13 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
-import common from "../locales/en/common";
-import login from "../locales/en/login";
-import dashboard from "../locales/en/dashboard";
-import students from "../locales/en/students";
-import classes from "../locales/en/classes";
-import schedules from "../locales/en/schedules";
-import navigation from "../locales/en/navigation";
+import common from "./locales/en/common";
+import login from "./locales/en/login";
+import dashboard from "./locales/en/dashboard";
+import students from "./locales/en/students";
+import classes from "./locales/en/classes";
+import schedules from "./locales/en/schedules";
+import navigation from "./locales/en/navigation";
 
 const resources = {
   en: {

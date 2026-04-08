@@ -1,4 +1,4 @@
-import { AddStudentDrawer } from "@/components/students/add-student-drawer";
+import { StudentDrawer, type DrawerMode } from "@/components/students/student-drawer";
 import { Button } from "@/components/ui/button";
 import { useStudents } from "@/hooks/queries/use-students";
 import type { Student } from "@/types/student";
@@ -36,7 +36,12 @@ function SearchInput() {
   );
 }
 
-function StudentCard({ student }: { student: Student }) {
+interface StudentCardProps {
+  student: Student;
+  onClick: () => void;
+}
+
+function StudentCard({ student, onClick }: StudentCardProps) {
   const { t } = useTranslation(["students"]);
   
   const getInitials = (name: string) => {
@@ -48,7 +53,10 @@ function StudentCard({ student }: { student: Student }) {
   };
 
   return (
-    <div className="bg-surface-container-lowest p-6 rounded-xl ambient-shadow flex gap-5 items-center">
+    <div 
+      className="bg-surface-container-lowest p-6 rounded-xl ambient-shadow flex gap-5 items-center cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+      onClick={onClick}
+    >
       <div className="w-20 h-20 rounded-lg bg-surface-container-high flex items-center justify-center text-primary font-headline font-bold text-2xl">
         {getInitials(student.name)}
       </div>
@@ -79,7 +87,31 @@ function AddStudentFAB({ onClick }: { onClick: () => void }) {
 export function StudentScreen() {
   const { t } = useTranslation(["students"]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const { data: students, isLoading } = useStudents();
+
+  const handleCreateClick = () => {
+    setDrawerMode("create");
+    setSelectedStudentId(null);
+    setIsDrawerOpen(true);
+  };
+
+  const handleStudentClick = (studentId: string) => {
+    setDrawerMode("view");
+    setSelectedStudentId(studentId);
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerClose = (open: boolean) => {
+    setIsDrawerOpen(open);
+    if (!open) {
+      setTimeout(() => {
+        setSelectedStudentId(null);
+        setDrawerMode("create");
+      }, 300);
+    }
+  };
 
   return (
     <div>
@@ -92,12 +124,22 @@ export function StudentScreen() {
       ) : (
         <div className="space-y-6">
           {students?.map((student) => (
-            <StudentCard key={student.id} student={student} />
+            <StudentCard 
+              key={student.id} 
+              student={student} 
+              onClick={() => handleStudentClick(student.id)}
+            />
           ))}
         </div>
       )}
-      <AddStudentFAB onClick={() => setIsDrawerOpen(true)} />
-      <AddStudentDrawer isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
+      <AddStudentFAB onClick={handleCreateClick} />
+      <StudentDrawer 
+        isOpen={isDrawerOpen} 
+        onOpenChange={handleDrawerClose}
+        mode={drawerMode}
+        studentId={selectedStudentId}
+        onModeChange={setDrawerMode}
+      />
     </div>
   );
 }
