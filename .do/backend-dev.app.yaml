@@ -1,0 +1,63 @@
+features:
+  - buildpack-stack=ubuntu-22
+ingress:
+  rules:
+    - component:
+        name: backend
+      cors:
+        allow_credentials: true
+        allow_headers:
+          - Content-Type
+        allow_methods:
+          - GET
+          - HEAD
+          - POST
+          - OPTIONS
+          - PUT
+          - PATCH
+          - DELETE
+        allow_origins:
+          - exact: https://tutorpal-app-cvaeg.ondigitalocean.app
+      match:
+        authority:
+          exact: ""
+        path:
+          prefix: /
+name: tutor-pal-backend-dev
+region: sgp
+services:
+  - envs:
+      - key: PORT
+        scope: RUN_AND_BUILD_TIME
+        value: "3000"
+      - key: CORS_ORIGIN
+        scope: RUN_AND_BUILD_TIME
+        value: https://tutorpal-app-cvaeg.ondigitalocean.app/login
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${DATABASE_URL}
+      - key: BETTER_AUTH_SECRET
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${BETTER_AUTH_SECRET}
+      - key: BETTER_AUTH_URL
+        scope: RUN_AND_BUILD_TIME
+        value: https://tutor-pal-backend-dev-k7rbm.ondigitalocean.app/
+    health_check:
+      failure_threshold: 3
+      http_path: /v1/health
+      initial_delay_seconds: 10
+      period_seconds: 10
+      port: 3000
+      success_threshold: 1
+      timeout_seconds: 5
+    http_port: 3000
+    image:
+      registry: tutor-pal
+      registry_type: DOCR
+      repository: backend
+      tag: dev
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    name: backend
