@@ -2,7 +2,13 @@
 
 # Deploy TutorPal Backend to Development Environment
 # 
-# Usage:
+# ⚠️  DEPRECATED: This script is deprecated in favor of the new separated workflow.
+# Please use the following scripts instead:
+#   - ./scripts/build-push.sh --push  (Build and push images)
+#   - ./scripts/release.sh dev        (Promote to dev environment)
+#   - ./scripts/deploy.sh dev         (Deploy to App Platform)
+#
+# Old Usage:
 #   ./scripts/deploy-dev.sh           # Build and push only
 #   ./scripts/deploy-dev.sh --deploy  # Build, push, and deploy to DO App Platform
 #
@@ -60,6 +66,22 @@ if ! command -v doctl &> /dev/null; then
 fi
 
 print_success "All prerequisites met"
+
+# Deprecation warning
+echo ""
+print_warning "⚠️  THIS SCRIPT IS DEPRECATED ⚠️"
+print_warning "Please use the new separated workflow:"
+echo ""
+echo "  1. Build & Push:   ./scripts/build-push.sh --push"
+echo "  2. Release:        ./scripts/release.sh dev"
+echo "  3. Deploy:         ./scripts/deploy.sh dev"
+echo ""
+read -p "Continue with deprecated script? (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    print_info "Please use the new scripts instead"
+    exit 0
+fi
 
 # Check for uncommitted changes
 print_info "Checking git status..."

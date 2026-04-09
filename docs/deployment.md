@@ -71,14 +71,21 @@ Defines the **development** App Platform service:
 - **Health check**: HTTP GET `/v1/health`
 - **Instance size**: `basic-xxs` (dev-sized instance)
 
-### 3. Deployment Script (`scripts/deploy-dev.sh`)
+### 3. Deployment Scripts
 
-Automated deployment script with:
-- ✅ Git SHA-based tagging (7 characters)
-- ✅ Uncommitted change detection
-- ✅ Colorized output for better UX
-- ✅ Opt-in deployment with `--deploy` flag
-- ✅ Automatic health check verification
+We use **three separate scripts** for better separation of concerns:
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `scripts/build-push.sh` | Build Docker image and push to registry | `./scripts/build-push.sh --push` |
+| `scripts/release.sh` | Promote image to environment (dev/staging/prod) | `./scripts/release.sh dev [sha]` |
+| `scripts/deploy.sh` | Deploy to DigitalOcean App Platform | `./scripts/deploy.sh dev` |
+
+**Key Principles:**
+- ✅ **Build once, promote many** - Single immutable image built per commit
+- ✅ **Separate concerns** - Build, release, and deploy are independent steps
+- ✅ **Environment promotion** - Same image flows dev → staging → prod
+- ✅ **Easy rollback** - Re-release any git-sha to any environment
 
 ### 4. Environment Variables
 
@@ -93,27 +100,45 @@ Required environment variables (set in DO dashboard):
 
 ## Quick Start - Dev Deployment
 
-### Option 1: Using the Automated Script (Recommended)
+### Using the New Scripts (Recommended)
 
 ```bash
 # Navigate to project root
 cd /path/to/tutorpal
 
-# Build and push only (no deployment)
-./scripts/deploy-dev.sh
+# 1. Build and push image
+./scripts/build-push.sh --push
 
-# Build, push, and deploy
-./scripts/deploy-dev.sh --deploy
+# 2. Release to dev environment (uses current HEAD)
+./scripts/release.sh dev
+
+# 3. Deploy to App Platform
+./scripts/deploy.sh dev
 ```
 
-The script will:
-1. ✅ Check for uncommitted changes
-2. ✅ Get shortened git SHA (7 characters)
-3. ✅ Build Docker image with SHA tag
-4. ✅ Tag as `dev` (promotion)
-5. ✅ Push both tags to registry
-6. ✅ Optionally deploy to App Platform
-7. ✅ Verify health check
+Or in one line:
+```bash
+./scripts/build-push.sh --push && ./scripts/release.sh dev && ./scripts/deploy.sh dev
+```
+
+Each script:
+1. **build-push.sh**: Builds image with `git-<sha>` tag, optionally pushes to registry
+2. **release.sh**: Pulls `git-<sha>` from registry, tags as `dev`, pushes environment tag
+3. **deploy.sh**: Uses `.do/dev.app.yaml` to deploy the `dev` tagged image
+
+### Promoting to Other Environments
+
+After testing in dev, promote the same image:
+
+```bash
+# Promote specific SHA to staging (after dev testing)
+./scripts/release.sh staging abc1234
+./scripts/deploy.sh staging
+
+# Promote to production (requires confirmation)
+./scripts/release.sh prod abc1234
+./scripts/deploy.sh prod
+```
 
 ### Option 2: Manual Deployment
 
@@ -200,28 +225,19 @@ open $APP_URL/v1/docs
 
 ## Rollback Strategy
 
-If you need to rollback to a previous version:
+If you need to rollback to a previous version, simply re-release the old SHA:
 
 ```bash
 # Find the commit SHA you want to rollback to
 # (use git log or doctl registry repository list-tags tutor-pal/backend)
 
-# Example: Rollback to git-abc1234
-export ROLLBACK_SHA="abc1234"
+# Example: Rollback dev to git-abc1234
+./scripts/release.sh dev abc1234
+./scripts/deploy.sh dev
 
-# Pull the old image
-docker pull registry.digitalocean.com/tutor-pal/backend:git-${ROLLBACK_SHA}
-
-# Retag as dev
-docker tag registry.digitalocean.com/tutor-pal/backend:git-${ROLLBACK_SHA} \
-           registry.digitalocean.com/tutor-pal/backend:dev
-
-# Push the retagged image
-docker push registry.digitalocean.com/tutor-pal/backend:dev
-
-# Trigger deployment
-export APP_ID=$(doctl apps list --format ID,Name --no-header | grep "tutor-pal-backend-dev" | awk '{print $1}')
-doctl apps create-deployment $APP_ID
+# Rollback production (requires confirmation)
+./scripts/release.sh prod abc1234
+./scripts/deploy.sh prod
 ```
 
 ## Update Deployment
@@ -229,8 +245,10 @@ doctl apps create-deployment $APP_ID
 For routine updates:
 
 ```bash
-# Using the script (recommended)
-./scripts/deploy-dev.sh --deploy
+# Using the new scripts (recommended)
+./scripts/build-push.sh --push
+./scripts/release.sh dev
+./scripts/deploy.sh dev
 
 # Or manually
 docker build -t tutor-pal-backend:git-$(git rev-parse --short=7 HEAD) ./backend
@@ -343,10 +361,12 @@ docker build -t tutor-pal-backend .
 doctl registry repository list-tags tutor-pal/backend
 
 # Re-push if needed
-./scripts/deploy-dev.sh
+./scripts/build-push.sh --push
 ```
 
-### Uncommitted changes error
+### Uncommitted changes warning
+
+The build-push.sh script warns about uncommitted changes but allows you to continue:
 
 ```bash
 # Check git status
@@ -356,8 +376,10 @@ git status
 git add .
 git commit -m "Your commit message"
 
-# Then run deployment script again
-./scripts/deploy-dev.sh --deploy
+# Then run the scripts again
+./scripts/build-push.sh --push
+./scripts/release.sh dev
+./scripts/deploy.sh dev
 ```
 
 ## Resources

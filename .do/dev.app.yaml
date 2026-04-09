@@ -66,35 +66,47 @@ services:
       - path: /
         preserve_path_prefix: false
 
-# Deployment Workflow (automated via scripts/deploy-dev.sh):
+# Deployment Workflow (separate build/release/deploy scripts):
 #
-# 1. Build image with git SHA:
-#    docker build -t tutor-pal-backend:git-abc1234 ./backend
+# 1. BUILD - Create and push image:
+#    ./scripts/build-push.sh --push
+#    
+#    This creates an immutable git-<sha> tag and pushes to registry.
 #
-# 2. Tag as dev (promotion without rebuild):
-#    docker tag tutor-pal-backend:git-abc1234 tutor-pal-backend:dev
+# 2. RELEASE - Promote image to environment:
+#    ./scripts/release.sh dev [git-sha]
+#    
+#    This pulls git-<sha> and tags it as 'dev' in the registry.
+#    If git-sha is omitted, uses current HEAD.
 #
-# 3. Push to DO Container Registry:
-#    doctl registry login
-#    docker push registry.digitalocean.com/tutor-pal/backend:git-abc1234
-#    docker push registry.digitalocean.com/tutor-pal/backend:dev
+# 3. DEPLOY - Deploy to App Platform:
+#    ./scripts/deploy.sh dev
+#    
+#    This uses .do/dev.app.yaml spec and deploys the 'dev' tagged image.
 #
-# 4. Deploy to App Platform:
-#    doctl apps create --spec .do/dev.app.yaml
-#    # or update existing:
-#    doctl apps update $APP_ID --spec=.do/dev.app.yaml
+# Quick Start:
+#    ./scripts/build-push.sh --push && ./scripts/release.sh dev && ./scripts/deploy.sh dev
 #
-# Or use the automated script:
-#    ./scripts/deploy-dev.sh        # Build and push only
-#    ./scripts/deploy-dev.sh --deploy  # Build, push, and deploy
+# Multi-Environment Workflow:
+#    # Build once
+#    ./scripts/build-push.sh --push
+#    
+#    # Release to dev
+#    ./scripts/release.sh dev
+#    ./scripts/deploy.sh dev
+#    
+#    # Promote same image to staging (after dev testing)
+#    ./scripts/release.sh staging abc1234
+#    ./scripts/deploy.sh staging
+#    
+#    # Promote to production (requires confirmation)
+#    ./scripts/release.sh prod abc1234
+#    ./scripts/deploy.sh prod
 #
 # Rollback Strategy:
-# If you need to rollback to a previous version, retag 'dev' to point to an older git-<sha>:
-#    docker pull registry.digitalocean.com/tutor-pal/backend:git-abc1234
-#    docker tag registry.digitalocean.com/tutor-pal/backend:git-abc1234 \
-#               registry.digitalocean.com/tutor-pal/backend:dev
-#    docker push registry.digitalocean.com/tutor-pal/backend:dev
-#    doctl apps create-deployment $APP_ID
+# To rollback to a previous version:
+#    ./scripts/release.sh dev <old-git-sha>
+#    ./scripts/deploy.sh dev
 
 # Note: Environment variables marked as SECRET should be set via:
 # 1. DigitalOcean App Platform dashboard UI
