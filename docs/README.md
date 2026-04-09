@@ -41,6 +41,16 @@ Complete guide to the backend layered architecture. Covers:
 - Database operations with Prisma
 - Integration with OpenAPI workflow
 
+### 🚀 Deployment
+**[Deployment Guide](./deployment.md)**
+
+Complete deployment documentation for production:
+- Docker containerization with multi-stage builds
+- DigitalOcean App Platform configuration
+- Database migration strategy with Supabase
+- CI/CD pipeline setup
+- Production checklist and troubleshooting
+
 ### 📡 API Development Workflow
 **[OpenAPI Spec Generation Workflow](./openapi-workflow.md)**
 

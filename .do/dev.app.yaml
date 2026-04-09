@@ -1,0 +1,105 @@
+# DigitalOcean App Platform Specification - Development Environment
+# This file defines the dev infrastructure for TutorPal backend
+# Documentation: https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+
+name: tutor-pal-backend-dev
+region: sgp  # Singapore region (change to your preferred region: nyc, fra, etc.)
+
+# Container Registry Configuration
+# Deploys from DigitalOcean Container Registry using the 'dev' tag
+# 
+# Tagging Strategy:
+#   - git-<sha>: Immutable tag for specific commits (e.g., git-abc1234)
+#   - dev: Mutable tag pointing to current dev version
+# 
+# Promotion = retagging, not rebuilding
+# This allows easy rollback by retagging to a previous git-<sha>
+services:
+  - name: backend
+    # Deploy from pre-built image in DO Container Registry
+    image:
+      registry_type: DOCR
+      repository: tutor-pal/backend
+      tag: dev
+    
+    # Environment Variables
+    # Set actual values in DigitalOcean App Platform dashboard or use doctl
+    envs:
+      - key: NODE_ENV
+        value: development
+      
+      - key: PORT
+        value: "3000"
+      
+      - key: CORS_ORIGIN
+        value: "https://your-frontend-domain.com"  # Replace with your frontend URL
+        # For multiple origins, use comma-separated: "https://domain1.com,https://domain2.com"
+      
+      - key: DATABASE_URL
+        value: "${DATABASE_URL}"  # Set in DO dashboard - use Supabase connection string
+        type: SECRET
+      
+      - key: BETTER_AUTH_SECRET
+        value: "${BETTER_AUTH_SECRET}"  # Set in DO dashboard - generate a strong secret
+        type: SECRET
+      
+      - key: BETTER_AUTH_URL
+        value: "${APP_URL}"  # Will be auto-populated with the app URL
+    
+    # Instance Configuration
+    instance_count: 1
+    instance_size_slug: basic-xxs  # Dev instance (upgrade for production)
+    
+    # Health Check
+    health_check:
+      http_path: /v1/health
+      port: 3000
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    
+    # HTTP Routes
+    http_port: 3000
+    routes:
+      - path: /
+        preserve_path_prefix: false
+
+# Deployment Workflow (automated via scripts/deploy-dev.sh):
+#
+# 1. Build image with git SHA:
+#    docker build -t tutor-pal-backend:git-abc1234 ./backend
+#
+# 2. Tag as dev (promotion without rebuild):
+#    docker tag tutor-pal-backend:git-abc1234 tutor-pal-backend:dev
+#
+# 3. Push to DO Container Registry:
+#    doctl registry login
+#    docker push registry.digitalocean.com/tutor-pal/backend:git-abc1234
+#    docker push registry.digitalocean.com/tutor-pal/backend:dev
+#
+# 4. Deploy to App Platform:
+#    doctl apps create --spec .do/dev.app.yaml
+#    # or update existing:
+#    doctl apps update $APP_ID --spec=.do/dev.app.yaml
+#
+# Or use the automated script:
+#    ./scripts/deploy-dev.sh        # Build and push only
+#    ./scripts/deploy-dev.sh --deploy  # Build, push, and deploy
+#
+# Rollback Strategy:
+# If you need to rollback to a previous version, retag 'dev' to point to an older git-<sha>:
+#    docker pull registry.digitalocean.com/tutor-pal/backend:git-abc1234
+#    docker tag registry.digitalocean.com/tutor-pal/backend:git-abc1234 \
+#               registry.digitalocean.com/tutor-pal/backend:dev
+#    docker push registry.digitalocean.com/tutor-pal/backend:dev
+#    doctl apps create-deployment $APP_ID
+
+# Note: Environment variables marked as SECRET should be set via:
+# 1. DigitalOcean App Platform dashboard UI
+# 2. doctl CLI: doctl apps update $APP_ID --spec=.do/dev.app.yaml
+
+# After deployment, access your API at:
+# https://tutor-pal-backend-dev-xxxxx.ondigitalocean.app/v1/health
+# https://tutor-pal-backend-dev-xxxxx.ondigitalocean.app/v1/docs (API documentation)

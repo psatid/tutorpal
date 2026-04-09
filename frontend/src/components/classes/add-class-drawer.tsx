@@ -1,14 +1,13 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, ChevronRight, Users, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FormDrawer } from "@/components/ui/form-drawer";
 import { RHFInputField } from "@/components/ui/form/rhf";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useStudents } from "@/hooks/queries/use-students";
 import { classSchema, type ClassFormData } from "@/types/class";
-import { StudentSelectorDrawer } from "./student-selector-drawer";
+import { StudentSelectorAccordion } from "./student-selector-accordion";
 
 interface AddClassDrawerProps {
   isOpen: boolean;
@@ -28,7 +27,6 @@ export function AddClassDrawer({ isOpen, onOpenChange }: AddClassDrawerProps) {
     defaultValues,
   });
 
-  const [isStudentSelectorOpen, setIsStudentSelectorOpen] = useState(false);
   const { data: students } = useStudents();
 
   // Watch studentIds from form
@@ -128,38 +126,13 @@ export function AddClassDrawer({ isOpen, onOpenChange }: AddClassDrawerProps) {
             </div>
           )}
 
-          {/* Student Selector Trigger */}
-          <button
-            type="button"
-            onClick={() => setIsStudentSelectorOpen(true)}
-            className="w-full flex items-center justify-between p-4 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
-                <Users className="w-5 h-5 text-on-secondary-container" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-on-surface">
-                  {selectedStudents.length > 0
-                    ? t("classes:form.students.selectedCount", {
-                        count: selectedStudents.length,
-                      })
-                    : t("classes:form.students.placeholder")}
-                </p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-on-surface-variant" />
-          </button>
+          {/* Student Selector Accordion */}
+          <StudentSelectorAccordion
+            selectedIds={selectedStudentIds}
+            onChange={handleStudentSelectionChange}
+          />
         </div>
       </FormDrawer>
-
-      {/* Student Selector Drawer */}
-      <StudentSelectorDrawer
-        isOpen={isStudentSelectorOpen}
-        onOpenChange={setIsStudentSelectorOpen}
-        selectedIds={selectedStudentIds}
-        onChange={handleStudentSelectionChange}
-      />
     </>
   );
 }

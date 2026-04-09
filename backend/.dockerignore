@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Development
+.vscode/
+.idea/
+*.log
+
+# Testing
+coverage/
+*.test.ts
+*.spec.ts
+
+# Build outputs
+dist/
+build/
+
+# Prisma (migrations are run via CI/CD, not in container)
+prisma/migrations/
+
+# Documentation
+*.md
+docs/
+
+# Scripts (not needed in production image)
+scripts/
+
+# OpenAPI spec (generated at runtime)
+openapi/
+
+# CI/CD
+.github/
+.do/
+
+# OS
+.DS_Store
+Thumbs.db
