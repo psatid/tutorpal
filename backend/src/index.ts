@@ -16,19 +16,19 @@ app.use(logger());
 
 // Enable CORS for all routes
 const corsMiddleware = cors({
-	origin: ENV.CORS_ORIGIN,
-	allowHeaders: ["Content-Type", "Authorization", "better-auth"],
-	allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-	exposeHeaders: ["Content-Length"],
-	maxAge: 600,
-	credentials: true,
+  origin: ENV.CORS_ORIGIN,
+  allowHeaders: ["Content-Type", "Authorization", "better-auth"],
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  exposeHeaders: ["Content-Length"],
+  maxAge: 600,
+  credentials: true,
 });
 
 app.use("*", corsMiddleware);
 
 // Mount better-auth routes before other routes
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-	return auth.handler(c.req.raw);
+app.on(["POST", "GET"], "/v1/auth/*", (c) => {
+  return auth.handler(c.req.raw);
 });
 
 // Mount API routes
@@ -36,31 +36,31 @@ app.route("/", routes).onError(errorHandler);
 
 // Serve OpenAPI spec generated from describeRoute metadata
 app.get(
-	"/v1/docs/open-api",
-	openAPIRouteHandler(app, {
-		documentation: {
-			info: {
-				title: "TutorPal API",
-				version: "1.0.0",
-				description: "TutorPal API documentation",
-			},
-			servers: [
-				{
-					url: `http://localhost:${port}`,
-					description: "Local development server",
-				},
-			],
-			tags: [
-				{ name: "system", description: "System endpoints" },
-				{ name: "students", description: "Student management endpoints" },
-			],
-		},
-	}),
+  "/v1/docs/open-api",
+  openAPIRouteHandler(app, {
+    documentation: {
+      info: {
+        title: "TutorPal API",
+        version: "1.0.0",
+        description: "TutorPal API documentation",
+      },
+      servers: [
+        {
+          url: `http://localhost:${port}`,
+          description: "Local development server",
+        },
+      ],
+      tags: [
+        { name: "system", description: "System endpoints" },
+        { name: "students", description: "Student management endpoints" },
+      ],
+    },
+  })
 );
 
 Bun.serve({
-	port,
-	fetch: app.fetch,
+  port,
+  fetch: app.fetch,
 });
 
 console.log(`Server running on http://localhost:${port}`);
