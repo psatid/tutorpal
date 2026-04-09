@@ -165,6 +165,17 @@ fi
 
 print_success "Image pulled successfully"
 
+# Remove old environment tag from registry (to avoid caching issues)
+echo ""
+print_info "Removing old environment tag from registry..."
+echo "  ${REGISTRY}/${REPOSITORY}:${ENVIRONMENT}"
+
+if doctl registry repository delete-tag backend ${ENVIRONMENT} 2>/dev/null; then
+    print_success "Old tag removed from registry"
+else
+    print_info "Tag did not exist in registry (first release or already removed)"
+fi
+
 # Tag with environment
 echo ""
 print_info "Tagging image for environment..."
@@ -181,6 +192,34 @@ echo "  ${REGISTRY}/${REPOSITORY}:${ENVIRONMENT}"
 
 docker push ${REGISTRY}/${REPOSITORY}:${ENVIRONMENT}
 print_success "Environment tag pushed"
+
+# Verify the tag was updated
+echo ""
+print_info "Verifying tag was updated in registry..."
+
+# Get the expected digest (from the source image we just tagged)
+EXPECTED_DIGEST=$(docker inspect ${SOURCE_IMAGE} --format='{{index .RepoDigests 0}}' 2>/dev/null | cut -d'@' -f2 || echo "")
+
+# Check the registry for the current dev tag digest
+sleep 2  # Brief wait for registry to update
+REGISTRY_TAG_INFO=$(doctl registry repository list-tags backend --format Tag,ManifestDigest --no-header | grep "^${ENVIRONMENT} " || true)
+
+if [[ -n "$REGISTRY_TAG_INFO" ]]; then
+    REGISTRY_DIGEST=$(echo "$REGISTRY_TAG_INFO" | awk '{print $NF}')
+    
+    if [[ -n "$EXPECTED_DIGEST" && "$EXPECTED_DIGEST" == *"$REGISTRY_DIGEST"* ]] || \
+       [[ -z "$EXPECTED_DIGEST" ]]; then
+        print_success "Tag verified in registry: ${REGISTRY_DIGEST}"
+    else
+        print_warning "Tag digest mismatch detected"
+        print_info "Expected: ${EXPECTED_DIGEST}"
+        print_info "Registry: ${REGISTRY_DIGEST}"
+        print_info "The tag may still be propagating. Check with:"
+        echo "  doctl registry repository list-tags backend"
+    fi
+else
+    print_warning "Could not verify tag in registry (may still be propagating)"
+fi
 
 # Summary
 echo ""

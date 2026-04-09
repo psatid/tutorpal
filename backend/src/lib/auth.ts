@@ -6,7 +6,6 @@ import { ENV } from "./env";
 
 export const auth = betterAuth({
   baseURL: ENV.BETTER_AUTH_URL,
-  basePath: "/v1/auth",
   secret: ENV.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -25,7 +24,7 @@ export const auth = betterAuth({
   advanced: {
     crossSubDomainCookies: {
       enabled: true,
-      domains: "tutorpal-app-cvaeg.ondigitalocean.app",
+      domains: ENV.CORS_ORIGIN.replace("https://", "").replace("http://", ""),
     },
   },
 });

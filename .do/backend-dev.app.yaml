@@ -19,8 +19,6 @@ ingress:
         allow_origins:
           - exact: https://tutorpal-app-cvaeg.ondigitalocean.app
       match:
-        authority:
-          exact: ""
         path:
           prefix: /
 name: tutor-pal-backend-dev
