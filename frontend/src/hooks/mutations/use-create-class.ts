@@ -11,7 +11,7 @@ export const useCreateClass = (options?: { onSuccess?: () => void }) => {
     mutationFn: async (data: ClassFormData) => {
       const response = await apiClient.postV1Classes({
         name: data.name,
-        totalHours: parseInt(data.totalHours, 10),
+        totalHours: data.totalHours,
         studentIds: data.studentIds,
       });
       return response.data;
