@@ -22,10 +22,4 @@ export const auth = betterAuth({
   },
   trustedOrigins: [ENV.CORS_ORIGIN, ENV.BETTER_AUTH_URL],
   plugins: [admin()],
-  advanced: {
-    crossSubDomainCookies: {
-      enabled: true,
-      domains: ENV.CORS_ORIGIN.replace("https://", "").replace("http://", ""),
-    },
-  },
 });

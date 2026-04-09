@@ -3,18 +3,21 @@
 # Deploy Script - Deploy to DigitalOcean App Platform
 #
 # Usage:
-#   ./scripts/deploy.sh <environment>
+#   ./scripts/deploy.sh <environment> [component]
 #
 # Arguments:
 #   environment    Target environment (dev, staging, prod)
+#   component      Component to deploy (backend, frontend). Defaults to backend.
 #
 # Examples:
-#   ./scripts/deploy.sh dev        # Deploy to dev
-#   ./scripts/deploy.sh staging    # Deploy to staging
-#   ./scripts/deploy.sh prod       # Deploy to production
+#   ./scripts/deploy.sh dev              # Deploy backend to dev
+#   ./scripts/deploy.sh dev backend      # Deploy backend to dev
+#   ./scripts/deploy.sh dev frontend     # Deploy frontend to dev
+#   ./scripts/deploy.sh staging backend  # Deploy backend to staging
+#   ./scripts/deploy.sh prod backend     # Deploy backend to production
 #
 # This script:
-#   - Checks for app spec file (.do/<environment>.app.yaml)
+#   - Checks for app spec file (.do/<component>-<environment>.app.yaml)
 #   - Creates or updates DO App Platform app
 #   - Waits for deployment and health check
 #   - Shows app URL and status
@@ -47,24 +50,27 @@ print_warning() {
 
 # Show help
 show_help() {
-    echo "Usage: $0 <environment>"
+    echo "Usage: $0 <environment> [component]"
     echo ""
     echo "Arguments:"
     echo "  environment    Target environment (dev, staging, prod)"
+    echo "  component      Component to deploy (backend, frontend). Defaults to backend."
     echo ""
     echo "Examples:"
-    echo "  $0 dev       # Deploy to dev"
-    echo "  $0 staging   # Deploy to staging"
-    echo "  $0 prod      # Deploy to production"
+    echo "  $0 dev              # Deploy backend to dev"
+    echo "  $0 dev backend      # Deploy backend to dev"
+    echo "  $0 dev frontend     # Deploy frontend to dev"
+    echo "  $0 staging backend  # Deploy backend to staging"
+    echo "  $0 prod backend     # Deploy backend to production"
     echo ""
     echo "Prerequisites:"
     echo "  - Image must be released to the environment first (see release.sh)"
-    echo "  - App spec must exist at .do/<environment>.app.yaml"
+    echo "  - App spec must exist at .do/<component>-<environment>.app.yaml"
     echo ""
     echo "Deployment Workflow:"
     echo "  1. Build:    ./scripts/build-push.sh --push"
     echo "  2. Release:  ./scripts/release.sh <env> [sha]"
-    echo "  3. Deploy:   ./scripts/deploy.sh <env>  ← You are here"
+    echo "  3. Deploy:   ./scripts/deploy.sh <env> [component]  ← You are here"
 }
 
 # Parse arguments
@@ -74,6 +80,7 @@ if [[ $# -lt 1 ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
 fi
 
 ENVIRONMENT=$1
+COMPONENT=${2:-"backend"}
 
 # Validate environment
 VALID_ENVIRONMENTS=("dev" "staging" "prod")
@@ -83,27 +90,37 @@ if [[ ! " ${VALID_ENVIRONMENTS[@]} " =~ " ${ENVIRONMENT} " ]]; then
     exit 1
 fi
 
+# Validate component
+VALID_COMPONENTS=("backend" "frontend")
+if [[ ! " ${VALID_COMPONENTS[@]} " =~ " ${COMPONENT} " ]]; then
+    print_error "Invalid component: ${COMPONENT}"
+    echo "Valid components: ${VALID_COMPONENTS[*]}"
+    exit 1
+fi
+
 # Determine app spec path
-APP_SPEC=".do/${ENVIRONMENT}.app.yaml"
+APP_SPEC=".do/${COMPONENT}-${ENVIRONMENT}.app.yaml"
 
 # Check if app spec exists
 if [[ ! -f "$APP_SPEC" ]]; then
     print_error "App spec file not found: ${APP_SPEC}"
     echo ""
-    print_info "Please create the app spec file for ${ENVIRONMENT} environment."
-    print_info "Example: .do/dev.app.yaml"
+    print_info "Please create the app spec file for ${COMPONENT} ${ENVIRONMENT} environment."
+    print_info "Example: .do/backend-dev.app.yaml"
     echo ""
-    print_info "You can create one based on the dev spec:"
-    echo "  cp .do/dev.app.yaml ${APP_SPEC}"
+    print_info "You can create one based on an existing spec:"
+    echo "  cp .do/backend-dev.app.yaml ${APP_SPEC}"
     echo ""
     print_info "Then update the following in ${APP_SPEC}:"
-    echo "  - name: (app name for ${ENVIRONMENT})"
+    echo "  - name: (app name for ${COMPONENT} ${ENVIRONMENT})"
     echo "  - services[0].image.tag: ${ENVIRONMENT}"
     echo "  - Environment variables as needed"
     exit 1
 fi
 
 print_success "Found app spec: ${APP_SPEC}"
+print_info "Component: ${COMPONENT}"
+print_info "Environment: ${ENVIRONMENT}"
 
 # Check prerequisites
 print_info "Checking prerequisites..."
@@ -184,11 +201,14 @@ else
 fi
 echo "=========================================="
 echo ""
-print_info "App Name: ${APP_NAME}"
-print_info "App ID: ${APP_ID}"
-print_info "App URL: ${APP_URL}"
-print_info "Health Check: ${APP_URL}/v1/health"
-print_info "API Docs: ${APP_URL}/v1/docs"
+print_info "Component: ${COMPONENT}"
+    print_info "App Name: ${APP_NAME}"
+    print_info "App ID: ${APP_ID}"
+    print_info "App URL: ${APP_URL}"
+    if [[ "$COMPONENT" == "backend" ]]; then
+        print_info "Health Check: ${APP_URL}/v1/health"
+        print_info "API Docs: ${APP_URL}/v1/docs"
+    fi
 echo ""
 
 # Wait for deployment
@@ -232,16 +252,18 @@ echo ""
 if [[ "$DEPLOYMENT_COMPLETE" == true ]]; then
     print_success "Deployment complete!"
     
-    # Health check
-    echo ""
-    print_info "Performing health check..."
-    sleep 5
-    
-    if curl -sf "${APP_URL}/v1/health" > /dev/null 2>&1; then
-        print_success "Health check passed!"
-    else
-        print_warning "Health check not responding yet (may need more time)"
-        print_info "Check manually with: curl ${APP_URL}/v1/health"
+    # Health check (only for backend)
+    if [[ "$COMPONENT" == "backend" ]]; then
+        echo ""
+        print_info "Performing health check..."
+        sleep 5
+        
+        if curl -sf "${APP_URL}/v1/health" > /dev/null 2>&1; then
+            print_success "Health check passed!"
+        else
+            print_warning "Health check not responding yet (may need more time)"
+            print_info "Check manually with: curl ${APP_URL}/v1/health"
+        fi
     fi
 else
     print_warning "Deployment is still in progress"

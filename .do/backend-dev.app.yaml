@@ -17,7 +17,7 @@ ingress:
           - PATCH
           - DELETE
         allow_origins:
-          - exact: https://tutorpal-app-cvaeg.ondigitalocean.app
+          - exact: https://dev.tutorpal.io
       match:
         path:
           prefix: /
@@ -30,7 +30,7 @@ services:
         value: "3000"
       - key: CORS_ORIGIN
         scope: RUN_AND_BUILD_TIME
-        value: https://tutorpal-app-cvaeg.ondigitalocean.app/login
+        value: https://dev.tutorpal.io
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
@@ -41,7 +41,7 @@ services:
         value: ${BETTER_AUTH_SECRET}
       - key: BETTER_AUTH_URL
         scope: RUN_AND_BUILD_TIME
-        value: https://tutor-pal-backend-dev-k7rbm.ondigitalocean.app/
+        value: https://dev.api.tutorpal.io
     health_check:
       failure_threshold: 3
       http_path: /v1/health
