@@ -119,7 +119,7 @@ print_info "Building Docker image..."
 echo "  Tag: git-${GIT_SHA}"
 echo "  Tag: latest"
 
-docker build -t tutor-pal-backend:git-${GIT_SHA} ./backend
+docker buildx build --platform linux/amd64 -t tutor-pal-backend:git-${GIT_SHA} ./backend --load
 docker tag tutor-pal-backend:git-${GIT_SHA} tutor-pal-backend:latest
 
 print_success "Docker image built successfully"

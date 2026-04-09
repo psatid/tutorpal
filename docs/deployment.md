@@ -73,13 +73,14 @@ Defines the **development** App Platform service:
 
 ### 3. Deployment Scripts
 
-We use **three separate scripts** for better separation of concerns:
+We use **separate scripts** for better separation of concerns:
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
 | `scripts/build-push.sh` | Build Docker image and push to registry | `./scripts/build-push.sh --push` |
 | `scripts/release.sh` | Promote image to environment (dev/staging/prod) | `./scripts/release.sh dev [sha]` |
 | `scripts/deploy.sh` | Deploy to DigitalOcean App Platform | `./scripts/deploy.sh dev` |
+| `scripts/migrate.sh` | Run database migrations | `./scripts/migrate.sh dev` |
 
 **Key Principles:**
 - ✅ **Build once, promote many** - Single immutable image built per commit
@@ -106,6 +107,10 @@ Required environment variables (set in DO dashboard):
 # Navigate to project root
 cd /path/to/tutorpal
 
+# 0. Run database migrations FIRST (before deploying code)
+export DATABASE_URL="your-supabase-dev-url"
+./scripts/migrate.sh dev
+
 # 1. Build and push image
 ./scripts/build-push.sh --push
 
@@ -118,13 +123,14 @@ cd /path/to/tutorpal
 
 Or in one line:
 ```bash
-./scripts/build-push.sh --push && ./scripts/release.sh dev && ./scripts/deploy.sh dev
+./scripts/migrate.sh dev && ./scripts/build-push.sh --push && ./scripts/release.sh dev && ./scripts/deploy.sh dev
 ```
 
 Each script:
-1. **build-push.sh**: Builds image with `git-<sha>` tag, optionally pushes to registry
-2. **release.sh**: Pulls `git-<sha>` from registry, tags as `dev`, pushes environment tag
-3. **deploy.sh**: Uses `.do/dev.app.yaml` to deploy the `dev` tagged image
+1. **migrate.sh**: Runs database migrations (do this first!)
+2. **build-push.sh**: Builds image with `git-<sha>` tag, optionally pushes to registry
+3. **release.sh**: Pulls `git-<sha>` from registry, tags as `dev`, pushes environment tag
+4. **deploy.sh**: Uses `.do/dev.app.yaml` to deploy the `dev` tagged image
 
 ### Promoting to Other Environments
 
@@ -192,6 +198,20 @@ CORS_ORIGIN=https://your-frontend-domain.com
 
 ⚠️ **Important**: Run migrations **before** deploying new code!
 
+**Using the migration script (recommended):**
+
+```bash
+# Run migrations on dev environment
+./scripts/migrate.sh dev
+
+# The script will prompt for DATABASE_URL if not set
+# Or you can export it first:
+export DATABASE_URL="your-supabase-dev-url"
+./scripts/migrate.sh dev
+```
+
+**Or manually:**
+
 ```bash
 cd backend
 
@@ -201,12 +221,17 @@ export DATABASE_URL="your-supabase-dev-url"
 # Install dependencies
 bun install
 
-# Run migrations
+# Run migrations (production-safe, only applies pending migrations)
 bunx prisma migrate deploy
 
 # Verify
 bunx prisma migrate status
 ```
+
+**Important Notes:**
+- `prisma migrate deploy` is safe for production - it only applies pending migrations, never creates new ones
+- `prisma migrate dev` is for local development only - it can create new migrations and reset databases
+- Production migrations require explicit "yes" confirmation
 
 ### 3. Verify Deployment
 
