@@ -1,3 +1,7 @@
+domains:
+  - domain: dev.api.tutorpal.io
+    type: PRIMARY
+    zone: tutorpal.io
 features:
   - buildpack-stack=ubuntu-22
 ingress:
@@ -34,11 +38,11 @@ services:
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-        value: ${DATABASE_URL}
+        value: EV[1:F/4n8QMTkQBG1khhBdlCGRnZpTU6j3K3:h/V/tpeXD6Y8vUolt4FI/pUVdMCavolK8VXirLnC4UcWqjhUmanUhjhA+Bdy49oxQfcLkCRf4kXQcJ9Kn9Gx8hqk/kfXhcEV+3FiVPgb8tUG8uyA/3eB5px3jPXijwz+VTuBIxWQc+Qkm40HPZS5KDPzjnxYz2SX7U6MQVA8guq+bBkd55UhNagmbXNf54uUwq0qR4wSKw==]
       - key: BETTER_AUTH_SECRET
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-        value: ${BETTER_AUTH_SECRET}
+        value: EV[1:vW4dmFfO0Od8KCDytA5F3+fSaFLYDFMO:t+2v8BLCika22fJ7gK8IMELdCl8NbuX84bE+5Lb5vIDzz9zwO/8W4nUQRGlwWK9GyZOAnERIJ39eTAgMupAmx/3BwaLm2iefED1a+VRTDCJknONOJjm2pBfJesRs52tdRCrZZKblASlgEkJCojyjT+KEgWicg1YpBeGTQ8JfyVHBocW30g4WAVoz2ZshRhk1]
       - key: BETTER_AUTH_URL
         scope: RUN_AND_BUILD_TIME
         value: https://dev.api.tutorpal.io

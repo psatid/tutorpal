@@ -27,7 +27,7 @@ const corsMiddleware = cors({
 app.use("*", corsMiddleware);
 
 // Mount better-auth routes before other routes
-app.on(["POST", "GET"], "/v1/auth/*", (c) => {
+app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
 
