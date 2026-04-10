@@ -3,6 +3,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/auth-context";
+import { ENV } from "@/lib/env";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -14,7 +15,7 @@ export const Route = createRootRoute({
         <Outlet />
       </QueryClientProvider>
       <Toaster />
-      <TanStackRouterDevtools />
+      {ENV.IS_DEV && <TanStackRouterDevtools />}
     </AuthProvider>
   ),
 });

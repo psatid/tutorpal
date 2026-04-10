@@ -1,8 +1,9 @@
 import axios from "axios";
 import { getTutorPalAPI } from "@/api/generated/tutorPalAPI";
+import { ENV } from "./env";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "",
+  baseURL: ENV.API_URL,
   withCredentials: true,
 });
 
