@@ -5,4 +5,8 @@ export default {
   duration: "{{minutes}} min",
   location: "Room {{room}}",
   online: "Online",
+  loading: "Loading schedules...",
+  empty: "No schedules found. Create your first schedule to get started.",
+  errorTitle: "Error",
+  errorDescription: "Failed to load schedules. Please try again later.",
 } as const;

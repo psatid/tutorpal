@@ -30,6 +30,7 @@ model Class {
 
   // Many-to-many relation with Student through ClassEnrollment
   students   ClassEnrollment[]
+  schedules  Schedule[]
 
   @@map("classes")
 }
@@ -116,4 +117,30 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+enum ScheduleStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+
+  @@map("schedule_status")
+}
+
+model Schedule {
+  id               String         @id @default(uuid())
+  classId          String
+  date             DateTime       @db.Date
+  time             Int
+  durationMinutes  Int
+  notes            String?
+  status           ScheduleStatus @default(SCHEDULED)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  class            Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+  @@index([date])
+  @@map("schedules")
 }
