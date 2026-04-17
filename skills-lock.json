@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "ef6d7e3d63d9b028bb52112506dc901b2d94a24918f06865914c8e66bda22c63"
     },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "computedHash": "873c67922d80775a9fdf596db7964b579f0408c30ec6e3d11989f6055bbec89f"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

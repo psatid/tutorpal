@@ -1,4 +1,7 @@
-import { StudentDrawer, type DrawerMode } from "@/components/students/student-drawer";
+import {
+  StudentDrawer,
+  type DrawerMode,
+} from "@/components/students/student-drawer";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +19,7 @@ import { useTranslation } from "react-i18next";
 
 function EditorialHeader({ count }: { count: number }) {
   const { t } = useTranslation(["students"]);
-  
+
   return (
     <section className="mb-8">
       <h2 className="font-headline font-extrabold text-4xl text-on-surface tracking-tight leading-tight">
@@ -31,7 +34,7 @@ function EditorialHeader({ count }: { count: number }) {
 
 function SearchInput() {
   const { t } = useTranslation(["students"]);
-  
+
   return (
     <div className="relative mb-10">
       <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
@@ -52,7 +55,7 @@ interface StudentCardProps {
 
 function StudentCard({ student, onClick, onDelete }: StudentCardProps) {
   const { t } = useTranslation(["students"]);
-  
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -67,8 +70,8 @@ function StudentCard({ student, onClick, onDelete }: StudentCardProps) {
   };
 
   return (
-    <div 
-      className="bg-surface-container-lowest p-6 rounded-xl ambient-shadow flex gap-5 items-center cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98] relative"
+    <div
+      className="bg-surface-container-lowest p-6 rounded-xl border border-gray-200 flex gap-5 items-center cursor-pointer transition-transform  relative"
       onClick={onClick}
     >
       <div className="w-20 h-20 rounded-lg bg-surface-container-high flex items-center justify-center text-primary font-headline font-bold text-2xl">
@@ -82,7 +85,7 @@ function StudentCard({ student, onClick, onDelete }: StudentCardProps) {
           {t("students:grade", { grade: student.grade })}
         </p>
       </div>
-      
+
       <DropdownMenu>
         <DropdownMenuTrigger
           className="absolute top-3 right-3 p-2 rounded-full hover:bg-surface-container-high transition-colors outline-none"
@@ -107,7 +110,6 @@ function StudentCard({ student, onClick, onDelete }: StudentCardProps) {
 function AddStudentFAB({ onClick }: { onClick: () => void }) {
   return (
     <Button
-      variant="gradient"
       size="icon"
       onClick={onClick}
       leftIcon={Plus}
@@ -120,7 +122,9 @@ export function StudentScreen() {
   const { t } = useTranslation(["students"]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  );
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const { data: students, isLoading } = useStudents();
@@ -196,9 +200,10 @@ export function StudentScreen() {
         isOpen={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}
         title="Delete Student"
-        description={studentToDelete
-          ? `Are you sure you want to delete "${studentToDelete.name}"? This action cannot be undone.`
-          : "Are you sure you want to delete this student? This action cannot be undone."
+        description={
+          studentToDelete
+            ? `Are you sure you want to delete "${studentToDelete.name}"? This action cannot be undone.`
+            : "Are you sure you want to delete this student? This action cannot be undone."
         }
         confirmText="Delete"
         cancelText="Cancel"

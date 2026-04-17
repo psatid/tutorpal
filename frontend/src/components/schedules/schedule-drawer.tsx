@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Pencil, Save, Eye, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RHFInputField, RHFSelectField, RHFTimeField } from "@/components/ui/form/rhf";
+import { RHFInputField, RHFSelectField, RHFTimeField, RHFDateField } from "@/components/ui/form/rhf";
 import {
   Drawer,
   DrawerPortal,
@@ -205,15 +205,12 @@ export function ScheduleDrawer({
                       }}
                     />
 
-                    <RHFInputField
+                    <RHFDateField
                       control={control}
                       name="date"
                       label="Date"
                       caption={mode === "create" ? "Required" : undefined}
                       disabled={isDisabled}
-                      inputProps={{
-                        type: "date",
-                      }}
                     />
 
                     <RHFTimeField

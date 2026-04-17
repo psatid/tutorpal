@@ -7,3 +7,6 @@ export type { RHFSelectFieldProps } from "./rhf-select-field";
 
 export { RHFTimeField } from "./rhf-time-field";
 export type { RHFTimeFieldProps } from "./rhf-time-field";
+
+export { RHFDateField } from "./rhf-date-field";
+export type { RHFDateFieldProps } from "./rhf-date-field";

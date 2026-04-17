@@ -131,6 +131,21 @@ import { Select } from "@/components/ui/select";
 />
 ```
 
+### Date Picker
+
+```typescript
+import { RHFDateField } from "@/components/ui/form/rhf";
+
+<RHFDateField
+  control={control}
+  name="date"
+  label="Date"
+  caption="Required"
+/>
+```
+
+The date picker uses shadcn's Calendar component (built on react-day-picker) with a popover. It outputs dates in YYYY-MM-DD format to match your schema.
+
 ### Checkbox
 
 ```typescript
