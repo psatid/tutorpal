@@ -1,21 +1,47 @@
 export default {
   title: "Classes",
-  description: "Managing {{count}} active classes this term.",
-  status: {
-    active: "Active",
-  },
+  managingCount: "Managing {{count}} active class this term.",
+  managingCount_plural: "Managing {{count}} active classes this term.",
+  searchPlaceholder: "Search by name...",
+  loading: "Loading classes...",
   students: "{{count}} students",
   hours: "{{hours}} hours",
   enrolledStudents: "Enrolled Students",
-  schedule: "{{days}}",
   addButton: "Add Class",
-  empty: {
-    description: "No classes yet. Create your first class to get started!",
-    createButton: "Create Class",
+  noClasses: "No classes yet",
+  noClassesDescription: "Create your first class to get started.",
+  noResults: "No classes found",
+  status: {
+    active: "Active",
   },
-  error: {
-    title: "Failed to load classes",
-    retry: "Try Again",
+  delete: {
+    confirm: "Are you sure you want to delete this class?",
+    confirmButton: "Delete",
+    cancelButton: "Cancel",
+  },
+  drawer: {
+    createTitle: "Add New Class",
+    editTitle: "Edit Class",
+    viewTitle: "Class Details",
+    editButton: "Edit",
+    updateButton: "Update Class",
+    closeButton: "Close",
+    cancelButton: "Cancel",
+    name: {
+      label: "Class Name",
+      caption: "Required",
+      placeholder: "e.g. Advanced Calculus",
+    },
+    totalHours: {
+      label: "Total Hours",
+      caption: "Required",
+      placeholder: "e.g. 30",
+    },
+    students: {
+      label: "Students",
+      caption: "Optional",
+      selectedCount: "{{count}} students selected",
+    },
   },
   form: {
     addTitle: "Add New Class",

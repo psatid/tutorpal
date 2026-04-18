@@ -1,23 +1,15 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar, Pencil, Save, Eye, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   RHFInputField,
   RHFSelectField,
   RHFTimeField,
   RHFDateField,
 } from "@/components/ui/form/rhf";
-import {
-  Drawer,
-  DrawerPortal,
-  DrawerBackdrop,
-  DrawerViewport,
-  DrawerPopup,
-  DrawerContent,
-  DrawerClose,
-} from "@/components/ui/drawer";
+import { FormDrawer, type DrawerMode } from "@/components/ui/form-drawer";
 import {
   useCreateSchedule,
   useUpdateSchedule,
@@ -31,7 +23,7 @@ import {
   timeStringToMinutes,
 } from "@/types/schedule";
 
-export type DrawerMode = "create" | "view" | "edit";
+export type { DrawerMode } from "@/components/ui/form-drawer";
 
 interface ScheduleDrawerProps {
   isOpen: boolean;
@@ -54,6 +46,7 @@ export function ScheduleDrawer({
   scheduleId,
   onModeChange,
 }: ScheduleDrawerProps) {
+  const { t } = useTranslation(["schedules"]);
   const { handleSubmit, reset, control, setValue } = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
@@ -67,7 +60,7 @@ export function ScheduleDrawer({
   });
 
   const { data: classes } = useClasses();
-  const { data: scheduleData, isLoading: isLoadingSchedule } = useGetSchedule(
+  const { data: scheduleData } = useGetSchedule(
     mode !== "create" ? scheduleId : null
   );
 
@@ -81,7 +74,6 @@ export function ScheduleDrawer({
     if (scheduleData && (mode === "view" || mode === "edit")) {
       setValue("classId", scheduleData.classId);
       setValue("date", scheduleData.date);
-      // Convert minutes since midnight to HH:MM format
       setValue("time", minutesToTimeString(scheduleData.time));
       setValue("durationMinutes", scheduleData.durationMinutes);
       setValue("notes", scheduleData.notes || "");
@@ -117,7 +109,6 @@ export function ScheduleDrawer({
   });
 
   const onSubmit = (data: ScheduleFormData) => {
-    // Convert HH:MM format to minutes since midnight for API
     const timeInMinutes = timeStringToMinutes(data.time);
 
     if (mode === "create") {
@@ -144,16 +135,16 @@ export function ScheduleDrawer({
     }
   };
 
-  const isDisabled = mode === "view" || isLoadingSchedule;
+  const isDisabled = mode === "view";
 
   const getTitle = () => {
     switch (mode) {
       case "create":
-        return "Add New Schedule";
+        return t("schedules:drawer.createTitle");
       case "view":
-        return "Schedule Details";
+        return t("schedules:drawer.viewTitle");
       case "edit":
-        return "Edit Schedule";
+        return t("schedules:drawer.editTitle");
       default:
         return "";
     }
@@ -162,157 +153,104 @@ export function ScheduleDrawer({
   const getSubmitButtonText = () => {
     switch (mode) {
       case "create":
-        return "Create Schedule";
+        return t("schedules:addSchedule");
       case "edit":
-        return "Update Schedule";
+        return t("schedules:drawer.updateButton");
       default:
         return "";
     }
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerPortal>
-        <DrawerBackdrop />
-        <DrawerViewport>
-          <DrawerPopup>
-            <DrawerContent>
-              <div className="w-12 h-1.5 bg-surface-variant rounded-full mx-auto my-4" />
+    <FormDrawer
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      mode={mode}
+      onModeChange={onModeChange}
+      title={getTitle()}
+      editButtonText={t("schedules:drawer.editButton")}
+      submitButtonText={getSubmitButtonText()}
+      submitButtonIcon={mode === "create" ? Plus : Save}
+      isLoading={createMutation.isPending || updateMutation.isPending}
+      onSubmit={handleSubmit(onSubmit)}
+      onCancel={reset}
+    >
+      <RHFSelectField
+        control={control}
+        name="classId"
+        label={t("schedules:drawer.class.label")}
+        caption={
+          mode === "create" ? t("schedules:drawer.class.caption") : undefined
+        }
+        options={classOptions}
+        disabled={isDisabled}
+        selectProps={{
+          placeholder: t("schedules:drawer.class.placeholder"),
+        }}
+      />
 
-              <div className="px-8 pb-10">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    {mode === "create" && (
-                      <Plus className="w-6 h-6 text-primary" />
-                    )}
-                    {mode === "view" && (
-                      <Eye className="w-6 h-6 text-primary" />
-                    )}
-                    {mode === "edit" && (
-                      <Pencil className="w-6 h-6 text-primary" />
-                    )}
-                    <h2 className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
-                      {getTitle()}
-                    </h2>
-                  </div>
-                  <DrawerClose>
-                    <X className="w-6 h-6" />
-                  </DrawerClose>
-                </div>
+      <RHFDateField
+        control={control}
+        name="date"
+        label={t("schedules:drawer.date.label")}
+        caption={
+          mode === "create" ? t("schedules:drawer.date.caption") : undefined
+        }
+        disabled={isDisabled}
+      />
 
-                {isLoadingSchedule ? (
-                  <div className="text-center py-8 text-on-surface-variant">
-                    Loading schedule details...
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    <RHFSelectField
-                      control={control}
-                      name="classId"
-                      label="Class"
-                      caption={mode === "create" ? "Required" : undefined}
-                      options={classOptions}
-                      disabled={isDisabled}
-                      selectProps={{
-                        placeholder: "Select a class",
-                      }}
-                    />
+      <RHFTimeField
+        control={control}
+        name="time"
+        label={t("schedules:drawer.time.label")}
+        caption={
+          mode === "create" ? t("schedules:drawer.time.caption") : undefined
+        }
+        disabled={isDisabled}
+      />
 
-                    <RHFDateField
-                      control={control}
-                      name="date"
-                      label="Date"
-                      caption={mode === "create" ? "Required" : undefined}
-                      disabled={isDisabled}
-                    />
+      <RHFInputField
+        control={control}
+        name="durationMinutes"
+        label={t("schedules:drawer.duration.label")}
+        caption={
+          mode === "create"
+            ? t("schedules:drawer.duration.caption")
+            : undefined
+        }
+        disabled={isDisabled}
+        inputProps={{
+          type: "number",
+          min: 1,
+          placeholder: t("schedules:drawer.duration.placeholder"),
+        }}
+      />
 
-                    <RHFTimeField
-                      control={control}
-                      name="time"
-                      label="Time"
-                      caption={mode === "create" ? "Required" : undefined}
-                      disabled={isDisabled}
-                    />
+      <RHFInputField
+        control={control}
+        name="notes"
+        label={t("schedules:drawer.notes.label")}
+        caption={t("schedules:drawer.notes.caption")}
+        disabled={isDisabled}
+        inputProps={{
+          type: "text",
+          placeholder: t("schedules:drawer.notes.placeholder"),
+        }}
+      />
 
-                    <RHFInputField
-                      control={control}
-                      name="durationMinutes"
-                      label="Duration (minutes)"
-                      caption={mode === "create" ? "Required" : undefined}
-                      disabled={isDisabled}
-                      inputProps={{
-                        type: "number",
-                        min: 1,
-                        placeholder: "e.g., 60",
-                      }}
-                    />
-
-                    <RHFInputField
-                      control={control}
-                      name="notes"
-                      label="Notes"
-                      caption="Optional"
-                      disabled={isDisabled}
-                      inputProps={{
-                        type: "text",
-                        placeholder: "Add any notes...",
-                      }}
-                    />
-
-                    <RHFSelectField
-                      control={control}
-                      name="status"
-                      label="Status"
-                      caption={mode === "create" ? "Required" : undefined}
-                      options={statusOptions}
-                      disabled={isDisabled}
-                      selectProps={{
-                        placeholder: "Select status",
-                      }}
-                    />
-
-                    <div className="pt-4 space-y-3">
-                      {mode === "view" ? (
-                        <Button
-                          type="button"
-                          className="w-full"
-                          leftIcon={Pencil}
-                          onClick={(e: React.MouseEvent) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setTimeout(() => onModeChange("edit"), 0);
-                          }}
-                        >
-                          Edit Schedule
-                        </Button>
-                      ) : (
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          loading={
-                            createMutation.isPending || updateMutation.isPending
-                          }
-                          leftIcon={mode === "create" ? Calendar : Save}
-                        >
-                          {getSubmitButtonText()}
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="tertiary"
-                        className="w-full"
-                        onClick={() => onOpenChange(false)}
-                      >
-                        {mode === "view" ? "Close" : "Cancel"}
-                      </Button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </DrawerContent>
-          </DrawerPopup>
-        </DrawerViewport>
-      </DrawerPortal>
-    </Drawer>
+      <RHFSelectField
+        control={control}
+        name="status"
+        label={t("schedules:drawer.status.label")}
+        caption={
+          mode === "create" ? t("schedules:drawer.status.caption") : undefined
+        }
+        options={statusOptions}
+        disabled={isDisabled}
+        selectProps={{
+          placeholder: t("schedules:drawer.status.placeholder"),
+        }}
+      />
+    </FormDrawer>
   );
 }

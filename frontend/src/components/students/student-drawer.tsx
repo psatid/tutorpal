@@ -1,26 +1,16 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Save, Eye, Plus, X, User } from "lucide-react";
+import { User, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
-import {
-  Drawer,
-  DrawerPortal,
-  DrawerBackdrop,
-  DrawerViewport,
-  DrawerPopup,
-  DrawerContent,
-  DrawerTitle,
-  DrawerClose,
-} from "@/components/ui/drawer";
+import { FormDrawer, type DrawerMode } from "@/components/ui/form-drawer";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { useUpdateStudent } from "@/hooks/mutations/use-update-student";
 import { studentSchema, type StudentFormData } from "@/types/student";
 import type { GetV1Students200Item } from "@/api/generated/models/getV1Students200Item";
 
-export type DrawerMode = "create" | "view" | "edit";
+export type { DrawerMode } from "@/components/ui/form-drawer";
 
 interface StudentDrawerProps {
   isOpen: boolean;
@@ -132,119 +122,58 @@ export function StudentDrawer({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerPortal>
-        <DrawerBackdrop />
-        <DrawerViewport>
-          <DrawerPopup>
-            <DrawerContent>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  {mode === "create" && (
-                    <Plus className="w-5 h-5 text-primary" />
-                  )}
-                  {mode === "view" && (
-                    <Eye className="w-5 h-5 text-primary" />
-                  )}
-                  {mode === "edit" && (
-                    <Pencil className="w-5 h-5 text-primary" />
-                  )}
-                  <DrawerTitle className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
-                    {getTitle()}
-                  </DrawerTitle>
-                </div>
-                <DrawerClose className="p-2 -m-2 rounded-full hover:bg-muted transition-colors">
-                  <X className="w-5 h-5" />
-                </DrawerClose>
-              </div>
+    <FormDrawer
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      mode={mode}
+      onModeChange={onModeChange}
+      title={getTitle()}
+      editButtonText={t("students:drawer.editButton")}
+      submitButtonText={getSubmitButtonText()}
+      submitButtonIcon={mode === "create" ? User : Save}
+      isLoading={createMutation.isPending || updateMutation.isPending}
+      onSubmit={handleSubmit(onSubmit)}
+      onCancel={reset}
+    >
+      <RHFInputField
+        control={control}
+        name="name"
+        label={t("students:drawer.name.label")}
+        caption={
+          mode === "create" ? t("students:drawer.name.caption") : undefined
+        }
+        disabled={isDisabled}
+        inputProps={{
+          type: "text",
+          placeholder: t("students:drawer.name.placeholder"),
+        }}
+      />
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                <RHFInputField
-                  control={control}
-                  name="name"
-                  label={t("students:drawer.name.label")}
-                  caption={
-                    mode === "create"
-                      ? t("students:drawer.name.caption")
-                      : undefined
-                  }
-                  disabled={isDisabled}
-                  inputProps={{
-                    type: "text",
-                    placeholder: t("students:drawer.name.placeholder"),
-                  }}
-                />
+      <RHFInputField
+        control={control}
+        name="phone"
+        label={t("students:drawer.phone.label")}
+        caption={t("students:drawer.phone.caption")}
+        disabled={isDisabled}
+        inputProps={{
+          type: "tel",
+          placeholder: t("students:drawer.phone.placeholder"),
+        }}
+      />
 
-                <RHFInputField
-                  control={control}
-                  name="phone"
-                  label={t("students:drawer.phone.label")}
-                  caption={t("students:drawer.phone.caption")}
-                  disabled={isDisabled}
-                  inputProps={{
-                    type: "tel",
-                    placeholder: t("students:drawer.phone.placeholder"),
-                  }}
-                />
-
-                <RHFSelectField
-                  control={control}
-                  name="grade"
-                  label={t("students:drawer.grade.label")}
-                  caption={
-                    mode === "create"
-                      ? t("students:drawer.grade.caption")
-                      : undefined
-                  }
-                  options={gradeOptions}
-                  disabled={isDisabled}
-                  selectProps={{
-                    placeholder: t("students:drawer.grade.placeholder"),
-                  }}
-                />
-
-                <div className="pt-4 space-y-3">
-                  {mode === "view" ? (
-                    <Button
-                      type="button"
-                      className="w-full"
-                      leftIcon={Pencil}
-                      onClick={(e: React.MouseEvent) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setTimeout(() => onModeChange("edit"), 0);
-                      }}
-                    >
-                      {t("students:drawer.editButton")}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      loading={
-                        createMutation.isPending || updateMutation.isPending
-                      }
-                      leftIcon={mode === "create" ? User : Save}
-                    >
-                      {getSubmitButtonText()}
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    {mode === "view"
-                      ? t("students:drawer.closeButton")
-                      : t("students:drawer.cancelButton")}
-                  </Button>
-                </div>
-              </form>
-            </DrawerContent>
-          </DrawerPopup>
-        </DrawerViewport>
-      </DrawerPortal>
-    </Drawer>
+      <RHFSelectField
+        control={control}
+        name="grade"
+        label={t("students:drawer.grade.label")}
+        caption={
+          mode === "create" ? t("students:drawer.grade.caption") : undefined
+        }
+        options={gradeOptions}
+        disabled={isDisabled}
+        selectProps={{
+          placeholder: t("students:drawer.grade.placeholder"),
+        }}
+      />
+    </FormDrawer>
   );
 }

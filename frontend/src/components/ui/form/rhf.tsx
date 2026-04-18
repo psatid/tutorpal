@@ -36,36 +36,47 @@ function RHFInputField<T extends FieldValues>({
     <Controller
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
-        <InputField
-          {...field}
-          {...inputProps}
-          label={label}
-          caption={caption}
-          error={fieldState.error?.message}
-          required={required}
-          disabled={disabled}
-          aria-invalid={!!fieldState.error}
-        />
-      )}
+      render={({ field, fieldState }) => {
+        const { onChange, ...rest } = field;
+        return (
+          <InputField
+            {...rest}
+            {...inputProps}
+            label={label}
+            caption={caption}
+            error={fieldState.error?.message}
+            required={required}
+            disabled={disabled}
+            aria-invalid={!!fieldState.error}
+            onChange={(e) => {
+              const isNumber = inputProps?.type === "number";
+              if (isNumber) {
+                onChange(e.target.valueAsNumber);
+              } else {
+                onChange(e.target.value);
+              }
+            }}
+          />
+        );
+      }}
     />
   );
 }
 
-interface RHFSelectFieldProps<T extends FieldValues> {
+interface RHFSelectFieldProps<T extends FieldValues, O = string> {
   control: Control<T>;
   name: FieldPath<T>;
   label?: string;
   caption?: string;
   required?: boolean;
   disabled?: boolean;
-  options: { value: string; label: string }[];
+  options: { value: O; label: string }[];
   selectProps?: {
     placeholder?: string;
   };
 }
 
-function RHFSelectField<T extends FieldValues>({
+function RHFSelectField<T extends FieldValues, O = string>({
   control,
   name,
   label,
@@ -74,7 +85,7 @@ function RHFSelectField<T extends FieldValues>({
   disabled,
   options,
   selectProps,
-}: RHFSelectFieldProps<T>) {
+}: RHFSelectFieldProps<T, O>) {
   return (
     <Controller
       control={control}
