@@ -1,44 +1,37 @@
 import * as React from "react";
-import { type LucideIcon } from "lucide-react";
+import { Input as InputPrimitive } from "@base-ui/react/input";
+
 import { cn } from "@/lib/utils";
+import { type LucideIcon } from "lucide-react";
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  error?: string;
+export type InputProps = React.ComponentProps<"input"> & {
   leftIcon?: LucideIcon;
-}
+};
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, error, leftIcon: LeftIcon, ...props }, ref) => {
+function Input({ className, type, leftIcon: LeftIcon, ...props }: InputProps) {
+  const input = (
+    <InputPrimitive
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-9 w-full min-w-0 rounded-4xl border border-input bg-input/30 px-3 py-1 text-base transition-colors outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        LeftIcon && "pl-9",
+        className
+      )}
+      {...props}
+    />
+  );
+
+  if (LeftIcon) {
     return (
-      <div className="w-full">
-        <div className="relative">
-          {LeftIcon && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant">
-              <LeftIcon className="w-5 h-5" />
-            </div>
-          )}
-          <input
-            type={type}
-            className={cn(
-              "flex w-full rounded-lg border bg-surface-container-low text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-outline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-              LeftIcon ? "px-12 py-3.5" : "px-4 py-3.5",
-              error
-                ? "border-error focus-visible:border-error"
-                : "border-outline-variant focus-visible:border-primary",
-              className
-            )}
-            ref={ref}
-            {...props}
-          />
-        </div>
-        {error && (
-          <p className="text-error text-sm mt-1 font-body">{error}</p>
-        )}
+      <div className="relative">
+        <LeftIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        {input}
       </div>
     );
   }
-);
-Input.displayName = "Input";
+
+  return input;
+}
 
 export { Input };

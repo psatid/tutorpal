@@ -3,7 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Pencil, Save, Eye, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RHFInputField, RHFSelectField, RHFTimeField, RHFDateField } from "@/components/ui/form/rhf";
+import {
+  RHFInputField,
+  RHFSelectField,
+  RHFTimeField,
+  RHFDateField,
+} from "@/components/ui/form/rhf";
 import {
   Drawer,
   DrawerPortal,
@@ -13,10 +18,18 @@ import {
   DrawerContent,
   DrawerClose,
 } from "@/components/ui/drawer";
-import { useCreateSchedule, useUpdateSchedule } from "@/hooks/mutations/use-schedules";
+import {
+  useCreateSchedule,
+  useUpdateSchedule,
+} from "@/hooks/mutations/use-schedules";
 import { useGetSchedule } from "@/hooks/queries/use-get-schedule";
 import { useClasses } from "@/hooks/queries/use-classes";
-import { scheduleSchema, type ScheduleFormData, minutesToTimeString, timeStringToMinutes } from "@/types/schedule";
+import {
+  scheduleSchema,
+  type ScheduleFormData,
+  minutesToTimeString,
+  timeStringToMinutes,
+} from "@/types/schedule";
 
 export type DrawerMode = "create" | "view" | "edit";
 
@@ -106,7 +119,7 @@ export function ScheduleDrawer({
   const onSubmit = (data: ScheduleFormData) => {
     // Convert HH:MM format to minutes since midnight for API
     const timeInMinutes = timeStringToMinutes(data.time);
-    
+
     if (mode === "create") {
       createMutation.mutate({
         classId: data.classId,
@@ -286,7 +299,7 @@ export function ScheduleDrawer({
                       )}
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="tertiary"
                         className="w-full"
                         onClick={() => onOpenChange(false)}
                       >

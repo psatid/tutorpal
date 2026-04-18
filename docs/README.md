@@ -5,13 +5,13 @@ Welcome to the TutorPal documentation hub. This directory contains comprehensive
 ## Documentation
 
 ### 🎨 Design System
-**[Design System Strategy: The Academic Atelier](./design.md)**
+**[Design System: The Curated Study](./design.md)**
 
-The creative north star and design philosophy for TutorPal. Covers:
-- Color palette and tonal architecture
-- Typography (Manrope + Inter pairing)
-- Component primitives and styling patterns
-- Do's and don'ts for maintaining the scholarly aesthetic
+Modern functionalism design philosophy for TutorPal. Covers:
+- Color palette with solid boundaries (no gradients/blur)
+- Typography (Manrope for all text)
+- Component primitives and "Border-First" architecture
+- Do's and don'ts for maintaining the editorial aesthetic
 
 ### 🏗️ Frontend Architecture
 **[Frontend Overview](./frontend/)**

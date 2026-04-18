@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { showToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
 interface LoginCredentials {
@@ -33,13 +33,12 @@ export const useLogin = (options?: UseLoginOptions) => {
       return result.data;
     },
     onSuccess: () => {
-      showToast.success("Success", "Welcome back! You have been logged in.");
+      toast.success("Welcome back! You have been logged in.");
       navigate({ to: "/" });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      showToast.error(
-        "Error",
+      toast.error(
         error.message || "Invalid email or password. Please try again."
       );
     },

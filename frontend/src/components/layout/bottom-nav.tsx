@@ -46,7 +46,7 @@ export function BottomNav() {
           "rounded-t-2xl"
         )}
         style={{
-          boxShadow: "0px -8px 24px rgba(107, 70, 193, 0.04)",
+          boxShadow: "0px -8px 24px rgba(109, 99, 243, 0.04)",
         }}
       >
         {navItems.map((item) => {
