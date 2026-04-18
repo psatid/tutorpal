@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Pencil, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,7 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "@/components/ui/drawer";
+import { DrawerSelectPortalContext } from "@/components/ui/select";
 
 export type DrawerMode = "create" | "view" | "edit";
 
@@ -42,13 +44,16 @@ export function FormDrawer({
   onModeChange,
   editButtonText,
 }: FormDrawerProps) {
+  const portalRef = useRef<HTMLDivElement>(null);
+
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerPortal>
         <DrawerBackdrop />
         <DrawerViewport>
           <DrawerPopup>
-            <DrawerContent>
+            <DrawerContent ref={portalRef}>
+              <DrawerSelectPortalContext.Provider value={portalRef.current}>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <DrawerTitle className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
@@ -100,6 +105,7 @@ export function FormDrawer({
                   </Button>
                 </div>
               </form>
+              </DrawerSelectPortalContext.Provider>
             </DrawerContent>
           </DrawerPopup>
         </DrawerViewport>

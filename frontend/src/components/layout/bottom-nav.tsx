@@ -66,7 +66,7 @@ export function BottomNav() {
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 bg-secondary-container rounded-xl"
+                  className="absolute inset-0 bg-secondary rounded-xl"
                   initial={false}
                   transition={{
                     type: "spring",

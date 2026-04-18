@@ -1,25 +1,50 @@
-import { Input, type InputProps } from "@/components/ui/input";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { FormField } from "./form-field";
+import { useState } from "react";
 
-type DateFieldProps = Omit<InputProps, "type"> & {
+interface DateFieldProps {
+  value?: string;
+  onChange?: (value: string) => void;
   label?: string;
   caption?: string;
   error?: string | string[];
   required?: boolean;
   disabled?: boolean;
-  orientation?: "vertical" | "horizontal" | "responsive";
-};
+  placeholder?: string;
+  className?: string;
+}
 
 function DateField({
+  value,
+  onChange,
   label,
   caption,
   error,
   required,
   disabled,
-  orientation,
+  placeholder = "Pick a date",
   className,
-  ...inputProps
 }: DateFieldProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const parsedDate = value ? new Date(`${value}T00:00:00`) : undefined;
+  const date = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : undefined;
+
+  const handleSelect = (selected: Date | undefined) => {
+    if (selected && onChange) {
+      const isoString = format(selected, "yyyy-MM-dd");
+      onChange(isoString);
+      setIsOpen(false);
+    }
+  };
+
   return (
     <FormField
       label={label}
@@ -27,16 +52,30 @@ function DateField({
       error={error}
       required={required}
       disabled={disabled}
-      orientation={orientation}
     >
-      <Input
-        type="date"
-        className={className}
-        disabled={disabled}
-        {...inputProps}
-      />
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger
+          disabled={disabled}
+          className={cn(
+            "flex h-9 w-full items-center justify-start gap-2 rounded-4xl border border-input bg-input/30 px-3 py-1 text-left text-sm transition-colors outline-none hover:bg-input/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-ring data-[state=open]:ring-[3px] data-[state=open]:ring-primary/40",
+            !date && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarIcon className="size-4 shrink-0" />
+          {date ? format(date, "PPP") : <span>{placeholder}</span>}
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleSelect}
+            disabled={disabled}
+          />
+        </PopoverContent>
+      </Popover>
     </FormField>
   );
 }
 
-export { DateField };
+export { DateField, type DateFieldProps };
