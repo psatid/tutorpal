@@ -1,42 +1,45 @@
 import {
   Field,
+  FieldLabel,
   FieldContent,
   FieldDescription,
   FieldError,
-  FieldLabel,
 } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
-type FormFieldProps = React.ComponentProps<"div"> & {
+interface FormFieldProps {
   label?: string;
-  description?: string;
+  caption?: string;
   error?: string | string[];
   required?: boolean;
+  disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
-};
+  className?: string;
+  children: React.ReactNode;
+}
 
 function FormField({
   label,
-  description,
+  caption,
   error,
   required,
-  orientation = "vertical",
+  disabled,
+  orientation,
   className,
   children,
-  ...props
 }: FormFieldProps) {
-  const errors = Array.isArray(error)
-    ? error.map((e) => ({ message: e }))
-    : error
-      ? [{ message: error }]
-      : undefined;
+  const errors = error
+    ? Array.isArray(error)
+      ? error.map((e) => ({ message: e }))
+      : [{ message: error }]
+    : undefined;
 
   return (
     <Field
-      data-invalid={!!error}
       orientation={orientation}
-      className={cn(className)}
-      {...props}
+      data-invalid={!!error}
+      data-disabled={disabled}
+      className={cn("w-full", className)}
     >
       {label && (
         <FieldLabel>
@@ -46,11 +49,11 @@ function FormField({
       )}
       <FieldContent>
         {children}
-        {description && <FieldDescription>{description}</FieldDescription>}
+        {caption && <FieldDescription>{caption}</FieldDescription>}
         {errors && <FieldError errors={errors} />}
       </FieldContent>
     </Field>
   );
 }
 
-export { FormField, type FormFieldProps };
+export { FormField };

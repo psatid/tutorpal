@@ -1,16 +1,16 @@
 import { Input, type InputProps } from "@/components/ui/input";
 import { FormField } from "./form-field";
 
-interface InputFieldProps extends InputProps {
+type DateFieldProps = Omit<InputProps, "type"> & {
   label?: string;
   caption?: string;
   error?: string | string[];
   required?: boolean;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
-}
+};
 
-function InputField({
+function DateField({
   label,
   caption,
   error,
@@ -19,7 +19,7 @@ function InputField({
   orientation,
   className,
   ...inputProps
-}: InputFieldProps) {
+}: DateFieldProps) {
   return (
     <FormField
       label={label}
@@ -29,9 +29,14 @@ function InputField({
       disabled={disabled}
       orientation={orientation}
     >
-      <Input className={className} disabled={disabled} {...inputProps} />
+      <Input
+        type="date"
+        className={className}
+        disabled={disabled}
+        {...inputProps}
+      />
     </FormField>
   );
 }
 
-export { InputField };
+export { DateField };

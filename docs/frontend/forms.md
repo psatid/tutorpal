@@ -31,18 +31,20 @@ export type StudentFormData = z.infer<typeof studentSchema>;
 ### 2. Create Form Component
 
 ```typescript
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { studentSchema, type StudentFormData } from "@/types/student";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 
 export function StudentForm() {
   const {
-    control,
+    register,
     handleSubmit,
-    formState: { isSubmitting },
+    control,
+    formState: { errors, isSubmitting },
   } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
   });
@@ -55,26 +57,31 @@ export function StudentForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <RHFInputField
-        control={control}
-        name="name"
+      <Input
+        {...register("name")}
         label="Name"
-        inputProps={{ placeholder: "Enter name" }}
+        error={errors.name?.message}
       />
 
-      <RHFInputField
-        control={control}
-        name="email"
+      <Input
+        {...register("email")}
         label="Email"
-        inputProps={{ type: "email", placeholder: "Enter email" }}
+        type="email"
+        error={errors.email?.message}
       />
 
-      <RHFSelectField
-        control={control}
+      <Controller
         name="grade"
-        label="Grade"
-        placeholder="Select grade"
-        options={gradeOptions}
+        control={control}
+        render={({ field }) => (
+          <Select
+            label="Grade"
+            options={gradeOptions}
+            value={field.value}
+            onChange={field.onChange}
+            error={errors.grade?.message}
+          />
+        )}
       />
 
       <Button type="submit" loading={isSubmitting}>
@@ -90,36 +97,37 @@ export function StudentForm() {
 ### Text Input
 
 ```typescript
-import { RHFInputField } from "@/components/ui/form/rhf";
+import { Input } from "@/components/ui/input";
 
-<RHFInputField
-  control={control}
-  name="email"
-  label="Email"
-  description="Your email address"
-  inputProps={{
-    type: "email",
-    placeholder: "you@example.com",
-    leftIcon: Mail,
-  }}
+<Input
+  {...register("name")}
+  label="Name"
+  placeholder="Enter name"
+  error={errors.name?.message}
 />
 ```
 
 ### Select/Dropdown
 
 ```typescript
-import { RHFSelectField } from "@/components/ui/form/rhf";
+import { Controller } from "react-hook-form";
+import { Select } from "@/components/ui/select";
 
-<RHFSelectField
-  control={control}
+<Controller
   name="grade"
-  label="Grade"
-  description="Select the student's grade"
-  placeholder="Select grade"
-  options={[
-    { value: "6", label: "Grade 6" },
-    { value: "7", label: "Grade 7" },
-  ]}
+  control={control}
+  render={({ field }) => (
+    <Select
+      label="Grade"
+      options={[
+        { value: "6", label: "Grade 6" },
+        { value: "7", label: "Grade 7" },
+      ]}
+      value={field.value}
+      onChange={field.onChange}
+      error={errors.grade?.message}
+    />
+  )}
 />
 ```
 
@@ -409,57 +417,49 @@ const schema = z.object({
 
 ## Reusable Form Components
 
-The project provides built-in RHF field components in `@/components/ui/form/rhf`:
-
-### RHFInputField
-
-Wraps `Controller` + `InputField`. Errors are automatically extracted from field state.
+### RHF Input Wrapper
 
 ```typescript
-import { RHFInputField } from "@/components/ui/form/rhf";
+// src/components/form/rhf-input.tsx
+import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 
-<RHFInputField
-  control={control}
-  name="email"
-  label="Email"
-  description="Optional hint text"
-  inputProps={{
-    type: "email",
-    placeholder: "you@example.com",
-    leftIcon: Mail,
-  }}
-/>
+interface RHFInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  name: string;
+  label?: string;
+}
+
+export function RHFInput({ name, label, ...props }: RHFInputProps) {
+  const { register, formState: { errors } } = useFormContext();
+
+  return (
+    <Input
+      {...register(name)}
+      label={label}
+      error={errors[name]?.message as string}
+      {...props}
+    />
+  );
+}
 ```
 
-### RHFSelectField
-
-Wraps `Controller` + `FormField` + `SelectInput`.
+### Usage with FormProvider
 
 ```typescript
-import { RHFSelectField } from "@/components/ui/form/rhf";
+import { FormProvider, useForm } from "react-hook-form";
 
-<RHFSelectField
-  control={control}
-  name="grade"
-  label="Grade"
-  placeholder="Select grade"
-  options={[
-    { value: "6", label: "Grade 6" },
-    { value: "7", label: "Grade 7" },
-  ]}
-/>
-```
+function MyForm() {
+  const methods = useForm();
 
-### Composable FormField
-
-For custom inputs, use `FormField` directly with children:
-
-```typescript
-import { FormField } from "@/components/ui/form/form-field";
-
-<FormField label="Custom Field" error={errors.custom?.message}>
-  <MyCustomInput {...register("custom")} />
-</FormField>
+  return (
+    <FormProvider {...methods}>
+      <form>
+        <RHFInput name="name" label="Name" />
+        <RHFInput name="email" label="Email" type="email" />
+      </form>
+    </FormProvider>
+  );
+}
 ```
 
 ## Best Practices

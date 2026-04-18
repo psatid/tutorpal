@@ -13,12 +13,7 @@ src/components/
 │   ├── avatar.tsx
 │   ├── button.tsx
 │   ├── input.tsx
-│   ├── select.tsx
-│   ├── field.tsx          # Field primitives (Field, FieldLabel, FieldDescription, FieldError)
-│   └── form/              # Form field wrappers
-│       ├── form-field.tsx # Composable field wrapper (label + description + error + children)
-│       ├── input-field.tsx # FormField + Input convenience
-│       └── rhf.tsx        # React Hook Form integration (RHFInputField, RHFSelectField)
+│   └── select.tsx
 └── [feature]/             # Feature-specific components
     └── add-student-drawer.tsx
 ```
@@ -93,38 +88,9 @@ import { Input } from "@/components/ui/input";
 
 <Input
   placeholder="Enter your name"
+  error={error?.message}
   leftIcon={Mail}
-/>
-```
-
-### FormField (`src/components/ui/form/form-field.tsx`)
-
-Composable wrapper that adds label, description, and error display to any input:
-
-```typescript
-import { FormField } from "@/components/ui/form/form-field";
-import { Input } from "@/components/ui/input";
-
-<FormField label="Email" description="We'll never share it" error={errorMsg} required>
-  <Input type="email" placeholder="you@example.com" />
-</FormField>
-```
-
-### InputField (`src/components/ui/form/input-field.tsx`)
-
-Convenience component combining `FormField` + `Input`:
-
-```typescript
-import { InputField } from "@/components/ui/form/input-field";
-
-<InputField
-  label="Email"
-  description="Your email address"
-  error="Required"
-  required
-  leftIcon={Mail}
-  type="email"
-  placeholder="you@example.com"
+  rightIcon={Check}
 />
 ```
 

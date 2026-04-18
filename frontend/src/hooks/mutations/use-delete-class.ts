@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { showToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { classesKeys } from "@/hooks/queries/query-keys";
 
@@ -11,15 +11,12 @@ export const useDeleteClass = (options?: { onSuccess?: () => void }) => {
       await apiClient.deleteV1ClassesById(id);
     },
     onSuccess: () => {
-      showToast.success("Success", "Class deleted successfully.");
+      toast.success("Class deleted successfully.");
       queryClient.invalidateQueries({ queryKey: classesKeys.lists() });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      showToast.error(
-        "Error",
-        error.message || "Failed to delete class. Please try again."
-      );
+      toast.error(error.message || "Failed to delete class. Please try again.");
     },
   });
 };

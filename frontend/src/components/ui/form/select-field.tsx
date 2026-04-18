@@ -1,25 +1,27 @@
-import { Input, type InputProps } from "@/components/ui/input";
+import {
+  SelectInput,
+  type SelectInputProps,
+} from "@/components/ui/select";
 import { FormField } from "./form-field";
 
-interface InputFieldProps extends InputProps {
+type SelectFieldProps<T = string> = SelectInputProps<T> & {
   label?: string;
   caption?: string;
   error?: string | string[];
   required?: boolean;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
-}
+};
 
-function InputField({
+function SelectField<T = string>({
   label,
   caption,
   error,
   required,
   disabled,
   orientation,
-  className,
-  ...inputProps
-}: InputFieldProps) {
+  ...selectProps
+}: SelectFieldProps<T>) {
   return (
     <FormField
       label={label}
@@ -29,9 +31,9 @@ function InputField({
       disabled={disabled}
       orientation={orientation}
     >
-      <Input className={className} disabled={disabled} {...inputProps} />
+      <SelectInput disabled={disabled} {...selectProps} />
     </FormField>
   );
 }
 
-export { InputField };
+export { SelectField };

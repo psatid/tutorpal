@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { showToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { classesKeys } from "@/hooks/queries/query-keys";
 import type { ClassFormData } from "@/types/class";
@@ -17,7 +17,7 @@ export const useUpdateClass = (options?: { onSuccess?: () => void }) => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      showToast.success("Success", "Class updated successfully.");
+      toast.success("Class updated successfully.");
       queryClient.invalidateQueries({ queryKey: classesKeys.lists() });
       queryClient.invalidateQueries({
         queryKey: classesKeys.detail(variables.id),
@@ -25,10 +25,7 @@ export const useUpdateClass = (options?: { onSuccess?: () => void }) => {
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      showToast.error(
-        "Error",
-        error.message || "Failed to update class. Please try again."
-      );
+      toast.error(error.message || "Failed to update class. Please try again.");
     },
   });
 };

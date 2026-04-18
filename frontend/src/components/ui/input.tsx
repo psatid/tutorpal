@@ -2,7 +2,7 @@ import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 
 import { cn } from "@/lib/utils";
-import { type LucideIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 export type InputProps = React.ComponentProps<"input"> & {
   leftIcon?: LucideIcon;
@@ -22,16 +22,16 @@ function Input({ className, type, leftIcon: LeftIcon, ...props }: InputProps) {
     />
   );
 
-  if (LeftIcon) {
-    return (
-      <div className="relative">
-        <LeftIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        {input}
-      </div>
-    );
+  if (!LeftIcon) {
+    return input;
   }
 
-  return input;
+  return (
+    <div className="relative w-full">
+      <LeftIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {input}
+    </div>
+  );
 }
 
 export { Input };
