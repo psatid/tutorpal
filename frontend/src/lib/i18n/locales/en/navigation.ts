@@ -1,5 +1,5 @@
 export default {
-  dashboard: "Dashboard",
+  home: "Home",
   students: "Students",
   classes: "Classes",
   schedules: "Schedules",

@@ -26,9 +26,9 @@ function LayoutRoute() {
   }
 
   return (
-    <div className="min-h-dvh bg-surface flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <TopAppBar />
-      <main className="p-4 grow shrink">
+      <main className="p-4 grow shrink bg-accent">
         <Outlet />
       </main>
       <BottomNav />

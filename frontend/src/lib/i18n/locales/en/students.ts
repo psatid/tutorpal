@@ -6,6 +6,7 @@ export default {
   loading: "Loading students...",
   grade: "Grade {{grade}}",
   addStudent: "Add Student",
+  view: "View Details",
   noStudents: "No students yet",
   noStudentsDescription: "Add your first student to get started.",
   noResults: "No students found",

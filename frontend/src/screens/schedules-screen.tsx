@@ -11,12 +11,14 @@ import {
   ScheduleDrawer,
   type DrawerMode,
 } from "@/components/schedules/schedule-drawer";
+import { WeekDateSelector } from "@/components/schedules/week-date-selector";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
   const { data: schedules, isLoading } = useSchedules();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
@@ -100,6 +102,12 @@ export function SchedulesScreen() {
           </Button>
         </div>
       </div>
+
+      {/* Week Date Selector */}
+      <WeekDateSelector
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+      />
 
       {/* Search */}
       {schedules && schedules.length > 0 && (

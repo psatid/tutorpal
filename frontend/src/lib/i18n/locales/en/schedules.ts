@@ -59,4 +59,9 @@ export default {
   description: "View and manage your tutoring calendar and upcoming sessions.",
   online: "Online",
   empty: "No schedules found. Create your first schedule to get started.",
+  weekSelector: {
+    previousWeek: "Previous week",
+    nextWeek: "Next week",
+    today: "Today",
+  },
 } as const;

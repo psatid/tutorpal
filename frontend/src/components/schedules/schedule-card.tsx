@@ -43,7 +43,7 @@ export function ScheduleCard({
     <button
       type="button"
       onClick={onView}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-surface-container-lowest hover:bg-surface-container transition-colors text-left group"
+      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container border border-outline-variant transition-colors text-left group"
     >
       <div className="w-11 h-11 rounded-xl bg-primary-container flex items-center justify-center shrink-0">
         <BookOpen className="w-5 h-5 text-primary" />
@@ -63,7 +63,7 @@ export function ScheduleCard({
             {t(`schedules:status.${schedule.status}`)}
           </span>
         </div>
-        <div className="flex items-center gap-3 mt-0.5">
+        <div className="mt-0.5 space-y-1">
           <span className="flex items-center gap-1 text-sm text-on-surface-variant">
             <Calendar className="w-3 h-3" />
             {formatDate(schedule.date)}

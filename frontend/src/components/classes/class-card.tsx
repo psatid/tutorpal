@@ -1,9 +1,19 @@
-import { Trash2, Clock, Users } from "lucide-react";
+import { Trash2, Clock, Users, Eye, MoreVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Avatar,
   AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
 } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import type { Class } from "@/types/class";
 
 interface ClassCardProps {
@@ -12,60 +22,71 @@ interface ClassCardProps {
   onDelete: () => void;
 }
 
-export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
-  const { t } = useTranslation(["classes"]);
-
-  const initials = classData.name
+const getInitials = (name: string) =>
+  name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
 
+export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
+  const { t } = useTranslation(["classes"]);
+
+  const displayedStudents = classData.students.slice(0, 3);
+  const remainingStudents = classData.students.length - 3;
+
   return (
     <button
       type="button"
       onClick={onView}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-surface-container-lowest hover:bg-surface-container transition-colors text-left group"
+      className="w-full flex items-start gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant"
     >
-      <Avatar size="lg">
-        <AvatarFallback className="bg-primary-container text-on-primary-container font-semibold">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-on-surface truncate">{classData.name}</p>
-        <div className="flex items-center gap-3 mt-0.5">
-          <span className="flex items-center gap-1 text-sm text-on-surface-variant">
-            <Users className="w-3 h-3" />
-            {t("classes:students", { count: classData.students.length })}
-          </span>
-          <span className="flex items-center gap-1 text-sm text-on-surface-variant">
-            <Clock className="w-3 h-3" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-lg text-on-surface truncate">
+            {classData.name}
+          </p>
+          <Badge variant="outline" className="shrink-0">
+            <Clock className="w-3 h-3 mr-1" />
             {t("classes:hours", { hours: classData.totalHours })}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <AvatarGroup className="shrink-0">
+            {displayedStudents.map((student) => (
+              <Avatar key={student.id} size="sm">
+                <AvatarFallback className="bg-accent text-on-primary-container font-semibold">
+                  {getInitials(student.name)}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+            {remainingStudents > 0 && (
+              <AvatarGroupCount>+{remainingStudents}</AvatarGroupCount>
+            )}
+          </AvatarGroup>
+          <span className="text-sm text-on-surface-variant">
+            {t("classes:students", { count: classData.students.length })}
           </span>
         </div>
       </div>
 
-      <span
-        role="button"
-        tabIndex={0}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-            onDelete();
-          }
-        }}
-        className="p-2 rounded-full text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-        aria-label={t("classes:delete.confirmButton")}
-      >
-        <Trash2 className="w-4 h-4" />
-      </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
+          <MoreVertical className="w-4 h-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onView}>
+            <Eye className="w-4 h-4" />
+            {t("classes:view")}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={onDelete}>
+            <Trash2 className="w-4 h-4" />
+            {t("classes:delete.confirmButton")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </button>
   );
 }

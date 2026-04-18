@@ -75,7 +75,7 @@ export function StudentScreen() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-200px)]">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between">

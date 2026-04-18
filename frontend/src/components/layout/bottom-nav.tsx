@@ -1,9 +1,9 @@
-import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Users, GraduationCap, Calendar } from "lucide-react";
-import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { APP_ROUTES } from "@/constants/routes";
+import { cn } from "@/lib/utils";
+import { Link, useLocation } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Calendar, GraduationCap, Home, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface NavItem {
   labelKey: string;
@@ -13,9 +13,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    labelKey: "navigation:dashboard",
+    labelKey: "navigation:home",
     href: APP_ROUTES.HOME,
-    icon: LayoutDashboard,
+    icon: Home,
   },
   {
     labelKey: "navigation:students",
@@ -42,8 +42,7 @@ export function BottomNav() {
     <nav className="sticky bottom-0 left-0 right-0 z-50">
       <div
         className={cn(
-          "glass-dock flex justify-around items-center px-4 pb-6 pt-3",
-          "rounded-t-2xl"
+          "flex justify-around items-center px-4 pb-6 pt-3 rounded-t-2xl bg-card shadow-lg"
         )}
         style={{
           boxShadow: "0px -8px 24px rgba(109, 99, 243, 0.04)",
@@ -66,7 +65,7 @@ export function BottomNav() {
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 bg-secondary rounded-xl"
+                  className="absolute inset-0 bg-primary-foreground rounded-xl"
                   initial={false}
                   transition={{
                     type: "spring",

@@ -1,14 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { LogOut } from "lucide-react";
 
-interface TopAppBarProps {
-  className?: string;
-}
-
-export function TopAppBar({ className }: TopAppBarProps) {
+export function TopAppBar() {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -30,11 +25,9 @@ export function TopAppBar({ className }: TopAppBarProps) {
 
   return (
     <header
-      className={cn(
-        "sticky top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4",
-        "glass ambient-shadow",
-        className
-      )}
+      className={
+        "sticky top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-card/50 backdrop-blur-lg"
+      }
     >
       <h1 className="font-headline font-extrabold text-primary tracking-tight text-xl">
         TutorPal

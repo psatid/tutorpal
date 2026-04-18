@@ -8,6 +8,7 @@ export default {
   hours: "{{hours}} hours",
   enrolledStudents: "Enrolled Students",
   addButton: "Add Class",
+  view: "View Details",
   noClasses: "No classes yet",
   noClassesDescription: "Create your first class to get started.",
   noResults: "No classes found",
