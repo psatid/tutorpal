@@ -23,5 +23,6 @@ static_sites:
     github:
       branch: main
       repo: psatid/tutorpal
+      deploy_on_push: true
     name: react
     source_dir: frontend

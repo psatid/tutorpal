@@ -1,5 +1,3 @@
-import { Trash2, Clock, Users, Eye, MoreVertical } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import {
   Avatar,
   AvatarFallback,
@@ -9,12 +7,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Class } from "@/types/class";
+import { Clock, Eye, MoreVertical, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ClassCardProps {
   classData: Class;
@@ -77,7 +77,12 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+        <DropdownMenuTrigger
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
           <MoreVertical className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

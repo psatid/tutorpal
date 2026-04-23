@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { showToast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 interface UseLogoutOptions {
   onSuccess?: () => void;
@@ -19,15 +19,12 @@ export const useLogout = (options?: UseLogoutOptions) => {
       await authClient.signOut();
     },
     onSuccess: () => {
-      showToast.success("Success", "You have been logged out.");
+      toast.success("You have been logged out.");
       navigate({ to: "/login" });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      showToast.error(
-        "Error",
-        error.message || "Failed to log out. Please try again."
-      );
+      toast.error(error.message || "Failed to log out. Please try again.");
     },
   });
 };
