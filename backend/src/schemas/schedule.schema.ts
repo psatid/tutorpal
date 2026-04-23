@@ -16,6 +16,7 @@ export const ScheduleSchema = z.object({
 	status: ScheduleStatusSchema,
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
+	remainingHours: z.number().optional(),
 });
 
 // Request schemas

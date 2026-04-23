@@ -17,6 +17,7 @@ export const ClassSchema = z.object({
 	students: z.array(StudentInClassSchema),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
+	remainingHours: z.number().optional(),
 });
 
 // Request schemas

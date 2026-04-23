@@ -6,6 +6,7 @@ export default {
   loading: "Loading classes...",
   students: "{{count}} students",
   hours: "{{hours}} hours",
+  hoursWithRemaining: "{{remaining}}/{{total}} hours",
   enrolledStudents: "Enrolled Students",
   addButton: "Add Class",
   view: "View Details",

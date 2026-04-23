@@ -5,7 +5,11 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSchedules } from "@/hooks/queries/use-schedules";
-import { useDeleteSchedule } from "@/hooks/mutations/use-schedules";
+import {
+  useDeleteSchedule,
+  useCompleteSchedule,
+  useRestoreHours,
+} from "@/hooks/mutations/use-schedules";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
 import {
   ScheduleDrawer,
@@ -26,6 +30,8 @@ export function SchedulesScreen() {
   );
 
   const deleteMutation = useDeleteSchedule();
+  const completeMutation = useCompleteSchedule();
+  const restoreMutation = useRestoreHours();
 
   const filteredSchedules = useMemo(() => {
     if (!schedules) return [];
@@ -61,6 +67,34 @@ export function SchedulesScreen() {
       },
       cancel: {
         label: t("schedules:delete.cancelButton"),
+        onClick: () => {},
+      },
+    });
+  };
+
+  const handleCompleteSchedule = (schedule: GetV1Schedules200Item) => {
+    const hoursToDeduct = (schedule.durationMinutes / 60).toFixed(1);
+    toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
+      action: {
+        label: t("schedules:complete.confirmButton"),
+        onClick: () => completeMutation.mutate(schedule.id),
+      },
+      cancel: {
+        label: t("schedules:complete.cancelButton"),
+        onClick: () => {},
+      },
+    });
+  };
+
+  const handleRestoreHours = (schedule: GetV1Schedules200Item) => {
+    const hoursToRestore = (schedule.durationMinutes / 60).toFixed(1);
+    toast(t("schedules:restore.confirm", { hours: hoursToRestore }), {
+      action: {
+        label: t("schedules:restore.confirmButton"),
+        onClick: () => restoreMutation.mutate(schedule.id),
+      },
+      cancel: {
+        label: t("schedules:restore.cancelButton"),
         onClick: () => {},
       },
     });
@@ -158,6 +192,8 @@ export function SchedulesScreen() {
               schedule={schedule}
               onView={() => handleViewSchedule(schedule)}
               onDelete={() => handleDeleteSchedule(schedule)}
+              onComplete={() => handleCompleteSchedule(schedule)}
+              onRestore={() => handleRestoreHours(schedule)}
             />
           ))}
         </div>

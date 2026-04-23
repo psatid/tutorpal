@@ -12,6 +12,8 @@ import {
 	UpdateScheduleSchemaResolver,
 } from "../schemas";
 import { ScheduleService } from "../services";
+import { resolver } from "hono-openapi";
+import { z } from "zod";
 
 // Initialize service with repository
 const scheduleService = new ScheduleService(scheduleRepository);
@@ -176,6 +178,102 @@ const scheduleRoutes = new Hono()
 			const id = c.req.param("id");
 			await scheduleService.deleteSchedule(id);
 			return c.body(null, 204);
+		},
+	)
+
+	// Complete schedule (mark as completed and deduct hours)
+	.patch(
+		"/:id/complete",
+		describeRoute({
+			tags: ["schedules"],
+			description: "Complete a schedule (marks as COMPLETED and deducts hours from class)",
+			responses: {
+				200: {
+					description: "Schedule completed successfully",
+					content: {
+						"application/json": {
+							schema: ScheduleSchemaResolver as any,
+						},
+					},
+				},
+				400: {
+					description: "Invalid status transition or insufficient hours",
+				},
+				401: {
+					description: "Unauthorized - Authentication required",
+				},
+				404: {
+					description: "Schedule not found",
+				},
+			},
+		}),
+		async (c) => {
+			const id = c.req.param("id");
+			const schedule = await scheduleService.completeSchedule(id);
+			return c.json(schedule);
+		},
+	)
+
+	// Restore hours (when cancelling a completed schedule)
+	.patch(
+		"/:id/restore",
+		describeRoute({
+			tags: ["schedules"],
+			description: "Restore hours for a completed schedule (marks as CANCELLED)",
+			responses: {
+				200: {
+					description: "Hours restored successfully",
+					content: {
+						"application/json": {
+							schema: ScheduleSchemaResolver as any,
+						},
+					},
+				},
+				400: {
+					description: "Invalid operation - schedule not completed or hours already restored",
+				},
+				401: {
+					description: "Unauthorized - Authentication required",
+				},
+				404: {
+					description: "Schedule not found",
+				},
+			},
+		}),
+		async (c) => {
+			const id = c.req.param("id");
+			const schedule = await scheduleService.restoreHours(id);
+			return c.json(schedule);
+		},
+	)
+
+	// Get remaining hours for a class
+	.get(
+		"/class/:classId/remaining-hours",
+		describeRoute({
+			tags: ["schedules"],
+			description: "Get remaining hours for a class",
+			responses: {
+				200: {
+					description: "Remaining hours",
+					content: {
+						"application/json": {
+							schema: resolver(z.object({ remainingHours: z.number() })) as any,
+						},
+					},
+				},
+				401: {
+					description: "Unauthorized - Authentication required",
+				},
+				404: {
+					description: "Class not found",
+				},
+			},
+		}),
+		async (c) => {
+			const classId = c.req.param("classId");
+			const remainingHours = await scheduleService.getRemainingHours(classId);
+			return c.json({ remainingHours });
 		},
 	);
 

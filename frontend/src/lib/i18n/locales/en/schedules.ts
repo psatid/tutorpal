@@ -18,6 +18,20 @@ export default {
     confirmButton: "Delete",
     cancelButton: "Cancel",
   },
+  complete: {
+    action: "Complete",
+    confirm: "Complete this schedule and deduct {{hours}} hours?",
+    confirmButton: "Complete",
+    cancelButton: "Cancel",
+  },
+  restore: {
+    action: "Restore Hours",
+    confirm: "Restore {{hours}} hours for this schedule?",
+    confirmButton: "Restore",
+    cancelButton: "Cancel",
+  },
+  view: "View",
+  remainingHours: "{{hours}}h remaining",
   drawer: {
     createTitle: "Add New Schedule",
     editTitle: "Edit Schedule",

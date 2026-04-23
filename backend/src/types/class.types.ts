@@ -6,6 +6,7 @@ export interface ClassDTO {
 	students: StudentInClassDTO[];
 	createdAt: string;
 	updatedAt: string;
+	remainingHours?: number;
 }
 
 export interface StudentInClassDTO {

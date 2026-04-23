@@ -12,6 +12,7 @@ export interface ScheduleDTO {
 	status: ScheduleStatus;
 	createdAt: string;
 	updatedAt: string;
+	remainingHours?: number; // Remaining hours for the class after this schedule
 }
 
 export interface CreateScheduleDTO {
@@ -39,4 +40,8 @@ export interface IScheduleRepository {
 	findById(id: string): Promise<ScheduleDTO | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO>;
 	delete(id: string): Promise<void>;
+	validateAndReserveHours(classId: string, hours: number): Promise<boolean>;
+	completeSchedule(id: string): Promise<ScheduleDTO>;
+	restoreHours(id: string): Promise<ScheduleDTO>;
+	getRemainingHours(classId: string): Promise<number>;
 }

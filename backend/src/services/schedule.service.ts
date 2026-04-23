@@ -20,6 +20,20 @@ export class ScheduleService {
 			);
 		}
 
+		// Validate and reserve hours for the schedule
+		const hoursNeeded = data.durationMinutes / 60;
+		const hasEnoughHours = await this.repository.validateAndReserveHours(
+			data.classId,
+			hoursNeeded,
+		);
+
+		if (!hasEnoughHours) {
+			throw AppError.badRequest(
+				"INSUFFICIENT_HOURS",
+				"The class does not have enough remaining hours for this schedule",
+			);
+		}
+
 		return this.repository.create(data);
 	}
 
@@ -53,6 +67,19 @@ export class ScheduleService {
 			}
 		}
 
+		// Handle status changes
+		if (data.status !== undefined) {
+			// If changing from COMPLETED to CANCELLED, restore hours
+			if (existingSchedule.status === "COMPLETED" && data.status === "CANCELLED") {
+				return this.repository.restoreHours(id);
+			}
+
+			// If changing to COMPLETED, use completeSchedule method
+			if (data.status === "COMPLETED" && existingSchedule.status !== "COMPLETED") {
+				return this.repository.completeSchedule(id);
+			}
+		}
+
 		return this.repository.update(id, data);
 	}
 
@@ -64,5 +91,17 @@ export class ScheduleService {
 		}
 
 		await this.repository.delete(id);
+	}
+
+	async completeSchedule(id: string): Promise<ScheduleDTO> {
+		return this.repository.completeSchedule(id);
+	}
+
+	async restoreHours(id: string): Promise<ScheduleDTO> {
+		return this.repository.restoreHours(id);
+	}
+
+	async getRemainingHours(classId: string): Promise<number> {
+		return this.repository.getRemainingHours(classId);
 	}
 }

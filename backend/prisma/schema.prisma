@@ -128,19 +128,35 @@ enum ScheduleStatus {
 }
 
 model Schedule {
-  id               String         @id @default(uuid())
+  id               String             @id @default(uuid())
   classId          String
-  date             DateTime       @db.Date
+  date             DateTime           @db.Date
   time             Int
   durationMinutes  Int
   notes            String?
-  status           ScheduleStatus @default(SCHEDULED)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  status           ScheduleStatus     @default(SCHEDULED)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
-  class            Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class            Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  hourDeduction    ClassHourDeduction?
 
   @@index([classId])
   @@index([date])
   @@map("schedules")
+}
+
+model ClassHourDeduction {
+  id                 String    @id @default(uuid())
+  scheduleId         String    @unique
+  classId            String
+  hoursDeducted      Float     // Hours deducted (durationMinutes / 60)
+  deductedAt         DateTime  @default(now())
+  restoredAt         DateTime? // When hours were restored (if schedule is cancelled)
+
+  schedule           Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+  @@index([scheduleId])
+  @@map("class_hour_deductions")
 }

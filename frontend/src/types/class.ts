@@ -12,6 +12,7 @@ export interface Class {
   name: string;
   totalHours: number;
   students: StudentInClass[];
+  remainingHours?: number;
 }
 
 // Form schema - all fields required for form

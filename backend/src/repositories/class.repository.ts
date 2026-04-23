@@ -7,21 +7,24 @@ import type {
 } from "../types";
 
 // Helper to convert Prisma Class with relations to DTO
-function toDTO(classData: {
-	id: string;
-	name: string;
-	totalHours: number;
-	createdAt: Date;
-	updatedAt: Date;
-	students: Array<{
-		student: {
-			id: string;
-			name: string;
-			phoneNumber: string | null;
-			grade: number;
-		};
-	}>;
-}): ClassDTO {
+function toDTO(
+	classData: {
+		id: string;
+		name: string;
+		totalHours: number;
+		createdAt: Date;
+		updatedAt: Date;
+		students: Array<{
+			student: {
+				id: string;
+				name: string;
+				phoneNumber: string | null;
+				grade: number;
+			};
+		}>;
+	},
+	remainingHours?: number
+): ClassDTO {
 	return {
 		id: classData.id,
 		name: classData.name,
@@ -34,6 +37,7 @@ function toDTO(classData: {
 		})),
 		createdAt: classData.createdAt.toISOString(),
 		updatedAt: classData.updatedAt.toISOString(),
+		remainingHours,
 	};
 }
 
@@ -61,7 +65,10 @@ export class ClassRepository implements IClassRepository {
 				},
 			},
 		});
-		return toDTO(classData);
+
+		const remainingHours = classData.totalHours;
+
+		return toDTO(classData, remainingHours);
 	}
 
 	async findAll(): Promise<ClassDTO[]> {
@@ -75,7 +82,29 @@ export class ClassRepository implements IClassRepository {
 				},
 			},
 		});
-		return classes.map(toDTO);
+
+		const classesWithHours = await Promise.all(
+			classes.map(async (classData) => {
+				const deductions = await prisma.classHourDeduction.findMany({
+					where: {
+						classId: classData.id,
+						restoredAt: null,
+					},
+				});
+
+				const totalDeducted = deductions.reduce(
+					(sum: number, deduction: { hoursDeducted: number }) =>
+						sum + deduction.hoursDeducted,
+					0
+				);
+
+				const remainingHours = classData.totalHours - totalDeducted;
+
+				return toDTO(classData, remainingHours);
+			})
+		);
+
+		return classesWithHours;
 	}
 
 	async findById(id: string): Promise<ClassDTO | null> {
@@ -89,7 +118,27 @@ export class ClassRepository implements IClassRepository {
 				},
 			},
 		});
-		return classData ? toDTO(classData) : null;
+
+		if (!classData) {
+			return null;
+		}
+
+		const deductions = await prisma.classHourDeduction.findMany({
+			where: {
+				classId: id,
+				restoredAt: null,
+			},
+		});
+
+		const totalDeducted = deductions.reduce(
+			(sum: number, deduction: { hoursDeducted: number }) =>
+				sum + deduction.hoursDeducted,
+			0
+		);
+
+		const remainingHours = classData.totalHours - totalDeducted;
+
+		return toDTO(classData, remainingHours);
 	}
 
 	async update(id: string, data: UpdateClassDTO): Promise<ClassDTO> {
@@ -125,7 +174,23 @@ export class ClassRepository implements IClassRepository {
 				},
 			},
 		});
-		return toDTO(classData);
+
+		const deductions = await prisma.classHourDeduction.findMany({
+			where: {
+				classId: id,
+				restoredAt: null,
+			},
+		});
+
+		const totalDeducted = deductions.reduce(
+			(sum: number, deduction: { hoursDeducted: number }) =>
+				sum + deduction.hoursDeducted,
+			0
+		);
+
+		const remainingHours = classData.totalHours - totalDeducted;
+
+		return toDTO(classData, remainingHours);
 	}
 
 	async delete(id: string): Promise<void> {

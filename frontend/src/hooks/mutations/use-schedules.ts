@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import { schedulesKeys } from "@/hooks/queries/query-keys";
+import { classesKeys, schedulesKeys } from "@/hooks/queries/query-keys";
 
 export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
   const queryClient = useQueryClient();
@@ -58,6 +58,7 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
       queryClient.invalidateQueries({
         queryKey: schedulesKeys.detail(variables.id),
       });
+      queryClient.invalidateQueries({ queryKey: classesKeys.all });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
@@ -78,11 +79,60 @@ export const useDeleteSchedule = (options?: { onSuccess?: () => void }) => {
     onSuccess: () => {
       toast.success("Schedule deleted successfully.");
       queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: classesKeys.all });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
       toast.error(
         error.message || "Failed to delete schedule. Please try again."
+      );
+    },
+  });
+};
+
+export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.patchV1SchedulesByIdComplete(id);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      toast.success("Schedule completed successfully. Hours deducted.");
+      queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: schedulesKeys.detail(variables),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast.error(
+        error.message || "Failed to complete schedule. Please try again."
+      );
+    },
+  });
+};
+
+export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.patchV1SchedulesByIdRestore(id);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      toast.success("Hours restored successfully.");
+      queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: schedulesKeys.detail(variables),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast.error(
+        error.message || "Failed to restore hours. Please try again."
       );
     },
   });

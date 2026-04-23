@@ -43,13 +43,18 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
       className="w-full flex items-start gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant"
     >
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <p className="font-medium text-lg text-on-surface truncate">
             {classData.name}
           </p>
           <Badge variant="outline" className="shrink-0">
-            <Clock className="w-3 h-3 mr-1" />
-            {t("classes:hours", { hours: classData.totalHours })}
+            <Clock />
+            {classData.remainingHours !== undefined
+              ? t("classes:hoursWithRemaining", {
+                  total: classData.totalHours,
+                  remaining: classData.remainingHours.toFixed(0),
+                })
+              : t("classes:hours", { hours: classData.totalHours })}
           </Badge>
         </div>
         <div className="flex items-center gap-2">
@@ -72,7 +77,7 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuTrigger onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <MoreVertical className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
