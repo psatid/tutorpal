@@ -12,11 +12,13 @@ model Student {
   name        String
   phoneNumber String?
   grade       Int
+  lineUserId  String?  @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Many-to-many relation with Class through ClassEnrollment
   classes   ClassEnrollment[]
+  lineLinkTokens LineLinkToken[]
 
   @@map("students")
 }
@@ -117,6 +119,21 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model LineLinkToken {
+  id        String    @id @default(uuid())
+  studentId String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([studentId])
+  @@map("line_link_tokens")
 }
 
 enum ScheduleStatus {

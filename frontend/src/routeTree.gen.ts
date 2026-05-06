@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LineLinkRouteImport } from './routes/line-link'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
@@ -19,6 +20,11 @@ import { Route as LayoutClassesRouteImport } from './routes/_layout/classes'
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LineLinkRoute = LineLinkRouteImport.update({
+  id: '/line-link',
+  path: '/line-link',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutRoute = LayoutRouteImport.update({
@@ -48,12 +54,14 @@ const LayoutClassesRoute = LayoutClassesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
+  '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
   '/classes': typeof LayoutClassesRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/students': typeof LayoutStudentsRoute
 }
 export interface FileRoutesByTo {
+  '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
   '/classes': typeof LayoutClassesRoute
   '/schedules': typeof LayoutSchedulesRoute
@@ -63,6 +71,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
   '/_layout/classes': typeof LayoutClassesRoute
   '/_layout/schedules': typeof LayoutSchedulesRoute
@@ -71,12 +80,19 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/classes' | '/schedules' | '/students'
+  fullPaths:
+    | '/'
+    | '/line-link'
+    | '/login'
+    | '/classes'
+    | '/schedules'
+    | '/students'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/classes' | '/schedules' | '/students' | '/'
+  to: '/line-link' | '/login' | '/classes' | '/schedules' | '/students' | '/'
   id:
     | '__root__'
     | '/_layout'
+    | '/line-link'
     | '/login'
     | '/_layout/classes'
     | '/_layout/schedules'
@@ -86,6 +102,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  LineLinkRoute: typeof LineLinkRoute
   LoginRoute: typeof LoginRoute
 }
 
@@ -96,6 +113,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/line-link': {
+      id: '/line-link'
+      path: '/line-link'
+      fullPath: '/line-link'
+      preLoaderRoute: typeof LineLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout': {
@@ -155,6 +179,7 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  LineLinkRoute: LineLinkRoute,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

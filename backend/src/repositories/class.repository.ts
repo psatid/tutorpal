@@ -1,8 +1,8 @@
 import { prisma } from "../lib/db";
 import type {
+	ClassDTO,
 	CreateClassDTO,
 	IClassRepository,
-	ClassDTO,
 	UpdateClassDTO,
 } from "../types";
 
@@ -23,7 +23,7 @@ function toDTO(
 			};
 		}>;
 	},
-	remainingHours?: number
+	remainingHours?: number,
 ): ClassDTO {
 	return {
 		id: classData.id,
@@ -47,15 +47,16 @@ export class ClassRepository implements IClassRepository {
 			data: {
 				name: data.name,
 				totalHours: data.totalHours,
-				students: data.studentIds && data.studentIds.length > 0
-					? {
-							create: data.studentIds.map((studentId) => ({
-								student: {
-									connect: { id: studentId },
-								},
-							})),
-						}
-					: undefined,
+				students:
+					data.studentIds && data.studentIds.length > 0
+						? {
+								create: data.studentIds.map((studentId) => ({
+									student: {
+										connect: { id: studentId },
+									},
+								})),
+							}
+						: undefined,
 			},
 			include: {
 				students: {
@@ -95,13 +96,13 @@ export class ClassRepository implements IClassRepository {
 				const totalDeducted = deductions.reduce(
 					(sum: number, deduction: { hoursDeducted: number }) =>
 						sum + deduction.hoursDeducted,
-					0
+					0,
 				);
 
 				const remainingHours = classData.totalHours - totalDeducted;
 
 				return toDTO(classData, remainingHours);
-			})
+			}),
 		);
 
 		return classesWithHours;
@@ -133,7 +134,7 @@ export class ClassRepository implements IClassRepository {
 		const totalDeducted = deductions.reduce(
 			(sum: number, deduction: { hoursDeducted: number }) =>
 				sum + deduction.hoursDeducted,
-			0
+			0,
 		);
 
 		const remainingHours = classData.totalHours - totalDeducted;
@@ -185,7 +186,7 @@ export class ClassRepository implements IClassRepository {
 		const totalDeducted = deductions.reduce(
 			(sum: number, deduction: { hoursDeducted: number }) =>
 				sum + deduction.hoursDeducted,
-			0
+			0,
 		);
 
 		const remainingHours = classData.totalHours - totalDeducted;

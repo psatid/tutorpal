@@ -2,7 +2,11 @@ import { resolver } from "hono-openapi";
 import { z } from "zod";
 
 // Schedule status enum
-export const ScheduleStatusSchema = z.enum(["SCHEDULED", "COMPLETED", "CANCELLED"]);
+export const ScheduleStatusSchema = z.enum([
+	"SCHEDULED",
+	"COMPLETED",
+	"CANCELLED",
+]);
 
 // Base schedule schema (matches Prisma model with class name)
 export const ScheduleSchema = z.object({
@@ -22,18 +26,39 @@ export const ScheduleSchema = z.object({
 // Request schemas
 export const CreateScheduleSchema = z.object({
 	classId: z.string().min(1, "Class is required"),
-	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-	time: z.number().int().min(0).max(1439, "Time must be between 0 and 1439 minutes"),
-	durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute"),
+	date: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+	time: z
+		.number()
+		.int()
+		.min(0)
+		.max(1439, "Time must be between 0 and 1439 minutes"),
+	durationMinutes: z
+		.number()
+		.int()
+		.min(1, "Duration must be at least 1 minute"),
 	notes: z.string().optional(),
 	status: ScheduleStatusSchema.optional(),
 });
 
 export const UpdateScheduleSchema = z.object({
 	classId: z.string().min(1, "Class is required").optional(),
-	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").optional(),
-	time: z.number().int().min(0).max(1439, "Time must be between 0 and 1439 minutes").optional(),
-	durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute").optional(),
+	date: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+		.optional(),
+	time: z
+		.number()
+		.int()
+		.min(0)
+		.max(1439, "Time must be between 0 and 1439 minutes")
+		.optional(),
+	durationMinutes: z
+		.number()
+		.int()
+		.min(1, "Duration must be at least 1 minute")
+		.optional(),
 	notes: z.string().optional(),
 	status: ScheduleStatusSchema.optional(),
 });

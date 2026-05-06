@@ -29,7 +29,11 @@ export const CreateClassSchema = z.object({
 
 export const UpdateClassSchema = z.object({
 	name: z.string().min(1, "Name is required").optional(),
-	totalHours: z.number().int().min(1, "Total hours must be at least 1").optional(),
+	totalHours: z
+		.number()
+		.int()
+		.min(1, "Total hours must be at least 1")
+		.optional(),
 	studentIds: z.array(z.string()).optional(),
 });
 

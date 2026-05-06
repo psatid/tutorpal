@@ -2,6 +2,8 @@ import { prisma } from "../lib/db";
 import type {
 	CreateStudentDTO,
 	IStudentRepository,
+	PaginatedResponse,
+	PaginationParams,
 	StudentDTO,
 	UpdateStudentDTO,
 } from "../types";
@@ -12,6 +14,7 @@ function toDTO(student: {
 	name: string;
 	phoneNumber: string | null;
 	grade: number;
+	lineUserId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 }): StudentDTO {
@@ -20,6 +23,7 @@ function toDTO(student: {
 		name: student.name,
 		phoneNumber: student.phoneNumber,
 		grade: student.grade,
+		lineUserId: student.lineUserId,
 		createdAt: student.createdAt.toISOString(),
 		updatedAt: student.updatedAt.toISOString(),
 	};
@@ -37,11 +41,50 @@ export class StudentRepository implements IStudentRepository {
 		return toDTO(student);
 	}
 
-	async findAll(): Promise<StudentDTO[]> {
+	async findAll(
+		params?: PaginationParams,
+	): Promise<PaginatedResponse<StudentDTO>> {
+		const page = params?.page || 1;
+		const limit = params?.limit || 10;
+		const skip = (page - 1) * limit;
+		const search = params?.search?.trim();
+		const sortBy = params?.sortBy || "createdAt";
+		const sortOrder = params?.sortOrder || "desc";
+
+		// Build where clause for search (only name and phoneNumber)
+		const where = search
+			? {
+					OR: [
+						{ name: { contains: search, mode: "insensitive" } },
+						{ phoneNumber: { contains: search } },
+					],
+				}
+			: undefined;
+
+		// Get total count matching the search criteria
+		const total = await prisma.student.count({ where });
+
+		// Get paginated results
 		const students = await prisma.student.findMany({
-			orderBy: { createdAt: "desc" },
+			where,
+			skip,
+			take: limit,
+			orderBy: { [sortBy]: sortOrder },
 		});
-		return students.map(toDTO);
+
+		const totalPages = Math.ceil(total / limit);
+
+		return {
+			data: students.map(toDTO),
+			pagination: {
+				total,
+				page,
+				limit,
+				totalPages,
+				hasNext: page < totalPages,
+				hasPrev: page > 1,
+			},
+		};
 	}
 
 	async findById(id: string): Promise<StudentDTO | null> {

@@ -1,6 +1,6 @@
 import { Variants } from "framer-motion";
 
-export const INITIAL_BUFFER_DAYS = 60;
+export const INITIAL_BUFFER_DAYS = 15;
 export const LOAD_MORE_DAYS = 7;
 
 export const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];

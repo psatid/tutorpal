@@ -6,7 +6,9 @@ import { studentRepository } from "../repositories";
 import {
 	CreateStudentSchema,
 	CreateStudentSchemaResolver,
-	StudentListSchemaResolver,
+	PaginatedStudentListSchemaResolver,
+	StudentListQuerySchema,
+	StudentListQuerySchemaResolver,
 	StudentSchemaResolver,
 	UpdateStudentSchema,
 	UpdateStudentSchemaResolver,
@@ -61,13 +63,69 @@ const studentRoutes = new Hono()
 		"/",
 		describeRoute({
 			tags: ["students"],
-			description: "Get all students",
+			description: "Get all students with pagination and search",
+			parameters: [
+				{
+					name: "page",
+					in: "query",
+					required: false,
+					schema: {
+						type: "integer",
+						default: 1,
+						minimum: 1,
+					},
+					description: "Page number",
+				},
+				{
+					name: "limit",
+					in: "query",
+					required: false,
+					schema: {
+						type: "integer",
+						default: 10,
+						minimum: 1,
+						maximum: 100,
+					},
+					description: "Items per page",
+				},
+				{
+					name: "search",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+					},
+					description: "Search by name or phone number",
+				},
+				{
+					name: "sortBy",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						enum: ["name", "phoneNumber", "grade", "createdAt"],
+						default: "createdAt",
+					},
+					description: "Field to sort by",
+				},
+				{
+					name: "sortOrder",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						enum: ["asc", "desc"],
+						default: "desc",
+					},
+					description: "Sort order",
+				},
+			],
 			responses: {
 				200: {
-					description: "List of students",
+					description: "Paginated list of students",
 					content: {
 						"application/json": {
-							schema: StudentListSchemaResolver as any,
+							schema: PaginatedStudentListSchemaResolver as any,
 						},
 					},
 				},
@@ -76,8 +134,10 @@ const studentRoutes = new Hono()
 				},
 			},
 		}),
+		sValidator("query", StudentListQuerySchema),
 		async (c) => {
-			const students = await studentService.getAllStudents();
+			const query = c.req.valid("query");
+			const students = await studentService.getAllStudents(query);
 			return c.json(students);
 		},
 	)

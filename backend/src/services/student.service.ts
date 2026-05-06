@@ -2,6 +2,8 @@ import { AppError } from "../lib/error";
 import type {
 	CreateStudentDTO,
 	IStudentRepository,
+	PaginatedResponse,
+	PaginationParams,
 	StudentDTO,
 	UpdateStudentDTO,
 } from "../types";
@@ -13,8 +15,10 @@ export class StudentService {
 		return this.repository.create(data);
 	}
 
-	async getAllStudents(): Promise<StudentDTO[]> {
-		return this.repository.findAll();
+	async getAllStudents(
+		params?: PaginationParams,
+	): Promise<PaginatedResponse<StudentDTO>> {
+		return this.repository.findAll(params);
 	}
 
 	async getStudentById(id: string): Promise<StudentDTO> {

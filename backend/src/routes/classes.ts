@@ -4,10 +4,10 @@ import { describeRoute } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { classRepository } from "../repositories";
 import {
-	CreateClassSchema,
-	CreateClassSchemaResolver,
 	ClassListSchemaResolver,
 	ClassSchemaResolver,
+	CreateClassSchema,
+	CreateClassSchemaResolver,
 	UpdateClassSchema,
 	UpdateClassSchemaResolver,
 } from "../schemas";

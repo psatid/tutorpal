@@ -5,6 +5,7 @@ export interface Student {
   name: string;
   phoneNumber: string | null;
   grade: number;
+  lineUserId: string | null;
 }
 
 export const studentSchema = z.object({

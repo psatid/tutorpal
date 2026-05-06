@@ -28,7 +28,8 @@ export function StudentSelectorDrawer({
   onChange,
 }: StudentSelectorDrawerProps) {
   const { t } = useTranslation(["classes", "students"]);
-  const { data: students, isLoading } = useStudents();
+  const { data: studentsData, isLoading } = useStudents();
+  const students = studentsData?.data || [];
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedIds);
 
@@ -36,7 +37,7 @@ export function StudentSelectorDrawer({
   const filteredStudents = useMemo(() => {
     if (!students) return [];
     if (!searchQuery.trim()) return students;
-    
+
     const query = searchQuery.toLowerCase();
     return students.filter(
       (student) =>

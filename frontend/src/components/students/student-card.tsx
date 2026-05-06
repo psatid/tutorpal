@@ -1,4 +1,4 @@
-import { Trash2, Phone, Eye, MoreVertical } from "lucide-react";
+import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,15 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { GetV1Students200Item } from "@/api/generated/models/getV1Students200Item";
+import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 
 interface StudentCardProps {
-  student: GetV1Students200Item;
+  student: GetV1Students200DataItem;
   onView: () => void;
   onDelete: () => void;
+  onLinkLine: () => void;
+  onSendTestMessage: () => void;
 }
 
-export function StudentCard({ student, onView, onDelete }: StudentCardProps) {
+export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestMessage }: StudentCardProps) {
   const { t } = useTranslation(["students"]);
 
   const initials = student.name
@@ -28,10 +30,17 @@ export function StudentCard({ student, onView, onDelete }: StudentCardProps) {
     .slice(0, 2);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onView}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onView();
+        }
+      }}
+      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
     >
       <Avatar size="lg">
         <AvatarFallback className="bg-accent text-on-primary-container font-semibold">
@@ -45,6 +54,12 @@ export function StudentCard({ student, onView, onDelete }: StudentCardProps) {
           <Badge variant="outline" className="shrink-0">
             {t("students:grade", { grade: student.grade })}
           </Badge>
+          {student.lineUserId && (
+            <Badge variant="outline" className="shrink-0 gap-1 text-green-600 border-green-200">
+              <CheckCircle2 className="w-3 h-3" />
+              LINE
+            </Badge>
+          )}
         </div>
         {student.phoneNumber && (
           <span className="flex items-center gap-1 text-sm text-on-surface-variant mt-0.5">
@@ -63,6 +78,18 @@ export function StudentCard({ student, onView, onDelete }: StudentCardProps) {
             <Eye className="w-4 h-4" />
             {t("students:view")}
           </DropdownMenuItem>
+          {!student.lineUserId && (
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onLinkLine(); }}>
+              <Link2 className="w-4 h-4" />
+              {t("students:line.linkLabel")}
+            </DropdownMenuItem>
+          )}
+          {student.lineUserId && (
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendTestMessage(); }}>
+              <MessageSquare className="w-4 h-4" />
+              {t("students:line.testMessage")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
             <Trash2 className="w-4 h-4" />
@@ -70,6 +97,6 @@ export function StudentCard({ student, onView, onDelete }: StudentCardProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </button>
+    </div>
   );
 }

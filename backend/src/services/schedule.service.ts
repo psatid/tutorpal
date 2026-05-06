@@ -49,7 +49,10 @@ export class ScheduleService {
 		return schedule;
 	}
 
-	async updateSchedule(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO> {
+	async updateSchedule(
+		id: string,
+		data: UpdateScheduleDTO,
+	): Promise<ScheduleDTO> {
 		// Check if schedule exists first
 		const existingSchedule = await this.repository.findById(id);
 		if (!existingSchedule) {
@@ -70,12 +73,18 @@ export class ScheduleService {
 		// Handle status changes
 		if (data.status !== undefined) {
 			// If changing from COMPLETED to CANCELLED, restore hours
-			if (existingSchedule.status === "COMPLETED" && data.status === "CANCELLED") {
+			if (
+				existingSchedule.status === "COMPLETED" &&
+				data.status === "CANCELLED"
+			) {
 				return this.repository.restoreHours(id);
 			}
 
 			// If changing to COMPLETED, use completeSchedule method
-			if (data.status === "COMPLETED" && existingSchedule.status !== "COMPLETED") {
+			if (
+				data.status === "COMPLETED" &&
+				existingSchedule.status !== "COMPLETED"
+			) {
 				return this.repository.completeSchedule(id);
 			}
 		}

@@ -1,6 +1,7 @@
 import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, resolver } from "hono-openapi";
+import { z } from "zod";
 import { requireAuth } from "../middleware/auth";
 import { scheduleRepository } from "../repositories";
 import {
@@ -12,8 +13,6 @@ import {
 	UpdateScheduleSchemaResolver,
 } from "../schemas";
 import { ScheduleService } from "../services";
-import { resolver } from "hono-openapi";
-import { z } from "zod";
 
 // Initialize service with repository
 const scheduleService = new ScheduleService(scheduleRepository);
@@ -186,7 +185,8 @@ const scheduleRoutes = new Hono()
 		"/:id/complete",
 		describeRoute({
 			tags: ["schedules"],
-			description: "Complete a schedule (marks as COMPLETED and deducts hours from class)",
+			description:
+				"Complete a schedule (marks as COMPLETED and deducts hours from class)",
 			responses: {
 				200: {
 					description: "Schedule completed successfully",
@@ -219,7 +219,8 @@ const scheduleRoutes = new Hono()
 		"/:id/restore",
 		describeRoute({
 			tags: ["schedules"],
-			description: "Restore hours for a completed schedule (marks as CANCELLED)",
+			description:
+				"Restore hours for a completed schedule (marks as CANCELLED)",
 			responses: {
 				200: {
 					description: "Hours restored successfully",
@@ -230,7 +231,8 @@ const scheduleRoutes = new Hono()
 					},
 				},
 				400: {
-					description: "Invalid operation - schedule not completed or hours already restored",
+					description:
+						"Invalid operation - schedule not completed or hours already restored",
 				},
 				401: {
 					description: "Unauthorized - Authentication required",

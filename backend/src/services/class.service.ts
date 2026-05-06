@@ -1,8 +1,8 @@
 import { AppError } from "../lib/error";
 import type {
+	ClassDTO,
 	CreateClassDTO,
 	IClassRepository,
-	ClassDTO,
 	UpdateClassDTO,
 } from "../types";
 

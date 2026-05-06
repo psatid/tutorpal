@@ -54,10 +54,17 @@ export function ScheduleCard({
     formatTime24Hour(scheduleEndTime);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onView}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onView();
+        }
+      }}
+      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
     >
       <div className="w-11 h-11 rounded-xl bg-surface-container flex flex-col items-center justify-center shrink-0 text-center">
         <span className="text-md font-semibold text-on-surface leading-none">
@@ -149,6 +156,6 @@ export function ScheduleCard({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </button>
+    </div>
   );
 }

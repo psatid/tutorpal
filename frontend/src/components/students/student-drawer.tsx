@@ -8,7 +8,7 @@ import { FormDrawer, type DrawerMode } from "@/components/ui/form-drawer";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { useUpdateStudent } from "@/hooks/mutations/use-update-student";
 import { studentSchema, type StudentFormData } from "@/types/student";
-import type { GetV1Students200Item } from "@/api/generated/models/getV1Students200Item";
+import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 
 export type { DrawerMode } from "@/components/ui/form-drawer";
 
@@ -16,7 +16,7 @@ interface StudentDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   mode: DrawerMode;
-  student: GetV1Students200Item | null;
+  student: GetV1Students200DataItem | null;
   onModeChange: (mode: DrawerMode) => void;
 }
 

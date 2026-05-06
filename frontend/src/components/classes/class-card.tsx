@@ -37,10 +37,17 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
   const remainingStudents = classData.students.length - 3;
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onView}
-      className="w-full flex items-start gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onView();
+        }
+      }}
+      className="w-full flex items-start gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
     >
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-1">
@@ -97,6 +104,6 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </button>
+    </div>
   );
 }

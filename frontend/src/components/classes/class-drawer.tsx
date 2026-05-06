@@ -38,11 +38,13 @@ export function ClassDrawer({
     },
   });
 
-  const { data: students } = useStudents();
+  const { data: studentsData } = useStudents();
+
+  const students = studentsData?.data || [];
 
   const selectedStudentIds = form.watch("studentIds") || [];
   const selectedStudents =
-    students?.filter((student) => selectedStudentIds.includes(student.id)) ||
+    students.filter((student) => selectedStudentIds.includes(student.id)) ||
     [];
 
   useEffect(() => {

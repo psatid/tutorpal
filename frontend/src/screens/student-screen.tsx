@@ -1,41 +1,144 @@
-import { useState, useMemo } from "react";
-import { Plus, Search, Users, UserPlus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Search, UserPlus, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useStudents } from "@/hooks/queries/use-students";
+import { SelectInput, type SelectInputOption } from "@/components/ui/select";
+import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
 import { useDeleteStudent } from "@/hooks/mutations/use-delete-student";
+import { useGenerateLineLink } from "@/hooks/mutations/use-generate-line-link";
+import { useSendLineTestMessage } from "@/hooks/mutations/use-send-line-test-message";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { StudentCard } from "@/components/students/student-card";
 import {
-  StudentDrawer,
-  type DrawerMode,
+	StudentDrawer,
+	type DrawerMode,
 } from "@/components/students/student-drawer";
-import type { GetV1Students200Item } from "@/api/generated/models/getV1Students200Item";
+import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
+import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
+import { studentsKeys } from "@/hooks/queries/query-keys";
 
 export function StudentScreen() {
-  const { t } = useTranslation(["students"]);
-  const { data: students, isLoading } = useStudents();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
-  const [selectedStudent, setSelectedStudent] =
-    useState<GetV1Students200Item | null>(null);
+	const { t } = useTranslation(["students"]);
+	const queryClient = useQueryClient();
 
-  const deleteMutation = useDeleteStudent();
+	const [searchQuery, setSearchQuery] = useState("");
+	const debouncedSearchQuery = useDebounce(searchQuery, 300);
+	const [sortBy, setSortBy] =
+		useState<GetV1StudentsParams["sortBy"]>("createdAt");
+	const [sortOrder, setSortOrder] =
+		useState<GetV1StudentsParams["sortOrder"]>("desc");
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
+	const [selectedStudent, setSelectedStudent] =
+		useState<	GetV1Students200DataItem | null>(null);
 
-  const filteredStudents = useMemo(() => {
-    if (!students) return [];
-    if (!searchQuery.trim()) return students;
+	const loadMoreRef = useRef<HTMLDivElement>(null);
 
-    const query = searchQuery.toLowerCase();
-    return students.filter(
-      (student) =>
-        student.name.toLowerCase().includes(query) ||
-        student.grade.toString().includes(query) ||
-        (student.phoneNumber && student.phoneNumber.includes(query))
-    );
-  }, [students, searchQuery]);
+	const {
+		data: infiniteData,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		isLoading,
+	} = useInfiniteStudents({
+		search: debouncedSearchQuery || undefined,
+		sortBy,
+		sortOrder,
+	});
+
+	// Flatten all pages into a single list
+	const students = infiniteData?.pages.flatMap((page) => page.data) || [];
+	const totalStudents = infiniteData?.pages[0]?.pagination.total || 0;
+
+	// Sort options
+	const sortOptions: SelectInputOption<string>[] = [
+		{ value: "createdAt-desc", label: t("students:sort.newest") },
+		{ value: "createdAt-asc", label: t("students:sort.oldest") },
+		{ value: "name-asc", label: t("students:sort.nameAsc") },
+		{ value: "name-desc", label: t("students:sort.nameDesc") },
+		{ value: "grade-asc", label: t("students:sort.gradeAsc") },
+		{ value: "grade-desc", label: t("students:sort.gradeDesc") },
+	];
+
+	const deleteMutation = useDeleteStudent();
+	const lineLinkMutation = useGenerateLineLink();
+	const sendTestMessageMutation = useSendLineTestMessage();
+
+	// Add intersection observer for automatic loading
+	useIntersectionObserver(
+		loadMoreRef,
+		() => {
+			if (hasNextPage && !isFetchingNextPage) {
+				fetchNextPage();
+			}
+		},
+		{
+			enabled: students.length > 0 && !isLoading,
+			threshold: 0.1,
+		},
+	);
+
+  const handleLinkLine = (student: 	GetV1Students200DataItem) => {
+    if (student.lineUserId) {
+      toast.info("This student already has a LINE account linked.");
+      return;
+    }
+    toast(t("students:line.linkConfirm"), {
+      action: {
+        label: t("students:line.linkGenerate"),
+        onClick: () => {
+          lineLinkMutation.mutate(student.id, {
+            onSuccess: (data) => {
+              navigator.clipboard.writeText(data.linkUrl).then(() => {
+                toast.success(t("students:line.linkCopied"));
+              }).catch(() => {
+                toast.info(`Link: ${data.linkUrl}`);
+              });
+            },
+          });
+        },
+      },
+      cancel: {
+        label: t("students:delete.cancelButton"),
+        onClick: () => {},
+      },
+    });
+  };
+
+  const handleSendTestMessage = (student: GetV1Students200DataItem) => {
+    if (!student.lineUserId) {
+      toast.info(t("students:line.notLinked"));
+      return;
+    }
+    toast(t("students:line.testMessageConfirm"), {
+      action: {
+        label: t("students:line.testMessageSend"),
+        onClick: () => {
+          sendTestMessageMutation.mutate(student.id);
+        },
+      },
+      cancel: {
+        label: t("students:delete.cancelButton"),
+        onClick: () => {},
+      },
+    });
+  };
+
+  const handleSortChange = (value: string | null) => {
+		if (!value) return;
+		const [newSortBy, newSortOrder] = value.split("-") as [
+			GetV1StudentsParams["sortBy"],
+			GetV1StudentsParams["sortOrder"],
+		];
+		setSortBy(newSortBy);
+		setSortOrder(newSortOrder);
+		// Invalidate query to restart from page 1 when sort changes
+		queryClient.invalidateQueries({ queryKey: studentsKeys.infinite() });
+	};
 
   const handleAddStudent = () => {
     setSelectedStudent(null);
@@ -43,13 +146,13 @@ export function StudentScreen() {
     setIsDrawerOpen(true);
   };
 
-  const handleViewStudent = (student: GetV1Students200Item) => {
+  const handleViewStudent = (student: 	GetV1Students200DataItem) => {
     setSelectedStudent(student);
     setDrawerMode("view");
     setIsDrawerOpen(true);
   };
 
-  const handleDeleteStudent = (student: GetV1Students200Item) => {
+  const handleDeleteStudent = (student: 	GetV1Students200DataItem) => {
     toast(t("students:delete.confirm"), {
       action: {
         label: t("students:delete.confirmButton"),
@@ -83,9 +186,9 @@ export function StudentScreen() {
             <h2 className="font-headline font-extrabold text-3xl text-on-surface tracking-tight leading-tight">
               {t("students:title")}
             </h2>
-            {students && students.length > 0 && (
+            {totalStudents > 0 && (
               <p className="font-body text-on-surface-variant mt-1">
-                {t("students:managingCount", { count: students.length })}
+                {t("students:managingCount", { count: totalStudents })}
               </p>
             )}
           </div>
@@ -99,14 +202,23 @@ export function StudentScreen() {
         </div>
       </div>
 
-      {/* Search */}
-      {students && students.length > 0 && (
-        <div className="mb-4">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t("students:searchPlaceholder")}
-            leftIcon={Search}
+      {/* Search and Sort */}
+      {totalStudents > 0 && (
+        <div className="mb-4 flex gap-2">
+          <div className="flex-1">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("students:searchPlaceholder")}
+              leftIcon={Search}
+            />
+          </div>
+          <SelectInput
+            value={`${sortBy}-${sortOrder}`}
+            onValueChange={handleSortChange}
+            options={sortOptions}
+            placeholder={t("students:sort.label")}
+            className="flex-1"
           />
         </div>
       )}
@@ -120,7 +232,7 @@ export function StudentScreen() {
             {t("students:loading")}
           </p>
         </div>
-      ) : !students || students.length === 0 ? (
+      ) : totalStudents === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-2xl bg-primary-container flex items-center justify-center mb-6">
             <UserPlus className="w-10 h-10 text-primary" />
@@ -135,22 +247,38 @@ export function StudentScreen() {
             {t("students:addStudent")}
           </Button>
         </div>
-      ) : filteredStudents.length === 0 ? (
+      ) : students.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Users className="w-12 h-12 text-surface-variant mb-3" />
+          <UserPlus className="w-12 h-12 text-surface-variant mb-3" />
           <p className="text-on-surface-variant">{t("students:noResults")}</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filteredStudents.map((student) => (
-            <StudentCard
-              key={student.id}
-              student={student}
-              onView={() => handleViewStudent(student)}
-              onDelete={() => handleDeleteStudent(student)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-2">
+            {students.map((student) => (
+              <StudentCard
+                key={student.id}
+                student={student}
+                onView={() => handleViewStudent(student)}
+                onDelete={() => handleDeleteStudent(student)}
+                onLinkLine={() => handleLinkLine(student)}
+                onSendTestMessage={() => handleSendTestMessage(student)}
+              />
+            ))}
+          </div>
+
+          {/* Load More Indicator */}
+          <div ref={loadMoreRef}>
+            {isFetchingNextPage && (
+              <div className="flex justify-center items-center py-4 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-on-surface-variant" />
+                <span className="text-sm text-on-surface-variant">
+                  {t("students:loadingMore")}
+                </span>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Student Drawer */}

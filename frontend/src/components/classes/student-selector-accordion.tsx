@@ -16,7 +16,8 @@ export function StudentSelectorAccordion({
   onChange,
 }: StudentSelectorAccordionProps) {
   const { t } = useTranslation(["classes", "students"]);
-  const { data: students, isLoading } = useStudents();
+  const { data: studentsData, isLoading } = useStudents();
+  const students = studentsData?.data || [];
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelectedIds, setLocalSelectedIds] =
