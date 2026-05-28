@@ -65,6 +65,23 @@ export class LineService {
 		await this.repository.linkStudentLineUser(record.studentId, profile.userId);
 		await this.repository.markTokenUsed(record.id);
 
+		const student = await prisma.student.findUnique({
+			where: { id: record.studentId },
+		});
+
+		if (student && profile.userId) {
+			try {
+				await sendLinePushMessage(profile.userId, [
+					{
+						type: "text",
+						text: `Hello ${student.name}! Your LINE account has been successfully linked to TutorPal.`,
+					},
+				]);
+			} catch (error) {
+				console.error("Failed to send welcome message:", error);
+			}
+		}
+
 		return { success: true, displayName: profile.displayName };
 	}
 
@@ -90,5 +107,24 @@ export class LineService {
 		]);
 
 		return { sent: true };
+	}
+
+	async unlinkStudent(studentId: string) {
+		const student = await prisma.student.findUnique({
+			where: { id: studentId },
+		});
+		if (!student) {
+			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
+		}
+		if (!student.lineUserId) {
+			throw AppError.badRequest(
+				"LINE_NOT_LINKED",
+				"Student does not have a LINE account linked",
+			);
+		}
+
+		await this.repository.unlinkStudentLineUser(studentId);
+
+		return { unlinked: true };
 	}
 }

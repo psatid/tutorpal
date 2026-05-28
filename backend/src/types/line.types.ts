@@ -12,6 +12,10 @@ export interface LineAuthUrlDTO {
 	authUrl: string;
 }
 
+export interface UnlinkLineRequestDTO {
+	studentId: string;
+}
+
 export interface ILineRepository {
 	createToken(studentId: string): Promise<{ token: string; expiresAt: Date }>;
 	findValidToken(token: string): Promise<{
@@ -22,4 +26,5 @@ export interface ILineRepository {
 	} | null>;
 	markTokenUsed(tokenId: string): Promise<void>;
 	linkStudentLineUser(studentId: string, lineUserId: string): Promise<void>;
+	unlinkStudentLineUser(studentId: string): Promise<void>;
 }

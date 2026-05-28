@@ -12,6 +12,9 @@ import {
 	SendTestMessageRequestResolver,
 	SendTestMessageRequestSchema,
 	SendTestMessageResponseResolver,
+	UnlinkLineRequestResolver,
+	UnlinkLineRequestSchema,
+	UnlinkLineResponseResolver,
 } from "../schemas";
 import { LineService } from "../services";
 
@@ -119,6 +122,39 @@ const lineRoutes = new Hono()
 		async (c) => {
 			const { studentId } = c.req.valid("json");
 			const result = await lineService.sendTestMessage(studentId);
+			return c.json(result);
+		},
+	)
+	.post(
+		"/unlink",
+		describeRoute({
+			tags: ["line"],
+			description: "Unlink a LINE account from a student",
+			requestBody: {
+				content: {
+					"application/json": {
+						schema: UnlinkLineRequestResolver as any,
+					},
+				},
+			},
+			responses: {
+				200: {
+					description: "LINE account unlinked successfully",
+					content: {
+						"application/json": {
+							schema: UnlinkLineResponseResolver as any,
+						},
+					},
+				},
+				401: { description: "Unauthorized" },
+				404: { description: "Student not found" },
+				400: { description: "LINE account not linked" },
+			},
+		}),
+		sValidator("json", UnlinkLineRequestSchema),
+		async (c) => {
+			const { studentId } = c.req.valid("json");
+			const result = await lineService.unlinkStudent(studentId);
 			return c.json(result);
 		},
 	);

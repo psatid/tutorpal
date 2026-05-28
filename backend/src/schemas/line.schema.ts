@@ -23,6 +23,14 @@ export const SendTestMessageResponseSchema = z.object({
 	sent: z.boolean(),
 });
 
+export const UnlinkLineRequestSchema = z.object({
+	studentId: z.string().uuid("Invalid student ID"),
+});
+
+export const UnlinkLineResponseSchema = z.object({
+	unlinked: z.boolean(),
+});
+
 export const GenerateLinkTokenRequestResolver = resolver(
 	GenerateLinkTokenRequestSchema,
 );
@@ -34,3 +42,6 @@ export const SendTestMessageRequestResolver = resolver(
 export const SendTestMessageResponseResolver = resolver(
 	SendTestMessageResponseSchema,
 );
+
+export const UnlinkLineRequestResolver = resolver(UnlinkLineRequestSchema);
+export const UnlinkLineResponseResolver = resolver(UnlinkLineResponseSchema);
