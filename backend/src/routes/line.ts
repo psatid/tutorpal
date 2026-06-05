@@ -21,6 +21,87 @@ import { LineService } from "../services";
 const lineService = new LineService(lineRepository);
 
 const lineRoutes = new Hono()
+	// Public routes (no authentication required)
+	.get(
+		"/auth-url",
+		describeRoute({
+			tags: ["line"],
+			description: "Get LINE Login authorization URL for a given link token",
+			parameters: [
+				{
+					name: "token",
+					in: "query",
+					required: true,
+					schema: { type: "string" },
+					description: "Link token from /link-token endpoint",
+				},
+			],
+			responses: {
+				200: {
+					description: "LINE auth URL",
+					content: {
+						"application/json": {
+							schema: LineAuthUrlResponseResolver as any,
+						},
+					},
+				},
+				400: { description: "Invalid or expired token" },
+			},
+		}),
+		async (c) => {
+			const token = c.req.query("token");
+			if (!token) {
+				return c.json(
+					{ errorCode: "MISSING_TOKEN", message: "Token is required" },
+					400,
+				);
+			}
+			const result = await lineService.getAuthUrl(token);
+			return c.json(result);
+		},
+	)
+	.get(
+		"/callback",
+		describeRoute({
+			tags: ["line"],
+			description: "LINE OAuth callback — exchanges code and links student",
+			parameters: [
+				{
+					name: "code",
+					in: "query",
+					required: true,
+					schema: { type: "string" },
+				},
+				{
+					name: "state",
+					in: "query",
+					required: true,
+					schema: { type: "string" },
+				},
+			],
+			responses: {
+				302: { description: "Redirects to frontend success/error page" },
+			},
+		}),
+		async (c) => {
+			const code = c.req.query("code");
+			const state = c.req.query("state");
+
+			if (!code || !state) {
+				return c.redirect(`${ENV.FRONTEND_URL}/line-link?error=missing_params`);
+			}
+
+			try {
+				const result = await lineService.handleCallback(code, state);
+				return c.redirect(
+					`${ENV.FRONTEND_URL}/line-link?success=true&name=${encodeURIComponent(result.displayName)}`,
+				);
+			} catch {
+				return c.redirect(`${ENV.FRONTEND_URL}/line-link?error=link_failed`);
+			}
+		},
+	)
+	// Apply authentication middleware for protected routes below
 	.use(requireAuth)
 	.post(
 		"/link-token",
@@ -121,85 +202,4 @@ const lineRoutes = new Hono()
 		},
 	);
 
-const linePublicRoutes = new Hono()
-	.get(
-		"/auth-url",
-		describeRoute({
-			tags: ["line"],
-			description: "Get LINE Login authorization URL for a given link token",
-			parameters: [
-				{
-					name: "token",
-					in: "query",
-					required: true,
-					schema: { type: "string" },
-					description: "Link token from /link-token endpoint",
-				},
-			],
-			responses: {
-				200: {
-					description: "LINE auth URL",
-					content: {
-						"application/json": {
-							schema: LineAuthUrlResponseResolver as any,
-						},
-					},
-				},
-				400: { description: "Invalid or expired token" },
-			},
-		}),
-		async (c) => {
-			const token = c.req.query("token");
-			if (!token) {
-				return c.json(
-					{ errorCode: "MISSING_TOKEN", message: "Token is required" },
-					400,
-				);
-			}
-			const result = await lineService.getAuthUrl(token);
-			return c.json(result);
-		},
-	)
-	.get(
-		"/callback",
-		describeRoute({
-			tags: ["line"],
-			description: "LINE OAuth callback — exchanges code and links student",
-			parameters: [
-				{
-					name: "code",
-					in: "query",
-					required: true,
-					schema: { type: "string" },
-				},
-				{
-					name: "state",
-					in: "query",
-					required: true,
-					schema: { type: "string" },
-				},
-			],
-			responses: {
-				302: { description: "Redirects to frontend success/error page" },
-			},
-		}),
-		async (c) => {
-			const code = c.req.query("code");
-			const state = c.req.query("state");
-
-			if (!code || !state) {
-				return c.redirect(`${ENV.FRONTEND_URL}/line-link?error=missing_params`);
-			}
-
-			try {
-				const result = await lineService.handleCallback(code, state);
-				return c.redirect(
-					`${ENV.FRONTEND_URL}/line-link?success=true&name=${encodeURIComponent(result.displayName)}`,
-				);
-			} catch {
-				return c.redirect(`${ENV.FRONTEND_URL}/line-link?error=link_failed`);
-			}
-		},
-	);
-
-export { lineRoutes, linePublicRoutes };
+export { lineRoutes };
