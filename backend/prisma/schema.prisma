@@ -33,6 +33,7 @@ model Class {
   // Many-to-many relation with Student through ClassEnrollment
   students   ClassEnrollment[]
   schedules  Schedule[]
+  recurringSchedules RecurringSchedule[]
 
   @@map("classes")
 }
@@ -176,4 +177,44 @@ model ClassHourDeduction {
   @@index([classId])
   @@index([scheduleId])
   @@map("class_hour_deductions")
+}
+
+model RecurringSchedule {
+  id               String   @id @default(uuid())
+  classId          String
+  startDate        DateTime @db.Date
+  durationMinutes  Int
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  class            Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  scheduleItems    RecurringScheduleItem[]
+
+  @@index([classId])
+  @@map("recurring_schedules")
+}
+
+model RecurringScheduleItem {
+  id                    String   @id @default(uuid())
+  recurringScheduleId   String
+  weekday               Weekday
+  time                  Int
+
+  recurringSchedule     RecurringSchedule @relation(fields: [recurringScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([recurringScheduleId])
+  @@map("recurring_schedule_items")
+}
+
+enum Weekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+
+  @@map("weekday")
 }

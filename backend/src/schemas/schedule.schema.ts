@@ -8,6 +8,33 @@ export const ScheduleStatusSchema = z.enum([
 	"CANCELLED",
 ]);
 
+// Weekday enum
+export const WeekdaySchema = z.enum([
+	"MONDAY",
+	"TUESDAY",
+	"WEDNESDAY",
+	"THURSDAY",
+	"FRIDAY",
+	"SATURDAY",
+	"SUNDAY",
+]);
+
+// Recurring schedule item schema
+const RecurringScheduleItemSchema = z.object({
+	weekday: WeekdaySchema,
+	time: z.number().int().min(0).max(1439), // 0 to 23:59 in minutes
+});
+
+// Recurring pattern schema
+const RecurringPatternSchema = z.object({
+	startDate: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format"),
+	scheduleItems: z
+		.array(RecurringScheduleItemSchema)
+		.min(1, "At least one weekday must be selected"),
+}).optional();
+
 // Base schedule schema (matches Prisma model with class name)
 export const ScheduleSchema = z.object({
 	id: z.string(),
@@ -40,6 +67,7 @@ export const CreateScheduleSchema = z.object({
 		.min(1, "Duration must be at least 1 minute"),
 	notes: z.string().optional(),
 	status: ScheduleStatusSchema.optional(),
+	recurring: RecurringPatternSchema,
 });
 
 export const UpdateScheduleSchema = z.object({
@@ -74,3 +102,5 @@ export type ScheduleSchemaType = z.infer<typeof ScheduleSchema>;
 export type CreateScheduleSchemaType = z.infer<typeof CreateScheduleSchema>;
 export type UpdateScheduleSchemaType = z.infer<typeof UpdateScheduleSchema>;
 export type ScheduleStatusSchemaType = z.infer<typeof ScheduleStatusSchema>;
+export type WeekdaySchemaType = z.infer<typeof WeekdaySchema>;
+export type RecurringPatternSchemaType = z.infer<typeof RecurringPatternSchema>;

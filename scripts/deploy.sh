@@ -164,7 +164,7 @@ print_info "App name: ${APP_NAME}"
 # Check if app exists
 echo ""
 print_info "Checking for existing app..."
-APP_ID=$(doctl apps list --format ID,Name --no-header | grep "${APP_NAME}" | awk '{print $1}' || true)
+APP_ID=$(doctl apps list --format ID,Spec.Name --no-header | grep "${APP_NAME}" | awk '{print $1}' || true)
 
 if [[ -z "$APP_ID" ]]; then
     print_info "App does not exist. Creating new app..."
@@ -178,6 +178,10 @@ else
     print_info "Updating existing app (ID: ${APP_ID})..."
     doctl apps update ${APP_ID} --spec=${APP_SPEC}
     print_success "Update triggered"
+    
+    print_info "Forcing rebuild to pull latest image..."
+    doctl apps create-deployment ${APP_ID} --force-rebuild
+    print_success "Redeployment triggered"
 fi
 
 # Get app URL

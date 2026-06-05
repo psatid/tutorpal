@@ -1,4 +1,4 @@
-import type { ScheduleStatus } from "@prisma/client";
+import type { ScheduleStatus, Weekday } from "@prisma/client";
 
 // DTOs for clean data transfer between layers
 export interface ScheduleDTO {
@@ -22,6 +22,15 @@ export interface CreateScheduleDTO {
 	durationMinutes: number;
 	notes?: string;
 	status?: ScheduleStatus;
+	recurring?: RecurringPattern;
+}
+
+export interface RecurringPattern {
+	startDate: string; // ISO date string (YYYY-MM-DD)
+	scheduleItems: Array<{
+		weekday: Weekday;
+		time: number; // Minutes since midnight
+	}>;
 }
 
 export interface UpdateScheduleDTO {
@@ -33,9 +42,29 @@ export interface UpdateScheduleDTO {
 	status?: ScheduleStatus;
 }
 
+// Recurring schedule DTOs
+export interface RecurringScheduleDTO {
+	id: string;
+	classId: string;
+	className: string;
+	startDate: string;
+	durationMinutes: number;
+	notes: string | null;
+	createdAt: string;
+	updatedAt: string;
+	scheduleItems: RecurringScheduleItemDTO[];
+}
+
+export interface RecurringScheduleItemDTO {
+	id: string;
+	weekday: Weekday;
+	time: number;
+}
+
 // Repository interface - abstract data access
 export interface IScheduleRepository {
 	create(data: CreateScheduleDTO): Promise<ScheduleDTO>;
+	createMany(data: Array<Omit<CreateScheduleDTO, 'notes' | 'status'>>): Promise<ScheduleDTO[]>;
 	findAll(): Promise<ScheduleDTO[]>;
 	findById(id: string): Promise<ScheduleDTO | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO>;
@@ -44,4 +73,11 @@ export interface IScheduleRepository {
 	completeSchedule(id: string): Promise<ScheduleDTO>;
 	restoreHours(id: string): Promise<ScheduleDTO>;
 	getRemainingHours(classId: string): Promise<number>;
+	createRecurringSchedule(
+		data: Omit<RecurringScheduleDTO, 'id' | 'className' | 'createdAt' | 'updatedAt'>
+	): Promise<RecurringScheduleDTO>;
+	createRecurringScheduleItems(
+		recurringScheduleId: string,
+		items: Array<{ weekday: Weekday; time: number }>
+	): Promise<RecurringScheduleItemDTO[]>;
 }

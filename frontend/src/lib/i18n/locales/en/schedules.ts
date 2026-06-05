@@ -48,6 +48,8 @@ export default {
     date: {
       label: "Date",
       caption: "Required",
+      recurringLabel: "Start Date",
+      recurringCaption: "First occurrence of this recurring schedule",
     },
     time: {
       label: "Time",
@@ -67,6 +69,28 @@ export default {
       label: "Status",
       caption: "Required",
       placeholder: "Select status",
+    },
+    recurring: {
+      label: "Make this recurring",
+      startDate: {
+        label: "Start Date",
+        caption: "First occurrence of this recurring schedule",
+      },
+    },
+    weekdayTime: {
+      label: "Schedule",
+      caption: "Select weekdays and times for recurring sessions",
+      selectAll: "Select All",
+      clearAll: "Clear All",
+      weekdays: {
+        MONDAY: "Monday",
+        TUESDAY: "Tuesday",
+        WEDNESDAY: "Wednesday",
+        THURSDAY: "Thursday",
+        FRIDAY: "Friday",
+        SATURDAY: "Saturday",
+        SUNDAY: "Sunday",
+      },
     },
   },
   addSchedule: "Add Schedule",

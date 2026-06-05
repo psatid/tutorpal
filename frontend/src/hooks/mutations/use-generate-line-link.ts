@@ -8,12 +8,9 @@ export const useGenerateLineLink = () => {
       const response = await apiClient.postV1LineLinkToken({ studentId });
       return response.data;
     },
-    onSuccess: () => {
-      toast.success("LINE link generated. Copy and send it to the student.");
-    },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Failed to generate LINE link. Please try again."
+        error.message || "Failed to generate LINE link. Please try again.",
       );
     },
   });

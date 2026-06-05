@@ -21,7 +21,7 @@ export const Route = createRootRoute({
       <QueryClientProvider client={queryClient}>
         <Outlet />
       </QueryClientProvider>
-      <Toaster />
+      <Toaster richColors duration={3000} />
       {ENV.IS_DEV && <TanStackRouterDevtools />}
     </AuthProvider>
   ),

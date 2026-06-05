@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Save } from "lucide-react";
@@ -16,12 +16,14 @@ import {
 } from "@/hooks/mutations/use-schedules";
 import { useGetSchedule } from "@/hooks/queries/use-get-schedule";
 import { useClasses } from "@/hooks/queries/use-classes";
+import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import {
   scheduleSchema,
   type ScheduleFormData,
   minutesToTimeString,
   timeStringToMinutes,
 } from "@/types/schedule";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export type { DrawerMode } from "@/components/ui/form-drawer";
 
@@ -47,21 +49,26 @@ export function ScheduleDrawer({
   onModeChange,
 }: ScheduleDrawerProps) {
   const { t } = useTranslation(["schedules"]);
-  const { handleSubmit, reset, control, setValue } = useForm<ScheduleFormData>({
-    resolver: zodResolver(scheduleSchema),
-    defaultValues: {
-      classId: "",
-      date: "",
-      time: "09:00",
-      durationMinutes: 60,
-      notes: "",
-      status: "SCHEDULED",
-    },
-  });
+  const [isRecurring, setIsRecurring] = useState(false);
+  const { handleSubmit, reset, control, setValue, formState } =
+    useForm<ScheduleFormData>({
+      resolver: zodResolver(scheduleSchema),
+      defaultValues: {
+        classId: "",
+        date: "",
+        time: "09:00",
+        durationMinutes: 60,
+        notes: "",
+        status: "SCHEDULED",
+        recurring: undefined,
+      },
+    });
+
+  console.log("formState", formState.errors);
 
   const { data: classes } = useClasses();
   const { data: scheduleData } = useGetSchedule(
-    mode !== "create" ? scheduleId : null
+    mode !== "create" ? scheduleId : null,
   );
 
   const classOptions =
@@ -90,7 +97,9 @@ export function ScheduleDrawer({
         durationMinutes: 60,
         notes: "",
         status: "SCHEDULED",
+        recurring: undefined,
       });
+      setIsRecurring(false);
     }
   }, [isOpen, reset]);
 
@@ -109,7 +118,7 @@ export function ScheduleDrawer({
   });
 
   const onSubmit = (data: ScheduleFormData) => {
-    const timeInMinutes = timeStringToMinutes(data.time);
+    const timeInMinutes = isRecurring ? 0 : timeStringToMinutes(data.time || "");
 
     if (mode === "create") {
       createMutation.mutate({
@@ -119,6 +128,15 @@ export function ScheduleDrawer({
         durationMinutes: data.durationMinutes,
         notes: data.notes,
         status: data.status,
+        recurring: data.recurring
+          ? {
+              startDate: data.date,
+              scheduleItems: data.recurring.scheduleItems.map((item) => ({
+                weekday: item.weekday,
+                time: timeStringToMinutes(item.time),
+              })),
+            }
+          : undefined,
       });
     } else if (mode === "edit" && scheduleId) {
       updateMutation.mutate({
@@ -189,34 +207,73 @@ export function ScheduleDrawer({
         }}
       />
 
+      {mode === "create" && (
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="recurring"
+            checked={isRecurring}
+            onCheckedChange={(checked) => {
+              setIsRecurring(checked === true);
+              if (checked) {
+                setValue("recurring", {
+                  scheduleItems: [],
+                });
+              } else {
+                setValue("recurring", undefined);
+              }
+            }}
+            disabled={isDisabled}
+          />
+          <label htmlFor="recurring" className="text-sm font-medium">
+            {t("schedules:drawer.recurring.label")}
+          </label>
+        </div>
+      )}
+
       <RHFDateField
         control={control}
         name="date"
-        label={t("schedules:drawer.date.label")}
+        label={
+          isRecurring && mode === "create"
+            ? t("schedules:drawer.date.recurringLabel")
+            : t("schedules:drawer.date.label")
+        }
         caption={
-          mode === "create" ? t("schedules:drawer.date.caption") : undefined
+          mode === "create"
+            ? isRecurring
+              ? t("schedules:drawer.date.recurringCaption")
+              : t("schedules:drawer.date.caption")
+            : undefined
         }
         disabled={isDisabled}
       />
 
-      <RHFTimeField
-        control={control}
-        name="time"
-        label={t("schedules:drawer.time.label")}
-        caption={
-          mode === "create" ? t("schedules:drawer.time.caption") : undefined
-        }
-        disabled={isDisabled}
-      />
+      {!isRecurring && (
+        <RHFTimeField
+          control={control}
+          name="time"
+          label={t("schedules:drawer.time.label")}
+          caption={
+            mode === "create" ? t("schedules:drawer.time.caption") : undefined
+          }
+          disabled={isDisabled}
+        />
+      )}
+
+      {isRecurring && mode === "create" && (
+        <WeekdayTimeSelector
+          name="recurring.scheduleItems"
+          control={control}
+          disabled={isDisabled}
+        />
+      )}
 
       <RHFInputField
         control={control}
         name="durationMinutes"
         label={t("schedules:drawer.duration.label")}
         caption={
-          mode === "create"
-            ? t("schedules:drawer.duration.caption")
-            : undefined
+          mode === "create" ? t("schedules:drawer.duration.caption") : undefined
         }
         disabled={isDisabled}
         inputProps={{

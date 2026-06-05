@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { classesKeys, schedulesKeys } from "@/hooks/queries/query-keys";
+import type { Weekday } from "@/types/schedule";
 
 export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
   const queryClient = useQueryClient();
@@ -14,8 +15,34 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
       durationMinutes: number;
       notes?: string;
       status?: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+      recurring?: {
+        startDate: string;
+        scheduleItems: Array<{
+          weekday: Weekday;
+          time: number;
+        }>;
+      };
     }) => {
-      const response = await apiClient.postV1Schedules(data);
+      const payload: any = {
+        classId: data.classId,
+        date: data.recurring ? data.recurring.startDate : data.date,
+        time: data.recurring ? 0 : data.time, // Time is ignored for recurring schedules
+        durationMinutes: data.durationMinutes,
+        notes: data.notes,
+        status: data.status,
+      };
+
+      if (data.recurring) {
+        payload.recurring = {
+          startDate: data.recurring.startDate,
+          scheduleItems: data.recurring.scheduleItems.map(item => ({
+            weekday: item.weekday,
+            time: item.time,
+          })),
+        };
+      }
+
+      const response = await apiClient.postV1Schedules(payload);
       return response.data;
     },
     onSuccess: () => {

@@ -14,75 +14,75 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { StudentCard } from "@/components/students/student-card";
 import {
-	StudentDrawer,
-	type DrawerMode,
+  StudentDrawer,
+  type DrawerMode,
 } from "@/components/students/student-drawer";
 import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
 import { studentsKeys } from "@/hooks/queries/query-keys";
 
 export function StudentScreen() {
-	const { t } = useTranslation(["students"]);
-	const queryClient = useQueryClient();
+  const { t } = useTranslation(["students"]);
+  const queryClient = useQueryClient();
 
-	const [searchQuery, setSearchQuery] = useState("");
-	const debouncedSearchQuery = useDebounce(searchQuery, 300);
-	const [sortBy, setSortBy] =
-		useState<GetV1StudentsParams["sortBy"]>("createdAt");
-	const [sortOrder, setSortOrder] =
-		useState<GetV1StudentsParams["sortOrder"]>("desc");
-	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-	const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
-	const [selectedStudent, setSelectedStudent] =
-		useState<	GetV1Students200DataItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [sortBy, setSortBy] =
+    useState<GetV1StudentsParams["sortBy"]>("createdAt");
+  const [sortOrder, setSortOrder] =
+    useState<GetV1StudentsParams["sortOrder"]>("desc");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
+  const [selectedStudent, setSelectedStudent] =
+    useState<GetV1Students200DataItem | null>(null);
 
-	const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-	const {
-		data: infiniteData,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
-		isLoading,
-	} = useInfiniteStudents({
-		search: debouncedSearchQuery || undefined,
-		sortBy,
-		sortOrder,
-	});
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteStudents({
+    search: debouncedSearchQuery || undefined,
+    sortBy,
+    sortOrder,
+  });
 
-	// Flatten all pages into a single list
-	const students = infiniteData?.pages.flatMap((page) => page.data) || [];
-	const totalStudents = infiniteData?.pages[0]?.pagination.total || 0;
+  // Flatten all pages into a single list
+  const students = infiniteData?.pages.flatMap((page) => page.data) || [];
+  const totalStudents = infiniteData?.pages[0]?.pagination.total || 0;
 
-	// Sort options
-	const sortOptions: SelectInputOption<string>[] = [
-		{ value: "createdAt-desc", label: t("students:sort.newest") },
-		{ value: "createdAt-asc", label: t("students:sort.oldest") },
-		{ value: "name-asc", label: t("students:sort.nameAsc") },
-		{ value: "name-desc", label: t("students:sort.nameDesc") },
-		{ value: "grade-asc", label: t("students:sort.gradeAsc") },
-		{ value: "grade-desc", label: t("students:sort.gradeDesc") },
-	];
+  // Sort options
+  const sortOptions: SelectInputOption<string>[] = [
+    { value: "createdAt-desc", label: t("students:sort.newest") },
+    { value: "createdAt-asc", label: t("students:sort.oldest") },
+    { value: "name-asc", label: t("students:sort.nameAsc") },
+    { value: "name-desc", label: t("students:sort.nameDesc") },
+    { value: "grade-asc", label: t("students:sort.gradeAsc") },
+    { value: "grade-desc", label: t("students:sort.gradeDesc") },
+  ];
 
-	const deleteMutation = useDeleteStudent();
-	const lineLinkMutation = useGenerateLineLink();
-	const sendTestMessageMutation = useSendLineTestMessage();
+  const deleteMutation = useDeleteStudent();
+  const lineLinkMutation = useGenerateLineLink();
+  const sendTestMessageMutation = useSendLineTestMessage();
 
-	// Add intersection observer for automatic loading
-	useIntersectionObserver(
-		loadMoreRef,
-		() => {
-			if (hasNextPage && !isFetchingNextPage) {
-				fetchNextPage();
-			}
-		},
-		{
-			enabled: students.length > 0 && !isLoading,
-			threshold: 0.1,
-		},
-	);
+  // Add intersection observer for automatic loading
+  useIntersectionObserver(
+    loadMoreRef,
+    () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    {
+      enabled: students.length > 0 && !isLoading,
+      threshold: 0.1,
+    },
+  );
 
-  const handleLinkLine = (student: 	GetV1Students200DataItem) => {
+  const handleLinkLine = (student: GetV1Students200DataItem) => {
     if (student.lineUserId) {
       toast.info("This student already has a LINE account linked.");
       return;
@@ -95,8 +95,6 @@ export function StudentScreen() {
             onSuccess: (data) => {
               navigator.clipboard.writeText(data.linkUrl).then(() => {
                 toast.success(t("students:line.linkCopied"));
-              }).catch(() => {
-                toast.info(`Link: ${data.linkUrl}`);
               });
             },
           });
@@ -129,16 +127,16 @@ export function StudentScreen() {
   };
 
   const handleSortChange = (value: string | null) => {
-		if (!value) return;
-		const [newSortBy, newSortOrder] = value.split("-") as [
-			GetV1StudentsParams["sortBy"],
-			GetV1StudentsParams["sortOrder"],
-		];
-		setSortBy(newSortBy);
-		setSortOrder(newSortOrder);
-		// Invalidate query to restart from page 1 when sort changes
-		queryClient.invalidateQueries({ queryKey: studentsKeys.infinite() });
-	};
+    if (!value) return;
+    const [newSortBy, newSortOrder] = value.split("-") as [
+      GetV1StudentsParams["sortBy"],
+      GetV1StudentsParams["sortOrder"],
+    ];
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+    // Invalidate query to restart from page 1 when sort changes
+    queryClient.invalidateQueries({ queryKey: studentsKeys.infinite() });
+  };
 
   const handleAddStudent = () => {
     setSelectedStudent(null);
@@ -146,13 +144,13 @@ export function StudentScreen() {
     setIsDrawerOpen(true);
   };
 
-  const handleViewStudent = (student: 	GetV1Students200DataItem) => {
+  const handleViewStudent = (student: GetV1Students200DataItem) => {
     setSelectedStudent(student);
     setDrawerMode("view");
     setIsDrawerOpen(true);
   };
 
-  const handleDeleteStudent = (student: 	GetV1Students200DataItem) => {
+  const handleDeleteStudent = (student: GetV1Students200DataItem) => {
     toast(t("students:delete.confirm"), {
       action: {
         label: t("students:delete.confirmButton"),

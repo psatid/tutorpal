@@ -20,42 +20,42 @@ const scheduleService = new ScheduleService(scheduleRepository);
 const scheduleRoutes = new Hono()
 	.use(requireAuth)
 	// Create schedule
-	.post(
-		"/",
-		describeRoute({
-			tags: ["schedules"],
-			description: "Create a new schedule",
-			requestBody: {
-				content: {
-					"application/json": {
-						schema: CreateScheduleSchemaResolver as any,
-					},
-				},
-			},
-			responses: {
-				201: {
-					description: "Schedule created successfully",
+		.post(
+			"/",
+			describeRoute({
+				tags: ["schedules"],
+				description: "Create a new schedule (one-time or recurring)",
+				requestBody: {
 					content: {
 						"application/json": {
-							schema: ScheduleSchemaResolver as any,
+							schema: CreateScheduleSchemaResolver as any,
 						},
 					},
 				},
-				400: {
-					description: "Validation error or class not found",
+				responses: {
+					201: {
+						description: "Schedule created successfully",
+						content: {
+							"application/json": {
+								schema: ScheduleSchemaResolver as any,
+							},
+						},
+					},
+					400: {
+						description: "Validation error or class not found",
+					},
+					401: {
+						description: "Unauthorized - Authentication required",
+					},
 				},
-				401: {
-					description: "Unauthorized - Authentication required",
-				},
+			}),
+			sValidator("json", CreateScheduleSchema),
+			async (c) => {
+				const data = c.req.valid("json");
+				const schedule = await scheduleService.createSchedule(data);
+				return c.json(schedule, 201);
 			},
-		}),
-		sValidator("json", CreateScheduleSchema),
-		async (c) => {
-			const data = c.req.valid("json");
-			const schedule = await scheduleService.createSchedule(data);
-			return c.json(schedule, 201);
-		},
-	)
+		)
 
 	// List all schedules
 	.get(
