@@ -1,11 +1,5 @@
--- AlterEnum
-ALTER TYPE "Weekday" ADD VALUE 'MONDAY';
-ALTER TYPE "Weekday" ADD VALUE 'TUESDAY';
-ALTER TYPE "Weekday" ADD VALUE 'WEDNESDAY';
-ALTER TYPE "Weekday" ADD VALUE 'THURSDAY';
-ALTER TYPE "Weekday" ADD VALUE 'FRIDAY';
-ALTER TYPE "Weekday" ADD VALUE 'SATURDAY';
-ALTER TYPE "Weekday" ADD VALUE 'SUNDAY';
+-- CreateEnum
+CREATE TYPE "weekday" AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY');
 
 -- CreateTable
 CREATE TABLE "recurring_schedules" (
@@ -15,7 +9,7 @@ CREATE TABLE "recurring_schedules" (
     "durationMinutes" INTEGER NOT NULL,
     "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "recurring_schedules_pkey" PRIMARY KEY ("id")
 );
@@ -24,7 +18,7 @@ CREATE TABLE "recurring_schedules" (
 CREATE TABLE "recurring_schedule_items" (
     "id" TEXT NOT NULL,
     "recurringScheduleId" TEXT NOT NULL,
-    "weekday" "Weekday" NOT NULL,
+    "weekday" "weekday" NOT NULL,
     "time" INTEGER NOT NULL,
 
     CONSTRAINT "recurring_schedule_items_pkey" PRIMARY KEY ("id")

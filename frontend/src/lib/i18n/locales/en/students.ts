@@ -61,5 +61,10 @@ export default {
     testMessage: "Send Test Message",
     testMessageConfirm: "Send a test message to this student's LINE account?",
     testMessageSend: "Send",
+    generating: "Generating LINE link...",
+    linkGenerated: "LINE link generated! Click the button below to copy it.",
+    copyButton: "Copy Link",
+    copySuccess: "Copied to clipboard!",
+    copyFailed: "Failed to copy. Please copy the link manually.",
   },
 } as const;

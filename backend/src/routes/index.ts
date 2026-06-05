@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import baseRoutes from "./base-router";
 import classRoutes from "./classes";
-import { lineCallbackRoutes, lineRoutes } from "./line";
+import { linePublicRoutes, lineRoutes } from "./line";
 import scheduleRoutes from "./schedules";
 import studentRoutes from "./students";
 
@@ -13,7 +13,7 @@ export function createRoutes() {
 		.route("/classes", classRoutes)
 		.route("/schedules", scheduleRoutes)
 		.route("/line", lineRoutes)
-		.route("/line", lineCallbackRoutes);
+		.route("/line", linePublicRoutes);
 }
 
 export type AppType = ReturnType<typeof createRoutes>;

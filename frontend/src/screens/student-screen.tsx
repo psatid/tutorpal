@@ -87,15 +87,42 @@ export function StudentScreen() {
       toast.info("This student already has a LINE account linked.");
       return;
     }
-    toast(t("students:line.linkConfirm"), {
+
+    const confirmToastId = toast(t("students:line.linkConfirm"), {
       action: {
         label: t("students:line.linkGenerate"),
         onClick: () => {
+          toast.dismiss(confirmToastId);
+
+          const loadingToastId = toast.loading(t("students:line.generating"));
+
           lineLinkMutation.mutate(student.id, {
             onSuccess: (data) => {
-              navigator.clipboard.writeText(data.linkUrl).then(() => {
-                toast.success(t("students:line.linkCopied"));
+              toast.dismiss(loadingToastId);
+
+              const copyToastId = toast(t("students:line.linkGenerated"), {
+                duration: Infinity,
+                action: {
+                  label: t("students:line.copyButton"),
+                  onClick: async () => {
+                    try {
+                      await navigator.clipboard.writeText(data.linkUrl);
+                      toast.dismiss(copyToastId);
+                      toast.success(t("students:line.copySuccess"));
+                    } catch (error) {
+                      console.error("Clipboard write failed:", error);
+                      toast.error(t("students:line.copyFailed"));
+                    }
+                  },
+                },
               });
+            },
+            onError: (error) => {
+              toast.dismiss(loadingToastId);
+              toast.error(
+                error.message ||
+                  "Failed to generate LINE link. Please try again.",
+              );
             },
           });
         },
