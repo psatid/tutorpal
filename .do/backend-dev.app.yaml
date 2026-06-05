@@ -52,7 +52,7 @@ services:
       - key: LINE_LOGIN_CHANNEL_SECRET
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-        value: EV[1:dYcZ+O9aI0QHPpPyF4vLSw==:ovlBkQAHgQa+KpLqcQfaGSBLZgEfGLgk1veENuV0dH0O43EnI51EVv84wQ5uHwQqE1+n2J9z+FWZ0TC/MYxVzJ3s9BE3l0vqY6+/OJiP6+IT3bF8fW8CwL/Vh9y5Ct3jg=]
+        value: EV[1:nKPjGzLmbllwOQlMNisAFyYl1dTe/u4p:x9iwAPnImMQLaA3el5KZQw==]
       - key: LINE_LINK_REDIRECT_URL
         scope: RUN_AND_BUILD_TIME
         value: https://dev.api.tutorpal.io/v1/line/callback
@@ -62,7 +62,7 @@ services:
       - key: LINE_MESSAGING_CHANNEL_ACCESS_TOKEN
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-        value: EV[1:hJfM7r2L3QJqS8vT9wNlXw==:8PqB2lKRJfQcL9vM7pX4R3wN8TqH2lM9pX4R3wN8TqH2lM9pX4R3wN8TqH2lM9pX4R3wN8TqH2lM9pX4R3wN8TqH2lM9pX4R3wN8TqH2lM9pX4R3wN8TqH2lM9pX4R3w==]
+        value: EV[1:sBwRDGdT5KbSVFhyIG3XYxV4hiawCZoM:0e/x0KpaVI3v7f83SL5VV57wAn4OHLhAtULnFtuqxiEMniUdW1zcuS2uLoypaKdEXXRfEIyaw4kdH98OcCrUnR41MFdvXjCmz6YzHWuiPKrYu8a1wO5MTXUBctY0SkGlTU+HLYryYYedc4/O1vXJcQy+xEu6IGLnzdldGL1aJkZwtz8wljqqRL4UWPk0VolV2TZLAeqBkpjAy3ZEjvkH0LChvXVC9ofepkz0eE42Hfit9+4vzafvLntx+p0=]
     health_check:
       failure_threshold: 3
       http_path: /v1/health
