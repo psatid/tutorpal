@@ -91,11 +91,18 @@ export const UpdateScheduleSchema = z.object({
 	status: ScheduleStatusSchema.optional(),
 });
 
+// Query schema for listing schedules
+export const ScheduleListQuerySchema = z.object({
+	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").optional(),
+	search: z.string().optional(),
+});
+
 // OpenAPI resolvers
 export const ScheduleSchemaResolver = resolver(ScheduleSchema);
 export const CreateScheduleSchemaResolver = resolver(CreateScheduleSchema);
 export const UpdateScheduleSchemaResolver = resolver(UpdateScheduleSchema);
 export const ScheduleListSchemaResolver = resolver(z.array(ScheduleSchema));
+export const ScheduleListQuerySchemaResolver = resolver(ScheduleListQuerySchema);
 
 // Type exports
 export type ScheduleSchemaType = z.infer<typeof ScheduleSchema>;
@@ -104,3 +111,4 @@ export type UpdateScheduleSchemaType = z.infer<typeof UpdateScheduleSchema>;
 export type ScheduleStatusSchemaType = z.infer<typeof ScheduleStatusSchema>;
 export type WeekdaySchemaType = z.infer<typeof WeekdaySchema>;
 export type RecurringPatternSchemaType = z.infer<typeof RecurringPatternSchema>;
+export type ScheduleListQuerySchemaType = z.infer<typeof ScheduleListQuerySchema>;

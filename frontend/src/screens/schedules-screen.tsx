@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
-import { Plus, Search, CalendarDays, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSchedules } from "@/hooks/queries/use-schedules";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useDeleteSchedule,
   useCompleteSchedule,
@@ -20,32 +22,24 @@ import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedule
 
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
-  const { data: schedules, isLoading } = useSchedules();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
-    null
+    null,
   );
+
+  const formattedDate = format(selectedDate, "yyyy-MM-dd");
+  const { data: schedules, isLoading } = useSchedules({
+    date: formattedDate,
+    search: debouncedSearchQuery || undefined,
+  });
 
   const deleteMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
   const restoreMutation = useRestoreHours();
-
-  const filteredSchedules = useMemo(() => {
-    if (!schedules) return [];
-    if (!searchQuery.trim()) return schedules;
-
-    const query = searchQuery.toLowerCase();
-    return schedules.filter(
-      (schedule) =>
-        schedule.className.toLowerCase().includes(query) ||
-        schedule.date.includes(query) ||
-        schedule.status.toLowerCase().includes(query) ||
-        (schedule.notes && schedule.notes.toLowerCase().includes(query))
-    );
-  }, [schedules, searchQuery]);
 
   const handleAddSchedule = () => {
     setSelectedScheduleId(null);
@@ -117,16 +111,9 @@ export function SchedulesScreen() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between">
-          <div>
-            <h2 className="font-headline font-extrabold text-3xl text-on-surface tracking-tight leading-tight">
-              {t("schedules:title")}
-            </h2>
-            {schedules && schedules.length > 0 && (
-              <p className="font-body text-on-surface-variant mt-1">
-                {t("schedules:managingCount", { count: schedules.length })}
-              </p>
-            )}
-          </div>
+          <h2 className="font-headline font-extrabold text-3xl text-on-surface tracking-tight leading-tight">
+            {t("schedules:title")}
+          </h2>
           <Button
             size="icon"
             onClick={handleAddSchedule}
@@ -179,14 +166,9 @@ export function SchedulesScreen() {
             {t("schedules:addSchedule")}
           </Button>
         </div>
-      ) : filteredSchedules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Calendar className="w-12 h-12 text-surface-variant mb-3" />
-          <p className="text-on-surface-variant">{t("schedules:noResults")}</p>
-        </div>
       ) : (
         <div className="space-y-2">
-          {filteredSchedules.map((schedule) => (
+          {schedules.map((schedule) => (
             <ScheduleCard
               key={schedule.id}
               schedule={schedule}

@@ -100,8 +100,24 @@ export class ScheduleRepository implements IScheduleRepository {
 		);
 	}
 
-  async findAll(): Promise<ScheduleDTO[]> {
+  async findAll(query?: { date?: string; search?: string }): Promise<ScheduleDTO[]> {
+    const where: any = {};
+
+    if (query?.date) {
+      where.date = new Date(query.date);
+    }
+
+    if (query?.search) {
+      where.class = {
+        name: {
+          contains: query.search,
+          mode: "insensitive",
+        },
+      };
+    }
+
     const schedules = await prisma.schedule.findMany({
+      where,
       orderBy: [{ date: "asc" }, { time: "asc" }],
       include: {
         class: true,

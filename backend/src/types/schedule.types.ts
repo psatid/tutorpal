@@ -42,6 +42,11 @@ export interface UpdateScheduleDTO {
 	status?: ScheduleStatus;
 }
 
+export interface ScheduleListQueryDTO {
+	date?: string; // ISO date string (YYYY-MM-DD)
+	search?: string; // Search by class name
+}
+
 // Recurring schedule DTOs
 export interface RecurringScheduleDTO {
 	id: string;
@@ -65,7 +70,7 @@ export interface RecurringScheduleItemDTO {
 export interface IScheduleRepository {
 	create(data: CreateScheduleDTO): Promise<ScheduleDTO>;
 	createMany(data: Array<Omit<CreateScheduleDTO, 'notes' | 'status'>>): Promise<ScheduleDTO[]>;
-	findAll(): Promise<ScheduleDTO[]>;
+	findAll(query?: ScheduleListQueryDTO): Promise<ScheduleDTO[]>;
 	findById(id: string): Promise<ScheduleDTO | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO>;
 	delete(id: string): Promise<void>;

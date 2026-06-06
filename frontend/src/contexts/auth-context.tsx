@@ -39,7 +39,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { data: session, isPending, error, refetch } = authClient.useSession();
 
-  const sessionData = session as SessionData | null;
+  const sessionData = session;
 
   const value: AuthContextValue = {
     session: sessionData,

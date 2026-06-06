@@ -223,8 +223,8 @@ export class ScheduleService {
 		return date;
 	}
 
-	async getAllSchedules(): Promise<ScheduleDTO[]> {
-		return this.repository.findAll();
+	async getAllSchedules(query?: { date?: string; search?: string }): Promise<ScheduleDTO[]> {
+		return this.repository.findAll(query);
 	}
 
 	async getScheduleById(id: string): Promise<ScheduleDTO> {

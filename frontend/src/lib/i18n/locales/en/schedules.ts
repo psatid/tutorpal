@@ -2,7 +2,7 @@ export default {
   title: "Schedules",
   managingCount: "Managing {{count}} scheduled session this term.",
   managingCount_plural: "Managing {{count}} scheduled sessions this term.",
-  searchPlaceholder: "Search by class or date...",
+  searchPlaceholder: "Search by class...",
   loading: "Loading schedules...",
   duration: "{{minutes}} min",
   noSchedules: "No schedules yet",

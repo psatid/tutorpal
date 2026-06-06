@@ -10,8 +10,8 @@ import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
 import { useDeleteStudent } from "@/hooks/mutations/use-delete-student";
 import { useGenerateLineLink } from "@/hooks/mutations/use-generate-line-link";
 import { useSendLineTestMessage } from "@/hooks/mutations/use-send-line-test-message";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { StudentCard } from "@/components/students/student-card";
 import {
   StudentDrawer,

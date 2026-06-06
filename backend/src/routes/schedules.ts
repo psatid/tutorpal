@@ -7,6 +7,8 @@ import { scheduleRepository } from "../repositories";
 import {
 	CreateScheduleSchema,
 	CreateScheduleSchemaResolver,
+	ScheduleListQuerySchema,
+	ScheduleListQuerySchemaResolver,
 	ScheduleListSchemaResolver,
 	ScheduleSchemaResolver,
 	UpdateScheduleSchema,
@@ -62,7 +64,28 @@ const scheduleRoutes = new Hono()
 		"/",
 		describeRoute({
 			tags: ["schedules"],
-			description: "Get all schedules",
+			description: "Get all schedules with optional filtering",
+			parameters: [
+				{
+					name: "date",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+					},
+					description: "Filter by date (YYYY-MM-DD format)",
+				},
+				{
+					name: "search",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+					},
+					description: "Search by class name",
+				},
+			],
 			responses: {
 				200: {
 					description: "List of schedules",
@@ -77,8 +100,10 @@ const scheduleRoutes = new Hono()
 				},
 			},
 		}),
+		sValidator("query", ScheduleListQuerySchema),
 		async (c) => {
-			const schedules = await scheduleService.getAllSchedules();
+			const query = c.req.valid("query");
+			const schedules = await scheduleService.getAllSchedules(query);
 			return c.json(schedules);
 		},
 	)
