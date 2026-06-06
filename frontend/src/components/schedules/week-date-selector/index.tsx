@@ -1,18 +1,18 @@
-import React, {
-  useState,
-  useMemo,
-  useRef,
-  useEffect,
-  useCallback,
-} from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { addDays, isSameDay } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  startOfWeek,
+  addWeeks,
+  subWeeks,
+  eachDayOfInterval,
+  endOfWeek,
+  format,
+  isBefore,
+} from "date-fns";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { WeekdayView } from "./weekday-view";
-import { CalendarView } from "./calendar-view";
-import { INITIAL_BUFFER_DAYS, LOAD_MORE_DAYS, easeOut } from "./constants";
+import { CalendarDrawer } from "./calendar-drawer";
 
 export interface WeekDateSelectorProps {
   selectedDate: Date | null;
@@ -25,176 +25,132 @@ export function WeekDateSelector({
   onDateSelect,
   className,
 }: WeekDateSelectorProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const startSentinelRef = useRef<HTMLDivElement>(null);
-  const endSentinelRef = useRef<HTMLDivElement>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isCalendarDrawerOpen, setIsCalendarDrawerOpen] = useState(false);
+  const [slideDirection, setSlideDirection] = useState(0);
 
-  const [startDate, setStartDate] = useState(() =>
-    addDays(new Date(), -INITIAL_BUFFER_DAYS)
-  );
-  const [dayCount, setDayCount] = useState(INITIAL_BUFFER_DAYS * 2 + 1);
-  const [isLoadingPast, setIsLoadingPast] = useState(false);
-  const [isLoadingFuture, setIsLoadingFuture] = useState(false);
+  const weekDates = useMemo(() => {
+    if (!selectedDate) return [];
+    const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end: endOfWeek(start, { weekStartsOn: 1 }) });
+  }, [selectedDate]);
 
-  const dates = useMemo(() => {
-    const days: Date[] = [];
-    for (let i = 0; i < dayCount; i++) {
-      days.push(addDays(startDate, i));
+  const monthLabel = selectedDate
+    ? format(selectedDate, "MMMM yyyy")
+    : "";
+
+  const handlePrevWeek = () => {
+    if (selectedDate) {
+      setSlideDirection(-1);
+      onDateSelect(subWeeks(selectedDate, 1));
     }
-    return days;
-  }, [startDate, dayCount]);
+  };
 
-  const loadMorePast = useCallback(() => {
-    if (isLoadingPast) return;
-    setIsLoadingPast(true);
-    const newStartDate = addDays(startDate, -LOAD_MORE_DAYS);
-    const scrollContainer = scrollRef.current;
-    const oldScrollWidth = scrollContainer?.scrollWidth ?? 0;
+  const handleNextWeek = () => {
+    if (selectedDate) {
+      setSlideDirection(1);
+      onDateSelect(addWeeks(selectedDate, 1));
+    }
+  };
 
-    setStartDate(newStartDate);
-    setDayCount((prev) => prev + LOAD_MORE_DAYS);
+  const handleToday = () => {
+    if (!selectedDate) {
+      setSlideDirection(0);
+      onDateSelect(new Date());
+      return;
+    }
+    const today = new Date();
+    const currentWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const todayWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const direction = isBefore(todayWeekStart, currentWeekStart) ? -1 : 1;
+    setSlideDirection(direction);
+    onDateSelect(today);
+  };
 
-    requestAnimationFrame(() => {
-      if (scrollContainer) {
-        const newScrollWidth = scrollContainer.scrollWidth;
-        const scrollDelta = newScrollWidth - oldScrollWidth;
-        scrollContainer.scrollLeft += scrollDelta;
-      }
-      setIsLoadingPast(false);
-    });
-  }, [startDate, isLoadingPast]);
-
-  const loadMoreFuture = useCallback(() => {
-    if (isLoadingFuture) return;
-    setIsLoadingFuture(true);
-    setDayCount((prev) => prev + LOAD_MORE_DAYS);
-    setIsLoadingFuture(false);
-  }, [isLoadingFuture]);
-
-  useEffect(() => {
-    if (isCalendarOpen) return;
-
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-
-    const options = {
-      root: scrollContainer,
-      rootMargin: "100px",
-      threshold: 0,
-    };
-
-    const startObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) loadMorePast();
-      });
-    }, options);
-
-    const endObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) loadMoreFuture();
-      });
-    }, options);
-
-    const observerTimeout = setTimeout(() => {
-      if (startSentinelRef.current)
-        startObserver.observe(startSentinelRef.current);
-      if (endSentinelRef.current) endObserver.observe(endSentinelRef.current);
-    }, 0);
-
-    return () => {
-      clearTimeout(observerTimeout);
-      startObserver.disconnect();
-      endObserver.disconnect();
-    };
-  }, [loadMorePast, loadMoreFuture, isCalendarOpen]);
-
-  useEffect(() => {
-    if (isCalendarOpen || !selectedDate) return;
-
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-
-    const targetIndex = dates.findIndex((date) =>
-      isSameDay(date, selectedDate)
-    );
-
-    if (targetIndex !== -1) {
-      const button = scrollContainer.children[targetIndex + 1] as HTMLElement;
-      if (button) {
-        button.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-          block: "nearest",
-        });
-      }
+  const handleWeekChange = (direction: "prev" | "next") => {
+    if (direction === "prev") {
+      handlePrevWeek();
     } else {
-      const newStartDate = addDays(selectedDate, -INITIAL_BUFFER_DAYS);
-      setStartDate(newStartDate);
-      setDayCount(INITIAL_BUFFER_DAYS * 2 + 1);
-    }
-  }, [selectedDate, isCalendarOpen, dates]);
-
-  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      action();
+      handleNextWeek();
     }
   };
 
-  const toggleCalendar = () => {
-    setIsCalendarOpen(!isCalendarOpen);
+  const handleMonthClick = () => {
+    setIsCalendarDrawerOpen(true);
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
+  const handleDrawerOpenChange = (open: boolean) => {
+    setIsCalendarDrawerOpen(open);
+  };
+
+  const handleCalendarDateSelect = (date: Date) => {
+    if (!selectedDate) {
+      setSlideDirection(0);
       onDateSelect(date);
-      setIsCalendarOpen(false);
+      setIsCalendarDrawerOpen(false);
+      return;
     }
+    const currentWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const newWeekStart = startOfWeek(date, { weekStartsOn: 1 });
+    const direction = isBefore(newWeekStart, currentWeekStart) ? -1 : 1;
+    setSlideDirection(direction);
+    onDateSelect(date);
+    setIsCalendarDrawerOpen(false);
   };
 
   return (
-    <motion.div
-      layout
-      transition={{ duration: 0.3, ease: easeOut }}
-      className={cn("bg-surface rounded-2xl mb-4 overflow-hidden", className)}
-    >
-      <AnimatePresence mode="wait">
-        {!isCalendarOpen ? (
-          <WeekdayView
-            dates={dates}
-            selectedDate={selectedDate}
-            onDateSelect={onDateSelect}
-            onKeyDown={handleKeyDown}
-            scrollRef={scrollRef}
-            startSentinelRef={startSentinelRef}
-            endSentinelRef={endSentinelRef}
-          />
-        ) : (
-          <CalendarView selected={selectedDate} onSelect={handleDateSelect} />
-        )}
-      </AnimatePresence>
+    <div className={cn("bg-surface rounded-2xl mb-4 overflow-hidden", className)}>
+      <div className="px-4 py-3 border-b border-outline-variant">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePrevWeek}
+              aria-label="Previous week"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNextWeek}
+              aria-label="Next week"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+            <button
+              type="button"
+              onClick={handleMonthClick}
+              className="px-3 py-1.5 rounded-lg hover:bg-surface-variant/50 transition-colors font-headline font-semibold text-lg text-on-surface"
+            >
+              {monthLabel}
+            </button>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleToday}
+            leftIcon={CalendarDays}
+          >
+            Today
+          </Button>
+        </div>
+      </div>
 
-      <motion.button
-        type="button"
-        onClick={toggleCalendar}
-        onKeyDown={(e) => handleKeyDown(e, toggleCalendar)}
-        className="w-full flex justify-center items-center hover:bg-surface-variant/30 transition-colors"
-        aria-label={isCalendarOpen ? "Hide calendar" : "Show calendar"}
-        aria-expanded={isCalendarOpen}
-        whileTap={{ scale: 0.98 }}
-      >
-        <motion.div
-          animate={{ rotate: isCalendarOpen ? 180 : 0 }}
-          transition={{ duration: 0.25, ease: easeOut }}
-        >
-          <HugeiconsIcon
-            icon={ChevronDown}
-            strokeWidth={2}
-            className="w-6 h-6 text-muted-foreground"
-          />
-        </motion.div>
-      </motion.button>
-    </motion.div>
+      <WeekdayView
+        dates={weekDates}
+        selectedDate={selectedDate}
+        onDateSelect={onDateSelect}
+        onWeekChange={handleWeekChange}
+        slideDirection={slideDirection}
+      />
+
+      <CalendarDrawer
+        isOpen={isCalendarDrawerOpen}
+        onOpenChange={handleDrawerOpenChange}
+        selectedDate={selectedDate}
+        onSelectDate={handleCalendarDateSelect}
+      />
+    </div>
   );
 }

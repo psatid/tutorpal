@@ -6,14 +6,12 @@ import {
   ChevronDown,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { motion } from "framer-motion";
 import React from "react";
 import {
   DayPicker,
   getDefaultClassNames,
   type DayButton,
 } from "react-day-picker";
-import { calendarContainerVariants } from "./constants";
 
 export interface CalendarViewProps {
   selected: Date | null;
@@ -27,16 +25,9 @@ export function CalendarView({
   className,
 }: CalendarViewProps) {
   return (
-    <motion.div
-      key="calendar"
-      variants={calendarContainerVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className={cn("py-3 px-3", className)}
-    >
+    <div className={cn("py-3 px-3", className)}>
       <InlineCalendar selected={selected} onSelect={onSelect} />
-    </motion.div>
+    </div>
   );
 }
 
