@@ -51,9 +51,9 @@ export function FormDrawer({
       <DrawerPortal>
         <DrawerBackdrop />
         <DrawerViewport>
-          <DrawerPopup>
-            <DrawerContent ref={portalRef}>
-              <DrawerSelectPortalContext.Provider value={portalRef.current}>
+          <DrawerPopup ref={portalRef}>
+            <DrawerContent>
+              <DrawerSelectPortalContext.Provider value={portalRef}>
                 <div className="flex flex-col h-full">
                   <form onSubmit={onSubmit} className="flex flex-col h-full">
                     <div className="flex items-center justify-between shrink-0 bg-background pb-4">

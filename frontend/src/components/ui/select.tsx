@@ -3,7 +3,9 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 
 import { cn } from "@/lib/utils";
 
-const DrawerSelectPortalContext = React.createContext<HTMLElement | null>(null);
+const DrawerSelectPortalContext = React.createContext<
+  React.RefObject<HTMLElement | null> | HTMLElement | null
+>(null);
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UnfoldMoreIcon,

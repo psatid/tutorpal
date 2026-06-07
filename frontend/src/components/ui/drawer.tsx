@@ -55,13 +55,13 @@ function DrawerViewport({
   );
 }
 
-function DrawerPopup({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof Drawer.Popup>) {
+const DrawerPopup = React.forwardRef<
+  React.ElementRef<typeof Drawer.Popup>,
+  React.ComponentPropsWithoutRef<typeof Drawer.Popup>
+>(function DrawerPopup({ className, children, ...props }, ref) {
   return (
     <Drawer.Popup
+      ref={ref}
       data-slot="drawer-popup"
       className={cn(
         "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-popover text-popover-foreground shadow-xl outline-none transition-transform duration-300 ease-out data-[starting-style]:translate-y-full data-[ending-style]:translate-y-full",
@@ -73,20 +73,21 @@ function DrawerPopup({
       {children}
     </Drawer.Popup>
   );
-}
+});
 
-function DrawerContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof Drawer.Content>) {
+const DrawerContent = React.forwardRef<
+  React.ElementRef<typeof Drawer.Content>,
+  React.ComponentPropsWithoutRef<typeof Drawer.Content>
+>(function DrawerContent({ className, ...props }, ref) {
   return (
     <Drawer.Content
+      ref={ref}
       data-slot="drawer-content"
       className={cn("flex-1 overflow-y-auto px-6 pb-6", className)}
       {...props}
     />
   );
-}
+});
 
 function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
