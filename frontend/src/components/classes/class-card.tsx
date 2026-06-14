@@ -16,20 +16,13 @@ import {
 import type { GetV1Classes200DataItem } from "@/api/generated/models/getV1Classes200DataItem";
 import { Clock, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getInitials } from "@/lib/name";
 
 interface ClassCardProps {
   classData: GetV1Classes200DataItem;
   onView: () => void;
   onDelete: () => void;
 }
-
-const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 
 export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
   const { t } = useTranslation(["classes"]);

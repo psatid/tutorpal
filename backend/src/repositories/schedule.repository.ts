@@ -112,11 +112,16 @@ export class ScheduleRepository implements IScheduleRepository {
 	async findAll(query?: {
 		date?: string;
 		search?: string;
+		classId?: string;
 	}): Promise<ScheduleDTO[]> {
 		const where: Prisma.ScheduleWhereInput = {};
 
 		if (query?.date) {
 			where.date = new Date(query.date);
+		}
+
+		if (query?.classId) {
+			where.classId = query.classId;
 		}
 
 		if (query?.search) {

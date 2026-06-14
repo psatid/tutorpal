@@ -7,6 +7,7 @@ import {
 	CreateStudentSchema,
 	CreateStudentSchemaResolver,
 	PaginatedStudentListSchemaResolver,
+	StudentDetailSchemaResolver,
 	StudentListQuerySchema,
 	StudentListQuerySchemaResolver,
 	StudentSchemaResolver,
@@ -147,13 +148,13 @@ const studentRoutes = new Hono()
 		"/:id",
 		describeRoute({
 			tags: ["students"],
-			description: "Get a student by ID",
+			description: "Get a student by ID with enrolled classes",
 			responses: {
 				200: {
 					description: "Student found",
 					content: {
 						"application/json": {
-							schema: StudentSchemaResolver as any,
+							schema: StudentDetailSchemaResolver as any,
 						},
 					},
 				},

@@ -1,6 +1,14 @@
 import { resolver } from "hono-openapi";
 import { z } from "zod";
 
+// Class in student schema (for detail view)
+export const ClassInStudentSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	totalHours: z.number().int(),
+	remainingHours: z.number().optional(),
+});
+
 // Base student schema (matches Prisma model)
 export const StudentSchema = z.object({
 	id: z.string(),
@@ -10,6 +18,11 @@ export const StudentSchema = z.object({
 	lineUserId: z.string().nullable(),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
+});
+
+// Student detail schema (includes classes)
+export const StudentDetailSchema = StudentSchema.extend({
+	classes: z.array(ClassInStudentSchema),
 });
 
 // Request schemas
@@ -51,6 +64,7 @@ export const PaginatedStudentListSchema = z.object({
 
 // OpenAPI resolvers
 export const StudentSchemaResolver = resolver(StudentSchema);
+export const StudentDetailSchemaResolver = resolver(StudentDetailSchema);
 export const CreateStudentSchemaResolver = resolver(CreateStudentSchema);
 export const UpdateStudentSchemaResolver = resolver(UpdateStudentSchema);
 export const StudentListQuerySchemaResolver = resolver(StudentListQuerySchema);
@@ -60,5 +74,6 @@ export const PaginatedStudentListSchemaResolver = resolver(
 
 // Type exports
 export type StudentSchemaType = z.infer<typeof StudentSchema>;
+export type StudentDetailSchemaType = z.infer<typeof StudentDetailSchema>;
 export type CreateStudentSchemaType = z.infer<typeof CreateStudentSchema>;
 export type UpdateStudentSchemaType = z.infer<typeof UpdateStudentSchema>;

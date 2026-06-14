@@ -1,10 +1,12 @@
 import { prisma } from "../lib/db";
 import type {
+	ClassInStudentDTO,
 	CreateStudentDTO,
 	IStudentRepository,
 	PaginatedResponse,
 	PaginationParams,
 	StudentDTO,
+	StudentDetailDTO,
 	UpdateStudentDTO,
 } from "../types";
 
@@ -87,11 +89,50 @@ export class StudentRepository implements IStudentRepository {
 		};
 	}
 
-	async findById(id: string): Promise<StudentDTO | null> {
+	async findById(id: string): Promise<StudentDetailDTO | null> {
 		const student = await prisma.student.findUnique({
 			where: { id },
+			include: {
+				classes: {
+					include: {
+						class: true,
+					},
+				},
+			},
 		});
-		return student ? toDTO(student) : null;
+
+		if (!student) {
+			return null;
+		}
+
+		const classes: ClassInStudentDTO[] = await Promise.all(
+			student.classes.map(async (enrollment) => {
+				const deductions = await prisma.classHourDeduction.findMany({
+					where: {
+						classId: enrollment.classId,
+						restoredAt: null,
+					},
+				});
+
+				const totalDeducted = deductions.reduce(
+					(sum: number, deduction: { hoursDeducted: number }) =>
+						sum + deduction.hoursDeducted,
+					0,
+				);
+
+				return {
+					id: enrollment.class.id,
+					name: enrollment.class.name,
+					totalHours: enrollment.class.totalHours,
+					remainingHours: enrollment.class.totalHours - totalDeducted,
+				};
+			}),
+		);
+
+		return {
+			...toDTO(student),
+			classes,
+		};
 	}
 
 	async update(id: string, data: UpdateStudentDTO): Promise<StudentDTO> {

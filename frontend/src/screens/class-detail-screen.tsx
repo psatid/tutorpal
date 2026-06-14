@@ -1,0 +1,234 @@
+import { useCallback, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { useClass } from "@/hooks/queries/use-class";
+import { useClassSchedules } from "@/hooks/queries/use-class-schedules";
+import {
+  useDeleteSchedule,
+  useCompleteSchedule,
+  useRestoreHours,
+} from "@/hooks/mutations/use-schedules";
+import { ClassInfoHeader } from "@/components/classes/class-info-header";
+import { ScheduleLog } from "@/components/classes/schedule-log";
+import {
+  ClassDrawer,
+  type DrawerMode,
+} from "@/components/classes/class-drawer";
+import {
+  ScheduleDrawer,
+  type DrawerMode as ScheduleDrawerMode,
+} from "@/components/schedules/schedule-drawer";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
+import type { GetV1Classes200DataItem } from "@/api/generated/models/getV1Classes200DataItem";
+
+interface ClassDetailScreenProps {
+  classId: string;
+}
+
+export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
+  const { t } = useTranslation(["classes", "schedules"]);
+  const navigate = useNavigate();
+
+  const { data: classData, isLoading: isLoadingClass } = useClass(classId);
+  const { data: schedules, isLoading: isLoadingSchedules } =
+    useClassSchedules(classId);
+
+  const deleteScheduleMutation = useDeleteSchedule();
+  const completeMutation = useCompleteSchedule();
+  const restoreMutation = useRestoreHours();
+
+  const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
+  const [classDrawerMode, setClassDrawerMode] = useState<DrawerMode>("edit");
+
+  const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
+  const [scheduleDrawerMode, setScheduleDrawerMode] =
+    useState<ScheduleDrawerMode>("view");
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
+    null,
+  );
+
+  const handleBack = useCallback(() => {
+    navigate({ to: "/classes" });
+  }, [navigate]);
+
+  const handleEditClass = useCallback(() => {
+    setClassDrawerMode("edit");
+    setIsClassDrawerOpen(true);
+  }, []);
+
+  const handleViewSchedule = useCallback((schedule: GetV1Schedules200Item) => {
+    setSelectedScheduleId(schedule.id);
+    setScheduleDrawerMode("view");
+    setIsScheduleDrawerOpen(true);
+  }, []);
+
+  const handleAddSchedule = useCallback(() => {
+    setSelectedScheduleId(null);
+    setScheduleDrawerMode("create");
+    setIsScheduleDrawerOpen(true);
+  }, []);
+
+  const handleDeleteSchedule = useCallback(
+    (schedule: GetV1Schedules200Item) => {
+      toast(t("schedules:delete.confirm", { ns: "schedules" }), {
+        action: {
+          label: t("schedules:delete.confirmButton", { ns: "schedules" }),
+          onClick: () => deleteScheduleMutation.mutate(schedule.id),
+        },
+        cancel: {
+          label: t("schedules:delete.cancelButton", { ns: "schedules" }),
+          onClick: () => {},
+        },
+      });
+    },
+    [deleteScheduleMutation, t],
+  );
+
+  const handleCompleteSchedule = useCallback(
+    (schedule: GetV1Schedules200Item) => {
+      const hoursToDeduct = (schedule.durationMinutes / 60).toFixed(1);
+      toast(
+        t("schedules:complete.confirm", {
+          hours: hoursToDeduct,
+          ns: "schedules",
+        }),
+        {
+          action: {
+            label: t("schedules:complete.confirmButton", { ns: "schedules" }),
+            onClick: () => completeMutation.mutate(schedule.id),
+          },
+          cancel: {
+            label: t("schedules:complete.cancelButton", { ns: "schedules" }),
+            onClick: () => {},
+          },
+        },
+      );
+    },
+    [completeMutation, t],
+  );
+
+  const handleRestoreHours = useCallback(
+    (schedule: GetV1Schedules200Item) => {
+      const hoursToRestore = (schedule.durationMinutes / 60).toFixed(1);
+      toast(
+        t("schedules:restore.confirm", {
+          hours: hoursToRestore,
+          ns: "schedules",
+        }),
+        {
+          action: {
+            label: t("schedules:restore.confirmButton", { ns: "schedules" }),
+            onClick: () => restoreMutation.mutate(schedule.id),
+          },
+          cancel: {
+            label: t("schedules:restore.cancelButton", { ns: "schedules" }),
+            onClick: () => {},
+          },
+        },
+      );
+    },
+    [restoreMutation, t],
+  );
+
+  const handleScheduleDrawerOpenChange = useCallback((open: boolean) => {
+    setIsScheduleDrawerOpen(open);
+    if (!open) {
+      setSelectedScheduleId(null);
+    }
+  }, []);
+
+  const handleClassDrawerOpenChange = useCallback((open: boolean) => {
+    setIsClassDrawerOpen(open);
+  }, []);
+
+  if (isLoadingClass) {
+    return (
+      <div className="flex flex-col h-full p-4 space-y-4">
+        <div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-9 h-9 rounded-full" />
+            <Skeleton className="flex-1 h-6 rounded" />
+            <Skeleton className="w-9 h-9 rounded-full" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-5 w-28 rounded-full" />
+            <Skeleton className="h-5 w-8 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, groupIdx) => (
+            <div key={groupIdx} className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              {Array.from({ length: 2 }).map((_, cardIdx) => (
+                <div
+                  key={cardIdx}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-outline-variant"
+                >
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!classData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+        <p className="text-on-surface-variant">{t("classDetail.notFound")}</p>
+        <button
+          type="button"
+          onClick={handleBack}
+          className="mt-4 text-sm text-primary font-medium hover:underline"
+        >
+          {t("classDetail.backToClasses")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full p-4 space-y-4">
+      <ClassInfoHeader
+        classData={classData}
+        onBack={handleBack}
+        onEdit={handleEditClass}
+      />
+
+      <ScheduleLog
+        schedules={schedules ?? []}
+        isLoading={isLoadingSchedules}
+        onViewSchedule={handleViewSchedule}
+        onAddSchedule={handleAddSchedule}
+        onCompleteSchedule={handleCompleteSchedule}
+        onRestoreSchedule={handleRestoreHours}
+        onDeleteSchedule={handleDeleteSchedule}
+      />
+
+      <ClassDrawer
+        isOpen={isClassDrawerOpen}
+        onOpenChange={handleClassDrawerOpenChange}
+        mode={classDrawerMode}
+        classData={classData as GetV1Classes200DataItem}
+        onModeChange={setClassDrawerMode}
+      />
+
+      <ScheduleDrawer
+        isOpen={isScheduleDrawerOpen}
+        onOpenChange={handleScheduleDrawerOpenChange}
+        mode={scheduleDrawerMode}
+        scheduleId={selectedScheduleId}
+        onModeChange={setScheduleDrawerMode}
+      />
+    </div>
+  );
+}

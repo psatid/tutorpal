@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ClassesScreen } from "@/screens/classes-screen";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_layout/classes")({
-  component: ClassesScreen,
+  component: () => <Outlet />,
 });

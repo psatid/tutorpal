@@ -85,6 +85,15 @@ const scheduleRoutes = new Hono()
 					},
 					description: "Search by class name",
 				},
+				{
+					name: "classId",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+					},
+					description: "Filter by class ID",
+				},
 			],
 			responses: {
 				200: {

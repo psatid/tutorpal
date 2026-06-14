@@ -125,6 +125,7 @@ export const ScheduleListQuerySchema = z.object({
 		.regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
 		.optional(),
 	search: z.string().optional(),
+	classId: z.string().optional(),
 });
 
 // OpenAPI resolvers

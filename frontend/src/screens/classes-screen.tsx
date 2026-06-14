@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, useRef } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
 import { ClassDrawer } from "@/components/classes/class-drawer";
 import { ClassScreenHeader } from "@/components/classes/class-screen-header";
@@ -8,11 +9,12 @@ import type { GetV1ClassesParams } from "@/api/generated/models/getV1ClassesPara
 import type { GetV1Classes200DataItem } from "@/api/generated/models/getV1Classes200DataItem";
 
 export function ClassesScreen() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<GetV1ClassesParams["sortBy"]>("createdAt");
   const [sortOrder, setSortOrder] = useState<GetV1ClassesParams["sortOrder"]>("desc");
 
-  const [drawerMode, setDrawerMode] = useState<"create" | "edit" | "view">("create");
+  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
   const [selectedClass, setSelectedClass] = useState<GetV1Classes200DataItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -61,11 +63,21 @@ export function ClassesScreen() {
     setIsDrawerOpen(true);
   }, []);
 
-  const handleViewClass = useCallback((classData: GetV1Classes200DataItem) => {
-    setSelectedClass(classData);
-    setDrawerMode("view");
-    setIsDrawerOpen(true);
-  }, []);
+  const handleViewClass = useCallback(
+    (classData: GetV1Classes200DataItem) => {
+      navigate({ to: "/classes/$classId", params: { classId: classData.id } });
+    },
+    [navigate],
+  );
+
+  const handleClassDrawerModeChange = useCallback(
+    (mode: "create" | "view" | "edit") => {
+      if (mode === "create" || mode === "edit") {
+        setDrawerMode(mode);
+      }
+    },
+    [],
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -96,7 +108,7 @@ export function ClassesScreen() {
         onOpenChange={setIsDrawerOpen}
         mode={drawerMode}
         classData={selectedClass}
-        onModeChange={setDrawerMode}
+        onModeChange={handleClassDrawerModeChange}
       />
     </div>
   );

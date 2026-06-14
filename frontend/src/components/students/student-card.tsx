@@ -47,7 +47,7 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
       transition={{ type: "spring", stiffness: 500, damping: 30 }}
     >
       <Avatar size="lg">
-        <AvatarFallback className="bg-accent text-on-primary-container font-semibold">
+        <AvatarFallback className="bg-primary text-white font-semibold">
           {initials}
         </AvatarFallback>
       </Avatar>
@@ -59,7 +59,7 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
             {t("students:grade", { grade: student.grade })}
           </Badge>
           {student.lineUserId && (
-            <Badge variant="outline" className="shrink-0 gap-1 text-green-600 border-green-200">
+            <Badge variant="outline" className="shrink-0 gap-1 text-green-600 border-green-600/30">
               <CheckCircle2 className="w-3 h-3" />
               LINE
             </Badge>

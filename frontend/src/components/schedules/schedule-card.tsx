@@ -4,8 +4,6 @@ import {
   MoreVertical,
   CheckCircle2,
   RotateCcw,
-  Check,
-  X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -17,6 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  formatTime24Hour,
+  statusColors,
+} from "@/lib/schedule-utils";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 
 interface ScheduleCardProps {
@@ -27,21 +29,6 @@ interface ScheduleCardProps {
   onRestore?: () => void;
 }
 
-function formatTime24Hour(minutes: number): { hours: string; minutes: string } {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return {
-    hours: hours.toString().padStart(2, "0"),
-    minutes: mins.toString().padStart(2, "0"),
-  };
-}
-
-const statusColors: Record<string, string> = {
-  SCHEDULED: "bg-primary-container text-on-primary-container",
-  COMPLETED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-destructive/10 text-destructive",
-};
-
 export function ScheduleCard({
   schedule,
   onView,
@@ -50,10 +37,9 @@ export function ScheduleCard({
   onRestore,
 }: ScheduleCardProps) {
   const { t } = useTranslation(["schedules"]);
-  const { hours, minutes } = formatTime24Hour(schedule.time);
+  const startTime = formatTime24Hour(schedule.time);
   const scheduleEndTime = schedule.time + schedule.durationMinutes;
-  const { hours: scheduleEndHours, minutes: scheduleEndMinutes } =
-    formatTime24Hour(scheduleEndTime);
+  const endTime = formatTime24Hour(scheduleEndTime);
 
   return (
     <div
@@ -77,15 +63,13 @@ export function ScheduleCard({
             variant="outline"
             className={cn(
               "shrink-0 gap-1",
-              statusColors[schedule.status] ?? statusColors.SCHEDULED,
+              statusColors[schedule.status]?.className ?? statusColors.SCHEDULED.className,
             )}
           >
-            {schedule.status === "COMPLETED" && (
-              <Check className="w-3 h-3" />
-            )}
-            {schedule.status === "CANCELLED" && (
-              <X className="w-3 h-3" />
-            )}
+            {(() => {
+              const Icon = statusColors[schedule.status]?.icon;
+              return Icon ? <Icon className="w-3 h-3" /> : null;
+            })()}
             {t(`schedules:status.${schedule.status}`)}
           </Badge>
         </div>
@@ -93,11 +77,11 @@ export function ScheduleCard({
 
       <div className="shrink-0 text-right">
         <span className="text-sm font-semibold text-on-surface tabular-nums">
-          {hours}:{minutes}
+          {startTime}
         </span>
         <span className="text-xs text-on-surface-variant"> – </span>
         <span className="text-sm font-medium text-on-surface-variant tabular-nums">
-          {scheduleEndHours}:{scheduleEndMinutes}
+          {endTime}
         </span>
       </div>
 

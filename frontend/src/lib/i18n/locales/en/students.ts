@@ -52,6 +52,16 @@ export default {
     confirmButton: "Delete",
     cancelButton: "Cancel",
   },
+  studentDetail: {
+    back: "Back to students",
+    editStudent: "Edit student",
+    notFound: "Student not found",
+    backToStudents: "Back to students",
+    enrolledClasses: "Enrolled Classes",
+    noClasses: "No classes yet",
+    noClassesDescription: "This student is not enrolled in any classes.",
+    addFirstClass: "Add to class",
+  },
   line: {
     linkLabel: "Link LINE",
     linkConfirm: "Generate a LINE linking link to send to this student?",

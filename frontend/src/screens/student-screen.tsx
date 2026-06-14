@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
 import { useDebounce } from "@/hooks/use-debounce";
 import { StudentScreenHeader } from "@/components/students/student-screen-header";
@@ -12,6 +13,7 @@ import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Stude
 import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
 
 export function StudentScreen() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [sortBy, setSortBy] =
@@ -51,11 +53,15 @@ export function StudentScreen() {
     setIsDrawerOpen(true);
   };
 
-  const handleViewStudent = (student: GetV1Students200DataItem) => {
-    setSelectedStudent(student);
-    setDrawerMode("view");
-    setIsDrawerOpen(true);
-  };
+  const handleViewStudent = useCallback(
+    (student: GetV1Students200DataItem) => {
+      navigate({
+        to: "/students/$studentId",
+        params: { studentId: student.id },
+      });
+    },
+    [navigate],
+  );
 
   const handleModeChange = (mode: DrawerMode) => {
     setDrawerMode(mode);

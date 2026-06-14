@@ -5,6 +5,7 @@ import type {
 	PaginatedResponse,
 	PaginationParams,
 	StudentDTO,
+	StudentDetailDTO,
 	UpdateStudentDTO,
 } from "../types";
 
@@ -21,7 +22,7 @@ export class StudentService {
 		return this.repository.findAll(params);
 	}
 
-	async getStudentById(id: string): Promise<StudentDTO> {
+	async getStudentById(id: string): Promise<StudentDetailDTO> {
 		const student = await this.repository.findById(id);
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");

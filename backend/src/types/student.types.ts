@@ -11,6 +11,17 @@ export interface StudentDTO {
 	updatedAt: string;
 }
 
+export interface ClassInStudentDTO {
+	id: string;
+	name: string;
+	totalHours: number;
+	remainingHours?: number;
+}
+
+export interface StudentDetailDTO extends StudentDTO {
+	classes: ClassInStudentDTO[];
+}
+
 export interface CreateStudentDTO {
 	name: string;
 	phoneNumber?: string;
@@ -27,7 +38,7 @@ export interface UpdateStudentDTO {
 export interface IStudentRepository {
 	create(data: CreateStudentDTO): Promise<StudentDTO>;
 	findAll(params?: PaginationParams): Promise<PaginatedResponse<StudentDTO>>;
-	findById(id: string): Promise<StudentDTO | null>;
+	findById(id: string): Promise<StudentDetailDTO | null>;
 	update(id: string, data: UpdateStudentDTO): Promise<StudentDTO>;
 	delete(id: string): Promise<void>;
 }

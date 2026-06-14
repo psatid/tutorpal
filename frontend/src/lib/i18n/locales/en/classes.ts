@@ -93,4 +93,17 @@ export default {
     deleteSuccess: "Class deleted successfully",
     deleteError: "Failed to delete class",
   },
+  classDetail: {
+    back: "Back to classes",
+    editClass: "Edit class",
+    noSchedules: "No sessions yet",
+    noSchedulesDescription: "Schedule your first session for this class.",
+    addFirstSchedule: "Schedule a session",
+    notFound: "Class not found",
+    backToClasses: "Back to classes",
+    dateHeaders: {
+      today: "Today",
+      yesterday: "Yesterday",
+    },
+  },
 } as const;

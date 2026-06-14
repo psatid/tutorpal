@@ -231,6 +231,7 @@ export class ScheduleService {
 	async getAllSchedules(query?: {
 		date?: string;
 		search?: string;
+		classId?: string;
 	}): Promise<ScheduleDTO[]> {
 		return this.repository.findAll(query);
 	}
