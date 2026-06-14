@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Search, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSchedules } from "@/hooks/queries/use-schedules";
@@ -30,6 +31,7 @@ export function SchedulesScreen() {
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const { data: schedules, isLoading } = useSchedules({
@@ -40,6 +42,12 @@ export function SchedulesScreen() {
   const deleteMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
   const restoreMutation = useRestoreHours();
+
+  const filteredSchedules = useMemo(() => {
+    if (!schedules) return [];
+    if (statusFilter === "ALL") return schedules;
+    return schedules.filter((s) => s.status === statusFilter);
+  }, [schedules, statusFilter]);
 
   const handleAddSchedule = () => {
     setSelectedScheduleId(null);
@@ -131,14 +139,37 @@ export function SchedulesScreen() {
       />
 
       {/* Search */}
+      <div className="mb-4">
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("schedules:searchPlaceholder")}
+          leftIcon={Search}
+        />
+      </div>
+
+      {/* Status Filter */}
       {schedules && schedules.length > 0 && (
-        <div className="mb-4">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t("schedules:searchPlaceholder")}
-            leftIcon={Search}
-          />
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          {(["ALL", "SCHEDULED", "COMPLETED", "CANCELLED"] as const).map(
+            (status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setStatusFilter(status)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                  statusFilter === status
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-surface-container text-on-surface-variant hover:bg-surface-container-low",
+                )}
+              >
+                {status === "ALL"
+                  ? t("schedules:filter.all")
+                  : t(`schedules:status.${status}`)}
+              </button>
+            ),
+          )}
         </div>
       )}
 
@@ -166,9 +197,15 @@ export function SchedulesScreen() {
             {t("schedules:addSchedule")}
           </Button>
         </div>
+      ) : filteredSchedules.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-on-surface-variant">
+            {t("schedules:noResults")}
+          </p>
+        </div>
       ) : (
         <div className="space-y-2">
-          {schedules.map((schedule) => (
+          {filteredSchedules.map((schedule) => (
             <ScheduleCard
               key={schedule.id}
               schedule={schedule}
@@ -188,6 +225,7 @@ export function SchedulesScreen() {
         mode={drawerMode}
         scheduleId={selectedScheduleId}
         onModeChange={handleModeChange}
+        selectedDate={selectedDate}
       />
     </div>
   );

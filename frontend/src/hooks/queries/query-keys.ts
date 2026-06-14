@@ -15,6 +15,9 @@ export const classesKeys = {
   lists: () => [...classesKeys.all, "list"] as const,
   list: (filters?: Record<string, unknown>) =>
     [...classesKeys.lists(), filters] as const,
+  infinites: () => [...classesKeys.all, "infinite"] as const,
+  infinite: (filters?: Record<string, unknown>) =>
+    [...classesKeys.infinites(), filters] as const,
   details: () => [...classesKeys.all, "detail"] as const,
   detail: (id: string) => [...classesKeys.details(), id] as const,
 };

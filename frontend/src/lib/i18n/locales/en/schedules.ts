@@ -102,6 +102,17 @@ export default {
 	description: "View and manage your tutoring calendar and upcoming sessions.",
 	online: "Online",
 	empty: "No schedules found. Create your first schedule to get started.",
+	filter: {
+		all: "All",
+	},
+	classSelector: {
+		title: "Select Class",
+		searchPlaceholder: "Search by class or student...",
+		noClasses: "No classes yet",
+		noResults: "No classes found",
+		selectButton: "Select",
+		remainingHours: "{{hours}}h left",
+	},
 	weekSelector: {
 		previousWeek: "Previous week",
 		nextWeek: "Next week",

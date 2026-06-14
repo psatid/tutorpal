@@ -3,6 +3,8 @@ import type {
 	ClassDTO,
 	CreateClassDTO,
 	IClassRepository,
+	PaginatedResponse,
+	PaginationParams,
 	UpdateClassDTO,
 } from "../types";
 
@@ -13,8 +15,10 @@ export class ClassService {
 		return this.repository.create(data);
 	}
 
-	async getAllClasses(): Promise<ClassDTO[]> {
-		return this.repository.findAll();
+	async getAllClasses(
+		params?: PaginationParams,
+	): Promise<PaginatedResponse<ClassDTO>> {
+		return this.repository.findAll(params);
 	}
 
 	async getClassById(id: string): Promise<ClassDTO> {

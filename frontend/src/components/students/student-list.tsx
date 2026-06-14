@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Plus, UserPlus, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { useGenerateLineLink } from "@/hooks/mutations/use-generate-line-link";
 import { useSendLineTestMessage } from "@/hooks/mutations/use-send-line-test-message";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { StudentCard } from "@/components/students/student-card";
+import { LineLinkModal } from "@/components/students/line-link-modal";
 import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 
 interface StudentListProps {
@@ -38,6 +39,10 @@ export function StudentList({
   const lineLinkMutation = useGenerateLineLink();
   const sendTestMessageMutation = useSendLineTestMessage();
 
+  const [lineLinkModalOpen, setLineLinkModalOpen] = useState(false);
+  const [generatedLinkUrl, setGeneratedLinkUrl] = useState("");
+  const [linkStudentName, setLinkStudentName] = useState("");
+
   useIntersectionObserver(
     loadMoreRef,
     () => {
@@ -53,7 +58,7 @@ export function StudentList({
 
   const handleLinkLine = (student: GetV1Students200DataItem) => {
     if (student.lineUserId) {
-      toast.info("This student already has a LINE account linked.");
+      toast.info(t("students:line.alreadyLinked"));
       return;
     }
 
@@ -68,23 +73,9 @@ export function StudentList({
           lineLinkMutation.mutate(student.id, {
             onSuccess: (data) => {
               toast.dismiss(loadingToastId);
-
-              const copyToastId = toast(t("students:line.linkGenerated"), {
-                duration: Infinity,
-                action: {
-                  label: t("students:line.copyButton"),
-                  onClick: async () => {
-                    try {
-                      await navigator.clipboard.writeText(data.linkUrl);
-                      toast.dismiss(copyToastId);
-                      toast.success(t("students:line.copySuccess"));
-                    } catch (error) {
-                      console.error("Clipboard write failed:", error);
-                      toast.error(t("students:line.copyFailed"));
-                    }
-                  },
-                },
-              });
+              setGeneratedLinkUrl(data.linkUrl);
+              setLinkStudentName(student.name);
+              setLineLinkModalOpen(true);
             },
             onError: (error) => {
               toast.dismiss(loadingToastId);
@@ -221,6 +212,13 @@ export function StudentList({
           </div>
         )}
       </div>
+
+      <LineLinkModal
+        isOpen={lineLinkModalOpen}
+        onOpenChange={setLineLinkModalOpen}
+        linkUrl={generatedLinkUrl}
+        studentName={linkStudentName}
+      />
     </>
   );
 }

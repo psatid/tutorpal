@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearch } from "@tanstack/react-router";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 
 type LinkState = "loading" | "ready" | "success" | "error";
 
+type LinkError = "missing_params" | "link_failed" | "invalid_token" | "network";
+
 export function LineLinkScreen() {
+  const { t } = useTranslation(["students"]);
   const search = useSearch({ strict: false }) as {
     token?: string;
     success?: string | boolean;
@@ -14,7 +18,7 @@ export function LineLinkScreen() {
     name?: string;
   };
   const [state, setState] = useState<LinkState>("loading");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [linkError, setLinkError] = useState<LinkError | null>(null);
   const [linkedName, setLinkedName] = useState("");
 
   const { token, success, error, name } = search;
@@ -26,36 +30,47 @@ export function LineLinkScreen() {
       return;
     }
     if (error) {
-      const messages: Record<string, string> = {
-        missing_params: "Missing required parameters.",
-        link_failed:
-          "Failed to link LINE account. The link may have expired.",
+      const errorMap: Record<string, LinkError> = {
+        missing_params: "missing_params",
+        link_failed: "link_failed",
       };
-      setErrorMessage(messages[error] || "An error occurred.");
+      setLinkError(errorMap[error] || "link_failed");
       setState("error");
       return;
     }
     if (!token) {
-      setErrorMessage("Invalid or missing link token.");
+      setLinkError("invalid_token");
       setState("error");
       return;
     }
     setState("ready");
   }, [token, success, error, name]);
 
-  const handleConnect = async () => {
+  const handleConnect = useCallback(async () => {
     if (!token) return;
     setState("loading");
+    setLinkError(null);
     try {
       const response = await apiClient.getV1LineAuthUrl({
         token,
       });
       window.location.href = response.data.authUrl;
     } catch {
-      setErrorMessage("Failed to connect. Please try again.");
+      setLinkError("network");
       setState("error");
     }
-  };
+  }, [token]);
+
+  const errorMessage = linkError
+    ? {
+        missing_params: t("students:line.error.missing"),
+        link_failed: t("students:line.error.expired"),
+        invalid_token: t("students:line.error.invalid"),
+        network: t("students:line.error.network"),
+      }[linkError]
+    : "";
+
+  const canRetry = linkError === "network";
 
   return (
     <div className="min-h-dvh bg-surface flex items-center justify-center p-6">
@@ -75,16 +90,15 @@ export function LineLinkScreen() {
           <div className="space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
             <p className="text-on-surface-variant">
-              Connecting to LINE...
+              {t("students:line.connecting")}
             </p>
           </div>
         )}
 
         {state === "ready" && (
           <div className="space-y-6">
-            <p className="text-on-surface-variant">
-              Link your LINE account to receive schedule updates and
-              notifications from your tutor.
+            <p className="text-on-surface-variant leading-relaxed">
+              {t("students:line.readyDescription")}
             </p>
             <Button
               onClick={handleConnect}
@@ -102,16 +116,16 @@ export function LineLinkScreen() {
             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
             <div className="space-y-1">
               <h2 className="font-headline font-bold text-xl text-on-surface">
-                Linked Successfully!
+                {t("students:line.successTitle")}
               </h2>
               {linkedName && (
                 <p className="text-on-surface-variant">
-                  Connected as {linkedName}
+                  {t("students:line.connectedAs", { name: linkedName })}
                 </p>
               )}
             </div>
             <p className="text-sm text-on-surface-variant">
-              You can now close this page.
+              {t("students:line.closePage")}
             </p>
           </div>
         )}
@@ -121,13 +135,23 @@ export function LineLinkScreen() {
             <XCircle className="w-16 h-16 text-destructive mx-auto" />
             <div className="space-y-1">
               <h2 className="font-headline font-bold text-xl text-on-surface">
-                Linking Failed
+                {t("students:line.errorTitle")}
               </h2>
               <p className="text-on-surface-variant">{errorMessage}</p>
             </div>
-            <p className="text-sm text-on-surface-variant">
-              Please ask your tutor for a new link.
-            </p>
+            {canRetry ? (
+              <Button
+                onClick={handleConnect}
+                variant="outline"
+                rightIcon={RotateCcw}
+              >
+                {t("students:line.retry")}
+              </Button>
+            ) : (
+              <p className="text-sm text-on-surface-variant">
+                {t("students:line.askTutor")}
+              </p>
+            )}
           </div>
         )}
       </div>

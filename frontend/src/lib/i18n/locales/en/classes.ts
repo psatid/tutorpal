@@ -13,6 +13,15 @@ export default {
   noClasses: "No classes yet",
   noClassesDescription: "Create your first class to get started.",
   noResults: "No classes found",
+  loadingMore: "Loading more classes...",
+  sort: {
+    newest: "Newest",
+    oldest: "Oldest",
+    nameAsc: "Name (A-Z)",
+    nameDesc: "Name (Z-A)",
+    hoursHigh: "Hours (High-Low)",
+    hoursLow: "Hours (Low-High)",
+  },
   status: {
     active: "Active",
   },

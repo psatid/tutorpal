@@ -4,10 +4,12 @@ import { describeRoute } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { classRepository } from "../repositories";
 import {
-	ClassListSchemaResolver,
+	ClassListQuerySchema,
+	ClassListQuerySchemaResolver,
 	ClassSchemaResolver,
 	CreateClassSchema,
 	CreateClassSchemaResolver,
+	PaginatedClassListSchemaResolver,
 	UpdateClassSchema,
 	UpdateClassSchemaResolver,
 } from "../schemas";
@@ -61,13 +63,69 @@ const classRoutes = new Hono()
 		"/",
 		describeRoute({
 			tags: ["classes"],
-			description: "Get all classes",
+			description: "Get all classes with pagination and search",
+			parameters: [
+				{
+					name: "page",
+					in: "query",
+					required: false,
+					schema: {
+						type: "integer",
+						default: 1,
+						minimum: 1,
+					},
+					description: "Page number",
+				},
+				{
+					name: "limit",
+					in: "query",
+					required: false,
+					schema: {
+						type: "integer",
+						default: 10,
+						minimum: 1,
+						maximum: 100,
+					},
+					description: "Items per page",
+				},
+				{
+					name: "search",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+					},
+					description: "Search by class name",
+				},
+				{
+					name: "sortBy",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						enum: ["name", "totalHours", "createdAt"],
+						default: "createdAt",
+					},
+					description: "Field to sort by",
+				},
+				{
+					name: "sortOrder",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						enum: ["asc", "desc"],
+						default: "desc",
+					},
+					description: "Sort order",
+				},
+			],
 			responses: {
 				200: {
-					description: "List of classes",
+					description: "Paginated list of classes",
 					content: {
 						"application/json": {
-							schema: ClassListSchemaResolver as any,
+							schema: PaginatedClassListSchemaResolver as any,
 						},
 					},
 				},
@@ -76,8 +134,10 @@ const classRoutes = new Hono()
 				},
 			},
 		}),
+		sValidator("query", ClassListQuerySchema),
 		async (c) => {
-			const classes = await classService.getAllClasses();
+			const query = c.req.valid("query");
+			const classes = await classService.getAllClasses(query);
 			return c.json(classes);
 		},
 	)

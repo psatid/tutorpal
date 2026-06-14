@@ -1,3 +1,5 @@
+import type { PaginatedResponse, PaginationParams } from "./pagination.types";
+
 // DTOs for clean data transfer between layers
 export interface ClassDTO {
 	id: string;
@@ -31,7 +33,7 @@ export interface UpdateClassDTO {
 // Repository interface - abstract data access
 export interface IClassRepository {
 	create(data: CreateClassDTO): Promise<ClassDTO>;
-	findAll(): Promise<ClassDTO[]>;
+	findAll(params?: PaginationParams): Promise<PaginatedResponse<ClassDTO>>;
 	findById(id: string): Promise<ClassDTO | null>;
 	update(id: string, data: UpdateClassDTO): Promise<ClassDTO>;
 	delete(id: string): Promise<void>;

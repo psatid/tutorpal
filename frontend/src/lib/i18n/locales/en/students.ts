@@ -67,5 +67,31 @@ export default {
     copyButton: "Copy Link",
     copySuccess: "Copied to clipboard!",
     copyFailed: "Failed to copy. Please copy the link manually.",
+    connecting: "Connecting to LINE...",
+    readyDescription:
+      "Your tutor uses TutorPal to manage your classes. Connect your LINE account to receive schedule updates and notifications.",
+    retry: "Try Again",
+    successTitle: "Linked Successfully!",
+    connectedAs: "Connected as {{name}}",
+    closePage: "You can now close this page.",
+    errorTitle: "Linking Failed",
+    askTutor: "Please ask your tutor for a new link.",
+    modal: {
+      title: "LINE Link Ready",
+      description:
+        "Copy this link and send it to {{name}}. The link expires in 24 hours.",
+      copyButton: "Copy Link",
+      copied: "Link copied to clipboard!",
+    },
+    error: {
+      expired:
+        "This link may have expired or already been used. Please ask your tutor for a new one.",
+      invalid:
+        "This link is invalid. Please request a new link from your tutor.",
+      network:
+        "Something went wrong. Please check your connection and try again.",
+      missing:
+        "Missing required parameters. Please request a new link from your tutor.",
+    },
   },
 } as const;

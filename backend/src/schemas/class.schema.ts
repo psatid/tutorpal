@@ -37,11 +37,39 @@ export const UpdateClassSchema = z.object({
 	studentIds: z.array(z.string()).optional(),
 });
 
+// Query schemas for pagination and search
+export const ClassListQuerySchema = z.object({
+	page: z.coerce.number().int().positive().default(1),
+	limit: z.coerce.number().int().positive().max(100).default(10),
+	search: z.string().optional(),
+	sortBy: z
+		.enum(["name", "totalHours", "createdAt"])
+		.default("createdAt"),
+	sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+// Paginated response schema
+export const PaginatedClassListSchema = z.object({
+	data: z.array(ClassSchema),
+	pagination: z.object({
+		total: z.number(),
+		page: z.number(),
+		limit: z.number(),
+		totalPages: z.number(),
+		hasNext: z.boolean(),
+		hasPrev: z.boolean(),
+	}),
+});
+
 // OpenAPI resolvers
 export const StudentInClassSchemaResolver = resolver(StudentInClassSchema);
 export const ClassSchemaResolver = resolver(ClassSchema);
 export const CreateClassSchemaResolver = resolver(CreateClassSchema);
 export const UpdateClassSchemaResolver = resolver(UpdateClassSchema);
+export const ClassListQuerySchemaResolver = resolver(ClassListQuerySchema);
+export const PaginatedClassListSchemaResolver = resolver(
+	PaginatedClassListSchema,
+);
 export const ClassListSchemaResolver = resolver(z.array(ClassSchema));
 
 // Type exports

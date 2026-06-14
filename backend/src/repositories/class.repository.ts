@@ -5,6 +5,7 @@ import type {
 	IClassRepository,
 	UpdateClassDTO,
 } from "../types";
+import type { PaginatedResponse, PaginationParams } from "../types/pagination.types";
 
 // Helper to convert Prisma Class with relations to DTO
 function toDTO(
@@ -72,9 +73,32 @@ export class ClassRepository implements IClassRepository {
 		return toDTO(classData, remainingHours);
 	}
 
-	async findAll(): Promise<ClassDTO[]> {
+	async findAll(
+		params?: PaginationParams,
+	): Promise<PaginatedResponse<ClassDTO>> {
+		const page = params?.page || 1;
+		const limit = params?.limit || 10;
+		const skip = (page - 1) * limit;
+		const search = params?.search?.trim();
+		const sortBy = params?.sortBy || "createdAt";
+		const sortOrder = params?.sortOrder || "desc";
+
+		// Build where clause for search (only name)
+		const where = search
+			? {
+					name: { contains: search, mode: "insensitive" as const },
+				}
+			: undefined;
+
+		// Get total count matching the search criteria
+		const total = await prisma.class.count({ where });
+
+		// Get paginated results
 		const classes = await prisma.class.findMany({
-			orderBy: { createdAt: "desc" },
+			where,
+			skip,
+			take: limit,
+			orderBy: { [sortBy]: sortOrder },
 			include: {
 				students: {
 					include: {
@@ -83,6 +107,8 @@ export class ClassRepository implements IClassRepository {
 				},
 			},
 		});
+
+		const totalPages = Math.ceil(total / limit);
 
 		const classesWithHours = await Promise.all(
 			classes.map(async (classData) => {
@@ -105,7 +131,17 @@ export class ClassRepository implements IClassRepository {
 			}),
 		);
 
-		return classesWithHours;
+		return {
+			data: classesWithHours,
+			pagination: {
+				total,
+				page,
+				limit,
+				totalPages,
+				hasNext: page < totalPages,
+				hasPrev: page > 1,
+			},
+		};
 	}
 
 	async findById(id: string): Promise<ClassDTO | null> {

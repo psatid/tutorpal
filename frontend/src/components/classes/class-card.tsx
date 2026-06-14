@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   Avatar,
   AvatarFallback,
@@ -12,12 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Class } from "@/types/class";
+import type { GetV1Classes200DataItem } from "@/api/generated/models/getV1Classes200DataItem";
 import { Clock, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface ClassCardProps {
-  classData: Class;
+  classData: GetV1Classes200DataItem;
   onView: () => void;
   onDelete: () => void;
 }
@@ -37,7 +38,7 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
   const remainingStudents = classData.students.length - 3;
 
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
       onClick={onView}
@@ -47,15 +48,18 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
           onView();
         }
       }}
-      className="w-full flex items-start gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
+      className="w-full flex items-start gap-4 p-4 rounded-xl bg-card text-left group border border-outline-variant cursor-pointer"
+      whileHover={{ borderColor: "var(--color-primary)" }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
     >
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-1">
-          <p className="font-medium text-lg text-on-surface truncate">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-on-surface truncate">
             {classData.name}
           </p>
-          <Badge variant="outline" className="shrink-0">
-            <Clock />
+          <Badge variant="outline" className="shrink-0 gap-1">
+            <Clock className="w-3 h-3" />
             {classData.remainingHours !== undefined
               ? t("classes:hoursWithRemaining", {
                   total: classData.totalHours,
@@ -90,7 +94,7 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
             e.preventDefault();
           }}
         >
-          <MoreVertical className="w-4 h-4" />
+          <MoreVertical className="w-4 h-4 text-on-surface-variant" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onView}>
@@ -104,6 +108,6 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+    </motion.div>
   );
 }

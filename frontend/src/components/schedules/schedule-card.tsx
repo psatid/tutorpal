@@ -4,6 +4,8 @@ import {
   MoreVertical,
   CheckCircle2,
   RotateCcw,
+  Check,
+  X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -64,19 +66,8 @@ export function ScheduleCard({
           onView();
         }
       }}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
+      className="w-full flex items-center gap-3 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
     >
-      <div className="w-11 h-11 rounded-xl bg-surface-container flex flex-col items-center justify-center shrink-0 text-center">
-        <span className="text-md font-semibold text-on-surface leading-none">
-          {hours}:{minutes}
-        </span>
-
-        <span className="text-xs font-medium text-on-surface-variant leading-none">
-          - <br />
-          {scheduleEndHours}:{scheduleEndMinutes}
-        </span>
-      </div>
-
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-medium text-on-surface truncate">
@@ -85,13 +76,29 @@ export function ScheduleCard({
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0",
-              statusColors[schedule.status] ?? statusColors.SCHEDULED
+              "shrink-0 gap-1",
+              statusColors[schedule.status] ?? statusColors.SCHEDULED,
             )}
           >
+            {schedule.status === "COMPLETED" && (
+              <Check className="w-3 h-3" />
+            )}
+            {schedule.status === "CANCELLED" && (
+              <X className="w-3 h-3" />
+            )}
             {t(`schedules:status.${schedule.status}`)}
           </Badge>
         </div>
+      </div>
+
+      <div className="shrink-0 text-right">
+        <span className="text-sm font-semibold text-on-surface tabular-nums">
+          {hours}:{minutes}
+        </span>
+        <span className="text-xs text-on-surface-variant"> – </span>
+        <span className="text-sm font-medium text-on-surface-variant tabular-nums">
+          {scheduleEndHours}:{scheduleEndMinutes}
+        </span>
       </div>
 
       <DropdownMenu>
