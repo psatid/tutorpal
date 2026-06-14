@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-14T00:00:00.000Z",
+  "title": "Design System: TutorPal",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Scholar's Ink",
+        "canonical": "oklch(0.457 0.24 277.023)",
+        "tonalRamp": [
+          "oklch(0.20 0.10 277)",
+          "oklch(0.30 0.15 277)",
+          "oklch(0.38 0.20 277)",
+          "oklch(0.46 0.24 277)",
+          "oklch(0.54 0.20 277)",
+          "oklch(0.64 0.15 277)",
+          "oklch(0.74 0.10 277)",
+          "oklch(0.88 0.04 277)"
+        ]
+      },
+      "primary-container": {
+        "role": "primary",
+        "displayName": "Ink Deep",
+        "canonical": "oklch(0.43 0.22 277)",
+        "tonalRamp": [
+          "oklch(0.18 0.10 277)",
+          "oklch(0.28 0.14 277)",
+          "oklch(0.36 0.18 277)",
+          "oklch(0.43 0.22 277)",
+          "oklch(0.52 0.18 277)",
+          "oklch(0.62 0.13 277)",
+          "oklch(0.72 0.09 277)",
+          "oklch(0.86 0.03 277)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Muted Indigo",
+        "canonical": "oklch(0.42 0.10 277)",
+        "tonalRamp": [
+          "oklch(0.20 0.05 277)",
+          "oklch(0.28 0.07 277)",
+          "oklch(0.35 0.09 277)",
+          "oklch(0.42 0.10 277)",
+          "oklch(0.50 0.09 277)",
+          "oklch(0.60 0.07 277)",
+          "oklch(0.70 0.05 277)",
+          "oklch(0.85 0.02 277)"
+        ]
+      },
+      "secondary-container": {
+        "role": "secondary",
+        "displayName": "Ink Light",
+        "canonical": "oklch(0.78 0.06 277)",
+        "tonalRamp": [
+          "oklch(0.30 0.06 277)",
+          "oklch(0.40 0.07 277)",
+          "oklch(0.55 0.07 277)",
+          "oklch(0.65 0.07 277)",
+          "oklch(0.78 0.06 277)",
+          "oklch(0.85 0.04 277)",
+          "oklch(0.90 0.03 277)",
+          "oklch(0.95 0.01 277)"
+        ]
+      },
+      "tertiary": {
+        "role": "tertiary",
+        "displayName": "Amber Warning",
+        "canonical": "oklch(0.50 0.15 60)",
+        "tonalRamp": [
+          "oklch(0.20 0.08 60)",
+          "oklch(0.30 0.10 60)",
+          "oklch(0.40 0.13 60)",
+          "oklch(0.50 0.15 60)",
+          "oklch(0.58 0.13 60)",
+          "oklch(0.68 0.10 60)",
+          "oklch(0.78 0.06 60)",
+          "oklch(0.90 0.03 60)"
+        ]
+      },
+      "tertiary-container": {
+        "role": "tertiary",
+        "displayName": "Amber Container",
+        "canonical": "oklch(0.55 0.15 55)",
+        "tonalRamp": [
+          "oklch(0.22 0.08 55)",
+          "oklch(0.32 0.10 55)",
+          "oklch(0.42 0.13 55)",
+          "oklch(0.50 0.15 55)",
+          "oklch(0.58 0.12 55)",
+          "oklch(0.68 0.09 55)",
+          "oklch(0.78 0.05 55)",
+          "oklch(0.90 0.02 55)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Page",
+        "canonical": "oklch(0.98 0.008 300)",
+        "tonalRamp": [
+          "oklch(0.20 0.005 300)",
+          "oklch(0.30 0.005 300)",
+          "oklch(0.50 0.005 300)",
+          "oklch(0.70 0.005 300)",
+          "oklch(0.85 0.005 300)",
+          "oklch(0.92 0.005 300)",
+          "oklch(0.96 0.005 300)",
+          "oklch(0.98 0.008 300)"
+        ]
+      },
+      "on-surface": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.14 0.01 270)",
+        "tonalRamp": [
+          "oklch(0.10 0.01 270)",
+          "oklch(0.14 0.01 270)",
+          "oklch(0.25 0.01 270)",
+          "oklch(0.35 0.01 270)",
+          "oklch(0.45 0.01 270)",
+          "oklch(0.55 0.01 270)",
+          "oklch(0.70 0.01 270)",
+          "oklch(0.85 0.01 270)"
+        ]
+      },
+      "destructive": {
+        "role": "destructive",
+        "displayName": "Destructive Red",
+        "canonical": "oklch(0.55 0.22 25)",
+        "tonalRamp": [
+          "oklch(0.20 0.10 25)",
+          "oklch(0.30 0.14 25)",
+          "oklch(0.40 0.18 25)",
+          "oklch(0.50 0.22 25)",
+          "oklch(0.58 0.20 25)",
+          "oklch(0.68 0.15 25)",
+          "oklch(0.78 0.10 25)",
+          "oklch(0.90 0.04 25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headlines, dashboard greetings, high-impact numbers. Used once per view."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Primary section headers. The workhorse heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles, drawer headings. Clear but not shouting."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Primary reading text. Comfortable at 0.875rem for daily use."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels, metadata, chips. ALL CAPS with 0.05em tracking. Functional, not decorative."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions."
+      },
+      {
+        "name": "spring-tab",
+        "value": "spring(stiffness: 500, damping: 22)",
+        "purpose": "Bottom nav active tab indicator animation."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action button. Violet background, white text, full pill shape.",
+      "html": "<button class=\"ds-btn-primary\">Create Student</button>",
+      "css": ".ds-btn-primary { background: #6C63FF; color: #FFFFFF; padding: 10px 16px; border-radius: 9999px; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-primary:hover { background: #675DF9; } .ds-btn-primary:focus-visible { outline: 3px solid rgba(108, 99, 255, 0.5); outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Default action button. Transparent with input border. Used for most interactions.",
+      "html": "<button class=\"ds-btn-outline\">View Details</button>",
+      "css": ".ds-btn-outline { background: transparent; color: #1B1B24; padding: 10px 16px; border-radius: 9999px; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 500; border: 1px solid #C7C4D8; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-outline:hover { background: rgba(199, 196, 216, 0.3); } .ds-btn-outline:focus-visible { outline: 3px solid rgba(108, 99, 255, 0.5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Tinted red background. For delete and dangerous actions. Never a solid red block.",
+      "html": "<button class=\"ds-btn-destructive\">Delete</button>",
+      "css": ".ds-btn-destructive { background: rgba(212, 66, 61, 0.1); color: #D4423D; padding: 10px 16px; border-radius: 9999px; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-destructive:hover { background: rgba(212, 66, 61, 0.2); } .ds-btn-destructive:focus-visible { outline: 3px solid rgba(212, 66, 61, 0.3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White surface with 1px border. The primary container for content. Border shifts to primary on hover.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Student Name</h3><p class=\"ds-card-body\">Grade 10</p></div>",
+      "css": ".ds-card { background: #FFFFFF; border: 1px solid #C7C4D8; border-radius: 16px; padding: 16px; transition: border-color 0.15s ease-out; cursor: pointer; } .ds-card:hover { border-color: #6C63FF; } .ds-card-title { font-family: Manrope, sans-serif; font-size: 1.375rem; font-weight: 600; color: #1B1B24; margin: 0 0 8px 0; } .ds-card-body { font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 400; color: #464555; margin: 0; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Full pill input with tinted background. Focus state adds primary border and ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search students...\" />",
+      "css": ".ds-input { background: rgba(199, 196, 216, 0.3); color: #1B1B24; padding: 8px 12px; border-radius: 9999px; border: 1px solid #C7C4D8; font-family: Manrope, sans-serif; font-size: 0.875rem; width: 100%; outline: none; transition: border-color 0.15s ease-out; box-sizing: border-box; } .ds-input::placeholder { color: #777587; } .ds-input:focus { border: 2px solid #6C63FF; box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.4); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge-default",
+      "description": "Full pill badge. Primary for active states, outline for metadata.",
+      "html": "<span class=\"ds-badge-primary\">10h remaining</span> <span class=\"ds-badge-outline\">Grade 10</span>",
+      "css": ".ds-badge-primary { background: #6C63FF; color: #FFFFFF; padding: 2px 8px; border-radius: 9999px; font-family: Manrope, sans-serif; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; } .ds-badge-outline { background: rgba(199, 196, 216, 0.3); color: #1B1B24; padding: 2px 8px; border-radius: 9999px; font-family: Manrope, sans-serif; font-size: 0.75rem; font-weight: 700; border: 1px solid #C7C4D8; display: inline-flex; align-items: center; gap: 4px; }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "bottom-nav",
+      "description": "Fixed bottom nav with rounded top corners. Active tab gets primary color with spring animation.",
+      "html": "<nav class=\"ds-bottom-nav\"><a class=\"ds-nav-item active\" href=\"#\"><span>Home</span></a><a class=\"ds-nav-item\" href=\"#\"><span>Students</span></a></nav>",
+      "css": ".ds-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #FFFFFF; border-radius: 16px 16px 0 0; padding: 12px 16px 24px; display: flex; justify-content: space-around; z-index: 50; } .ds-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: #777587; font-family: Manrope, sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.15s ease-out; padding: 4px 16px; border-radius: 12px; } .ds-nav-item.active { color: #6C63FF; background: rgba(108, 99, 255, 0.06); } .ds-nav-item:hover { color: #6C63FF; }"
+    },
+    {
+      "name": "Avatar",
+      "kind": "custom",
+      "refersTo": "avatar",
+      "description": "Circle avatar with accent background and initials fallback.",
+      "html": "<div class=\"ds-avatar\"><span>AB</span></div>",
+      "css": ".ds-avatar { width: 40px; height: 40px; border-radius: 9999px; background: #F6F2FF; color: #1B1B24; display: flex; align-items: center; justify-content: center; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 600; flex-shrink: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Scholar's Desk",
+    "overview": "TutorPal is a tutoring management tool for private tutors who juggle students, classes, and schedules. The design system embraces Modern Functionalism — a high-contrast, mathematically precise aesthetic stripped of visual noise. No gradients, no transparency, no decorative depth. Sophistication comes from masterful control of white space, bold Manrope typography, and a Border-First architectural logic. This system explicitly rejects the corporate spreadsheet look and the SaaS-cream AI default. TutorPal feels like a well-organized desk — warm, precise, calm — not accounting software or a generic dashboard.",
+    "keyCharacteristics": [
+      "Border-first architecture: solid 1px outlines create hierarchy, not shadows or gradients",
+      "Surface color shifts for depth: layering solid blocks of color, not elevation",
+      "Bold Manrope typography: high-contrast headlines, scannable body text",
+      "Warm violet identity: #6C63FF as the singular accent, used with restraint",
+      "Clean & restrained components: content does the talking, surfaces stay quiet"
+    ],
+    "rules": [
+      {
+        "name": "The Solid Boundary Rule",
+        "body": "No gradients, no transparency (except disabled states), no standard box-shadows. Depth is communicated through surface color layering and solid 1px borders. The system is unapologetically flat.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Accent Rule",
+        "body": "The primary violet is used on ≤10% of any given screen. Its rarity creates hierarchy. When in doubt, use a neutral surface shift instead of adding more purple.",
+        "section": "colors"
+      },
+      {
+        "name": "The Label Restraint Rule",
+        "body": "The uppercase label style is used for functional metadata (form labels, chip text, nav labels), not as a decorative kicker above every section heading. One label per context, not a uniform scaffold.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "Standard box-shadow is prohibited. If an element needs to feel elevated, make it lighter (shift toward white) or add a 2px border in the primary color for active states. Depth through color, not lighting effects.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use solid 1px borders for all card and input outlines. The border IS the design.",
+      "Do use surface color shifts (page → section → card → float) for depth hierarchy.",
+      "Do use the primary violet sparingly — one accent per view, rare enough to create hierarchy.",
+      "Do use Manrope weight contrast (400/600/700/800) for typographic hierarchy instead of size alone.",
+      "Do use full pill shapes for buttons, badges, and inputs. Confident and approachable.",
+      "Do use ALL CAPS labels (0.05em tracking) for functional metadata only — form labels, chip text, nav labels.",
+      "Do use tertiary (#914800) for urgent notifications — sophisticated warmth vs harsh red.",
+      "Do use 16px border-radius on cards and modals. Gentle curve, never boxy."
+    ],
+    "donts": [
+      "Don't use gradients of any kind — even subtle ones. The system is unapologetically flat.",
+      "Don't use standard box-shadow for elevation. Use surface color shifts instead.",
+      "Don't use pure black (#000000) for text — always use on-surface (#1B1B24).",
+      "Don't use transparency (alpha < 100%) except for disabled states and tinted backgrounds.",
+      "Don't use border-left or border-right greater than 1px as a colored stripe. Never intentional.",
+      "Don't use glassmorphism, backdrop-blur, or decorative transparency. Purposeful only.",
+      "Don't use corporate spreadsheet layouts — dense data tables, monochrome grids, overwhelming numbers.",
+      "Don't use the SaaS-cream AI default — warm beige backgrounds, soft shadows, gradient accents.",
+      "Don't put uppercase label kicker text above every section heading. One label per context, not a uniform scaffold.",
+      "Don't use 32px+ border-radius on cards. Cards top out at 16px; full pill is for buttons and badges.",
+      "Don't pair 1px border + box-shadow with blur ≥ 16px on the same element. Pick one, never both."
+    ]
+  }
+}

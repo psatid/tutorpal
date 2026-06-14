@@ -1,5 +1,6 @@
 import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,7 +31,7 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
     .slice(0, 2);
 
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
       onClick={onView}
@@ -40,7 +41,10 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
           onView();
         }
       }}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
+      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card text-left group border border-outline-variant cursor-pointer"
+      whileHover={{ borderColor: "var(--color-primary)" }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
     >
       <Avatar size="lg">
         <AvatarFallback className="bg-accent text-on-primary-container font-semibold">
@@ -97,6 +101,6 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+    </motion.div>
   );
 }

@@ -14,6 +14,7 @@ export default {
   phone: "Phone",
   sort: {
     label: "Sort by",
+    sortedBy: "Sorted by",
     nameAsc: "Name (A-Z)",
     nameDesc: "Name (Z-A)",
     gradeAsc: "Grade (Low to High)",
