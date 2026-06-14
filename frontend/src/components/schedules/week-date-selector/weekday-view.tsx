@@ -44,18 +44,14 @@ export function WeekdayView({
   };
 
   return (
-    <div className={cn("py-3", className)}>
+    <div className={cn("py-3 px-1", className)}>
       <div
         ref={containerRef}
         className="relative overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          custom={slideDirection}
-        >
+        <AnimatePresence mode="sync" initial={false} custom={slideDirection}>
           <motion.div
             key={dates[0]?.getTime()}
             variants={weekSlideVariants}
@@ -81,25 +77,30 @@ export function WeekdayView({
                   type="button"
                   onClick={() => onDateSelect(date)}
                   className={cn(
-                    "aspect-3/4 flex flex-col items-center justify-center gap-0.5 rounded-[16px] transition-all relative py-1",
+                    "aspect-square flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-150 py-1.5",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1",
                     isSelected
-                      ? "bg-primary/90 text-primary-foreground shadow-md"
-                      : "bg-card border border-input text-on-surface hover:bg-surface-variant/50",
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card border border-outline-variant text-on-surface hover:bg-surface-variant/50",
                   )}
                   aria-label={`${dayName} ${dayNumber}${
                     isDateToday ? ` (${t("schedules:weekSelector.today")})` : ""
                   }${isSelected ? " (selected)" : ""}`}
                   tabIndex={0}
-                  whileTap={{ scale: 0.97 }}
+                  whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.1 }}
                 >
-                  <span className="text-[10px] font-medium leading-tight">
+                  <span className="text-[10px] font-medium leading-tight opacity-70">
                     {monthName}
                   </span>
                   <span
                     className={cn(
-                      "w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold leading-none",
-                      isSelected ? "bg-white text-primary" : "text-on-surface",
+                      "w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold leading-none",
+                      isSelected
+                        ? "bg-white text-primary"
+                        : isDateToday
+                          ? "text-on-surface ring-2 ring-primary/40 ring-offset-1"
+                          : "text-on-surface",
                     )}
                   >
                     {dayNumber}
@@ -114,10 +115,6 @@ export function WeekdayView({
                   >
                     {dayName}
                   </span>
-
-                  {isDateToday && !isSelected && (
-                    <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
-                  )}
                 </motion.button>
               );
             })}

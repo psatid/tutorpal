@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   startOfWeek,
@@ -25,6 +26,7 @@ export function WeekDateSelector({
   onDateSelect,
   className,
 }: WeekDateSelectorProps) {
+  const { t } = useTranslation(["schedules"]);
   const [isCalendarDrawerOpen, setIsCalendarDrawerOpen] = useState(false);
   const [slideDirection, setSlideDirection] = useState(0);
 
@@ -98,41 +100,42 @@ export function WeekDateSelector({
   };
 
   return (
-    <div className={cn("bg-surface rounded-2xl mb-4 overflow-hidden", className)}>
-      <div className="px-4 py-3 border-b border-outline-variant">
+    <div className={cn("bg-surface rounded-2xl mb-4 overflow-hidden border border-outline-variant", className)}>
+      <div className="px-3 py-2.5 border-b border-outline-variant">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-xs"
               onClick={handlePrevWeek}
               aria-label="Previous week"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-xs"
               onClick={handleNextWeek}
               aria-label="Next week"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
             </Button>
             <button
               type="button"
               onClick={handleMonthClick}
-              className="px-3 py-1.5 rounded-lg hover:bg-surface-variant/50 transition-colors font-headline font-semibold text-lg text-on-surface"
+              aria-label={t("schedules:weekSelector.openCalendar", { month: monthLabel })}
+              className="px-2 py-1 rounded-lg hover:bg-surface-variant/50 transition-colors font-headline font-semibold text-base text-on-surface cursor-pointer"
             >
               {monthLabel}
             </button>
           </div>
           <Button
             variant="ghost"
-            size="sm"
+            size="xs"
             onClick={handleToday}
             leftIcon={CalendarDays}
           >
-            Today
+            {t("schedules:weekSelector.today")}
           </Button>
         </div>
       </div>

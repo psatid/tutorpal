@@ -117,5 +117,6 @@ export default {
 		previousWeek: "Previous week",
 		nextWeek: "Next week",
 		today: "Today",
+		openCalendar: "Open calendar for {{month}}",
 	},
 } as const;
