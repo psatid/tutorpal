@@ -1,13 +1,12 @@
-import { AppError } from "../lib/error";
+import type { Weekday } from "@prisma/client";
 import { prisma } from "../lib/db";
+import { AppError } from "../lib/error";
 import { classRepository } from "../repositories";
 import type {
 	CreateScheduleDTO,
 	IScheduleRepository,
-	RecurringScheduleDTO,
 	ScheduleDTO,
 	UpdateScheduleDTO,
-	Weekday,
 } from "../types";
 
 export class ScheduleService {
@@ -28,6 +27,13 @@ export class ScheduleService {
 			return this.createRecurringSchedule(data);
 		}
 
+		if (data.time === undefined || data.durationMinutes === undefined) {
+			throw AppError.badRequest(
+				"INVALID_SCHEDULE",
+				"Time and duration are required for one-time schedules",
+			);
+		}
+
 		// Validate and reserve hours for the schedule
 		const hoursNeeded = data.durationMinutes / 60;
 		const hasEnoughHours = await this.repository.validateAndReserveHours(
@@ -46,22 +52,26 @@ export class ScheduleService {
 	}
 
 	private async createRecurringSchedule(
-		data: CreateScheduleDTO
+		data: CreateScheduleDTO,
 	): Promise<ScheduleDTO> {
-		const { classId, durationMinutes, notes, recurring } = data;
+		const { classId, notes, recurring } = data;
 		if (!recurring) {
 			throw new Error("Recurring pattern is required");
 		}
 
 		// Validate class has remaining hours BEFORE transaction
 		const remainingHours = await this.repository.getRemainingHours(classId);
-		const durationInHours = durationMinutes / 60;
-		const maxSchedules = Math.floor(remainingHours / durationInHours);
+		const scheduleData = this.generateScheduleData(
+			classId,
+			recurring.startDate,
+			recurring.scheduleItems,
+			remainingHours,
+		);
 
-		if (maxSchedules < 1) {
+		if (scheduleData.length < 1) {
 			throw AppError.badRequest(
 				"INSUFFICIENT_HOURS",
-				"The class does not have enough remaining hours to create any schedule"
+				"The class does not have enough remaining hours to create any schedule",
 			);
 		}
 
@@ -72,7 +82,6 @@ export class ScheduleService {
 				data: {
 					classId,
 					startDate: new Date(recurring.startDate),
-					durationMinutes,
 					notes: notes || null,
 				},
 				include: { class: true },
@@ -84,17 +93,9 @@ export class ScheduleService {
 					recurringScheduleId: recurringSchedule.id,
 					weekday: item.weekday,
 					time: item.time,
+					durationMinutes: item.durationMinutes,
 				})),
 			});
-
-			// 3. Generate schedule instances (bulk insert)
-			const scheduleData = this.generateScheduleData(
-				classId,
-				durationMinutes,
-				recurring.startDate,
-				recurring.scheduleItems,
-				maxSchedules
-			);
 
 			// Bulk insert all schedules at once
 			if (scheduleData.length > 0) {
@@ -103,7 +104,7 @@ export class ScheduleService {
 						classId,
 						date: new Date(item.date),
 						time: item.time,
-						durationMinutes,
+						durationMinutes: item.durationMinutes,
 						notes: notes || null,
 						status: "SCHEDULED",
 					})),
@@ -143,53 +144,57 @@ export class ScheduleService {
 
 	private generateScheduleData(
 		classId: string,
-		durationMinutes: number,
 		startDate: string,
-		items: Array<{ weekday: Weekday; time: number }>,
-		maxSchedules: number
-	): Array<{ classId: string; date: string; time: number }> {
+		items: Array<{ weekday: Weekday; time: number; durationMinutes: number }>,
+		remainingHours: number,
+	): Array<{
+		classId: string;
+		date: string;
+		time: number;
+		durationMinutes: number;
+	}> {
 		const scheduleData: Array<{
 			classId: string;
 			date: string;
 			time: number;
+			durationMinutes: number;
 		}> = [];
 		let currentDate = new Date(startDate);
+		let remainingMinutes = Math.max(0, Math.round(remainingHours * 60));
 
-		const weekdayOrder = [
-			"MONDAY",
-			"TUESDAY",
-			"WEDNESDAY",
-			"THURSDAY",
-			"FRIDAY",
-			"SATURDAY",
-			"SUNDAY",
-		];
-		const sortedItems = [...items].sort(
-			(a, b) =>
-				weekdayOrder.indexOf(a.weekday) - weekdayOrder.indexOf(b.weekday)
-		);
+		while (remainingMinutes > 0) {
+			const nextOccurrence = items
+				.map((item) => ({
+					item,
+					date: this.getNextDateForWeekday(currentDate, item.weekday),
+				}))
+				.sort((a, b) => {
+					const dateDiff = a.date.getTime() - b.date.getTime();
+					if (dateDiff !== 0) {
+						return dateDiff;
+					}
 
-		let generatedCount = 0;
+					return a.item.time - b.item.time;
+				})[0];
 
-		while (generatedCount < maxSchedules) {
-			for (const item of sortedItems) {
-				if (generatedCount >= maxSchedules) break;
-
-				const nextDate = this.getNextDateForWeekday(
-					currentDate,
-					item.weekday
-				);
-
-				scheduleData.push({
-					classId,
-					date: nextDate.toISOString().split("T")[0],
-					time: item.time,
-				});
-
-				generatedCount++;
-				currentDate = new Date(nextDate);
-				currentDate.setDate(currentDate.getDate() + 1);
+			if (!nextOccurrence) {
+				break;
 			}
+
+			if (nextOccurrence.item.durationMinutes > remainingMinutes) {
+				return scheduleData;
+			}
+
+			scheduleData.push({
+				classId,
+				date: nextOccurrence.date.toISOString().split("T")[0],
+				time: nextOccurrence.item.time,
+				durationMinutes: nextOccurrence.item.durationMinutes,
+			});
+
+			remainingMinutes -= nextOccurrence.item.durationMinutes;
+			currentDate = new Date(nextOccurrence.date);
+			currentDate.setDate(currentDate.getDate() + 1);
 		}
 
 		return scheduleData;
@@ -223,7 +228,10 @@ export class ScheduleService {
 		return date;
 	}
 
-	async getAllSchedules(query?: { date?: string; search?: string }): Promise<ScheduleDTO[]> {
+	async getAllSchedules(query?: {
+		date?: string;
+		search?: string;
+	}): Promise<ScheduleDTO[]> {
 		return this.repository.findAll(query);
 	}
 

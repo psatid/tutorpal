@@ -11,10 +11,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react(), tanstackRouter(), tailwindcss()],
   server: {
-    port: 3001,
+    port: 5173,
     proxy: {
       "/v1": {
-        target: "http://localhost:3000",
+        target: "http://localhost:5174",
         changeOrigin: true,
         secure: false,
       },

@@ -18,8 +18,8 @@ export interface ScheduleDTO {
 export interface CreateScheduleDTO {
 	classId: string;
 	date: string; // ISO date string (YYYY-MM-DD)
-	time: number; // Minutes since midnight
-	durationMinutes: number;
+	time?: number; // Minutes since midnight
+	durationMinutes?: number;
 	notes?: string;
 	status?: ScheduleStatus;
 	recurring?: RecurringPattern;
@@ -30,6 +30,7 @@ export interface RecurringPattern {
 	scheduleItems: Array<{
 		weekday: Weekday;
 		time: number; // Minutes since midnight
+		durationMinutes: number;
 	}>;
 }
 
@@ -53,7 +54,6 @@ export interface RecurringScheduleDTO {
 	classId: string;
 	className: string;
 	startDate: string;
-	durationMinutes: number;
 	notes: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -64,12 +64,20 @@ export interface RecurringScheduleItemDTO {
 	id: string;
 	weekday: Weekday;
 	time: number;
+	durationMinutes: number;
 }
 
 // Repository interface - abstract data access
 export interface IScheduleRepository {
 	create(data: CreateScheduleDTO): Promise<ScheduleDTO>;
-	createMany(data: Array<Omit<CreateScheduleDTO, 'notes' | 'status'>>): Promise<ScheduleDTO[]>;
+	createMany(
+		data: Array<{
+			classId: string;
+			date: string;
+			time: number;
+			durationMinutes: number;
+		}>,
+	): Promise<ScheduleDTO[]>;
 	findAll(query?: ScheduleListQueryDTO): Promise<ScheduleDTO[]>;
 	findById(id: string): Promise<ScheduleDTO | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO>;
@@ -79,10 +87,13 @@ export interface IScheduleRepository {
 	restoreHours(id: string): Promise<ScheduleDTO>;
 	getRemainingHours(classId: string): Promise<number>;
 	createRecurringSchedule(
-		data: Omit<RecurringScheduleDTO, 'id' | 'className' | 'createdAt' | 'updatedAt'>
+		data: Omit<
+			RecurringScheduleDTO,
+			"id" | "className" | "createdAt" | "updatedAt"
+		>,
 	): Promise<RecurringScheduleDTO>;
 	createRecurringScheduleItems(
 		recurringScheduleId: string,
-		items: Array<{ weekday: Weekday; time: number }>
+		items: Array<{ weekday: Weekday; time: number; durationMinutes: number }>,
 	): Promise<RecurringScheduleItemDTO[]>;
 }
