@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import {
   Avatar,
   AvatarFallback,
@@ -6,6 +5,7 @@ import {
   AvatarGroupCount,
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { InfoCard } from "@/components/ui/info-card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,23 +31,9 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
   const remainingStudents = classData.students.length - 3;
 
   return (
-    <motion.div
-      role="button"
-      tabIndex={0}
-      onClick={onView}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onView();
-        }
-      }}
-      className="w-full flex items-start gap-4 p-4 rounded-xl bg-card text-left group border border-outline-variant cursor-pointer"
-      whileHover={{ borderColor: "var(--color-primary)" }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-    >
-      <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-2">
+    <InfoCard onClick={onView}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
           <p className="font-medium text-on-surface truncate">
             {classData.name}
           </p>
@@ -60,8 +46,6 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
                 })
               : t("classes:hours", { hours: classData.totalHours })}
           </Badge>
-        </div>
-        <div className="flex items-center gap-2">
           <AvatarGroup className="shrink-0">
             {displayedStudents.map((student) => (
               <Avatar key={student.id} size="sm">
@@ -74,7 +58,7 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
               <AvatarGroupCount>+{remainingStudents}</AvatarGroupCount>
             )}
           </AvatarGroup>
-          <span className="text-sm text-on-surface-variant">
+          <span className="text-sm text-on-surface-variant shrink-0">
             {t("classes:students", { count: classData.students.length })}
           </span>
         </div>
@@ -101,6 +85,6 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </motion.div>
+    </InfoCard>
   );
 }

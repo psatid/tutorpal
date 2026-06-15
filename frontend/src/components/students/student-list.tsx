@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoCard } from "@/components/ui/info-card";
 import { useDeleteStudent } from "@/hooks/mutations/use-delete-student";
 import { useGenerateLineLink } from "@/hooks/mutations/use-generate-line-link";
 import { useSendLineTestMessage } from "@/hooks/mutations/use-send-line-test-message";
@@ -130,10 +131,7 @@ export function StudentList({
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className="w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-outline-variant"
-          >
+          <InfoCard key={i}>
             <Skeleton className="w-10 h-10 rounded-full shrink-0" />
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center gap-2">
@@ -142,7 +140,7 @@ export function StudentList({
               </div>
               <Skeleton className="h-3 w-20" />
             </div>
-          </div>
+          </InfoCard>
         ))}
       </div>
     );

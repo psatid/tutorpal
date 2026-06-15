@@ -8,6 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { InfoCard } from "@/components/ui/info-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -42,18 +43,7 @@ export function ScheduleCard({
   const endTime = formatTime24Hour(scheduleEndTime);
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onView}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onView();
-        }
-      }}
-      className="w-full flex items-center gap-3 p-4 rounded-xl bg-card hover:bg-surface-container transition-colors text-left group border border-outline-variant cursor-pointer"
-    >
+    <InfoCard onClick={onView}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-medium text-on-surface truncate">
@@ -147,6 +137,6 @@ export function ScheduleCard({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+    </InfoCard>
   );
 }

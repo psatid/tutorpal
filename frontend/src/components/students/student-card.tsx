@@ -1,8 +1,8 @@
 import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { InfoCard } from "@/components/ui/info-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -31,21 +31,7 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
     .slice(0, 2);
 
   return (
-    <motion.div
-      role="button"
-      tabIndex={0}
-      onClick={onView}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onView();
-        }
-      }}
-      className="w-full flex items-center gap-4 p-4 rounded-xl bg-card text-left group border border-outline-variant cursor-pointer"
-      whileHover={{ borderColor: "var(--color-primary)" }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-    >
+    <InfoCard onClick={onView}>
       <Avatar size="lg">
         <AvatarFallback className="bg-primary text-white font-semibold">
           {initials}
@@ -101,6 +87,6 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </motion.div>
+    </InfoCard>
   );
 }

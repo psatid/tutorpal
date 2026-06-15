@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoCard } from "@/components/ui/info-card";
 import { useDeleteClass } from "@/hooks/mutations/use-delete-class";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { ClassCard } from "@/components/classes/class-card";
@@ -64,10 +65,7 @@ export function ClassList({
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className="w-full flex items-start gap-4 p-4 rounded-xl bg-card border border-outline-variant"
-          >
+          <InfoCard key={i}>
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-5 w-32" />
@@ -80,7 +78,7 @@ export function ClassList({
                 <Skeleton className="h-4 w-16" />
               </div>
             </div>
-          </div>
+          </InfoCard>
         ))}
       </div>
     );
