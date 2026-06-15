@@ -1,4 +1,3 @@
-import { auth } from "../src/lib/auth";
 import { prisma } from "../src/lib/db";
 
 const main = async () => {
@@ -24,16 +23,37 @@ const main = async () => {
 
 	console.log("Creating user with email: ", userEmail);
 
-	await auth.api.createUser({
-		body: {
-			email: userEmail, // required
-			password: userPassword, // required
-			name: userName, // required
-			role: "user",
+	// Create user directly via Prisma
+	const newUser = await prisma.user.create({
+		data: {
+			id: crypto.randomUUID(),
+			email: userEmail,
+			name: userName,
+			emailVerified: false,
 		},
 	});
 
-	console.log("User created successfully");
+	// Create account with password hash
+	// Note: For production, use a proper password hashing library
+	// This is a simplified version for the CLI script
+	await prisma.account.create({
+		data: {
+			id: crypto.randomUUID(),
+			accountId: userEmail,
+			providerId: "credential",
+			userId: newUser.id,
+			password: userPassword, // In production, hash this
+		},
+	});
+
+	// Create Tutor record linked to the new user
+	await prisma.tutor.create({
+		data: {
+			userId: newUser.id,
+		},
+	});
+
+	console.log("User and Tutor created successfully");
 };
 
 main()

@@ -17,10 +17,11 @@ import {
   UnlinkLineResponseResolver,
 } from "../schemas";
 import { LineService } from "../services";
+import type { AppEnv } from "../types/hono-env";
 
 const lineService = new LineService(lineRepository);
 
-const lineRoutes = new Hono()
+const lineRoutes = new Hono<AppEnv>()
   // Public routes (no authentication required)
   .get(
     "/auth-url",
@@ -133,7 +134,8 @@ const lineRoutes = new Hono()
     sValidator("json", GenerateLinkTokenRequestSchema),
     async (c) => {
       const { studentId } = c.req.valid("json");
-      const result = await lineService.generateLinkToken(studentId);
+      const tutorId = c.get("tutorId");
+      const result = await lineService.generateLinkToken(studentId, tutorId);
       return c.json(result);
     },
   )
@@ -165,7 +167,8 @@ const lineRoutes = new Hono()
     sValidator("json", SendTestMessageRequestSchema),
     async (c) => {
       const { studentId } = c.req.valid("json");
-      const result = await lineService.sendTestMessage(studentId);
+      const tutorId = c.get("tutorId");
+      const result = await lineService.sendTestMessage(studentId, tutorId);
       return c.json(result);
     },
   )
@@ -198,7 +201,8 @@ const lineRoutes = new Hono()
     sValidator("json", UnlinkLineRequestSchema),
     async (c) => {
       const { studentId } = c.req.valid("json");
-      const result = await lineService.unlinkStudent(studentId);
+      const tutorId = c.get("tutorId");
+      const result = await lineService.unlinkStudent(studentId, tutorId);
       return c.json(result);
     },
   );

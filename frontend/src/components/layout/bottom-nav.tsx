@@ -50,7 +50,11 @@ export function BottomNav() {
       >
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.href;
+          const isActive =
+            item.href === "/"
+              ? location.pathname === "/"
+              : location.pathname === item.href ||
+                location.pathname.startsWith(item.href + "/");
 
           return (
             <Link

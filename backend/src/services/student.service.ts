@@ -17,36 +17,37 @@ export class StudentService {
 	}
 
 	async getAllStudents(
+		tutorId: string,
 		params?: PaginationParams,
 	): Promise<PaginatedResponse<StudentDTO>> {
-		return this.repository.findAll(params);
+		return this.repository.findAll(tutorId, params);
 	}
 
-	async getStudentById(id: string): Promise<StudentDetailDTO> {
-		const student = await this.repository.findById(id);
+	async getStudentById(id: string, tutorId: string): Promise<StudentDetailDTO> {
+		const student = await this.repository.findById(id, tutorId);
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
 		}
 		return student;
 	}
 
-	async updateStudent(id: string, data: UpdateStudentDTO): Promise<StudentDTO> {
+	async updateStudent(id: string, tutorId: string, data: UpdateStudentDTO): Promise<StudentDTO> {
 		// Check if student exists first
-		const existingStudent = await this.repository.findById(id);
+		const existingStudent = await this.repository.findById(id, tutorId);
 		if (!existingStudent) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
 		}
 
-		return this.repository.update(id, data);
+		return this.repository.update(id, tutorId, data);
 	}
 
-	async deleteStudent(id: string): Promise<void> {
+	async deleteStudent(id: string, tutorId: string): Promise<void> {
 		// Check if student exists first
-		const existingStudent = await this.repository.findById(id);
+		const existingStudent = await this.repository.findById(id, tutorId);
 		if (!existingStudent) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
 		}
 
-		await this.repository.delete(id);
+		await this.repository.delete(id, tutorId);
 	}
 }

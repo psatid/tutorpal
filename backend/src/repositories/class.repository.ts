@@ -11,6 +11,7 @@ import type { PaginatedResponse, PaginationParams } from "../types/pagination.ty
 function toDTO(
 	classData: {
 		id: string;
+		tutorId: string;
 		name: string;
 		totalHours: number;
 		createdAt: Date;
@@ -28,6 +29,7 @@ function toDTO(
 ): ClassDTO {
 	return {
 		id: classData.id,
+		tutorId: classData.tutorId,
 		name: classData.name,
 		totalHours: classData.totalHours,
 		students: classData.students.map((enrollment) => ({
@@ -46,6 +48,7 @@ export class ClassRepository implements IClassRepository {
 	async create(data: CreateClassDTO): Promise<ClassDTO> {
 		const classData = await prisma.class.create({
 			data: {
+				tutorId: data.tutorId,
 				name: data.name,
 				totalHours: data.totalHours,
 				students:
@@ -74,6 +77,7 @@ export class ClassRepository implements IClassRepository {
 	}
 
 	async findAll(
+		tutorId: string,
 		params?: PaginationParams,
 	): Promise<PaginatedResponse<ClassDTO>> {
 		const page = params?.page || 1;
@@ -83,12 +87,13 @@ export class ClassRepository implements IClassRepository {
 		const sortBy = params?.sortBy || "createdAt";
 		const sortOrder = params?.sortOrder || "desc";
 
-		// Build where clause for search (only name)
-		const where = search
-			? {
-					name: { contains: search, mode: "insensitive" as const },
-				}
-			: undefined;
+		// Build where clause for search (only name) with tutor scoping
+		const where = {
+			tutorId,
+			...(search
+				? { name: { contains: search, mode: "insensitive" as const } }
+				: {}),
+		};
 
 		// Get total count matching the search criteria
 		const total = await prisma.class.count({ where });
@@ -144,9 +149,9 @@ export class ClassRepository implements IClassRepository {
 		};
 	}
 
-	async findById(id: string): Promise<ClassDTO | null> {
-		const classData = await prisma.class.findUnique({
-			where: { id },
+	async findById(id: string, tutorId: string): Promise<ClassDTO | null> {
+		const classData = await prisma.class.findFirst({
+			where: { id, tutorId },
 			include: {
 				students: {
 					include: {
@@ -178,7 +183,7 @@ export class ClassRepository implements IClassRepository {
 		return toDTO(classData, remainingHours);
 	}
 
-	async update(id: string, data: UpdateClassDTO): Promise<ClassDTO> {
+	async update(id: string, tutorId: string, data: UpdateClassDTO): Promise<ClassDTO> {
 		// Handle student enrollment updates if studentIds is provided
 		if (data.studentIds !== undefined) {
 			// Delete existing enrollments
@@ -198,7 +203,7 @@ export class ClassRepository implements IClassRepository {
 		}
 
 		const classData = await prisma.class.update({
-			where: { id },
+			where: { id, tutorId },
 			data: {
 				...(data.name !== undefined && { name: data.name }),
 				...(data.totalHours !== undefined && { totalHours: data.totalHours }),
@@ -230,9 +235,9 @@ export class ClassRepository implements IClassRepository {
 		return toDTO(classData, remainingHours);
 	}
 
-	async delete(id: string): Promise<void> {
+	async delete(id: string, tutorId: string): Promise<void> {
 		await prisma.class.delete({
-			where: { id },
+			where: { id, tutorId },
 		});
 	}
 }

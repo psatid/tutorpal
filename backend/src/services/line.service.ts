@@ -12,9 +12,9 @@ import type { ILineRepository } from "../types";
 export class LineService {
 	constructor(private readonly repository: ILineRepository) {}
 
-	async generateLinkToken(studentId: string) {
-		const student = await prisma.student.findUnique({
-			where: { id: studentId },
+	async generateLinkToken(studentId: string, tutorId: string) {
+		const student = await prisma.student.findFirst({
+			where: { id: studentId, tutorId },
 		});
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
@@ -85,9 +85,9 @@ export class LineService {
 		return { success: true, displayName: profile.displayName };
 	}
 
-	async sendTestMessage(studentId: string) {
-		const student = await prisma.student.findUnique({
-			where: { id: studentId },
+	async sendTestMessage(studentId: string, tutorId: string) {
+		const student = await prisma.student.findFirst({
+			where: { id: studentId, tutorId },
 		});
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
@@ -109,9 +109,9 @@ export class LineService {
 		return { sent: true };
 	}
 
-	async unlinkStudent(studentId: string) {
-		const student = await prisma.student.findUnique({
-			where: { id: studentId },
+	async unlinkStudent(studentId: string, tutorId: string) {
+		const student = await prisma.student.findFirst({
+			where: { id: studentId, tutorId },
 		});
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");

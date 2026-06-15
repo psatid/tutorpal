@@ -13,6 +13,7 @@ import type {
 // Helper to convert Prisma Date to ISO string
 function toDTO(student: {
 	id: string;
+	tutorId: string;
 	name: string;
 	phoneNumber: string | null;
 	grade: number;
@@ -22,6 +23,7 @@ function toDTO(student: {
 }): StudentDTO {
 	return {
 		id: student.id,
+		tutorId: student.tutorId,
 		name: student.name,
 		phoneNumber: student.phoneNumber,
 		grade: student.grade,
@@ -35,6 +37,7 @@ export class StudentRepository implements IStudentRepository {
 	async create(data: CreateStudentDTO): Promise<StudentDTO> {
 		const student = await prisma.student.create({
 			data: {
+				tutorId: data.tutorId,
 				name: data.name,
 				phoneNumber: data.phoneNumber || null,
 				grade: data.grade,
@@ -44,6 +47,7 @@ export class StudentRepository implements IStudentRepository {
 	}
 
 	async findAll(
+		tutorId: string,
 		params?: PaginationParams,
 	): Promise<PaginatedResponse<StudentDTO>> {
 		const page = params?.page || 1;
@@ -53,15 +57,18 @@ export class StudentRepository implements IStudentRepository {
 		const sortBy = params?.sortBy || "createdAt";
 		const sortOrder = params?.sortOrder || "desc";
 
-		// Build where clause for search (only name and phoneNumber)
-		const where = search
-			? {
-					OR: [
-						{ name: { contains: search, mode: "insensitive" } },
-						{ phoneNumber: { contains: search } },
-					],
-				}
-			: undefined;
+		// Build where clause for search (only name and phoneNumber) with tutor scoping
+		const where = {
+			tutorId,
+			...(search
+				? {
+						OR: [
+							{ name: { contains: search, mode: "insensitive" as const } },
+							{ phoneNumber: { contains: search } },
+						],
+					}
+				: {}),
+		};
 
 		// Get total count matching the search criteria
 		const total = await prisma.student.count({ where });
@@ -89,9 +96,9 @@ export class StudentRepository implements IStudentRepository {
 		};
 	}
 
-	async findById(id: string): Promise<StudentDetailDTO | null> {
-		const student = await prisma.student.findUnique({
-			where: { id },
+	async findById(id: string, tutorId: string): Promise<StudentDetailDTO | null> {
+		const student = await prisma.student.findFirst({
+			where: { id, tutorId },
 			include: {
 				classes: {
 					include: {
@@ -135,9 +142,9 @@ export class StudentRepository implements IStudentRepository {
 		};
 	}
 
-	async update(id: string, data: UpdateStudentDTO): Promise<StudentDTO> {
+	async update(id: string, tutorId: string, data: UpdateStudentDTO): Promise<StudentDTO> {
 		const student = await prisma.student.update({
-			where: { id },
+			where: { id, tutorId },
 			data: {
 				...(data.name !== undefined && { name: data.name }),
 				...(data.phoneNumber !== undefined && {
@@ -149,9 +156,9 @@ export class StudentRepository implements IStudentRepository {
 		return toDTO(student);
 	}
 
-	async delete(id: string): Promise<void> {
+	async delete(id: string, tutorId: string): Promise<void> {
 		await prisma.student.delete({
-			where: { id },
+			where: { id, tutorId },
 		});
 	}
 }

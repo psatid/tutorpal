@@ -29,7 +29,7 @@ function toDTO(schedule: {
 		id: schedule.id,
 		classId: schedule.classId,
 		className: schedule.class.name,
-		date: schedule.date.toISOString().split("T")[0],
+		date: schedule.date.toISOString().split("T")[0]!,
 		time: schedule.time,
 		durationMinutes: schedule.durationMinutes,
 		notes: schedule.notes,
@@ -90,9 +90,13 @@ export class ScheduleRepository implements IScheduleRepository {
 
 		// Fetch the created schedules to return DTOs with class names
 		const dateStrings = data.map((d) => d.date);
+		const firstClassId = data[0]?.classId;
+		if (!firstClassId) {
+			return [];
+		}
 		const createdSchedules = await prisma.schedule.findMany({
 			where: {
-				classId: data[0].classId,
+				classId: firstClassId,
 				date: {
 					in: dateStrings.map((d) => new Date(d)),
 				},
@@ -102,7 +106,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 
 		// Get remaining hours once (optimization)
-		const remainingHours = await this.getRemainingHours(data[0].classId);
+		const remainingHours = await this.getRemainingHours(firstClassId);
 
 		return createdSchedules.map((schedule) =>
 			toDTO({ ...schedule, _remainingHours: remainingHours }),
@@ -320,7 +324,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			id: recurringSchedule.id,
 			classId: recurringSchedule.classId,
 			className: recurringSchedule.class.name,
-			startDate: recurringSchedule.startDate.toISOString().split("T")[0],
+			startDate: recurringSchedule.startDate.toISOString().split("T")[0]!,
 			notes: recurringSchedule.notes,
 			createdAt: recurringSchedule.createdAt.toISOString(),
 			updatedAt: recurringSchedule.updatedAt.toISOString(),

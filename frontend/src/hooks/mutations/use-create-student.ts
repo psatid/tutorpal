@@ -18,7 +18,7 @@ export const useCreateStudent = (options?: { onSuccess?: () => void }) => {
     },
     onSuccess: () => {
       toast.success("Student profile created successfully.");
-      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: studentsKeys.all });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

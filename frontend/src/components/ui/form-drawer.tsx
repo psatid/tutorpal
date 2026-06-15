@@ -12,6 +12,7 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { DrawerSelectPortalContext } from "@/components/ui/select";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type DrawerMode = "create" | "view" | "edit";
 
@@ -45,9 +46,14 @@ export function FormDrawer({
   editButtonText,
 }: FormDrawerProps) {
   const portalRef = useRef<HTMLDivElement>(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
+    <Drawer
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      swipeDirection={isDesktop ? "right" : "down"}
+    >
       <DrawerPortal>
         <DrawerBackdrop />
         <DrawerViewport>
@@ -56,7 +62,7 @@ export function FormDrawer({
               <DrawerSelectPortalContext.Provider value={portalRef}>
                 <div className="flex flex-col h-full">
                   <form onSubmit={onSubmit} className="flex flex-col h-full">
-                    <div className="flex items-center justify-between shrink-0 bg-background pb-4">
+                    <div className="flex items-center justify-between shrink-0 bg-background pb-4 md:pt-4">
                       <div className="flex items-center gap-3">
                         <DrawerTitle className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
                           {title}
@@ -68,46 +74,46 @@ export function FormDrawer({
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
-                      <div className="space-y-5">
-                        {children}
-                      </div>
+                      <div className="space-y-5">{children}</div>
                     </div>
 
-                    <div className="shrink-0 bg-background pt-4 space-y-3">
-                      {mode === "view" ? (
+                    <div className="shrink-0 bg-background pt-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:justify-end">
+                        {mode === "view" ? (
+                          <Button
+                            type="button"
+                            className="w-full md:w-fit"
+                            leftIcon={Pencil}
+                            onClick={(e: React.MouseEvent) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setTimeout(() => onModeChange?.("edit"), 0);
+                            }}
+                          >
+                            {editButtonText ?? "Edit"}
+                          </Button>
+                        ) : (
+                          <Button
+                            type="submit"
+                            className="w-full md:w-fit"
+                            loading={isLoading}
+                            leftIcon={SubmitIcon}
+                          >
+                            {submitButtonText}
+                          </Button>
+                        )}
                         <Button
                           type="button"
-                          className="w-full"
-                          leftIcon={Pencil}
-                          onClick={(e: React.MouseEvent) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setTimeout(() => onModeChange?.("edit"), 0);
+                          variant="ghost"
+                          className="w-full md:w-fit"
+                          onClick={() => {
+                            onCancel();
+                            onOpenChange(false);
                           }}
                         >
-                          {editButtonText ?? "Edit"}
+                          {mode === "view" ? "Close" : "Cancel"}
                         </Button>
-                      ) : (
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          loading={isLoading}
-                          leftIcon={SubmitIcon}
-                        >
-                          {submitButtonText}
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="w-full"
-                        onClick={() => {
-                          onCancel();
-                          onOpenChange(false);
-                        }}
-                      >
-                        {mode === "view" ? "Close" : "Cancel"}
-                      </Button>
+                      </div>
                     </div>
                   </form>
                 </div>

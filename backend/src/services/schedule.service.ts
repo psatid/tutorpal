@@ -12,9 +12,9 @@ import type {
 export class ScheduleService {
 	constructor(private readonly repository: IScheduleRepository) {}
 
-	async createSchedule(data: CreateScheduleDTO): Promise<ScheduleDTO> {
-		// Verify that the class exists
-		const classData = await classRepository.findById(data.classId);
+	async createSchedule(data: CreateScheduleDTO, tutorId: string): Promise<ScheduleDTO> {
+		// Verify that the class exists and belongs to this tutor
+		const classData = await classRepository.findById(data.classId, tutorId);
 		if (!classData) {
 			throw AppError.badRequest(
 				"CLASS_NOT_FOUND",
@@ -24,7 +24,7 @@ export class ScheduleService {
 
 		// If recurring pattern is provided
 		if (data.recurring) {
-			return this.createRecurringSchedule(data);
+			return this.createRecurringSchedule(data, tutorId);
 		}
 
 		if (data.time === undefined || data.durationMinutes === undefined) {
@@ -53,10 +53,20 @@ export class ScheduleService {
 
 	private async createRecurringSchedule(
 		data: CreateScheduleDTO,
+		tutorId: string,
 	): Promise<ScheduleDTO> {
 		const { classId, notes, recurring } = data;
 		if (!recurring) {
 			throw new Error("Recurring pattern is required");
+		}
+
+		// Validate class exists and belongs to this tutor
+		const classData = await classRepository.findById(classId, tutorId);
+		if (!classData) {
+			throw AppError.badRequest(
+				"CLASS_NOT_FOUND",
+				"The specified class does not exist",
+			);
 		}
 
 		// Validate class has remaining hours BEFORE transaction
@@ -135,11 +145,20 @@ export class ScheduleService {
 			throw new Error("No schedules were created");
 		}
 
-		const firstSchedule = result.schedules[0];
+		const firstSchedule = result.schedules[0]!;
 		return {
-			...firstSchedule,
+			id: firstSchedule.id,
+			classId: firstSchedule.classId,
+			className: firstSchedule.class.name,
+			date: firstSchedule.date.toISOString().split("T")[0]!,
+			time: firstSchedule.time,
+			durationMinutes: firstSchedule.durationMinutes,
+			notes: firstSchedule.notes,
+			status: firstSchedule.status,
+			createdAt: firstSchedule.createdAt.toISOString(),
+			updatedAt: firstSchedule.updatedAt.toISOString(),
 			remainingHours: finalRemainingHours,
-		} as ScheduleDTO;
+		};
 	}
 
 	private generateScheduleData(
@@ -187,7 +206,7 @@ export class ScheduleService {
 
 			scheduleData.push({
 				classId,
-				date: nextOccurrence.date.toISOString().split("T")[0],
+				date: nextOccurrence.date.toISOString().split("T")[0]!,
 				time: nextOccurrence.item.time,
 				durationMinutes: nextOccurrence.item.durationMinutes,
 			});
@@ -247,6 +266,7 @@ export class ScheduleService {
 	async updateSchedule(
 		id: string,
 		data: UpdateScheduleDTO,
+		tutorId: string,
 	): Promise<ScheduleDTO> {
 		// Check if schedule exists first
 		const existingSchedule = await this.repository.findById(id);
@@ -254,9 +274,9 @@ export class ScheduleService {
 			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
 		}
 
-		// If classId is being updated, verify the new class exists
+		// If classId is being updated, verify the new class exists and belongs to this tutor
 		if (data.classId !== undefined) {
-			const classData = await classRepository.findById(data.classId);
+			const classData = await classRepository.findById(data.classId, tutorId);
 			if (!classData) {
 				throw AppError.badRequest(
 					"CLASS_NOT_FOUND",

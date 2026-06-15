@@ -15,11 +15,12 @@ import {
 	UpdateScheduleSchemaResolver,
 } from "../schemas";
 import { ScheduleService } from "../services";
+import type { AppEnv } from "../types/hono-env";
 
 // Initialize service with repository
 const scheduleService = new ScheduleService(scheduleRepository);
 
-const scheduleRoutes = new Hono()
+const scheduleRoutes = new Hono<AppEnv>()
 	.use(requireAuth)
 	// Create schedule
 		.post(
@@ -52,11 +53,12 @@ const scheduleRoutes = new Hono()
 				},
 			}),
 			sValidator("json", CreateScheduleSchema),
-			async (c) => {
-				const data = c.req.valid("json");
-				const schedule = await scheduleService.createSchedule(data);
-				return c.json(schedule, 201);
-			},
+		async (c) => {
+			const data = c.req.valid("json");
+			const tutorId = c.get("tutorId");
+			const schedule = await scheduleService.createSchedule(data, tutorId);
+			return c.json(schedule, 201);
+		},
 		)
 
 	// List all schedules
@@ -184,7 +186,8 @@ const scheduleRoutes = new Hono()
 		async (c) => {
 			const id = c.req.param("id");
 			const data = c.req.valid("json");
-			const schedule = await scheduleService.updateSchedule(id, data);
+			const tutorId = c.get("tutorId");
+			const schedule = await scheduleService.updateSchedule(id, data, tutorId);
 			return c.json(schedule);
 		},
 	)

@@ -37,7 +37,7 @@ export async function exchangeCodeForToken(
 		throw new Error("Failed to exchange LINE authorization code");
 	}
 
-	return response.json();
+	return response.json() as Promise<LineTokenResponse>;
 }
 
 export async function getLineProfile(
@@ -53,7 +53,7 @@ export async function getLineProfile(
 		throw new Error("Failed to fetch LINE profile");
 	}
 
-	return response.json();
+	return response.json() as Promise<LineProfileResponse>;
 }
 
 export function buildLineAuthUrl(state: string): string {

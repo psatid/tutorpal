@@ -18,7 +18,7 @@ export const useCreateClass = (options?: { onSuccess?: () => void }) => {
     },
     onSuccess: () => {
       toast.success("Class created successfully.");
-      queryClient.invalidateQueries({ queryKey: classesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: classesKeys.all });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

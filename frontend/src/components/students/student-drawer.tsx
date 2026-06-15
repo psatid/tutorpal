@@ -48,20 +48,20 @@ export function StudentDrawer({
   });
 
   useEffect(() => {
-    if (student && (mode === "view" || mode === "edit")) {
+    if (isOpen && student && (mode === "view" || mode === "edit")) {
       reset({
         name: student.name,
         phone: student.phoneNumber || "",
         grade: student.grade.toString() as StudentFormData["grade"],
       });
-    } else if (mode === "create") {
+    } else if (isOpen && mode === "create") {
       reset({
         name: "",
         phone: "",
         grade: undefined,
       });
     }
-  }, [student, mode, reset]);
+  }, [isOpen, student, mode, reset]);
 
   useEffect(() => {
     if (!isOpen) {

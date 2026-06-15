@@ -3,8 +3,17 @@ import { Drawer } from "@base-ui/react/drawer";
 
 import { cn } from "@/lib/utils";
 
-function DrawerRoot({ ...props }: React.ComponentProps<typeof Drawer.Root>) {
-  return <Drawer.Root data-slot="drawer" {...props} />;
+function DrawerRoot({
+  swipeDirection,
+  ...props
+}: React.ComponentProps<typeof Drawer.Root>) {
+  return (
+    <Drawer.Root
+      data-slot="drawer"
+      swipeDirection={swipeDirection}
+      {...props}
+    />
+  );
 }
 
 function DrawerTrigger({
@@ -32,7 +41,7 @@ function DrawerBackdrop({
       data-slot="drawer-backdrop"
       className={cn(
         "fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-all duration-300 ease-out data-starting-style:opacity-0 data-ending-style:opacity-0",
-        className
+        className,
       )}
       {...props}
     />
@@ -47,8 +56,8 @@ function DrawerViewport({
     <Drawer.Viewport
       data-slot="drawer-viewport"
       className={cn(
-        "fixed inset-0 z-50 flex items-end justify-center",
-        className
+        "fixed inset-0 z-50 flex items-end justify-center md:items-stretch md:justify-end",
+        className,
       )}
       {...props}
     />
@@ -64,12 +73,15 @@ const DrawerPopup = React.forwardRef<
       ref={ref}
       data-slot="drawer-popup"
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-popover text-popover-foreground shadow-xl outline-none transition-transform duration-300 ease-out data-[starting-style]:translate-y-full data-[ending-style]:translate-y-full",
-        className
+        `fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-popover text-popover-foreground shadow-xl outline-none transition-transform duration-300 ease-out 
+        data-[swipe-direction=down]:data-starting-style:translate-y-full data-[swipe-direction=down]:data-ending-style:translate-y-full 
+        data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full 
+        md:inset-y-0 md:right-0 md:left-auto md:w-[min(400px,100vw)] md:rounded-none md:max-h-none`,
+        className,
       )}
       {...props}
     >
-      <div className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-muted" />
+      <div className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-muted md:hidden" />
       {children}
     </Drawer.Popup>
   );
@@ -118,7 +130,7 @@ function DrawerTitle({
       data-slot="drawer-title"
       className={cn(
         "font-headline font-bold text-lg text-foreground",
-        className
+        className,
       )}
       {...props}
     />

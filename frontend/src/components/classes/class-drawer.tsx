@@ -48,20 +48,20 @@ export function ClassDrawer({
     [];
 
   useEffect(() => {
-    if (classData && (mode === "view" || mode === "edit")) {
+    if (isOpen && classData && (mode === "view" || mode === "edit")) {
       form.reset({
         name: classData.name,
         totalHours: classData.totalHours,
         studentIds: classData.students.map((s) => s.id),
       });
-    } else if (mode === "create") {
+    } else if (isOpen && mode === "create") {
       form.reset({
         name: "",
         totalHours: 0,
         studentIds: [],
       });
     }
-  }, [classData, mode, form]);
+  }, [isOpen, classData, mode, form]);
 
   useEffect(() => {
     if (!isOpen) {

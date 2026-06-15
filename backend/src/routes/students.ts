@@ -15,11 +15,12 @@ import {
 	UpdateStudentSchemaResolver,
 } from "../schemas";
 import { StudentService } from "../services";
+import type { AppEnv } from "../types/hono-env";
 
 // Initialize service with repository
 const studentService = new StudentService(studentRepository);
 
-const studentRoutes = new Hono()
+const studentRoutes = new Hono<AppEnv>()
 	.use(requireAuth)
 	// Create student
 	.post(
@@ -54,7 +55,8 @@ const studentRoutes = new Hono()
 		sValidator("json", CreateStudentSchema),
 		async (c) => {
 			const data = c.req.valid("json");
-			const student = await studentService.createStudent(data);
+			const tutorId = c.get("tutorId");
+			const student = await studentService.createStudent({ ...data, tutorId });
 			return c.json(student, 201);
 		},
 	)
@@ -138,7 +140,8 @@ const studentRoutes = new Hono()
 		sValidator("query", StudentListQuerySchema),
 		async (c) => {
 			const query = c.req.valid("query");
-			const students = await studentService.getAllStudents(query);
+			const tutorId = c.get("tutorId");
+			const students = await studentService.getAllStudents(tutorId, query);
 			return c.json(students);
 		},
 	)
@@ -168,7 +171,8 @@ const studentRoutes = new Hono()
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			const student = await studentService.getStudentById(id);
+			const tutorId = c.get("tutorId");
+			const student = await studentService.getStudentById(id, tutorId);
 			return c.json(student);
 		},
 	)
@@ -210,7 +214,8 @@ const studentRoutes = new Hono()
 		async (c) => {
 			const id = c.req.param("id");
 			const data = c.req.valid("json");
-			const student = await studentService.updateStudent(id, data);
+			const tutorId = c.get("tutorId");
+			const student = await studentService.updateStudent(id, tutorId, data);
 			return c.json(student);
 		},
 	)
@@ -235,7 +240,8 @@ const studentRoutes = new Hono()
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			await studentService.deleteStudent(id);
+			const tutorId = c.get("tutorId");
+			await studentService.deleteStudent(id, tutorId);
 			return c.body(null, 204);
 		},
 	);

@@ -3,6 +3,7 @@ import type { PaginatedResponse, PaginationParams } from "./pagination.types";
 // DTOs for clean data transfer between layers
 export interface ClassDTO {
 	id: string;
+	tutorId: string;
 	name: string;
 	totalHours: number;
 	students: StudentInClassDTO[];
@@ -19,6 +20,7 @@ export interface StudentInClassDTO {
 }
 
 export interface CreateClassDTO {
+	tutorId: string;
 	name: string;
 	totalHours: number;
 	studentIds?: string[];
@@ -33,8 +35,11 @@ export interface UpdateClassDTO {
 // Repository interface - abstract data access
 export interface IClassRepository {
 	create(data: CreateClassDTO): Promise<ClassDTO>;
-	findAll(params?: PaginationParams): Promise<PaginatedResponse<ClassDTO>>;
-	findById(id: string): Promise<ClassDTO | null>;
-	update(id: string, data: UpdateClassDTO): Promise<ClassDTO>;
-	delete(id: string): Promise<void>;
+	findAll(
+		tutorId: string,
+		params?: PaginationParams,
+	): Promise<PaginatedResponse<ClassDTO>>;
+	findById(id: string, tutorId: string): Promise<ClassDTO | null>;
+	update(id: string, tutorId: string, data: UpdateClassDTO): Promise<ClassDTO>;
+	delete(id: string, tutorId: string): Promise<void>;
 }
