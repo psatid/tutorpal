@@ -1,18 +1,14 @@
-import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { studentRepository } from "../repositories";
 import {
 	CreateStudentSchema,
-	CreateStudentSchemaResolver,
 	PaginatedStudentListSchemaResolver,
 	StudentDetailSchemaResolver,
 	StudentListQuerySchema,
-	StudentListQuerySchemaResolver,
 	StudentSchemaResolver,
 	UpdateStudentSchema,
-	UpdateStudentSchemaResolver,
 } from "../schemas";
 import { StudentService } from "../services";
 import type { AppEnv } from "../types/hono-env";
@@ -28,19 +24,12 @@ const studentRoutes = new Hono<AppEnv>()
 		describeRoute({
 			tags: ["students"],
 			description: "Create a new student",
-			requestBody: {
-				content: {
-					"application/json": {
-						schema: CreateStudentSchemaResolver as any,
-					},
-				},
-			},
 			responses: {
 				201: {
 					description: "Student created successfully",
 					content: {
 						"application/json": {
-							schema: StudentSchemaResolver as any,
+							schema: StudentSchemaResolver,
 						},
 					},
 				},
@@ -52,7 +41,7 @@ const studentRoutes = new Hono<AppEnv>()
 				},
 			},
 		}),
-		sValidator("json", CreateStudentSchema),
+		validator("json", CreateStudentSchema),
 		async (c) => {
 			const data = c.req.valid("json");
 			const tutorId = c.get("tutorId");
@@ -128,7 +117,7 @@ const studentRoutes = new Hono<AppEnv>()
 					description: "Paginated list of students",
 					content: {
 						"application/json": {
-							schema: PaginatedStudentListSchemaResolver as any,
+							schema: PaginatedStudentListSchemaResolver,
 						},
 					},
 				},
@@ -137,7 +126,7 @@ const studentRoutes = new Hono<AppEnv>()
 				},
 			},
 		}),
-		sValidator("query", StudentListQuerySchema),
+		validator("query", StudentListQuerySchema),
 		async (c) => {
 			const query = c.req.valid("query");
 			const tutorId = c.get("tutorId");
@@ -157,7 +146,7 @@ const studentRoutes = new Hono<AppEnv>()
 					description: "Student found",
 					content: {
 						"application/json": {
-							schema: StudentDetailSchemaResolver as any,
+							schema: StudentDetailSchemaResolver,
 						},
 					},
 				},
@@ -183,19 +172,12 @@ const studentRoutes = new Hono<AppEnv>()
 		describeRoute({
 			tags: ["students"],
 			description: "Update a student by ID",
-			requestBody: {
-				content: {
-					"application/json": {
-						schema: UpdateStudentSchemaResolver as any,
-					},
-				},
-			},
 			responses: {
 				200: {
 					description: "Student updated successfully",
 					content: {
 						"application/json": {
-							schema: StudentSchemaResolver as any,
+							schema: StudentSchemaResolver,
 						},
 					},
 				},
@@ -210,7 +192,7 @@ const studentRoutes = new Hono<AppEnv>()
 				},
 			},
 		}),
-		sValidator("json", UpdateStudentSchema),
+		validator("json", UpdateStudentSchema),
 		async (c) => {
 			const id = c.req.param("id");
 			const data = c.req.valid("json");

@@ -1,17 +1,13 @@
-import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { classRepository } from "../repositories";
 import {
   ClassListQuerySchema,
-  ClassListQuerySchemaResolver,
   ClassSchemaResolver,
   CreateClassSchema,
-  CreateClassSchemaResolver,
   PaginatedClassListSchemaResolver,
   UpdateClassSchema,
-  UpdateClassSchemaResolver,
 } from "../schemas";
 import { ClassService } from "../services";
 import type { AppEnv } from "../types/hono-env";
@@ -27,19 +23,12 @@ const classRoutes = new Hono<AppEnv>()
     describeRoute({
       tags: ["classes"],
       description: "Create a new class",
-      requestBody: {
-        content: {
-          "application/json": {
-            schema: CreateClassSchemaResolver as any,
-          },
-        },
-      },
       responses: {
         201: {
           description: "Class created successfully",
           content: {
             "application/json": {
-              schema: ClassSchemaResolver as any,
+              schema: ClassSchemaResolver,
             },
           },
         },
@@ -51,7 +40,7 @@ const classRoutes = new Hono<AppEnv>()
         },
       },
     }),
-    sValidator("json", CreateClassSchema),
+    validator("json", CreateClassSchema),
     async (c) => {
       const data = c.req.valid("json");
       const tutorId = c.get("tutorId");
@@ -127,7 +116,7 @@ const classRoutes = new Hono<AppEnv>()
           description: "Paginated list of classes",
           content: {
             "application/json": {
-              schema: PaginatedClassListSchemaResolver as any,
+              schema: PaginatedClassListSchemaResolver,
             },
           },
         },
@@ -136,7 +125,7 @@ const classRoutes = new Hono<AppEnv>()
         },
       },
     }),
-    sValidator("query", ClassListQuerySchema),
+    validator("query", ClassListQuerySchema),
     async (c) => {
       const query = c.req.valid("query");
       const tutorId = c.get("tutorId");
@@ -156,7 +145,7 @@ const classRoutes = new Hono<AppEnv>()
           description: "Class found",
           content: {
             "application/json": {
-              schema: ClassSchemaResolver as any,
+              schema: ClassSchemaResolver,
             },
           },
         },
@@ -182,19 +171,12 @@ const classRoutes = new Hono<AppEnv>()
     describeRoute({
       tags: ["classes"],
       description: "Update a class by ID",
-      requestBody: {
-        content: {
-          "application/json": {
-            schema: UpdateClassSchemaResolver as any,
-          },
-        },
-      },
       responses: {
         200: {
           description: "Class updated successfully",
           content: {
             "application/json": {
-              schema: ClassSchemaResolver as any,
+              schema: ClassSchemaResolver,
             },
           },
         },
@@ -209,7 +191,7 @@ const classRoutes = new Hono<AppEnv>()
         },
       },
     }),
-    sValidator("json", UpdateClassSchema),
+    validator("json", UpdateClassSchema),
     async (c) => {
       const id = c.req.param("id");
       const data = c.req.valid("json");
