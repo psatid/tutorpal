@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db";
+import { getRemainingHoursMap } from "./class-hours";
 import type {
 	ClassInStudentDTO,
 	CreateStudentDTO,
@@ -112,29 +113,16 @@ export class StudentRepository implements IStudentRepository {
 			return null;
 		}
 
-		const classes: ClassInStudentDTO[] = await Promise.all(
-			student.classes.map(async (enrollment) => {
-				const deductions = await prisma.classHourDeduction.findMany({
-					where: {
-						classId: enrollment.classId,
-						restoredAt: null,
-					},
-				});
-
-				const totalDeducted = deductions.reduce(
-					(sum: number, deduction: { hoursDeducted: number }) =>
-						sum + deduction.hoursDeducted,
-					0,
-				);
-
-				return {
-					id: enrollment.class.id,
-					name: enrollment.class.name,
-					totalHours: enrollment.class.totalHours,
-					remainingHours: enrollment.class.totalHours - totalDeducted,
-				};
-			}),
+		const remainingHoursMap = await getRemainingHoursMap(
+			student.classes.map((enrollment) => enrollment.classId),
 		);
+
+		const classes: ClassInStudentDTO[] = student.classes.map((enrollment) => ({
+			id: enrollment.class.id,
+			name: enrollment.class.name,
+			totalHours: enrollment.class.totalHours,
+			remainingHours: remainingHoursMap.get(enrollment.classId),
+		}));
 
 		return {
 			...toDTO(student),

@@ -20,7 +20,7 @@ See [Documentation Hub](docs/README.md) for all project documentation.
 
 ### Schedule Complete Flow with Class Hour Tracking (April 23, 2026)
 
-**Overview**: Implemented automatic hour deduction when schedules are completed, with full tracking and restoration capabilities.
+**Overview**: Implemented reserved-hour tracking for schedules, with restoration/history support when completed schedules are cancelled.
 
 **Database Changes**:
 - Added `ClassHourDeduction` model to track all hour deductions
@@ -30,8 +30,8 @@ See [Documentation Hub](docs/README.md) for all project documentation.
 
 **Backend Implementation**:
 - **Repository Layer** (`schedule.repository.ts`):
-  - Added `validateAndReserveHours(classId, hours)` - checks and deducts hours at schedule creation
-  - Added `completeSchedule(id)` - creates deduction record and marks schedule as COMPLETED
+  - Added `validateAndReserveHours(classId, hours)` - checks class capacity before schedule creation
+  - Added `completeSchedule(id)` - marks schedule as COMPLETED and records completion history
   - Added `restoreHours(id)` - restores hours if schedule is cancelled
   - Added `getRemainingHours(classId)` - calculates available hours
   - Updated all query methods to include `remainingHours` in ScheduleDTO
@@ -82,14 +82,13 @@ See [Documentation Hub](docs/README.md) for all project documentation.
 - At schedule creation: Check if `class.remainingHours >= schedule.durationMinutes/60`
 - At completion: Ensure schedule status is SCHEDULED
 - At cancellation of completed: Restore hours, update deduction record
-- Prevent negative hours (throws error if insufficient hours)
+- Prevent negative hours by counting all `SCHEDULED` and `COMPLETED` schedules against class capacity
 
 **Usage Flow**:
-1. Create schedule → System validates class has enough hours
-2. Click complete button → Confirmation shows hours to deduct
-3. Hours deducted from class, schedule marked COMPLETED
-4. If needed, click restore button → Hours restored, schedule marked CANCELLED
-5. All deductions tracked in `ClassHourDeduction` table with timestamps
+1. Create schedule → System validates class has enough unreserved hours and reserves them immediately for `SCHEDULED` / `COMPLETED` schedules
+2. Click complete button → Schedule marked COMPLETED without consuming hours a second time
+3. If needed, click restore button → Hours released by marking the schedule CANCELLED
+4. Completion/restoration history is tracked in `ClassHourDeduction`
 
 **Files Modified**:
 - `backend/prisma/schema.prisma` - Added ClassHourDeduction model
@@ -114,10 +113,10 @@ See [Documentation Hub](docs/README.md) for all project documentation.
 - **Repository Layer** (`class.repository.ts`):
   - Modified `toDTO()` helper to accept optional `remainingHours` parameter
   - Updated `create()` method: Sets `remainingHours = totalHours` for new classes
-  - Updated `findAll()` method: Queries `ClassHourDeduction` for each class and calculates remaining hours
-  - Updated `findById()` method: Queries deductions and calculates remaining hours for single class
+  - Updated `findAll()` method: Calculates remaining hours from schedules in `SCHEDULED` or `COMPLETED` status
+  - Updated `findById()` method: Calculates remaining hours from active scheduled time
   - Updated `update()` method: Recalculates remaining hours after updates
-  - Hour calculation: `remainingHours = totalHours - sum(deductions where restoredAt is null)`
+  - Hour calculation: `remainingHours = totalHours - sum(schedule.durationMinutes for SCHEDULED/COMPLETED schedules)/60`
 
 - **Schemas Layer** (`class.schema.ts`):
   - Added `remainingHours: z.number().optional()` to `ClassSchema`
@@ -258,7 +257,7 @@ See [Documentation Hub](docs/README.md) for all project documentation.
 
 **Backend Changes**:
 - **Types** (`student.types.ts`): Added `ClassInStudentDTO` (id, name, totalHours, remainingHours) and `StudentDetailDTO` (extends StudentDTO with classes array)
-- **Repository** (`student.repository.ts`): Updated `findById` to include enrolled classes with remaining hours calculation via `ClassHourDeduction` queries
+- **Repository** (`student.repository.ts`): Updated `findById` to include enrolled classes with remaining hours calculation based on `SCHEDULED` / `COMPLETED` schedules
 - **Service** (`student.service.ts`): Updated return type to `StudentDetailDTO`
 - **Schema** (`student.schema.ts`): Added `ClassInStudentSchema` and `StudentDetailSchema`
 - **Routes** (`routes/students.ts`): GET /:id now returns `StudentDetailSchema` with classes

@@ -1,4 +1,4 @@
-import type { Weekday } from "@prisma/client";
+import type { ScheduleStatus, Weekday } from "@prisma/client";
 import { prisma } from "../lib/db";
 import { AppError } from "../lib/error";
 import { classRepository } from "../repositories";
@@ -9,8 +9,40 @@ import type {
 	UpdateScheduleDTO,
 } from "../types";
 
+const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = ["SCHEDULED", "COMPLETED"];
+
 export class ScheduleService {
 	constructor(private readonly repository: IScheduleRepository) {}
+
+	private isActiveStatus(status: ScheduleStatus): boolean {
+		return ACTIVE_SCHEDULE_STATUSES.includes(status);
+	}
+
+	private async validateScheduleCapacity(
+		classId: string,
+		durationMinutes: number,
+		status: ScheduleStatus,
+		existingSchedule?: Pick<
+			ScheduleDTO,
+			"classId" | "durationMinutes" | "status"
+		>,
+	): Promise<boolean> {
+		if (!this.isActiveStatus(status)) {
+			return true;
+		}
+
+		let remainingHours = await this.repository.getRemainingHours(classId);
+
+		if (
+			existingSchedule &&
+			existingSchedule.classId === classId &&
+			this.isActiveStatus(existingSchedule.status)
+		) {
+			remainingHours += existingSchedule.durationMinutes / 60;
+		}
+
+		return remainingHours >= durationMinutes / 60;
+	}
 
 	async createSchedule(data: CreateScheduleDTO, tutorId: string): Promise<ScheduleDTO> {
 		// Verify that the class exists and belongs to this tutor
@@ -35,10 +67,10 @@ export class ScheduleService {
 		}
 
 		// Validate and reserve hours for the schedule
-		const hoursNeeded = data.durationMinutes / 60;
-		const hasEnoughHours = await this.repository.validateAndReserveHours(
+		const hasEnoughHours = await this.validateScheduleCapacity(
 			data.classId,
-			hoursNeeded,
+			data.durationMinutes,
+			data.status || "SCHEDULED",
 		);
 
 		if (!hasEnoughHours) {
@@ -285,23 +317,58 @@ export class ScheduleService {
 			}
 		}
 
-		// Handle status changes
-		if (data.status !== undefined) {
-			// If changing from COMPLETED to CANCELLED, restore hours
-			if (
-				existingSchedule.status === "COMPLETED" &&
-				data.status === "CANCELLED"
-			) {
-				return this.repository.restoreHours(id);
+		const targetClassId = data.classId ?? existingSchedule.classId;
+		const targetDurationMinutes =
+			data.durationMinutes ?? existingSchedule.durationMinutes;
+		const targetStatus = data.status ?? existingSchedule.status;
+		const hasNonStatusUpdates =
+			data.classId !== undefined ||
+			data.date !== undefined ||
+			data.time !== undefined ||
+			data.durationMinutes !== undefined ||
+			data.notes !== undefined;
+
+		const hasEnoughHours = await this.validateScheduleCapacity(
+			targetClassId,
+			targetDurationMinutes,
+			targetStatus,
+			existingSchedule,
+		);
+
+		if (!hasEnoughHours) {
+			throw AppError.badRequest(
+				"INSUFFICIENT_HOURS",
+				"The class does not have enough remaining hours for this schedule",
+			);
+		}
+
+		if (
+			data.status === "COMPLETED" &&
+			existingSchedule.status !== "COMPLETED"
+		) {
+			if (hasNonStatusUpdates) {
+				const updatedSchedule = await this.repository.update(id, {
+					...data,
+					status: "SCHEDULED",
+				});
+				return this.repository.completeSchedule(updatedSchedule.id);
 			}
 
-			// If changing to COMPLETED, use completeSchedule method
-			if (
-				data.status === "COMPLETED" &&
-				existingSchedule.status !== "COMPLETED"
-			) {
-				return this.repository.completeSchedule(id);
+			return this.repository.completeSchedule(id);
+		}
+
+		if (
+			existingSchedule.status === "COMPLETED" &&
+			data.status === "CANCELLED"
+		) {
+			if (hasNonStatusUpdates) {
+				await this.repository.update(id, {
+					...data,
+					status: "COMPLETED",
+				});
 			}
+
+			return this.repository.restoreHours(id);
 		}
 
 		return this.repository.update(id, data);

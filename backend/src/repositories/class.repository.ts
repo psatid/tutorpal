@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db";
+import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 import type {
 	ClassDTO,
 	CreateClassDTO,
@@ -71,7 +72,7 @@ export class ClassRepository implements IClassRepository {
 			},
 		});
 
-		const remainingHours = classData.totalHours;
+		const remainingHours = await getRemainingHoursForClass(classData.id);
 
 		return toDTO(classData, remainingHours);
 	}
@@ -114,26 +115,12 @@ export class ClassRepository implements IClassRepository {
 		});
 
 		const totalPages = Math.ceil(total / limit);
+		const remainingHoursMap = await getRemainingHoursMap(
+			classes.map((classData) => classData.id),
+		);
 
-		const classesWithHours = await Promise.all(
-			classes.map(async (classData) => {
-				const deductions = await prisma.classHourDeduction.findMany({
-					where: {
-						classId: classData.id,
-						restoredAt: null,
-					},
-				});
-
-				const totalDeducted = deductions.reduce(
-					(sum: number, deduction: { hoursDeducted: number }) =>
-						sum + deduction.hoursDeducted,
-					0,
-				);
-
-				const remainingHours = classData.totalHours - totalDeducted;
-
-				return toDTO(classData, remainingHours);
-			}),
+		const classesWithHours = classes.map((classData) =>
+			toDTO(classData, remainingHoursMap.get(classData.id)),
 		);
 
 		return {
@@ -165,20 +152,7 @@ export class ClassRepository implements IClassRepository {
 			return null;
 		}
 
-		const deductions = await prisma.classHourDeduction.findMany({
-			where: {
-				classId: id,
-				restoredAt: null,
-			},
-		});
-
-		const totalDeducted = deductions.reduce(
-			(sum: number, deduction: { hoursDeducted: number }) =>
-				sum + deduction.hoursDeducted,
-			0,
-		);
-
-		const remainingHours = classData.totalHours - totalDeducted;
+		const remainingHours = await getRemainingHoursForClass(id);
 
 		return toDTO(classData, remainingHours);
 	}
@@ -217,20 +191,7 @@ export class ClassRepository implements IClassRepository {
 			},
 		});
 
-		const deductions = await prisma.classHourDeduction.findMany({
-			where: {
-				classId: id,
-				restoredAt: null,
-			},
-		});
-
-		const totalDeducted = deductions.reduce(
-			(sum: number, deduction: { hoursDeducted: number }) =>
-				sum + deduction.hoursDeducted,
-			0,
-		);
-
-		const remainingHours = classData.totalHours - totalDeducted;
+		const remainingHours = await getRemainingHoursForClass(id);
 
 		return toDTO(classData, remainingHours);
 	}

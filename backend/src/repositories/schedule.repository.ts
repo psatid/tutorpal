@@ -1,5 +1,6 @@
 import type { Prisma, Weekday } from "@prisma/client";
 import { prisma } from "../lib/db";
+import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 import type {
 	CreateScheduleDTO,
 	IScheduleRepository,
@@ -46,19 +47,47 @@ export class ScheduleRepository implements IScheduleRepository {
 			throw new Error("Time and duration are required");
 		}
 
-		const schedule = await prisma.schedule.create({
-			data: {
-				classId: data.classId,
-				date: new Date(data.date),
-				time: data.time,
-				durationMinutes: data.durationMinutes,
-				notes: data.notes || null,
-				status: data.status || "SCHEDULED",
-			},
+		const time = data.time;
+		const durationMinutes = data.durationMinutes;
+
+		const scheduleId = await prisma.$transaction(async (tx) => {
+			const createdSchedule = await tx.schedule.create({
+				data: {
+					classId: data.classId,
+					date: new Date(data.date),
+					time,
+					durationMinutes,
+					notes: data.notes || null,
+					status: data.status || "SCHEDULED",
+				},
+				include: {
+					class: true,
+				},
+			});
+
+			if (createdSchedule.status === "COMPLETED") {
+				await tx.classHourDeduction.create({
+					data: {
+						scheduleId: createdSchedule.id,
+						classId: createdSchedule.classId,
+						hoursDeducted: createdSchedule.durationMinutes / 60,
+					},
+				});
+			}
+
+			return createdSchedule.id;
+		});
+
+		const schedule = await prisma.schedule.findUnique({
+			where: { id: scheduleId },
 			include: {
 				class: true,
 			},
 		});
+
+		if (!schedule) {
+			throw new Error("Schedule not found after creation");
+		}
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
 		return toDTO({ ...schedule, _remainingHours: remainingHours });
@@ -145,10 +174,14 @@ export class ScheduleRepository implements IScheduleRepository {
 			},
 		});
 
-		const schedulesWithHours = await Promise.all(
-			schedules.map(async (schedule) => {
-				const remainingHours = await this.getRemainingHours(schedule.classId);
-				return toDTO({ ...schedule, _remainingHours: remainingHours });
+		const remainingHoursMap = await getRemainingHoursMap(
+			schedules.map((schedule) => schedule.classId),
+		);
+
+		const schedulesWithHours = schedules.map((schedule) =>
+			toDTO({
+				...schedule,
+				_remainingHours: remainingHoursMap.get(schedule.classId),
 			}),
 		);
 
@@ -172,21 +205,41 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO> {
-		const schedule = await prisma.schedule.update({
-			where: { id },
-			data: {
-				...(data.classId !== undefined && { classId: data.classId }),
-				...(data.date !== undefined && { date: new Date(data.date) }),
-				...(data.time !== undefined && { time: data.time }),
-				...(data.durationMinutes !== undefined && {
-					durationMinutes: data.durationMinutes,
-				}),
-				...(data.notes !== undefined && { notes: data.notes || null }),
-				...(data.status !== undefined && { status: data.status }),
-			},
-			include: {
-				class: true,
-			},
+		const schedule = await prisma.$transaction(async (tx) => {
+			const updatedSchedule = await tx.schedule.update({
+				where: { id },
+				data: {
+					...(data.classId !== undefined && { classId: data.classId }),
+					...(data.date !== undefined && { date: new Date(data.date) }),
+					...(data.time !== undefined && { time: data.time }),
+					...(data.durationMinutes !== undefined && {
+						durationMinutes: data.durationMinutes,
+					}),
+					...(data.notes !== undefined && { notes: data.notes || null }),
+					...(data.status !== undefined && { status: data.status }),
+				},
+				include: {
+					class: true,
+				},
+			});
+
+			if (updatedSchedule.status === "COMPLETED") {
+				await tx.classHourDeduction.upsert({
+					where: { scheduleId: updatedSchedule.id },
+					update: {
+						classId: updatedSchedule.classId,
+						hoursDeducted: updatedSchedule.durationMinutes / 60,
+						restoredAt: null,
+					},
+					create: {
+						scheduleId: updatedSchedule.id,
+						classId: updatedSchedule.classId,
+						hoursDeducted: updatedSchedule.durationMinutes / 60,
+					},
+				});
+			}
+
+			return updatedSchedule;
 		});
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
@@ -203,7 +256,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		classId: string,
 		hours: number,
 	): Promise<boolean> {
-		const remainingHours = await this.getRemainingHours(classId);
+		const remainingHours = await getRemainingHoursForClass(classId);
 		return remainingHours >= hours;
 	}
 
@@ -223,22 +276,31 @@ export class ScheduleRepository implements IScheduleRepository {
 
 		const hoursDeducted = schedule.durationMinutes / 60;
 
-		const [updatedSchedule] = await prisma.$transaction([
-			prisma.schedule.update({
+		const updatedSchedule = await prisma.$transaction(async (tx) => {
+			const completedSchedule = await tx.schedule.update({
 				where: { id },
 				data: { status: "COMPLETED" },
 				include: { class: true },
-			}),
-			prisma.classHourDeduction.create({
-				data: {
+			});
+
+			await tx.classHourDeduction.upsert({
+				where: { scheduleId: id },
+				update: {
+					hoursDeducted,
+					restoredAt: null,
+				},
+				create: {
 					scheduleId: id,
 					classId: schedule.classId,
 					hoursDeducted,
 				},
-			}),
-		]);
+			});
 
-		return toDTO(updatedSchedule);
+			return completedSchedule;
+		});
+
+		const remainingHours = await this.getRemainingHours(schedule.classId);
+		return toDTO({ ...updatedSchedule, _remainingHours: remainingHours });
 	}
 
 	async restoreHours(id: string): Promise<ScheduleDTO> {
@@ -263,44 +325,27 @@ export class ScheduleRepository implements IScheduleRepository {
 			throw new Error("Hours have already been restored for this schedule");
 		}
 
-		const [updatedSchedule] = await prisma.$transaction([
-			prisma.schedule.update({
+		const updatedSchedule = await prisma.$transaction(async (tx) => {
+			const cancelledSchedule = await tx.schedule.update({
 				where: { id },
 				data: { status: "CANCELLED" },
 				include: { class: true },
-			}),
-			prisma.classHourDeduction.update({
+			});
+
+			await tx.classHourDeduction.update({
 				where: { scheduleId: id },
 				data: { restoredAt: new Date() },
-			}),
-		]);
+			});
 
-		return toDTO(updatedSchedule);
+			return cancelledSchedule;
+		});
+
+		const remainingHours = await this.getRemainingHours(schedule.classId);
+		return toDTO({ ...updatedSchedule, _remainingHours: remainingHours });
 	}
 
 	async getRemainingHours(classId: string): Promise<number> {
-		const classData = await prisma.class.findUnique({
-			where: { id: classId },
-		});
-
-		if (!classData) {
-			throw new Error("Class not found");
-		}
-
-		const deductions = await prisma.classHourDeduction.findMany({
-			where: {
-				classId,
-				restoredAt: null,
-			},
-		});
-
-		const totalDeducted = deductions.reduce(
-			(sum: number, deduction: { hoursDeducted: number }) =>
-				sum + deduction.hoursDeducted,
-			0,
-		);
-
-		return classData.totalHours - totalDeducted;
+		return getRemainingHoursForClass(classId);
 	}
 
 	async createRecurringSchedule(
