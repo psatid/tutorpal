@@ -127,6 +127,8 @@ function LayoutComponent() {
 TutorPal keeps auth routes outside the authenticated `/_layout` tree.
 
 - `/login`: sign-in screen
+- `/forgot-password`: request a password reset email
+- `/reset-password`: set a new password from a Better Auth reset link
 - `/signup`: multi-step account creation flow
 - `/verify-email`: confirmation result screen used after Better Auth email verification redirects back to the frontend
 

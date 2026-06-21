@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LineLinkRouteImport } from './routes/line-link'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
@@ -33,6 +35,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -41,6 +48,11 @@ const LoginRoute = LoginRouteImport.update({
 const LineLinkRoute = LineLinkRouteImport.update({
   id: '/line-link',
   path: '/line-link',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutRoute = LayoutRouteImport.update({
@@ -90,8 +102,10 @@ const LayoutClassesClassIdRoute = LayoutClassesClassIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/classes': typeof LayoutClassesRouteWithChildren
@@ -103,8 +117,10 @@ export interface FileRoutesByFullPath {
   '/students/': typeof LayoutStudentsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/forgot-password': typeof ForgotPasswordRoute
   '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/schedules': typeof LayoutSchedulesRoute
@@ -117,8 +133,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_layout/classes': typeof LayoutClassesRouteWithChildren
@@ -134,8 +152,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/line-link'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/verify-email'
     | '/classes'
@@ -147,8 +167,10 @@ export interface FileRouteTypes {
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/forgot-password'
     | '/line-link'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/verify-email'
     | '/schedules'
@@ -160,8 +182,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_layout'
+    | '/forgot-password'
     | '/line-link'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/verify-email'
     | '/_layout/classes'
@@ -176,8 +200,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LineLinkRoute: typeof LineLinkRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
 }
@@ -198,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -210,6 +243,13 @@ declare module '@tanstack/react-router' {
       path: '/line-link'
       fullPath: '/line-link'
       preLoaderRoute: typeof LineLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout': {
@@ -325,8 +365,10 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LineLinkRoute: LineLinkRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   VerifyEmailRoute: VerifyEmailRoute,
 }

@@ -101,7 +101,7 @@ Required environment variables (set in DO dashboard):
 | `FRONTEND_URL` | Frontend app base URL | `https://your-frontend.com` |
 | `EMAIL_VERIFICATION_CALLBACK_URL` | Frontend route Better Auth redirects to after email confirmation | `https://your-frontend.com/verify-email` |
 | `RESEND_API_KEY` | Resend API key for verification emails | `re_123...` |
-| `RESEND_FROM_EMAIL` | Verified sender used for auth emails | `TutorPal <hello@your-domain.com>` |
+| `RESEND_FROM_EMAIL` | Verified sender used for auth emails such as verification and password reset | `TutorPal <hello@your-domain.com>` |
 
 ## Quick Start - Dev Deployment
 

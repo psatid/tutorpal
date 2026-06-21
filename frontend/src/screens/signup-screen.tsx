@@ -209,7 +209,7 @@ export function SignupScreen() {
               <div
                 key={index}
                 className={`h-1.5 flex-1 rounded-full ${
-                  index <= step ? "bg-primary" : "bg-accent"
+                  index <= step ? "bg-primary" : "bg-muted-foreground/20"
                 }`}
               />
             ))}
