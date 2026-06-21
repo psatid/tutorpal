@@ -101,39 +101,44 @@ export function WeekDateSelector({
 
   return (
     <div className={cn("bg-surface rounded-2xl mb-4 overflow-hidden border border-outline-variant", className)}>
-      <div className="px-3 py-2.5 border-b border-outline-variant">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={handlePrevWeek}
-              aria-label="Previous week"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={handleNextWeek}
-              aria-label="Next week"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+      <div className="border-b border-outline-variant px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex items-center rounded-full border border-outline-variant bg-card p-0.5">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={handlePrevWeek}
+                aria-label={t("schedules:weekSelector.previousWeek")}
+                className="rounded-full"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={handleNextWeek}
+                aria-label={t("schedules:weekSelector.nextWeek")}
+                className="rounded-full"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
             <button
               type="button"
               onClick={handleMonthClick}
               aria-label={t("schedules:weekSelector.openCalendar", { month: monthLabel })}
-              className="px-2 py-1 rounded-lg hover:bg-surface-variant/50 transition-colors font-headline font-semibold text-base text-on-surface cursor-pointer"
+              className="min-w-0 rounded-full px-3 py-1.5 font-headline text-base font-semibold text-on-surface transition-colors hover:bg-card"
             >
               {monthLabel}
             </button>
           </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="xs"
             onClick={handleToday}
             leftIcon={CalendarDays}
+            className="shrink-0 bg-card"
           >
             {t("schedules:weekSelector.today")}
           </Button>

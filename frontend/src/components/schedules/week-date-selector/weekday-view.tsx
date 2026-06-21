@@ -44,7 +44,7 @@ export function WeekdayView({
   };
 
   return (
-    <div className={cn("py-3 px-1", className)}>
+    <div className={cn("px-3 pb-3 pt-2 md:px-4 md:pb-4", className)}>
       <div
         ref={containerRef}
         className="relative overflow-hidden"
@@ -59,7 +59,7 @@ export function WeekdayView({
             animate="center"
             exit="exit"
             custom={slideDirection}
-            className="grid grid-cols-7 gap-1.5"
+            className="grid grid-cols-7 gap-2 md:flex md:items-stretch md:justify-around md:gap-3"
           >
             {dates.map((date) => {
               const isSelected = selectedDate
@@ -79,6 +79,7 @@ export function WeekdayView({
                   className={cn(
                     "aspect-square flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-150 py-1.5",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1",
+                    "w-full max-w-20",
                     isSelected
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-card border border-outline-variant text-on-surface hover:bg-surface-variant/50",

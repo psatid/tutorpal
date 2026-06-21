@@ -58,8 +58,8 @@ function SchedulesScreen() {
 ### Date Selection
 
 - **Tap to select**: Click any day in the week to select it
-- **Visual feedback**: Selected day has distinct styling with white circle
-- **Today indicator**: Small dot shows today's date when not selected
+- **Visual feedback**: Selected day uses a tinted card with a solid primary number chip
+- **Today indicator**: Unselected today shows a subtle primary ring on the date plus a small dot
 
 ### Header Controls
 
@@ -91,9 +91,10 @@ interface WeekdayViewProps {
 **Features:**
 - Displays 7 date buttons in a horizontal row
 - Each button shows: month abbreviation, day number, weekday name
+- Uses max-width day buttons with distributed spacing on tablet so the row stays compact instead of inflating into oversized squares
 - Swipe detection for week navigation
 - Animation on tap (scale down effect)
-- Selected state with primary color styling
+- Selected state with calmer product-style emphasis instead of a full saturated tile
 - Today indicator (small dot)
 
 **Touch Behavior:**
@@ -123,8 +124,10 @@ interface CalendarDrawerProps {
 
 ```css
 /* Colors */
-bg-primary           /* Selected day background */
-text-on-primary       /* Selected day text */
+bg-primary-container  /* Selected day card background */
+text-on-primary-container /* Selected day card text */
+bg-primary            /* Selected day number chip */
+text-primary-foreground /* Selected day number chip text */
 bg-surface           /* Component background */
 text-on-surface       /* Default text */
 text-on-surface-variant /* Weekday names */
@@ -147,14 +150,14 @@ className="bg-surface rounded-2xl mb-4 overflow-hidden"
 
 // Week day buttons
 className={cn(
-  "min-w-[56px] py-2 flex flex-col items-center justify-center gap-1 rounded-[20px]",
+  "min-h-24 min-w-0 flex flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-3 md:max-w-[96px] md:flex-1",
   isSelected
-    ? "bg-primary/90 text-primary-foreground shadow-md"
-    : "bg-card border border-input text-on-surface hover:bg-surface-variant/50"
+    ? "border-primary bg-primary-container text-on-primary-container"
+    : "bg-card border border-outline-variant text-on-surface hover:border-primary/30 hover:bg-surface-container-low"
 )}
 
 // Month label button
-className="px-3 py-1.5 rounded-lg hover:bg-surface-variant/50 transition-colors font-headline font-semibold text-lg text-on-surface"
+className="px-3 py-1.5 rounded-full hover:bg-card transition-colors font-headline font-semibold text-base text-on-surface"
 ```
 
 ## Animation
