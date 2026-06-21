@@ -19,6 +19,8 @@ export default {
   form: {
     email: "Email",
     password: "Password",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     name: "Name",
     description: "Description",
     required: "This field is required",

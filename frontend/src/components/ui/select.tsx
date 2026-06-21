@@ -1,20 +1,46 @@
 import * as React from "react";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
-
-import { cn } from "@/lib/utils";
-
-const DrawerSelectPortalContext = React.createContext<
-  React.RefObject<HTMLElement | null> | HTMLElement | null
->(null);
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  UnfoldMoreIcon,
-  Tick02Icon,
-  ArrowUp01Icon,
   ArrowDown01Icon,
+  ArrowUp01Icon,
+  Tick02Icon,
+  UnfoldMoreIcon,
 } from "@hugeicons/core-free-icons";
+import { cn } from "@/lib/utils";
 
-const Select = SelectPrimitive.Root;
+type DrawerSelectContextValue = {
+  portalContainer: React.RefObject<HTMLElement | null> | HTMLElement | null;
+  modal?: boolean;
+};
+
+const DrawerSelectPortalContext =
+  React.createContext<DrawerSelectContextValue | null>(null);
+
+function resolvePortalContainer(
+  context: DrawerSelectContextValue | null,
+): HTMLElement | null {
+  if (!context) {
+    return null;
+  }
+
+  const container = context.portalContainer;
+  if (!container) {
+    return null;
+  }
+
+  return "current" in container ? container.current : container;
+}
+
+function Select<Value, Multiple extends boolean | undefined = false>({
+  modal,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const drawerContext = React.useContext(DrawerSelectPortalContext);
+  const resolvedModal = modal ?? drawerContext?.modal;
+
+  return <SelectPrimitive.Root modal={resolvedModal} {...props} />;
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -82,7 +108,9 @@ function SelectContent({
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
   >) {
-  const portalContainer = React.useContext(DrawerSelectPortalContext);
+  const drawerContext = React.useContext(DrawerSelectPortalContext);
+  const portalContainer = resolvePortalContainer(drawerContext);
+
   return (
     <SelectPrimitive.Portal container={portalContainer || undefined}>
       <SelectPrimitive.Positioner
@@ -91,13 +119,13 @@ function SelectContent({
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
-        className="isolate z-50"
+        className="pointer-events-none isolate z-50"
       >
         <SelectPrimitive.Popup
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-2xl bg-popover text-popover-foreground border border-outline-variant duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "pointer-events-auto relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-2xl bg-popover text-popover-foreground border border-outline-variant duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
           {...props}

@@ -45,6 +45,7 @@ export interface UpdateScheduleDTO {
 export interface ScheduleListQueryDTO {
 	date?: string; // ISO date string (YYYY-MM-DD)
 	search?: string; // Search by class name
+	classId?: string; // Filter by class ID
 }
 
 // Recurring schedule DTOs
@@ -77,7 +78,10 @@ export interface IScheduleRepository {
 			durationMinutes: number;
 		}>,
 	): Promise<ScheduleDTO[]>;
-	findAll(query?: ScheduleListQueryDTO): Promise<ScheduleDTO[]>;
+	findAll(
+		tutorId: string,
+		query?: ScheduleListQueryDTO,
+	): Promise<ScheduleDTO[]>;
 	findById(id: string): Promise<ScheduleDTO | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO>;
 	delete(id: string): Promise<void>;

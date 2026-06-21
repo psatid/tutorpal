@@ -45,8 +45,13 @@ export function FormDrawer({
   onModeChange,
   editButtonText,
 }: FormDrawerProps) {
-  const portalRef = useRef<HTMLDivElement>(null);
+  const drawerPopupRef = useRef<HTMLDivElement>(null);
+  const desktopPortalRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const selectContextValue = {
+    portalContainer: isDesktop ? desktopPortalRef : drawerPopupRef,
+    modal: isDesktop ? false : undefined,
+  };
 
   return (
     <Drawer
@@ -55,11 +60,16 @@ export function FormDrawer({
       swipeDirection={isDesktop ? "right" : "down"}
     >
       <DrawerPortal>
+        <div
+          ref={desktopPortalRef}
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-60"
+        />
         <DrawerBackdrop />
         <DrawerViewport>
-          <DrawerPopup ref={portalRef}>
+          <DrawerPopup ref={drawerPopupRef}>
             <DrawerContent>
-              <DrawerSelectPortalContext.Provider value={portalRef}>
+              <DrawerSelectPortalContext.Provider value={selectContextValue}>
                 <div className="flex flex-col h-full">
                   <form onSubmit={onSubmit} className="flex flex-col h-full">
                     <div className="flex items-center justify-between shrink-0 bg-background pb-4 md:pt-4">

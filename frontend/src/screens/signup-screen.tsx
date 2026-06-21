@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { RHFInputField } from "@/components/ui/form/rhf";
+import { RHFInputField, RHFPasswordField } from "@/components/ui/form/rhf";
 import { APP_ROUTES } from "@/constants/routes";
 import { useSendVerificationEmail } from "@/hooks/mutations/use-send-verification-email";
 import { AuthFlowError, useSignup } from "@/hooks/mutations/use-signup";
@@ -267,12 +267,11 @@ export function SignupScreen() {
               )}
               aria-hidden={step !== 2}
             >
-              <RHFInputField
+              <RHFPasswordField
                 control={control}
                 name="password"
                 label={t("common:form.password")}
                 inputProps={{
-                  type: "password",
                   placeholder: t("auth:signup.steps.password.placeholder"),
                   leftIcon: Lock,
                 }}

@@ -94,6 +94,23 @@ import { Input } from "@/components/ui/input";
 />
 ```
 
+The shared `Input` primitive also supports a `rightAdornment` slot for inline actions that need to live inside the field chrome, such as auth password visibility toggles.
+
+### PasswordField (`src/components/ui/form/password-field.tsx`)
+
+```typescript
+import { PasswordField } from "@/components/ui/form/password-field";
+import { Lock } from "lucide-react";
+
+<PasswordField
+  label="Password"
+  placeholder="Enter your password"
+  leftIcon={Lock}
+/>
+```
+
+Use `PasswordField` when the UI needs TutorPal's built-in password visibility toggle. It preserves the same label, caption, error, disabled, and icon behavior as `InputField`, while keeping the toggle button accessible and local to each field instance.
+
 ### Select (`src/components/ui/select.tsx`)
 
 ```typescript
@@ -111,6 +128,8 @@ const options = [
   placeholder="Select grade"
 />
 ```
+
+The shared select is drawer-aware. Inside `FormDrawer`, mobile keeps the select popup anchored to the drawer surface, while tablet/desktop uses a separate overlay host plus non-modal popup behavior so repeated selections work without disturbing the drawer layout.
 
 ## Creating New Components
 

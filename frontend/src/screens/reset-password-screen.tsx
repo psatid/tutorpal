@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { RHFInputField } from "@/components/ui/form/rhf";
+import { RHFPasswordField } from "@/components/ui/form/rhf";
 import { APP_ROUTES } from "@/constants/routes";
 import { useResetPassword } from "@/hooks/mutations/use-reset-password";
 import { AuthFlowError } from "@/hooks/mutations/use-signup";
@@ -121,22 +121,20 @@ export function ResetPasswordScreen() {
 			subtitle={t("auth:resetPassword.subtitle")}
 			form={
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-					<RHFInputField
+					<RHFPasswordField
 						control={control}
 						name="newPassword"
 						label={t("common:form.password")}
 						inputProps={{
-							type: "password",
 							placeholder: t("auth:resetPassword.passwordPlaceholder"),
 							leftIcon: Lock,
 						}}
 					/>
-					<RHFInputField
+					<RHFPasswordField
 						control={control}
 						name="confirmPassword"
 						label={t("auth:resetPassword.confirmLabel")}
 						inputProps={{
-							type: "password",
 							placeholder: t("auth:resetPassword.confirmPlaceholder"),
 							leftIcon: Lock,
 						}}

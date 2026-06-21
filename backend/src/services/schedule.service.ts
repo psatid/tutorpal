@@ -48,7 +48,10 @@ export class ScheduleService {
 		return remainingHours >= durationMinutes / 60;
 	}
 
-	async createSchedule(data: CreateScheduleDTO, tutorId: string): Promise<ScheduleDTO> {
+	async createSchedule(
+		data: CreateScheduleDTO,
+		tutorId: string,
+	): Promise<ScheduleDTO> {
 		// Verify that the class exists and belongs to this tutor
 		const classData = await classRepository.findById(data.classId, tutorId);
 		if (!classData) {
@@ -283,12 +286,15 @@ export class ScheduleService {
 		return date;
 	}
 
-	async getAllSchedules(query?: {
-		date?: string;
-		search?: string;
-		classId?: string;
-	}): Promise<ScheduleDTO[]> {
-		return this.repository.findAll(query);
+	async getAllSchedules(
+		tutorId: string,
+		query?: {
+			date?: string;
+			search?: string;
+			classId?: string;
+		},
+	): Promise<ScheduleDTO[]> {
+		return this.repository.findAll(tutorId, query);
 	}
 
 	async getScheduleById(id: string): Promise<ScheduleDTO> {

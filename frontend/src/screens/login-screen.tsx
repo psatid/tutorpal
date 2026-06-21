@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { RHFInputField } from "@/components/ui/form/rhf";
+import { RHFInputField, RHFPasswordField } from "@/components/ui/form/rhf";
 import { APP_ROUTES } from "@/constants/routes";
 import { useLogin } from "@/hooks/mutations/use-login";
 import { authClient } from "@/lib/auth-client";
@@ -72,12 +72,11 @@ export function LoginScreen() {
 						}}
 					/>
 
-					<RHFInputField
+					<RHFPasswordField
 						control={control}
 						name="password"
 						label={t("common:form.password")}
 						inputProps={{
-							type: "password",
 							placeholder: t("auth:login.passwordPlaceholder"),
 							leftIcon: Lock,
 						}}

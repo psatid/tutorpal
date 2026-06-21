@@ -1,6 +1,5 @@
 import type { Prisma, ScheduleStatus, Weekday } from "@prisma/client";
 import { prisma } from "../lib/db";
-import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 import type {
 	CreateScheduleDTO,
 	IScheduleRepository,
@@ -9,6 +8,7 @@ import type {
 	ScheduleDTO,
 	UpdateScheduleDTO,
 } from "../types";
+import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 
 const DEDUCTED_SCHEDULE_STATUSES: ScheduleStatus[] = ["COMPLETED", "NO_SHOW"];
 
@@ -144,12 +144,19 @@ export class ScheduleRepository implements IScheduleRepository {
 		);
 	}
 
-	async findAll(query?: {
-		date?: string;
-		search?: string;
-		classId?: string;
-	}): Promise<ScheduleDTO[]> {
-		const where: Prisma.ScheduleWhereInput = {};
+	async findAll(
+		tutorId: string,
+		query?: {
+			date?: string;
+			search?: string;
+			classId?: string;
+		},
+	): Promise<ScheduleDTO[]> {
+		const where: Prisma.ScheduleWhereInput = {
+			class: {
+				tutorId,
+			},
+		};
 
 		if (query?.date) {
 			where.date = new Date(query.date);
@@ -161,6 +168,7 @@ export class ScheduleRepository implements IScheduleRepository {
 
 		if (query?.search) {
 			where.class = {
+				tutorId,
 				name: {
 					contains: query.search,
 					mode: "insensitive",

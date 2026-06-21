@@ -142,6 +142,7 @@ export class StudentRepository implements IStudentRepository {
 - Map database types to DTOs (e.g., Date → ISO string)
 - No business logic or error throwing
 - Export singleton instances for DI
+- For tutor-owned entities such as classes, students, and schedules, apply tutor scoping in repository queries instead of relying on callers or frontend filters.
 
 **Derived availability rule**:
 - When exposing class `remainingHours`, treat `SCHEDULED`, `COMPLETED`, and `NO_SHOW` schedules as reserved time and exclude `CANCELLED` schedules.

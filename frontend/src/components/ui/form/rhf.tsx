@@ -7,6 +7,7 @@ import {
 } from "react-hook-form";
 
 import { InputField } from "./input-field";
+import { PasswordField } from "./password-field";
 import { SelectField } from "./select-field";
 import { DateField } from "./date-field";
 import { TimeField } from "./time-field";
@@ -59,6 +60,48 @@ function RHFInputField<T extends FieldValues>({
           />
         );
       }}
+    />
+  );
+}
+
+interface RHFPasswordFieldProps<T extends FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
+  label?: string;
+  caption?: string;
+  required?: boolean;
+  disabled?: boolean;
+  inputProps?: Omit<React.ComponentProps<"input">, "name" | "type"> & {
+    leftIcon?: LucideIcon;
+  };
+}
+
+function RHFPasswordField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  caption,
+  required,
+  disabled,
+  inputProps,
+}: RHFPasswordFieldProps<T>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <PasswordField
+          {...field}
+          {...inputProps}
+          label={label}
+          caption={caption}
+          error={fieldState.error?.message}
+          required={required}
+          disabled={disabled}
+          aria-invalid={!!fieldState.error}
+          onChange={(e) => field.onChange(e.target.value)}
+        />
+      )}
     />
   );
 }
@@ -179,4 +222,10 @@ function RHFTimeField<T extends FieldValues>({
   );
 }
 
-export { RHFInputField, RHFSelectField, RHFDateField, RHFTimeField };
+export {
+  RHFInputField,
+  RHFPasswordField,
+  RHFSelectField,
+  RHFDateField,
+  RHFTimeField,
+};

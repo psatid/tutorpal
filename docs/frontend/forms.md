@@ -146,6 +146,25 @@ import { RHFDateField } from "@/components/ui/form/rhf";
 
 The date picker uses shadcn's Calendar component (built on react-day-picker) with a popover. It outputs dates in YYYY-MM-DD format to match your schema.
 
+### Password Input
+
+```typescript
+import { RHFPasswordField } from "@/components/ui/form/rhf";
+import { Lock } from "lucide-react";
+
+<RHFPasswordField
+  control={control}
+  name="password"
+  label="Password"
+  inputProps={{
+    placeholder: "Enter your password",
+    leftIcon: Lock,
+  }}
+/>
+```
+
+Use `RHFPasswordField` for auth and any other password entry flow. It reuses the shared form field styling, manages its own show/hide state per field, and exposes an accessible toggle button without changing your form schema or submit payload.
+
 ### Checkbox
 
 ```typescript

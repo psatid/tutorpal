@@ -1,7 +1,7 @@
 import { Input, type InputProps } from "@/components/ui/input";
 import { FormField } from "./form-field";
 
-interface InputFieldProps extends InputProps {
+export interface InputFieldProps extends InputProps {
   label?: string;
   caption?: string;
   error?: string | string[];
