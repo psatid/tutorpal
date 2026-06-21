@@ -1,7 +1,7 @@
+import { authClient } from "@/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { authClient, getEmailVerificationCallbackUrl } from "@/lib/auth-client";
 import { AuthFlowError } from "./use-signup";
 
 interface LoginCredentials {
