@@ -3,6 +3,7 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
 import common from "./locales/en/common";
+import auth from "./locales/en/auth";
 import login from "./locales/en/login";
 import dashboard from "./locales/en/dashboard";
 import students from "./locales/en/students";
@@ -13,6 +14,7 @@ import navigation from "./locales/en/navigation";
 const resources = {
   en: {
     common: common as Record<string, unknown>,
+    auth: auth as Record<string, unknown>,
     login: login as Record<string, unknown>,
     dashboard: dashboard as Record<string, unknown>,
     students: students as Record<string, unknown>,
@@ -33,6 +35,7 @@ i18n
     },
     ns: [
       "common",
+      "auth",
       "login",
       "dashboard",
       "students",

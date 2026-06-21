@@ -98,6 +98,10 @@ Required environment variables (set in DO dashboard):
 | `BETTER_AUTH_SECRET` | Strong random string for auth | Generate: `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | Backend public URL | Auto-set by DO as `${APP_URL}` |
 | `CORS_ORIGIN` | Frontend domain(s) | `https://your-frontend.com` |
+| `FRONTEND_URL` | Frontend app base URL | `https://your-frontend.com` |
+| `EMAIL_VERIFICATION_CALLBACK_URL` | Frontend route Better Auth redirects to after email confirmation | `https://your-frontend.com/verify-email` |
+| `RESEND_API_KEY` | Resend API key for verification emails | `re_123...` |
+| `RESEND_FROM_EMAIL` | Verified sender used for auth emails | `TutorPal <hello@your-domain.com>` |
 
 ## Quick Start - Dev Deployment
 
@@ -192,6 +196,10 @@ doctl apps update $APP_ID --spec=.do/dev.app.yaml
 DATABASE_URL=postgresql://postgres:[password]@[host]:5432/postgres?sslmode=require
 BETTER_AUTH_SECRET=<generate with openssl rand -base64 32>
 CORS_ORIGIN=https://your-frontend-domain.com
+FRONTEND_URL=https://your-frontend-domain.com
+EMAIL_VERIFICATION_CALLBACK_URL=https://your-frontend-domain.com/verify-email
+RESEND_API_KEY=<your-resend-api-key>
+RESEND_FROM_EMAIL=TutorPal <hello@your-domain.com>
 ```
 
 ### 2. Run Database Migrations

@@ -63,6 +63,16 @@ services:
         scope: RUN_AND_BUILD_TIME
         type: SECRET
         value: EV[1:sBwRDGdT5KbSVFhyIG3XYxV4hiawCZoM:0e/x0KpaVI3v7f83SL5VV57wAn4OHLhAtULnFtuqxiEMniUdW1zcuS2uLoypaKdEXXRfEIyaw4kdH98OcCrUnR41MFdvXjCmz6YzHWuiPKrYu8a1wO5MTXUBctY0SkGlTU+HLYryYYedc4/O1vXJcQy+xEu6IGLnzdldGL1aJkZwtz8wljqqRL4UWPk0VolV2TZLAeqBkpjAy3ZEjvkH0LChvXVC9ofepkz0eE42Hfit9+4vzafvLntx+p0=]
+      - key: RESEND_API_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: EV[1:F2UAOJwPQtSqeSa6ol1wYyeA0d7Oo4LF:GSGKQwH9O5haXnTiCrlpNjNqc0gbYtlFi9QJoaJrLtQQT2GLxc1TwDB8wmDRU/B3rbu8eA==]
+      - key: RESEND_FROM_EMAIL
+        scope: RUN_AND_BUILD_TIME
+        value: TutorPal <no-reply@tutorpal.io>
+      - key: EMAIL_VERIFICATION_CALLBACK_URL
+        scope: RUN_AND_BUILD_TIME
+        value: https://dev.tutorpal.io/verify-email
     health_check:
       failure_threshold: 3
       http_path: /v1/health

@@ -10,6 +10,9 @@ Routes are automatically generated from the file structure in `src/routes/`.
 src/routes/
 ├── __root.tsx              → / (root, provides QueryClient)
 ├── _layout.tsx             → Layout wrapper (TopAppBar, BottomNav)
+├── login.tsx               → /login
+├── signup.tsx              → /signup
+├── verify-email.tsx        → /verify-email
 ├── _layout/
 │   ├── index.tsx           → / (home/dashboard)
 │   ├── classes.tsx         → /classes
@@ -118,6 +121,16 @@ function LayoutComponent() {
   );
 }
 ```
+
+## Public Auth Routes
+
+TutorPal keeps auth routes outside the authenticated `/_layout` tree.
+
+- `/login`: sign-in screen
+- `/signup`: multi-step account creation flow
+- `/verify-email`: confirmation result screen used after Better Auth email verification redirects back to the frontend
+
+The auth screens share a dedicated auth shell component instead of using the main app chrome. This lets the public flow keep its own mobile/tablet layout while preserving the existing TutorPal theme and component styling.
 
 ### Root Route
 

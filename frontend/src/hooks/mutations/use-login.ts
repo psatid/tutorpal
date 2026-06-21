@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient, getEmailVerificationCallbackUrl } from "@/lib/auth-client";
+import { AuthFlowError } from "./use-signup";
 
 interface LoginCredentials {
   email: string;
@@ -10,6 +11,7 @@ interface LoginCredentials {
 
 interface UseLoginOptions {
   onSuccess?: () => void;
+  onError?: (error: AuthFlowError) => void;
 }
 
 /**
@@ -27,7 +29,10 @@ export const useLogin = (options?: UseLoginOptions) => {
       });
 
       if (result.error) {
-        throw new Error(result.error.message || "Login failed");
+        throw new AuthFlowError(
+          result.error.message || "Login failed",
+          (result.error as { code?: string }).code,
+        );
       }
 
       return result.data;
@@ -37,9 +42,14 @@ export const useLogin = (options?: UseLoginOptions) => {
       navigate({ to: "/" });
       options?.onSuccess?.();
     },
-    onError: (error: Error) => {
+    onError: (error: AuthFlowError) => {
+      if (options?.onError) {
+        options.onError(error);
+        return;
+      }
+
       toast.error(
-        error.message || "Invalid email or password. Please try again."
+        error.message || "Invalid email or password. Please try again.",
       );
     },
   });

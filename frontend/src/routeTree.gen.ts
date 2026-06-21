@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LineLinkRouteImport } from './routes/line-link'
 import { Route as LayoutRouteImport } from './routes/_layout'
@@ -21,6 +23,16 @@ import { Route as LayoutClassesIndexRouteImport } from './routes/_layout/classes
 import { Route as LayoutStudentsStudentIdRouteImport } from './routes/_layout/students/$studentId'
 import { Route as LayoutClassesClassIdRouteImport } from './routes/_layout/classes/$classId'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -80,6 +92,8 @@ export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/classes': typeof LayoutClassesRouteWithChildren
   '/schedules': typeof LayoutSchedulesRoute
   '/students': typeof LayoutStudentsRouteWithChildren
@@ -91,6 +105,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/': typeof LayoutIndexRoute
   '/classes/$classId': typeof LayoutClassesClassIdRoute
@@ -103,6 +119,8 @@ export interface FileRoutesById {
   '/_layout': typeof LayoutRouteWithChildren
   '/line-link': typeof LineLinkRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_layout/classes': typeof LayoutClassesRouteWithChildren
   '/_layout/schedules': typeof LayoutSchedulesRoute
   '/_layout/students': typeof LayoutStudentsRouteWithChildren
@@ -118,6 +136,8 @@ export interface FileRouteTypes {
     | '/'
     | '/line-link'
     | '/login'
+    | '/signup'
+    | '/verify-email'
     | '/classes'
     | '/schedules'
     | '/students'
@@ -129,6 +149,8 @@ export interface FileRouteTypes {
   to:
     | '/line-link'
     | '/login'
+    | '/signup'
+    | '/verify-email'
     | '/schedules'
     | '/'
     | '/classes/$classId'
@@ -140,6 +162,8 @@ export interface FileRouteTypes {
     | '/_layout'
     | '/line-link'
     | '/login'
+    | '/signup'
+    | '/verify-email'
     | '/_layout/classes'
     | '/_layout/schedules'
     | '/_layout/students'
@@ -154,10 +178,26 @@ export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
   LineLinkRoute: typeof LineLinkRoute
   LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -287,6 +327,8 @@ const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
   LineLinkRoute: LineLinkRoute,
   LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

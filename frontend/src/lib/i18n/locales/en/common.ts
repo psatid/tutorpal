@@ -10,6 +10,7 @@ export default {
     close: "Close",
     search: "Search",
     signIn: "Sign In",
+    continue: "Continue",
     signOut: "Sign Out",
     submit: "Submit",
     back: "Back",

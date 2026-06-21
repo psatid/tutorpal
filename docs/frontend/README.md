@@ -17,7 +17,7 @@ The frontend is a React 19 Single Page Application (SPA) built with Vite, follow
 | **[Components](./components.md)** | Base UI primitives, shadcn/ui, component organization |
 | **[Forms](./forms.md)** | React Hook Form, Zod validation |
 | **[Development](./development.md)** | Dev workflow, config files, troubleshooting |
-| **[i18n](../frontend/docs/i18n.md)** | Internationalization setup |
+| **[i18n](./i18n.md)** | Internationalization setup |
 
 ## Technology Stack
 

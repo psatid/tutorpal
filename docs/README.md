@@ -28,7 +28,7 @@ Comprehensive documentation for the frontend codebase organized by topic:
 | **[Components](./frontend/components.md)** | Base UI primitives, shadcn/ui, component patterns |
 | **[Forms](./frontend/forms.md)** | React Hook Form, Zod validation |
 | **[Development](./frontend/development.md)** | Dev workflow, config files, troubleshooting |
-| **[i18n](../frontend/docs/i18n.md)** | Internationalization setup with i18next |
+| **[i18n](./frontend/i18n.md)** | Internationalization setup with i18next |
 
 ### ⚙️ Backend Architecture
 **[Backend Project Structure](./backend.md)**

@@ -7,6 +7,9 @@ export const ENV = {
 	BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
 	BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "secret",
 	NODE_ENV: process.env.NODE_ENV ?? "development",
+	RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
+	RESEND_FROM_EMAIL:
+		process.env.RESEND_FROM_EMAIL ?? "TutorPal <no-reply@example.com>",
 	LINE_LOGIN_CHANNEL_ID: process.env.LINE_LOGIN_CHANNEL_ID ?? "",
 	LINE_LOGIN_CHANNEL_SECRET: process.env.LINE_LOGIN_CHANNEL_SECRET ?? "",
 	LINE_MESSAGING_CHANNEL_ACCESS_TOKEN:
@@ -15,4 +18,7 @@ export const ENV = {
 		process.env.LINE_LINK_REDIRECT_URL ??
 		"http://localhost:3000/v1/line/callback",
 	FRONTEND_URL: process.env.FRONTEND_URL ?? "http://localhost:3001",
+	EMAIL_VERIFICATION_CALLBACK_URL:
+		process.env.EMAIL_VERIFICATION_CALLBACK_URL ??
+		"http://localhost:3001/verify-email",
 } as const;

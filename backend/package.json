@@ -25,6 +25,7 @@
 		"mongoose": "8.23.0",
 		"pg": "8.14.0",
 		"prisma": "7.5.0",
+		"resend": "^6.14.0",
 		"serialize-error": "13.0.1",
 		"uuid": "^13.0.0",
 		"vitest": "4.1.0",
