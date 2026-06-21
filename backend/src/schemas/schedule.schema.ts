@@ -5,6 +5,7 @@ import { z } from "zod";
 export const ScheduleStatusSchema = z.enum([
 	"SCHEDULED",
 	"COMPLETED",
+	"NO_SHOW",
 	"CANCELLED",
 ]);
 
@@ -72,7 +73,6 @@ export const CreateScheduleSchema = z
 			.min(1, "Duration must be at least 1 minute")
 			.optional(),
 		notes: z.string().optional(),
-		status: ScheduleStatusSchema.optional(),
 		recurring: RecurringPatternSchema,
 	})
 	.superRefine((data, ctx) => {

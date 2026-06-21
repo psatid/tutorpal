@@ -3,6 +3,7 @@ import {
   Eye,
   MoreVertical,
   CheckCircle2,
+  AlertCircle,
   RotateCcw,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -27,6 +28,7 @@ interface ScheduleCardProps {
   onView: () => void;
   onDelete: () => void;
   onComplete?: () => void;
+  onNoShow?: () => void;
   onRestore?: () => void;
 }
 
@@ -35,6 +37,7 @@ export function ScheduleCard({
   onView,
   onDelete,
   onComplete,
+  onNoShow,
   onRestore,
 }: ScheduleCardProps) {
   const { t } = useTranslation(["schedules"]);
@@ -109,7 +112,23 @@ export function ScheduleCard({
               <DropdownMenuSeparator />
             </>
           )}
-          {schedule.status === "COMPLETED" && onRestore && (
+          {schedule.status === "SCHEDULED" && onNoShow && (
+            <>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onNoShow();
+                }}
+              >
+                <AlertCircle className="w-4 h-4" />
+                {t("schedules:noShow.action")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {(schedule.status === "COMPLETED" || schedule.status === "NO_SHOW") &&
+            onRestore && (
             <>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -123,7 +142,7 @@ export function ScheduleCard({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
-          )}
+            )}
           <DropdownMenuItem
             variant="destructive"
             onClick={(e) => {

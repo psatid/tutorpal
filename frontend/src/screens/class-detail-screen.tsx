@@ -8,6 +8,7 @@ import {
   useDeleteSchedule,
   useCompleteSchedule,
   useRestoreHours,
+  useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { ClassInfoHeader } from "@/components/classes/class-info-header";
 import { ScheduleLog } from "@/components/classes/schedule-log";
@@ -37,6 +38,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
 
   const deleteScheduleMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
+  const updateMutation = useUpdateSchedule();
   const restoreMutation = useRestoreHours();
 
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
@@ -132,6 +134,33 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
     [restoreMutation, t],
   );
 
+  const handleNoShowSchedule = useCallback(
+    (schedule: GetV1Schedules200Item) => {
+      const reservedHours = (schedule.durationMinutes / 60).toFixed(1);
+      toast(
+        t("schedules:noShow.confirm", {
+          hours: reservedHours,
+          ns: "schedules",
+        }),
+        {
+          action: {
+            label: t("schedules:noShow.confirmButton", { ns: "schedules" }),
+            onClick: () =>
+              updateMutation.mutate({
+                id: schedule.id,
+                data: { status: "NO_SHOW" },
+              }),
+          },
+          cancel: {
+            label: t("schedules:noShow.cancelButton", { ns: "schedules" }),
+            onClick: () => {},
+          },
+        },
+      );
+    },
+    [t, updateMutation],
+  );
+
   const handleScheduleDrawerOpenChange = useCallback((open: boolean) => {
     setIsScheduleDrawerOpen(open);
     if (!open) {
@@ -210,6 +239,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
         onViewSchedule={handleViewSchedule}
         onAddSchedule={handleAddSchedule}
         onCompleteSchedule={handleCompleteSchedule}
+        onNoShowSchedule={handleNoShowSchedule}
         onRestoreSchedule={handleRestoreHours}
         onDeleteSchedule={handleDeleteSchedule}
       />

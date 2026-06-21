@@ -20,7 +20,7 @@ export const scheduleSchema = z
 			.min(1, "Duration must be at least 1 minute")
 			.optional(),
 		notes: z.string().optional(),
-		status: z.enum(["SCHEDULED", "COMPLETED", "CANCELLED"]),
+		status: z.enum(["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]),
 		recurring: z
 			.object({
 				scheduleItems: z

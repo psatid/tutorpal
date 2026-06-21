@@ -39,12 +39,6 @@ interface ScheduleDrawerProps {
 	selectedDate?: Date;
 }
 
-const statusOptions = [
-	{ value: "SCHEDULED", label: "Scheduled" },
-	{ value: "COMPLETED", label: "Completed" },
-	{ value: "CANCELLED", label: "Cancelled" },
-];
-
 export function ScheduleDrawer({
 	isOpen,
 	onOpenChange,
@@ -54,6 +48,12 @@ export function ScheduleDrawer({
 	selectedDate,
 }: ScheduleDrawerProps) {
 	const { t } = useTranslation(["schedules"]);
+	const statusOptions = [
+		{ value: "SCHEDULED", label: t("schedules:status.SCHEDULED") },
+		{ value: "COMPLETED", label: t("schedules:status.COMPLETED") },
+		{ value: "NO_SHOW", label: t("schedules:status.NO_SHOW") },
+		{ value: "CANCELLED", label: t("schedules:status.CANCELLED") },
+	];
 	const [isRecurring, setIsRecurring] = useState(false);
 	const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
 	const { handleSubmit, reset, control, setValue, watch } =
@@ -130,7 +130,6 @@ export function ScheduleDrawer({
 				time: timeInMinutes,
 				durationMinutes: data.durationMinutes,
 				notes: data.notes,
-				status: data.status,
 				recurring: data.recurring
 					? {
 							startDate: data.date,
@@ -340,19 +339,18 @@ export function ScheduleDrawer({
 				}}
 			/>
 
-			<RHFSelectField
-				control={control}
-				name="status"
-				label={t("schedules:drawer.status.label")}
-				caption={
-					mode === "create" ? t("schedules:drawer.status.caption") : undefined
-				}
-				options={statusOptions}
-				disabled={isDisabled}
-				selectProps={{
-					placeholder: t("schedules:drawer.status.placeholder"),
-				}}
-			/>
+			{mode !== "create" && (
+				<RHFSelectField
+					control={control}
+					name="status"
+					label={t("schedules:drawer.status.label")}
+					options={statusOptions}
+					disabled={isDisabled}
+					selectProps={{
+						placeholder: t("schedules:drawer.status.placeholder"),
+					}}
+				/>
+			)}
 		</FormDrawer>
 	);
 }

@@ -144,7 +144,7 @@ export class StudentRepository implements IStudentRepository {
 - Export singleton instances for DI
 
 **Derived availability rule**:
-- When exposing class `remainingHours`, treat `SCHEDULED` and `COMPLETED` schedules as reserved time and exclude `CANCELLED` schedules.
+- When exposing class `remainingHours`, treat `SCHEDULED`, `COMPLETED`, and `NO_SHOW` schedules as reserved time and exclude `CANCELLED` schedules.
 - Prefer a shared repository helper for this calculation so class, student-detail, and schedule responses all use the same source of truth.
 
 ### 4. Schemas Layer (`src/schemas/`)

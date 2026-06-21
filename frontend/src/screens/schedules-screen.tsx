@@ -12,6 +12,7 @@ import {
   useDeleteSchedule,
   useCompleteSchedule,
   useRestoreHours,
+  useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
 import {
@@ -41,6 +42,7 @@ export function SchedulesScreen() {
 
   const deleteMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
+  const updateMutation = useUpdateSchedule();
   const restoreMutation = useRestoreHours();
 
   const filteredSchedules = useMemo(() => {
@@ -102,6 +104,24 @@ export function SchedulesScreen() {
     });
   };
 
+  const handleNoShowSchedule = (schedule: GetV1Schedules200Item) => {
+    const reservedHours = (schedule.durationMinutes / 60).toFixed(1);
+    toast(t("schedules:noShow.confirm", { hours: reservedHours }), {
+      action: {
+        label: t("schedules:noShow.confirmButton"),
+        onClick: () =>
+          updateMutation.mutate({
+            id: schedule.id,
+            data: { status: "NO_SHOW" },
+          }),
+      },
+      cancel: {
+        label: t("schedules:noShow.cancelButton"),
+        onClick: () => {},
+      },
+    });
+  };
+
   const handleModeChange = (mode: DrawerMode) => {
     setDrawerMode(mode);
   };
@@ -151,7 +171,7 @@ export function SchedulesScreen() {
       {/* Status Filter */}
       {schedules && schedules.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto">
-          {(["ALL", "SCHEDULED", "COMPLETED", "CANCELLED"] as const).map(
+          {(["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const).map(
             (status) => (
               <button
                 key={status}
@@ -212,6 +232,7 @@ export function SchedulesScreen() {
               onView={() => handleViewSchedule(schedule)}
               onDelete={() => handleDeleteSchedule(schedule)}
               onComplete={() => handleCompleteSchedule(schedule)}
+              onNoShow={() => handleNoShowSchedule(schedule)}
               onRestore={() => handleRestoreHours(schedule)}
             />
           ))}

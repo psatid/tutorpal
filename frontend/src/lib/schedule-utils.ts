@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 
 export function formatTime24Hour(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -14,7 +14,7 @@ export function formatDuration(totalMinutes: number): string {
   return `${hours}h ${mins}m`;
 }
 
-type ScheduleStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED";
+type ScheduleStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 
 export const statusColors: Record<
   ScheduleStatus,
@@ -26,6 +26,10 @@ export const statusColors: Record<
   COMPLETED: {
     className: "bg-green-100 text-green-800",
     icon: Check,
+  },
+  NO_SHOW: {
+    className: "bg-amber-100 text-amber-800",
+    icon: AlertCircle,
   },
   CANCELLED: {
     className: "bg-destructive/10 text-destructive",

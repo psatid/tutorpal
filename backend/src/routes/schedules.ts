@@ -257,7 +257,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 		describeRoute({
 			tags: ["schedules"],
 			description:
-				"Restore hours for a completed schedule (marks as CANCELLED)",
+				"Restore hours for a completed or no-show schedule (marks as CANCELLED)",
 			responses: {
 				200: {
 					description: "Hours restored successfully",
@@ -269,7 +269,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 				},
 				400: {
 					description:
-						"Invalid operation - schedule not completed or hours already restored",
+						"Invalid operation - schedule not completed/no-show or hours already restored",
 				},
 				401: {
 					description: "Unauthorized - Authentication required",

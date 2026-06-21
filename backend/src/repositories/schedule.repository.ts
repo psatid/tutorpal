@@ -1,4 +1,4 @@
-import type { Prisma, Weekday } from "@prisma/client";
+import type { Prisma, ScheduleStatus, Weekday } from "@prisma/client";
 import { prisma } from "../lib/db";
 import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 import type {
@@ -10,6 +10,8 @@ import type {
 	UpdateScheduleDTO,
 } from "../types";
 
+const DEDUCTED_SCHEDULE_STATUSES: ScheduleStatus[] = ["COMPLETED", "NO_SHOW"];
+
 // Helper to convert Prisma Schedule with class relation to DTO
 function toDTO(schedule: {
 	id: string;
@@ -18,7 +20,7 @@ function toDTO(schedule: {
 	time: number;
 	durationMinutes: number;
 	notes: string | null;
-	status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+	status: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 	createdAt: Date;
 	updatedAt: Date;
 	class: {
@@ -58,14 +60,14 @@ export class ScheduleRepository implements IScheduleRepository {
 					time,
 					durationMinutes,
 					notes: data.notes || null,
-					status: data.status || "SCHEDULED",
+					status: "SCHEDULED",
 				},
 				include: {
 					class: true,
 				},
 			});
 
-			if (createdSchedule.status === "COMPLETED") {
+			if (DEDUCTED_SCHEDULE_STATUSES.includes(createdSchedule.status)) {
 				await tx.classHourDeduction.create({
 					data: {
 						scheduleId: createdSchedule.id,
@@ -223,7 +225,7 @@ export class ScheduleRepository implements IScheduleRepository {
 				},
 			});
 
-			if (updatedSchedule.status === "COMPLETED") {
+			if (DEDUCTED_SCHEDULE_STATUSES.includes(updatedSchedule.status)) {
 				await tx.classHourDeduction.upsert({
 					where: { scheduleId: updatedSchedule.id },
 					update: {
@@ -318,7 +320,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 
 		if (!hourDeduction) {
-			throw new Error("No hours have been deducted for this schedule");
+			throw new Error("No reserved hours were found for this schedule");
 		}
 
 		if (hourDeduction.restoredAt) {

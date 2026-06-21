@@ -18,7 +18,6 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 			time: number;
 			durationMinutes?: number;
 			notes?: string;
-			status?: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 			recurring?: {
 				startDate: string;
 				scheduleItems: Array<{
@@ -34,7 +33,6 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 				time: number;
 				durationMinutes?: number;
 				notes?: string;
-				status?: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 				recurring?: {
 					startDate: string;
 					scheduleItems: Array<{
@@ -49,7 +47,6 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 				time: data.recurring ? 0 : data.time, // Time is ignored for recurring schedules
 				durationMinutes: data.durationMinutes,
 				notes: data.notes,
-				status: data.status,
 			};
 
 			if (data.recurring) {
@@ -96,7 +93,7 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 				time: number;
 				durationMinutes: number;
 				notes?: string;
-				status?: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+				status?: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 			}>;
 		}) => {
 			const response = await apiClient.putV1SchedulesById(id, data);

@@ -11,6 +11,7 @@ export default {
 	status: {
 		SCHEDULED: "Scheduled",
 		COMPLETED: "Completed",
+		NO_SHOW: "No Show",
 		CANCELLED: "Cancelled",
 	},
 	delete: {
@@ -22,6 +23,12 @@ export default {
 		action: "Complete",
 		confirm: "Complete this schedule and deduct {{hours}} hours?",
 		confirmButton: "Complete",
+		cancelButton: "Cancel",
+	},
+	noShow: {
+		action: "Mark No Show",
+		confirm: "Mark this schedule as no show? {{hours}} hours will remain reserved.",
+		confirmButton: "Mark No Show",
 		cancelButton: "Cancel",
 	},
 	restore: {

@@ -4,6 +4,7 @@ import { prisma } from "../lib/db";
 export const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
 	"SCHEDULED",
 	"COMPLETED",
+	"NO_SHOW",
 ];
 
 export async function getRemainingHoursMap(

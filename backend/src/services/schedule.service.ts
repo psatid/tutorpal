@@ -9,7 +9,11 @@ import type {
 	UpdateScheduleDTO,
 } from "../types";
 
-const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = ["SCHEDULED", "COMPLETED"];
+const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
+	"SCHEDULED",
+	"COMPLETED",
+	"NO_SHOW",
+];
 
 export class ScheduleService {
 	constructor(private readonly repository: IScheduleRepository) {}
@@ -70,7 +74,7 @@ export class ScheduleService {
 		const hasEnoughHours = await this.validateScheduleCapacity(
 			data.classId,
 			data.durationMinutes,
-			data.status || "SCHEDULED",
+			"SCHEDULED",
 		);
 
 		if (!hasEnoughHours) {
@@ -344,7 +348,7 @@ export class ScheduleService {
 
 		if (
 			data.status === "COMPLETED" &&
-			existingSchedule.status !== "COMPLETED"
+			existingSchedule.status === "SCHEDULED"
 		) {
 			if (hasNonStatusUpdates) {
 				const updatedSchedule = await this.repository.update(id, {
@@ -357,14 +361,27 @@ export class ScheduleService {
 			return this.repository.completeSchedule(id);
 		}
 
+		if (data.status === "NO_SHOW" && existingSchedule.status !== "NO_SHOW") {
+			if (
+				existingSchedule.status !== "SCHEDULED" &&
+				existingSchedule.status !== "COMPLETED"
+			) {
+				throw AppError.badRequest(
+					"INVALID_STATUS_TRANSITION",
+					"Only scheduled or completed schedules can be marked as no-show",
+				);
+			}
+		}
+
 		if (
-			existingSchedule.status === "COMPLETED" &&
+			(existingSchedule.status === "COMPLETED" ||
+				existingSchedule.status === "NO_SHOW") &&
 			data.status === "CANCELLED"
 		) {
 			if (hasNonStatusUpdates) {
 				await this.repository.update(id, {
 					...data,
-					status: "COMPLETED",
+					status: existingSchedule.status,
 				});
 			}
 

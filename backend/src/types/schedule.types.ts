@@ -21,7 +21,6 @@ export interface CreateScheduleDTO {
 	time?: number; // Minutes since midnight
 	durationMinutes?: number;
 	notes?: string;
-	status?: ScheduleStatus;
 	recurring?: RecurringPattern;
 }
 

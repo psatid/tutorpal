@@ -157,6 +157,7 @@ model LineLinkToken {
 enum ScheduleStatus {
   SCHEDULED
   COMPLETED
+  NO_SHOW
   CANCELLED
 
   @@map("schedule_status")

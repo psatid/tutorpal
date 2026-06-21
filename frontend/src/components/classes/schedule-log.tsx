@@ -5,6 +5,7 @@ import { format, isToday, isYesterday, parseISO } from "date-fns";
 import {
   CalendarDays,
   CheckCircle2,
+  AlertCircle,
   RotateCcw,
   Trash2,
   MoreVertical,
@@ -33,6 +34,7 @@ interface ScheduleLogProps {
   onViewSchedule: (schedule: GetV1Schedules200Item) => void;
   onAddSchedule: () => void;
   onCompleteSchedule?: (schedule: GetV1Schedules200Item) => void;
+  onNoShowSchedule?: (schedule: GetV1Schedules200Item) => void;
   onRestoreSchedule?: (schedule: GetV1Schedules200Item) => void;
   onDeleteSchedule?: (schedule: GetV1Schedules200Item) => void;
 }
@@ -94,6 +96,7 @@ export function ScheduleLog({
   onViewSchedule,
   onAddSchedule,
   onCompleteSchedule,
+  onNoShowSchedule,
   onRestoreSchedule,
   onDeleteSchedule,
 }: ScheduleLogProps) {
@@ -185,7 +188,10 @@ export function ScheduleLog({
                     {t(`schedules:status.${schedule.status}`, { ns: "schedules" })}
                   </Badge>
 
-                  {(onCompleteSchedule || onRestoreSchedule || onDeleteSchedule) && (
+                  {(onCompleteSchedule ||
+                    onNoShowSchedule ||
+                    onRestoreSchedule ||
+                    onDeleteSchedule) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         onClick={(e) => {
@@ -208,7 +214,21 @@ export function ScheduleLog({
                             {t("schedules:complete.action", { ns: "schedules" })}
                           </DropdownMenuItem>
                         )}
-                        {schedule.status === "COMPLETED" && onRestoreSchedule && (
+                        {schedule.status === "SCHEDULED" && onNoShowSchedule && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              onNoShowSchedule(schedule);
+                            }}
+                          >
+                            <AlertCircle className="w-4 h-4" />
+                            {t("schedules:noShow.action", { ns: "schedules" })}
+                          </DropdownMenuItem>
+                        )}
+                        {(schedule.status === "COMPLETED" ||
+                          schedule.status === "NO_SHOW") &&
+                          onRestoreSchedule && (
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -220,7 +240,9 @@ export function ScheduleLog({
                             {t("schedules:restore.action", { ns: "schedules" })}
                           </DropdownMenuItem>
                         )}
-                        {schedule.status === "SCHEDULED" && onCompleteSchedule && onDeleteSchedule && (
+                        {schedule.status === "SCHEDULED" &&
+                          (onCompleteSchedule || onNoShowSchedule) &&
+                          onDeleteSchedule && (
                           <DropdownMenuSeparator />
                         )}
                         {schedule.status !== "SCHEDULED" && onDeleteSchedule && (
