@@ -5,6 +5,7 @@ export interface ScheduleDTO {
 	id: string;
 	classId: string;
 	className: string;
+	recurringScheduleId?: string | null;
 	date: string; // ISO date string (YYYY-MM-DD)
 	time: number; // Minutes since midnight
 	durationMinutes: number;
@@ -65,6 +66,23 @@ export interface RecurringScheduleItemDTO {
 	weekday: Weekday;
 	time: number;
 	durationMinutes: number;
+}
+
+export interface UpdateRecurringScheduleDTO {
+	effectiveDate: string;
+	notes?: string;
+	scheduleItems: Array<{
+		weekday: Weekday;
+		time: number;
+		durationMinutes: number;
+	}>;
+}
+
+export interface RecurringScheduleUpdateResultDTO {
+	recurringSchedule: RecurringScheduleDTO;
+	effectiveDate: string;
+	deletedSchedulesCount: number;
+	createdSchedulesCount: number;
 }
 
 // Repository interface - abstract data access

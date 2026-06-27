@@ -9,6 +9,18 @@ export type Weekday =
 	| "SATURDAY"
 	| "SUNDAY";
 
+export interface RecurringScheduleSummary {
+	id: string;
+	startDate: string;
+	notes?: string | null;
+	scheduleItems: Array<{
+		id?: string;
+		weekday: Weekday;
+		time: number;
+		durationMinutes: number;
+	}>;
+}
+
 // Schema for the form - uses HH:MM format for time
 export const scheduleSchema = z
 	.object({

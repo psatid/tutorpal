@@ -147,6 +147,8 @@ export class StudentRepository implements IStudentRepository {
 **Derived availability rule**:
 - When exposing class `remainingHours`, treat `SCHEDULED`, `COMPLETED`, and `NO_SHOW` schedules as reserved time and exclude `CANCELLED` schedules.
 - Prefer a shared repository helper for this calculation so class, student-detail, and schedule responses all use the same source of truth.
+- Class `totalHours` is decimal-capable. Repositories should convert Prisma `Decimal` values to plain `number` DTO fields before returning API responses.
+- Recurring schedule edits should version the recurring series instead of mutating history in place: keep past occurrences untouched, recreate only future generated schedules from the effective date, and link generated occurrences back to their `recurringScheduleId` for future revisions.
 
 ### 4. Schemas Layer (`src/schemas/`)
 

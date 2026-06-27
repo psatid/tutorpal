@@ -5,7 +5,7 @@ import { z } from "zod";
 export const ClassInStudentSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	totalHours: z.number().int(),
+	totalHours: z.number(),
 	remainingHours: z.number().optional(),
 });
 

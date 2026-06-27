@@ -190,3 +190,40 @@ export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
 		},
 	});
 };
+
+export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void }) => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			id,
+			data,
+		}: {
+			id: string;
+			data: {
+				effectiveDate: string;
+				scheduleItems: Array<{
+					weekday: Weekday;
+					time: number;
+					durationMinutes: number;
+				}>;
+			};
+		}) => {
+			const response = await apiClient.patchV1SchedulesRecurringById(id, data);
+			return response.data;
+		},
+		onSuccess: () => {
+			toast.success("Recurring schedule updated successfully.");
+			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: studentsKeys.all });
+			options?.onSuccess?.();
+		},
+		onError: (error: Error) => {
+			toast.error(
+				error.message ||
+					"Failed to update recurring schedule. Please try again.",
+			);
+		},
+	});
+};

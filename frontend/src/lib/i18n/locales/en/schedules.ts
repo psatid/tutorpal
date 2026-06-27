@@ -37,6 +37,39 @@ export default {
 		confirmButton: "Restore",
 		cancelButton: "Cancel",
 	},
+	recurring: {
+		sectionTitle: "Recurring schedule",
+		emptyDescription:
+			"Set the weekly pattern for this class so future sessions stay in sync.",
+		createAction: "Create recurring schedule",
+		editAction: "Edit recurring schedule",
+		saveAction: "Save changes",
+		cancelAction: "Cancel",
+		confirmAction: "Recreate future schedules",
+		startsOn: "Starts {{date}}",
+		editHint:
+			"Editing creates a new future pattern from your effective date. Past schedules stay untouched.",
+		untouchedTitle: "Past schedules stay untouched",
+		untouchedDescription:
+			"Only generated schedules on or after the selected date will be recreated.",
+		startDateLabel: "Start date",
+		startDateCaption:
+			"The first date when this recurring schedule begins creating sessions.",
+		effectiveDateLabel: "Effective date",
+		effectiveDateCaption:
+			"The first date when TutorPal should switch to the new recurring pattern.",
+		previewTitle: "Before you save",
+		previewDescription:
+			"Starting {{date}}, {{count}} future generated sessions will be replaced.",
+		confirmTitle: "Update recurring schedule?",
+		confirmDescription:
+			"Starting {{date}}, TutorPal will recreate {{count}} future generated sessions to follow the new pattern. Past schedules will not change.",
+		notSelected: "your selected date",
+		drawer: {
+			createTitle: "Create Recurring Schedule",
+			editTitle: "Edit Recurring Schedule",
+		},
+	},
 	view: "View",
 	remainingHours: "{{hours}}h remaining",
 	drawer: {

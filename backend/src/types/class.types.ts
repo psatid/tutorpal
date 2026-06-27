@@ -1,5 +1,7 @@
 import type { PaginatedResponse, PaginationParams } from "./pagination.types";
 
+import type { RecurringScheduleDTO } from "./schedule.types";
+
 // DTOs for clean data transfer between layers
 export interface ClassDTO {
 	id: string;
@@ -10,6 +12,7 @@ export interface ClassDTO {
 	createdAt: string;
 	updatedAt: string;
 	remainingHours?: number;
+	recurringSchedule?: RecurringScheduleDTO | null;
 }
 
 export interface StudentInClassDTO {

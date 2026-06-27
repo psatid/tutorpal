@@ -5,10 +5,12 @@ import { requireAuth } from "../middleware/auth";
 import { scheduleRepository } from "../repositories";
 import {
 	CreateScheduleSchema,
+	RecurringScheduleUpdateResultSchemaResolver,
 	ScheduleListQuerySchema,
 	ScheduleListSchemaResolver,
 	ScheduleSchemaResolver,
 	UpdateScheduleSchema,
+	UpdateRecurringScheduleSchema,
 } from "../schemas";
 import { ScheduleService } from "../services";
 import type { AppEnv } from "../types/hono-env";
@@ -106,6 +108,48 @@ const scheduleRoutes = new Hono<AppEnv>()
 			const tutorId = c.get("tutorId");
 			const schedules = await scheduleService.getAllSchedules(tutorId, query);
 			return c.json(schedules);
+		},
+	)
+
+	// Update a recurring schedule from an effective date
+	.patch(
+		"/recurring/:id",
+		describeRoute({
+			tags: ["schedules"],
+			description:
+				"Update a recurring schedule from an effective date by recreating future generated schedules",
+			responses: {
+				200: {
+					description: "Recurring schedule updated successfully",
+					content: {
+						"application/json": {
+							schema: RecurringScheduleUpdateResultSchemaResolver,
+						},
+					},
+				},
+				400: {
+					description:
+						"Validation error, conflicting future schedules, or insufficient hours",
+				},
+				401: {
+					description: "Unauthorized - Authentication required",
+				},
+				404: {
+					description: "Recurring schedule not found",
+				},
+			},
+		}),
+		validator("json", UpdateRecurringScheduleSchema),
+		async (c) => {
+			const id = c.req.param("id");
+			const data = c.req.valid("json");
+			const tutorId = c.get("tutorId");
+			const result = await scheduleService.updateRecurringSchedule(
+				id,
+				data,
+				tutorId,
+			);
+			return c.json(result);
 		},
 	)
 

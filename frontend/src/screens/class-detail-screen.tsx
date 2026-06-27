@@ -11,6 +11,8 @@ import {
   useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { ClassInfoHeader } from "@/components/classes/class-info-header";
+import { RecurringScheduleDrawer } from "@/components/classes/recurring-schedule-drawer";
+import { RecurringScheduleSection } from "@/components/classes/recurring-schedule-section";
 import { ScheduleLog } from "@/components/classes/schedule-log";
 import {
   ClassDrawer,
@@ -50,6 +52,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
+  const [isRecurringDrawerOpen, setIsRecurringDrawerOpen] = useState(false);
 
   const handleBack = useCallback(() => {
     navigate({ to: "/classes" });
@@ -70,6 +73,10 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
     setSelectedScheduleId(null);
     setScheduleDrawerMode("create");
     setIsScheduleDrawerOpen(true);
+  }, []);
+
+  const handleOpenRecurringDrawer = useCallback(() => {
+    setIsRecurringDrawerOpen(true);
   }, []);
 
   const handleDeleteSchedule = useCallback(
@@ -233,6 +240,12 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
         onEdit={handleEditClass}
       />
 
+      <RecurringScheduleSection
+        recurringSchedule={classData.recurringSchedule}
+        onEdit={handleOpenRecurringDrawer}
+        onCreate={handleOpenRecurringDrawer}
+      />
+
       <ScheduleLog
         schedules={schedules ?? []}
         isLoading={isLoadingSchedules}
@@ -258,6 +271,14 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
         mode={scheduleDrawerMode}
         scheduleId={selectedScheduleId}
         onModeChange={setScheduleDrawerMode}
+      />
+
+      <RecurringScheduleDrawer
+        isOpen={isRecurringDrawerOpen}
+        onOpenChange={setIsRecurringDrawerOpen}
+        classId={classId}
+        recurringSchedule={classData.recurringSchedule}
+        schedules={schedules ?? []}
       />
     </div>
   );

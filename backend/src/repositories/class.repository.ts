@@ -1,20 +1,29 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db";
-import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 import type {
 	ClassDTO,
 	CreateClassDTO,
 	IClassRepository,
+	RecurringScheduleDTO,
 	UpdateClassDTO,
 } from "../types";
-import type { PaginatedResponse, PaginationParams } from "../types/pagination.types";
+import type {
+	PaginatedResponse,
+	PaginationParams,
+} from "../types/pagination.types";
+import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 
 // Helper to convert Prisma Class with relations to DTO
+function toHoursNumber(value: Prisma.Decimal | number): number {
+	return typeof value === "number" ? value : value.toNumber();
+}
+
 function toDTO(
 	classData: {
 		id: string;
 		tutorId: string;
 		name: string;
-		totalHours: number;
+		totalHours: Prisma.Decimal | number;
 		createdAt: Date;
 		updatedAt: Date;
 		students: Array<{
@@ -25,14 +34,36 @@ function toDTO(
 				grade: number;
 			};
 		}>;
+		recurringSchedules?: Array<{
+			id: string;
+			classId: string;
+			startDate: Date;
+			notes: string | null;
+			createdAt: Date;
+			updatedAt: Date;
+			scheduleItems: Array<{
+				id: string;
+				weekday:
+					| "MONDAY"
+					| "TUESDAY"
+					| "WEDNESDAY"
+					| "THURSDAY"
+					| "FRIDAY"
+					| "SATURDAY"
+					| "SUNDAY";
+				time: number;
+				durationMinutes: number;
+			}>;
+		}>;
 	},
 	remainingHours?: number,
+	recurringSchedule?: RecurringScheduleDTO | null,
 ): ClassDTO {
 	return {
 		id: classData.id,
 		tutorId: classData.tutorId,
 		name: classData.name,
-		totalHours: classData.totalHours,
+		totalHours: toHoursNumber(classData.totalHours),
 		students: classData.students.map((enrollment) => ({
 			id: enrollment.student.id,
 			name: enrollment.student.name,
@@ -42,6 +73,48 @@ function toDTO(
 		createdAt: classData.createdAt.toISOString(),
 		updatedAt: classData.updatedAt.toISOString(),
 		remainingHours,
+		recurringSchedule,
+	};
+}
+
+function toRecurringScheduleDTO(
+	className: string,
+	recurringSchedule: {
+		id: string;
+		classId: string;
+		startDate: Date;
+		notes: string | null;
+		createdAt: Date;
+		updatedAt: Date;
+		scheduleItems: Array<{
+			id: string;
+			weekday:
+				| "MONDAY"
+				| "TUESDAY"
+				| "WEDNESDAY"
+				| "THURSDAY"
+				| "FRIDAY"
+				| "SATURDAY"
+				| "SUNDAY";
+			time: number;
+			durationMinutes: number;
+		}>;
+	},
+): RecurringScheduleDTO {
+	return {
+		id: recurringSchedule.id,
+		classId: recurringSchedule.classId,
+		className,
+		startDate: recurringSchedule.startDate.toISOString().split("T")[0]!,
+		notes: recurringSchedule.notes,
+		createdAt: recurringSchedule.createdAt.toISOString(),
+		updatedAt: recurringSchedule.updatedAt.toISOString(),
+		scheduleItems: recurringSchedule.scheduleItems.map((item) => ({
+			id: item.id,
+			weekday: item.weekday,
+			time: item.time,
+			durationMinutes: item.durationMinutes,
+		})),
 	};
 }
 
@@ -145,6 +218,15 @@ export class ClassRepository implements IClassRepository {
 						student: true,
 					},
 				},
+				recurringSchedules: {
+					orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
+					take: 1,
+					include: {
+						scheduleItems: {
+							orderBy: [{ weekday: "asc" }, { time: "asc" }],
+						},
+					},
+				},
 			},
 		});
 
@@ -153,11 +235,21 @@ export class ClassRepository implements IClassRepository {
 		}
 
 		const remainingHours = await getRemainingHoursForClass(id);
+		const latestRecurringSchedule = classData.recurringSchedules?.[0]
+			? toRecurringScheduleDTO(
+					classData.name,
+					classData.recurringSchedules[0],
+				)
+			: null;
 
-		return toDTO(classData, remainingHours);
+		return toDTO(classData, remainingHours, latestRecurringSchedule);
 	}
 
-	async update(id: string, tutorId: string, data: UpdateClassDTO): Promise<ClassDTO> {
+	async update(
+		id: string,
+		tutorId: string,
+		data: UpdateClassDTO,
+	): Promise<ClassDTO> {
 		// Handle student enrollment updates if studentIds is provided
 		if (data.studentIds !== undefined) {
 			// Delete existing enrollments

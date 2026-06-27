@@ -1,17 +1,22 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db";
-import { getRemainingHoursMap } from "./class-hours";
 import type {
 	ClassInStudentDTO,
 	CreateStudentDTO,
 	IStudentRepository,
 	PaginatedResponse,
 	PaginationParams,
-	StudentDTO,
 	StudentDetailDTO,
+	StudentDTO,
 	UpdateStudentDTO,
 } from "../types";
+import { getRemainingHoursMap } from "./class-hours";
 
 // Helper to convert Prisma Date to ISO string
+function toHoursNumber(value: Prisma.Decimal | number): number {
+	return typeof value === "number" ? value : value.toNumber();
+}
+
 function toDTO(student: {
 	id: string;
 	tutorId: string;
@@ -97,7 +102,10 @@ export class StudentRepository implements IStudentRepository {
 		};
 	}
 
-	async findById(id: string, tutorId: string): Promise<StudentDetailDTO | null> {
+	async findById(
+		id: string,
+		tutorId: string,
+	): Promise<StudentDetailDTO | null> {
 		const student = await prisma.student.findFirst({
 			where: { id, tutorId },
 			include: {
@@ -120,7 +128,7 @@ export class StudentRepository implements IStudentRepository {
 		const classes: ClassInStudentDTO[] = student.classes.map((enrollment) => ({
 			id: enrollment.class.id,
 			name: enrollment.class.name,
-			totalHours: enrollment.class.totalHours,
+			totalHours: toHoursNumber(enrollment.class.totalHours),
 			remainingHours: remainingHoursMap.get(enrollment.classId),
 		}));
 
@@ -130,7 +138,11 @@ export class StudentRepository implements IStudentRepository {
 		};
 	}
 
-	async update(id: string, tutorId: string, data: UpdateStudentDTO): Promise<StudentDTO> {
+	async update(
+		id: string,
+		tutorId: string,
+		data: UpdateStudentDTO,
+	): Promise<StudentDTO> {
 		const student = await prisma.student.update({
 			where: { id, tutorId },
 			data: {

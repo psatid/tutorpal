@@ -16,6 +16,7 @@ const DEDUCTED_SCHEDULE_STATUSES: ScheduleStatus[] = ["COMPLETED", "NO_SHOW"];
 function toDTO(schedule: {
 	id: string;
 	classId: string;
+	recurringScheduleId?: string | null;
 	date: Date;
 	time: number;
 	durationMinutes: number;
@@ -32,6 +33,7 @@ function toDTO(schedule: {
 		id: schedule.id,
 		classId: schedule.classId,
 		className: schedule.class.name,
+		recurringScheduleId: schedule.recurringScheduleId ?? null,
 		date: schedule.date.toISOString().split("T")[0]!,
 		time: schedule.time,
 		durationMinutes: schedule.durationMinutes,

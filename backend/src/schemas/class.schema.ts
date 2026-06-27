@@ -1,5 +1,6 @@
 import { resolver } from "hono-openapi";
 import { z } from "zod";
+import { RecurringScheduleSchema } from "./schedule.schema";
 
 // Student in class schema
 export const StudentInClassSchema = z.object({
@@ -13,27 +14,24 @@ export const StudentInClassSchema = z.object({
 export const ClassSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	totalHours: z.number().int(),
+	totalHours: z.number(),
 	students: z.array(StudentInClassSchema),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
 	remainingHours: z.number().optional(),
+	recurringSchedule: RecurringScheduleSchema.nullable().optional(),
 });
 
 // Request schemas
 export const CreateClassSchema = z.object({
 	name: z.string().min(1, "Name is required"),
-	totalHours: z.number().int().min(1, "Total hours must be at least 1"),
+	totalHours: z.number().min(1, "Total hours must be at least 1"),
 	studentIds: z.array(z.string()).optional(),
 });
 
 export const UpdateClassSchema = z.object({
 	name: z.string().min(1, "Name is required").optional(),
-	totalHours: z
-		.number()
-		.int()
-		.min(1, "Total hours must be at least 1")
-		.optional(),
+	totalHours: z.number().min(1, "Total hours must be at least 1").optional(),
 	studentIds: z.array(z.string()).optional(),
 });
 
@@ -42,9 +40,7 @@ export const ClassListQuerySchema = z.object({
 	page: z.coerce.number().int().positive().default(1),
 	limit: z.coerce.number().int().positive().max(100).default(10),
 	search: z.string().optional(),
-	sortBy: z
-		.enum(["name", "totalHours", "createdAt"])
-		.default("createdAt"),
+	sortBy: z.enum(["name", "totalHours", "createdAt"]).default("createdAt"),
 	sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 

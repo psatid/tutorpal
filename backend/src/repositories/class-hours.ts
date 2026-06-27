@@ -1,5 +1,9 @@
-import type { ScheduleStatus } from "@prisma/client";
+import type { Prisma, ScheduleStatus } from "@prisma/client";
 import { prisma } from "../lib/db";
+
+function toHoursNumber(value: Prisma.Decimal | number): number {
+	return typeof value === "number" ? value : value.toNumber();
+}
 
 export const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
 	"SCHEDULED",
@@ -48,12 +52,15 @@ export async function getRemainingHoursMap(
 	return new Map(
 		classes.map((classData) => [
 			classData.id,
-			classData.totalHours - (reservedMinutesMap.get(classData.id) ?? 0) / 60,
+			toHoursNumber(classData.totalHours) -
+				(reservedMinutesMap.get(classData.id) ?? 0) / 60,
 		]),
 	);
 }
 
-export async function getRemainingHoursForClass(classId: string): Promise<number> {
+export async function getRemainingHoursForClass(
+	classId: string,
+): Promise<number> {
 	const remainingHoursMap = await getRemainingHoursMap([classId]);
 	const remainingHours = remainingHoursMap.get(classId);
 

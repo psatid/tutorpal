@@ -28,7 +28,7 @@ model Class {
   id         String   @id @default(uuid())
   tutorId    String
   name       String
-  totalHours Int
+  totalHours Decimal  @db.Decimal(10, 2)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -166,6 +166,7 @@ enum ScheduleStatus {
 model Schedule {
   id              String         @id @default(uuid())
   classId         String
+  recurringScheduleId String?
   date            DateTime       @db.Date
   time            Int
   durationMinutes Int
@@ -174,11 +175,13 @@ model Schedule {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  class         Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
-  hourDeduction ClassHourDeduction?
+  class             Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  recurringSchedule RecurringSchedule?  @relation(fields: [recurringScheduleId], references: [id], onDelete: SetNull)
+  hourDeduction     ClassHourDeduction?
 
   @@index([classId])
   @@index([date])
+  @@index([recurringScheduleId])
   @@map("schedules")
 }
 
@@ -207,6 +210,7 @@ model RecurringSchedule {
 
   class         Class                   @relation(fields: [classId], references: [id], onDelete: Cascade)
   scheduleItems RecurringScheduleItem[]
+  schedules     Schedule[]
 
   @@index([classId])
   @@map("recurring_schedules")
