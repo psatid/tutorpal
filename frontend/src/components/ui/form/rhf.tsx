@@ -38,10 +38,9 @@ function RHFInputField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => {
-        const { onChange, ...rest } = field;
         return (
           <InputField
-            {...rest}
+            {...field}
             {...inputProps}
             label={label}
             caption={caption}
@@ -49,14 +48,6 @@ function RHFInputField<T extends FieldValues>({
             required={required}
             disabled={disabled}
             aria-invalid={!!fieldState.error}
-            onChange={(e) => {
-              const isNumber = inputProps?.type === "number";
-              if (isNumber) {
-                onChange(e.target.valueAsNumber);
-              } else {
-                onChange(e.target.value);
-              }
-            }}
           />
         );
       }}
