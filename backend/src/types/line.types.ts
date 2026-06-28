@@ -25,6 +25,4 @@ export interface ILineRepository {
 		usedAt: Date | null;
 	} | null>;
 	markTokenUsed(tokenId: string): Promise<void>;
-	linkStudentLineUser(studentId: string, lineUserId: string): Promise<void>;
-	unlinkStudentLineUser(studentId: string): Promise<void>;
 }

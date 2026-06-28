@@ -1,3 +1,4 @@
+import type { ClassModel } from "../models/class.model";
 import type { PaginatedResponse, PaginationParams } from "./pagination.types";
 
 import type { RecurringScheduleDTO } from "./schedule.types";
@@ -37,12 +38,16 @@ export interface UpdateClassDTO {
 
 // Repository interface - abstract data access
 export interface IClassRepository {
-	create(data: CreateClassDTO): Promise<ClassDTO>;
+	create(data: CreateClassDTO): Promise<ClassModel>;
 	findAll(
 		tutorId: string,
 		params?: PaginationParams,
-	): Promise<PaginatedResponse<ClassDTO>>;
-	findById(id: string, tutorId: string): Promise<ClassDTO | null>;
-	update(id: string, tutorId: string, data: UpdateClassDTO): Promise<ClassDTO>;
+	): Promise<PaginatedResponse<ClassModel>>;
+	findById(id: string, tutorId: string): Promise<ClassModel | null>;
+	update(
+		id: string,
+		tutorId: string,
+		data: UpdateClassDTO,
+	): Promise<ClassModel>;
 	delete(id: string, tutorId: string): Promise<void>;
 }

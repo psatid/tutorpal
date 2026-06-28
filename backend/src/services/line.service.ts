@@ -1,4 +1,3 @@
-import { prisma } from "../lib/db";
 import { ENV } from "../lib/env";
 import { AppError } from "../lib/error";
 import {
@@ -7,19 +6,20 @@ import {
 	getLineProfile,
 	sendLinePushMessage,
 } from "../lib/line";
-import type { ILineRepository } from "../types";
+import type { ILineRepository, IStudentRepository } from "../types";
 
 export class LineService {
-	constructor(private readonly repository: ILineRepository) {}
+	constructor(
+		private readonly repository: ILineRepository,
+		private readonly studentRepository: IStudentRepository,
+	) {}
 
 	async generateLinkToken(studentId: string, tutorId: string) {
-		const student = await prisma.student.findFirst({
-			where: { id: studentId, tutorId },
-		});
+		const student = await this.studentRepository.findById(studentId, tutorId);
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
 		}
-		if (student.lineUserId) {
+		if (student.isLineLinked()) {
 			throw AppError.conflict(
 				"LINE_ALREADY_LINKED",
 				"Student already has a LINE account linked",
@@ -62,12 +62,12 @@ export class LineService {
 		const tokenResponse = await exchangeCodeForToken(code);
 		const profile = await getLineProfile(tokenResponse.access_token);
 
-		await this.repository.linkStudentLineUser(record.studentId, profile.userId);
+		await this.studentRepository.linkLineUser(record.studentId, profile.userId);
 		await this.repository.markTokenUsed(record.id);
 
-		const student = await prisma.student.findUnique({
-			where: { id: record.studentId },
-		});
+		const student = await this.studentRepository.findByIdForLineLink(
+			record.studentId,
+		);
 
 		if (student && profile.userId) {
 			try {
@@ -86,20 +86,25 @@ export class LineService {
 	}
 
 	async sendTestMessage(studentId: string, tutorId: string) {
-		const student = await prisma.student.findFirst({
-			where: { id: studentId, tutorId },
-		});
+		const student = await this.studentRepository.findById(studentId, tutorId);
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
 		}
-		if (!student.lineUserId) {
+		if (!student.isLineLinked()) {
+			throw AppError.badRequest(
+				"LINE_NOT_LINKED",
+				"Student does not have a LINE account linked",
+			);
+		}
+		const lineUserId = student.lineUserId;
+		if (!lineUserId) {
 			throw AppError.badRequest(
 				"LINE_NOT_LINKED",
 				"Student does not have a LINE account linked",
 			);
 		}
 
-		await sendLinePushMessage(student.lineUserId, [
+		await sendLinePushMessage(lineUserId, [
 			{
 				type: "text",
 				text: `Hello ${student.name}! This is a test message from TutorPal. Your LINE account is successfully linked.`,
@@ -110,20 +115,18 @@ export class LineService {
 	}
 
 	async unlinkStudent(studentId: string, tutorId: string) {
-		const student = await prisma.student.findFirst({
-			where: { id: studentId, tutorId },
-		});
+		const student = await this.studentRepository.findById(studentId, tutorId);
 		if (!student) {
 			throw AppError.notFound("STUDENT_NOT_FOUND", "Student not found");
 		}
-		if (!student.lineUserId) {
+		if (!student.isLineLinked()) {
 			throw AppError.badRequest(
 				"LINE_NOT_LINKED",
 				"Student does not have a LINE account linked",
 			);
 		}
 
-		await this.repository.unlinkStudentLineUser(studentId);
+		await this.studentRepository.unlinkLineUser(studentId);
 
 		return { unlinked: true };
 	}

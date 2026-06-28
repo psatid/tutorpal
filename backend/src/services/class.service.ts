@@ -1,6 +1,6 @@
 import { AppError } from "../lib/error";
+import type { ClassModel } from "../models/class.model";
 import type {
-	ClassDTO,
 	CreateClassDTO,
 	IClassRepository,
 	PaginatedResponse,
@@ -11,18 +11,18 @@ import type {
 export class ClassService {
 	constructor(private readonly repository: IClassRepository) {}
 
-	async createClass(data: CreateClassDTO): Promise<ClassDTO> {
+	async createClass(data: CreateClassDTO): Promise<ClassModel> {
 		return this.repository.create(data);
 	}
 
 	async getAllClasses(
 		tutorId: string,
 		params?: PaginationParams,
-	): Promise<PaginatedResponse<ClassDTO>> {
+	): Promise<PaginatedResponse<ClassModel>> {
 		return this.repository.findAll(tutorId, params);
 	}
 
-	async getClassById(id: string, tutorId: string): Promise<ClassDTO> {
+	async getClassById(id: string, tutorId: string): Promise<ClassModel> {
 		const classData = await this.repository.findById(id, tutorId);
 		if (!classData) {
 			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
@@ -30,7 +30,11 @@ export class ClassService {
 		return classData;
 	}
 
-	async updateClass(id: string, tutorId: string, data: UpdateClassDTO): Promise<ClassDTO> {
+	async updateClass(
+		id: string,
+		tutorId: string,
+		data: UpdateClassDTO,
+	): Promise<ClassModel> {
 		// Check if class exists first
 		const existingClass = await this.repository.findById(id, tutorId);
 		if (!existingClass) {

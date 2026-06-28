@@ -32,23 +32,6 @@ export class LineRepository implements ILineRepository {
 			data: { usedAt: new Date() },
 		});
 	}
-
-	async linkStudentLineUser(
-		studentId: string,
-		lineUserId: string,
-	): Promise<void> {
-		await prisma.student.update({
-			where: { id: studentId },
-			data: { lineUserId },
-		});
-	}
-
-	async unlinkStudentLineUser(studentId: string): Promise<void> {
-		await prisma.student.update({
-			where: { id: studentId },
-			data: { lineUserId: null },
-		});
-	}
 }
 
 export const lineRepository = new LineRepository();

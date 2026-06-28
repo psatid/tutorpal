@@ -46,7 +46,7 @@ const studentRoutes = new Hono<AppEnv>()
 			const data = c.req.valid("json");
 			const tutorId = c.get("tutorId");
 			const student = await studentService.createStudent({ ...data, tutorId });
-			return c.json(student, 201);
+			return c.json(student.toStudentDTO(), 201);
 		},
 	)
 
@@ -131,7 +131,10 @@ const studentRoutes = new Hono<AppEnv>()
 			const query = c.req.valid("query");
 			const tutorId = c.get("tutorId");
 			const students = await studentService.getAllStudents(tutorId, query);
-			return c.json(students);
+			return c.json({
+				...students,
+				data: students.data.map((student) => student.toStudentDTO()),
+			});
 		},
 	)
 
@@ -162,7 +165,7 @@ const studentRoutes = new Hono<AppEnv>()
 			const id = c.req.param("id");
 			const tutorId = c.get("tutorId");
 			const student = await studentService.getStudentById(id, tutorId);
-			return c.json(student);
+			return c.json(student.toStudentDetailDTO());
 		},
 	)
 
@@ -198,7 +201,7 @@ const studentRoutes = new Hono<AppEnv>()
 			const data = c.req.valid("json");
 			const tutorId = c.get("tutorId");
 			const student = await studentService.updateStudent(id, tutorId, data);
-			return c.json(student);
+			return c.json(student.toStudentDTO());
 		},
 	)
 

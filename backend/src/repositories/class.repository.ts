@@ -1,10 +1,8 @@
-import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db";
+import { ClassModel } from "../models/class.model";
 import type {
-	ClassDTO,
 	CreateClassDTO,
 	IClassRepository,
-	RecurringScheduleDTO,
 	UpdateClassDTO,
 } from "../types";
 import type {
@@ -13,113 +11,8 @@ import type {
 } from "../types/pagination.types";
 import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 
-// Helper to convert Prisma Class with relations to DTO
-function toHoursNumber(value: Prisma.Decimal | number): number {
-	return typeof value === "number" ? value : value.toNumber();
-}
-
-function toDTO(
-	classData: {
-		id: string;
-		tutorId: string;
-		name: string;
-		totalHours: Prisma.Decimal | number;
-		createdAt: Date;
-		updatedAt: Date;
-		students: Array<{
-			student: {
-				id: string;
-				name: string;
-				phoneNumber: string | null;
-				grade: number;
-			};
-		}>;
-		recurringSchedules?: Array<{
-			id: string;
-			classId: string;
-			startDate: Date;
-			notes: string | null;
-			createdAt: Date;
-			updatedAt: Date;
-			scheduleItems: Array<{
-				id: string;
-				weekday:
-					| "MONDAY"
-					| "TUESDAY"
-					| "WEDNESDAY"
-					| "THURSDAY"
-					| "FRIDAY"
-					| "SATURDAY"
-					| "SUNDAY";
-				time: number;
-				durationMinutes: number;
-			}>;
-		}>;
-	},
-	remainingHours?: number,
-	recurringSchedule?: RecurringScheduleDTO | null,
-): ClassDTO {
-	return {
-		id: classData.id,
-		tutorId: classData.tutorId,
-		name: classData.name,
-		totalHours: toHoursNumber(classData.totalHours),
-		students: classData.students.map((enrollment) => ({
-			id: enrollment.student.id,
-			name: enrollment.student.name,
-			phoneNumber: enrollment.student.phoneNumber,
-			grade: enrollment.student.grade,
-		})),
-		createdAt: classData.createdAt.toISOString(),
-		updatedAt: classData.updatedAt.toISOString(),
-		remainingHours,
-		recurringSchedule,
-	};
-}
-
-function toRecurringScheduleDTO(
-	className: string,
-	recurringSchedule: {
-		id: string;
-		classId: string;
-		startDate: Date;
-		notes: string | null;
-		createdAt: Date;
-		updatedAt: Date;
-		scheduleItems: Array<{
-			id: string;
-			weekday:
-				| "MONDAY"
-				| "TUESDAY"
-				| "WEDNESDAY"
-				| "THURSDAY"
-				| "FRIDAY"
-				| "SATURDAY"
-				| "SUNDAY";
-			time: number;
-			durationMinutes: number;
-		}>;
-	},
-): RecurringScheduleDTO {
-	return {
-		id: recurringSchedule.id,
-		classId: recurringSchedule.classId,
-		className,
-		startDate: recurringSchedule.startDate.toISOString().split("T")[0]!,
-		notes: recurringSchedule.notes,
-		createdAt: recurringSchedule.createdAt.toISOString(),
-		updatedAt: recurringSchedule.updatedAt.toISOString(),
-		scheduleItems: recurringSchedule.scheduleItems.map((item) => ({
-			id: item.id,
-			weekday: item.weekday,
-			time: item.time,
-			durationMinutes: item.durationMinutes,
-		})),
-	};
-}
-
 export class ClassRepository implements IClassRepository {
-	async create(data: CreateClassDTO): Promise<ClassDTO> {
+	async create(data: CreateClassDTO): Promise<ClassModel> {
 		const classData = await prisma.class.create({
 			data: {
 				tutorId: data.tutorId,
@@ -147,13 +40,13 @@ export class ClassRepository implements IClassRepository {
 
 		const remainingHours = await getRemainingHoursForClass(classData.id);
 
-		return toDTO(classData, remainingHours);
+		return ClassModel.fromClassPrisma(classData, remainingHours);
 	}
 
 	async findAll(
 		tutorId: string,
 		params?: PaginationParams,
-	): Promise<PaginatedResponse<ClassDTO>> {
+	): Promise<PaginatedResponse<ClassModel>> {
 		const page = params?.page || 1;
 		const limit = params?.limit || 10;
 		const skip = (page - 1) * limit;
@@ -193,7 +86,10 @@ export class ClassRepository implements IClassRepository {
 		);
 
 		const classesWithHours = classes.map((classData) =>
-			toDTO(classData, remainingHoursMap.get(classData.id)),
+			ClassModel.fromClassPrisma(
+				classData,
+				remainingHoursMap.get(classData.id),
+			),
 		);
 
 		return {
@@ -209,7 +105,7 @@ export class ClassRepository implements IClassRepository {
 		};
 	}
 
-	async findById(id: string, tutorId: string): Promise<ClassDTO | null> {
+	async findById(id: string, tutorId: string): Promise<ClassModel | null> {
 		const classData = await prisma.class.findFirst({
 			where: { id, tutorId },
 			include: {
@@ -235,21 +131,15 @@ export class ClassRepository implements IClassRepository {
 		}
 
 		const remainingHours = await getRemainingHoursForClass(id);
-		const latestRecurringSchedule = classData.recurringSchedules?.[0]
-			? toRecurringScheduleDTO(
-					classData.name,
-					classData.recurringSchedules[0],
-				)
-			: null;
 
-		return toDTO(classData, remainingHours, latestRecurringSchedule);
+		return ClassModel.fromClassPrisma(classData, remainingHours);
 	}
 
 	async update(
 		id: string,
 		tutorId: string,
 		data: UpdateClassDTO,
-	): Promise<ClassDTO> {
+	): Promise<ClassModel> {
 		// Handle student enrollment updates if studentIds is provided
 		if (data.studentIds !== undefined) {
 			// Delete existing enrollments
@@ -285,7 +175,7 @@ export class ClassRepository implements IClassRepository {
 
 		const remainingHours = await getRemainingHoursForClass(id);
 
-		return toDTO(classData, remainingHours);
+		return ClassModel.fromClassPrisma(classData, remainingHours);
 	}
 
 	async delete(id: string, tutorId: string): Promise<void> {
