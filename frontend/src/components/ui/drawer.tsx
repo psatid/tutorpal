@@ -3,6 +3,24 @@ import { Drawer } from "@base-ui/react/drawer";
 
 import { cn } from "@/lib/utils";
 
+type DrawerLayer = "base" | "nested";
+
+const drawerLayerClasses: Record<
+  DrawerLayer,
+  { backdrop: string; viewport: string; popup: string }
+> = {
+  base: {
+    backdrop: "z-50",
+    viewport: "z-60",
+    popup: "z-60",
+  },
+  nested: {
+    backdrop: "z-70",
+    viewport: "z-80",
+    popup: "z-80",
+  },
+};
+
 function DrawerRoot({
   swipeDirection,
   ...props
@@ -34,15 +52,32 @@ function DrawerClose({ ...props }: React.ComponentProps<typeof Drawer.Close>) {
 
 function DrawerBackdrop({
   className,
+  layer = "base",
   ...props
-}: React.ComponentProps<typeof Drawer.Backdrop>) {
+}: React.ComponentProps<typeof Drawer.Backdrop> & { layer?: DrawerLayer }) {
+  const { style, ...backdropProps } = props;
+  const backdropClassName = cn(
+    "fixed inset-0 bg-black/40 backdrop-blur-xs transition-all duration-300 ease-out data-starting-style:opacity-0 data-ending-style:opacity-0",
+    drawerLayerClasses[layer].backdrop,
+    className,
+  );
+
+  if (layer === "nested") {
+    return (
+      <div
+        aria-hidden="true"
+        data-slot="drawer-backdrop"
+        className={backdropClassName}
+        style={typeof style === "function" ? undefined : style}
+        {...backdropProps}
+      />
+    );
+  }
+
   return (
     <Drawer.Backdrop
       data-slot="drawer-backdrop"
-      className={cn(
-        "fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-all duration-300 ease-out data-starting-style:opacity-0 data-ending-style:opacity-0",
-        className,
-      )}
+      className={backdropClassName}
       {...props}
     />
   );
@@ -50,13 +85,15 @@ function DrawerBackdrop({
 
 function DrawerViewport({
   className,
+  layer = "base",
   ...props
-}: React.ComponentProps<typeof Drawer.Viewport>) {
+}: React.ComponentProps<typeof Drawer.Viewport> & { layer?: DrawerLayer }) {
   return (
     <Drawer.Viewport
       data-slot="drawer-viewport"
       className={cn(
-        "fixed inset-0 z-50 flex items-end justify-center md:items-stretch md:justify-end",
+        "fixed inset-0 flex items-end justify-center md:items-stretch md:justify-end",
+        drawerLayerClasses[layer].viewport,
         className,
       )}
       {...props}
@@ -64,19 +101,24 @@ function DrawerViewport({
   );
 }
 
+type DrawerPopupProps = React.ComponentPropsWithoutRef<typeof Drawer.Popup> & {
+  layer?: DrawerLayer;
+};
+
 const DrawerPopup = React.forwardRef<
   React.ElementRef<typeof Drawer.Popup>,
-  React.ComponentPropsWithoutRef<typeof Drawer.Popup>
->(function DrawerPopup({ className, children, ...props }, ref) {
+  DrawerPopupProps
+>(function DrawerPopup({ className, children, layer = "base", ...props }, ref) {
   return (
     <Drawer.Popup
       ref={ref}
       data-slot="drawer-popup"
       className={cn(
-        `fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-popover text-popover-foreground shadow-xl outline-none transition-transform duration-300 ease-out 
+        `fixed inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-2xl bg-popover text-popover-foreground shadow-xl outline-none transition-transform duration-300 ease-out
         data-[swipe-direction=down]:data-starting-style:translate-y-full data-[swipe-direction=down]:data-ending-style:translate-y-full 
         data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full 
         md:inset-y-0 md:right-0 md:left-auto md:w-[min(400px,100vw)] md:rounded-none md:max-h-none`,
+        drawerLayerClasses[layer].popup,
         className,
       )}
       {...props}

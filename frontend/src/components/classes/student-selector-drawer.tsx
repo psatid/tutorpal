@@ -96,7 +96,7 @@ export function StudentSelectorDrawer({
         <DrawerBackdrop />
         <DrawerViewport>
           <DrawerPopup className="max-h-[85vh]">
-            <DrawerContent>
+            <DrawerContent className="px-0 pb-0">
               {/* Handle */}
               <div className="w-12 h-1.5 bg-surface-variant rounded-full mx-auto my-4" />
 

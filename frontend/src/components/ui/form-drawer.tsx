@@ -83,7 +83,7 @@ export function FormDrawer({
                       </DrawerClose>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="-mx-1 flex-1 overflow-y-auto px-1">
                       <div className="space-y-5">{children}</div>
                     </div>
 
