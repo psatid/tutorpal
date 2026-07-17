@@ -9,8 +9,8 @@ import {
 	ScheduleListQuerySchema,
 	ScheduleListSchemaResolver,
 	ScheduleSchemaResolver,
-	UpdateScheduleSchema,
 	UpdateRecurringScheduleSchema,
+	UpdateScheduleSchema,
 } from "../schemas";
 import { ScheduleService } from "../services";
 import type { AppEnv } from "../types/hono-env";
@@ -48,7 +48,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 			const data = c.req.valid("json");
 			const tutorId = c.get("tutorId");
 			const schedule = await scheduleService.createSchedule(data, tutorId);
-			return c.json(schedule, 201);
+			return c.json(schedule.toScheduleDTO(), 201);
 		},
 	)
 
@@ -107,7 +107,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 			const query = c.req.valid("query");
 			const tutorId = c.get("tutorId");
 			const schedules = await scheduleService.getAllSchedules(tutorId, query);
-			return c.json(schedules);
+			return c.json(schedules.map((schedule) => schedule.toScheduleDTO()));
 		},
 	)
 
@@ -149,7 +149,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 				data,
 				tutorId,
 			);
-			return c.json(result);
+			return c.json(result.toRecurringScheduleUpdateResultDTO());
 		},
 	)
 
@@ -179,7 +179,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 		async (c) => {
 			const id = c.req.param("id");
 			const schedule = await scheduleService.getScheduleById(id);
-			return c.json(schedule);
+			return c.json(schedule.toScheduleDTO());
 		},
 	)
 
@@ -215,7 +215,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 			const data = c.req.valid("json");
 			const tutorId = c.get("tutorId");
 			const schedule = await scheduleService.updateSchedule(id, data, tutorId);
-			return c.json(schedule);
+			return c.json(schedule.toScheduleDTO());
 		},
 	)
 
@@ -274,7 +274,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 		async (c) => {
 			const id = c.req.param("id");
 			const schedule = await scheduleService.completeSchedule(id);
-			return c.json(schedule);
+			return c.json(schedule.toScheduleDTO());
 		},
 	)
 
@@ -309,7 +309,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 		async (c) => {
 			const id = c.req.param("id");
 			const schedule = await scheduleService.restoreHours(id);
-			return c.json(schedule);
+			return c.json(schedule.toScheduleDTO());
 		},
 	)
 

@@ -1,4 +1,9 @@
 import type { ScheduleStatus, Weekday } from "@prisma/client";
+import type {
+	RecurringScheduleModel,
+	RecurringScheduleUpdateResultModel,
+	ScheduleModel,
+} from "../models/schedule.model";
 
 // DTOs for clean data transfer between layers
 export interface ScheduleDTO {
@@ -85,9 +90,15 @@ export interface RecurringScheduleUpdateResultDTO {
 	createdSchedulesCount: number;
 }
 
+export interface RecurringScheduleCreationData {
+	classId: string;
+	notes?: string;
+	recurring: RecurringPattern;
+}
+
 // Repository interface - abstract data access
 export interface IScheduleRepository {
-	create(data: CreateScheduleDTO): Promise<ScheduleDTO>;
+	create(data: CreateScheduleDTO): Promise<ScheduleModel>;
 	createMany(
 		data: Array<{
 			classId: string;
@@ -95,26 +106,27 @@ export interface IScheduleRepository {
 			time: number;
 			durationMinutes: number;
 		}>,
-	): Promise<ScheduleDTO[]>;
+	): Promise<ScheduleModel[]>;
 	findAll(
 		tutorId: string,
 		query?: ScheduleListQueryDTO,
-	): Promise<ScheduleDTO[]>;
-	findById(id: string): Promise<ScheduleDTO | null>;
-	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO>;
+	): Promise<ScheduleModel[]>;
+	findById(id: string): Promise<ScheduleModel | null>;
+	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel>;
 	delete(id: string): Promise<void>;
-	validateAndReserveHours(classId: string, hours: number): Promise<boolean>;
-	completeSchedule(id: string): Promise<ScheduleDTO>;
-	restoreHours(id: string): Promise<ScheduleDTO>;
+	completeSchedule(id: string): Promise<ScheduleModel>;
+	restoreHours(id: string): Promise<ScheduleModel>;
 	getRemainingHours(classId: string): Promise<number>;
 	createRecurringSchedule(
-		data: Omit<
-			RecurringScheduleDTO,
-			"id" | "className" | "createdAt" | "updatedAt"
-		>,
-	): Promise<RecurringScheduleDTO>;
-	createRecurringScheduleItems(
+		data: RecurringScheduleCreationData,
+	): Promise<ScheduleModel>;
+	findRecurringScheduleById(
 		recurringScheduleId: string,
-		items: Array<{ weekday: Weekday; time: number; durationMinutes: number }>,
-	): Promise<RecurringScheduleItemDTO[]>;
+		tutorId: string,
+	): Promise<RecurringScheduleModel | null>;
+	updateRecurringSchedule(
+		recurringScheduleId: string,
+		data: UpdateRecurringScheduleDTO,
+		tutorId: string,
+	): Promise<RecurringScheduleUpdateResultModel>;
 }

@@ -1,52 +1,48 @@
 import type { Prisma, ScheduleStatus, Weekday } from "@prisma/client";
+import { DateTime } from "../lib/date-time";
 import { prisma } from "../lib/db";
+import { AppError } from "../lib/error";
+import {
+	RecurringScheduleModel,
+	RecurringScheduleUpdateResultModel,
+	ScheduleModel,
+} from "../models/schedule.model";
 import type {
 	CreateScheduleDTO,
 	IScheduleRepository,
-	RecurringScheduleDTO,
-	RecurringScheduleItemDTO,
-	ScheduleDTO,
+	RecurringScheduleCreationData,
+	ScheduleListQueryDTO,
+	UpdateRecurringScheduleDTO,
 	UpdateScheduleDTO,
 } from "../types";
 import { getRemainingHoursForClass, getRemainingHoursMap } from "./class-hours";
 
+const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
+	"SCHEDULED",
+	"COMPLETED",
+	"NO_SHOW",
+];
+
 const DEDUCTED_SCHEDULE_STATUSES: ScheduleStatus[] = ["COMPLETED", "NO_SHOW"];
 
-// Helper to convert Prisma Schedule with class relation to DTO
-function toDTO(schedule: {
-	id: string;
+const RECURRING_REPLACEABLE_STATUSES: ScheduleStatus[] = [
+	"SCHEDULED",
+	"CANCELLED",
+];
+
+type GeneratedScheduleData = {
 	classId: string;
-	recurringScheduleId?: string | null;
-	date: Date;
+	date: string;
 	time: number;
 	durationMinutes: number;
-	notes: string | null;
-	status: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
-	createdAt: Date;
-	updatedAt: Date;
-	class: {
-		name: string;
-	};
-	_remainingHours?: number;
-}): ScheduleDTO {
-	return {
-		id: schedule.id,
-		classId: schedule.classId,
-		className: schedule.class.name,
-		recurringScheduleId: schedule.recurringScheduleId ?? null,
-		date: schedule.date.toISOString().split("T")[0]!,
-		time: schedule.time,
-		durationMinutes: schedule.durationMinutes,
-		notes: schedule.notes,
-		status: schedule.status,
-		createdAt: schedule.createdAt.toISOString(),
-		updatedAt: schedule.updatedAt.toISOString(),
-		remainingHours: schedule._remainingHours,
-	};
+};
+
+function toHoursNumber(value: Prisma.Decimal | number): number {
+	return typeof value === "number" ? value : value.toNumber();
 }
 
 export class ScheduleRepository implements IScheduleRepository {
-	async create(data: CreateScheduleDTO): Promise<ScheduleDTO> {
+	async create(data: CreateScheduleDTO): Promise<ScheduleModel> {
 		if (data.time === undefined || data.durationMinutes === undefined) {
 			throw new Error("Time and duration are required");
 		}
@@ -58,7 +54,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			const createdSchedule = await tx.schedule.create({
 				data: {
 					classId: data.classId,
-					date: new Date(data.date),
+					date: DateTime.fromDateOnlyString(data.date).toDate(),
 					time,
 					durationMinutes,
 					notes: data.notes || null,
@@ -94,7 +90,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		}
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
-		return toDTO({ ...schedule, _remainingHours: remainingHours });
+		return ScheduleModel.fromSchedulePrisma(schedule, remainingHours);
 	}
 
 	async createMany(
@@ -104,16 +100,15 @@ export class ScheduleRepository implements IScheduleRepository {
 			time: number;
 			durationMinutes: number;
 		}>,
-	): Promise<ScheduleDTO[]> {
+	): Promise<ScheduleModel[]> {
 		if (data.length === 0) {
 			return [];
 		}
 
-		// Bulk insert schedules
 		await prisma.schedule.createMany({
 			data: data.map((item) => ({
 				classId: item.classId,
-				date: new Date(item.date),
+				date: DateTime.fromDateOnlyString(item.date).toDate(),
 				time: item.time,
 				durationMinutes: item.durationMinutes,
 				notes: null,
@@ -121,39 +116,36 @@ export class ScheduleRepository implements IScheduleRepository {
 			})),
 		});
 
-		// Fetch the created schedules to return DTOs with class names
 		const dateStrings = data.map((d) => d.date);
 		const firstClassId = data[0]?.classId;
 		if (!firstClassId) {
 			return [];
 		}
+
 		const createdSchedules = await prisma.schedule.findMany({
 			where: {
 				classId: firstClassId,
 				date: {
-					in: dateStrings.map((d) => new Date(d)),
+					in: dateStrings.map((date) =>
+						DateTime.fromDateOnlyString(date).toDate(),
+					),
 				},
 			},
 			include: { class: true },
 			orderBy: [{ date: "asc" }, { time: "asc" }],
 		});
 
-		// Get remaining hours once (optimization)
 		const remainingHours = await this.getRemainingHours(firstClassId);
 
 		return createdSchedules.map((schedule) =>
-			toDTO({ ...schedule, _remainingHours: remainingHours }),
+			ScheduleModel.fromSchedulePrisma(schedule, remainingHours),
 		);
 	}
 
 	async findAll(
 		tutorId: string,
-		query?: {
-			date?: string;
-			search?: string;
-			classId?: string;
-		},
-	): Promise<ScheduleDTO[]> {
+		query?: ScheduleListQueryDTO,
+	): Promise<ScheduleModel[]> {
 		const where: Prisma.ScheduleWhereInput = {
 			class: {
 				tutorId,
@@ -161,7 +153,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		};
 
 		if (query?.date) {
-			where.date = new Date(query.date);
+			where.date = DateTime.fromDateOnlyString(query.date).toDate();
 		}
 
 		if (query?.classId) {
@@ -190,17 +182,15 @@ export class ScheduleRepository implements IScheduleRepository {
 			schedules.map((schedule) => schedule.classId),
 		);
 
-		const schedulesWithHours = schedules.map((schedule) =>
-			toDTO({
-				...schedule,
-				_remainingHours: remainingHoursMap.get(schedule.classId),
-			}),
+		return schedules.map((schedule) =>
+			ScheduleModel.fromSchedulePrisma(
+				schedule,
+				remainingHoursMap.get(schedule.classId),
+			),
 		);
-
-		return schedulesWithHours;
 	}
 
-	async findById(id: string): Promise<ScheduleDTO | null> {
+	async findById(id: string): Promise<ScheduleModel | null> {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id },
 			include: {
@@ -213,16 +203,18 @@ export class ScheduleRepository implements IScheduleRepository {
 		}
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
-		return toDTO({ ...schedule, _remainingHours: remainingHours });
+		return ScheduleModel.fromSchedulePrisma(schedule, remainingHours);
 	}
 
-	async update(id: string, data: UpdateScheduleDTO): Promise<ScheduleDTO> {
+	async update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel> {
 		const schedule = await prisma.$transaction(async (tx) => {
 			const updatedSchedule = await tx.schedule.update({
 				where: { id },
 				data: {
 					...(data.classId !== undefined && { classId: data.classId }),
-					...(data.date !== undefined && { date: new Date(data.date) }),
+					...(data.date !== undefined && {
+						date: DateTime.fromDateOnlyString(data.date).toDate(),
+					}),
 					...(data.time !== undefined && { time: data.time }),
 					...(data.durationMinutes !== undefined && {
 						durationMinutes: data.durationMinutes,
@@ -255,7 +247,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
-		return toDTO({ ...schedule, _remainingHours: remainingHours });
+		return ScheduleModel.fromSchedulePrisma(schedule, remainingHours);
 	}
 
 	async delete(id: string): Promise<void> {
@@ -264,15 +256,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 	}
 
-	async validateAndReserveHours(
-		classId: string,
-		hours: number,
-	): Promise<boolean> {
-		const remainingHours = await getRemainingHoursForClass(classId);
-		return remainingHours >= hours;
-	}
-
-	async completeSchedule(id: string): Promise<ScheduleDTO> {
+	async completeSchedule(id: string): Promise<ScheduleModel> {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id },
 			include: { class: true },
@@ -312,10 +296,10 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
-		return toDTO({ ...updatedSchedule, _remainingHours: remainingHours });
+		return ScheduleModel.fromSchedulePrisma(updatedSchedule, remainingHours);
 	}
 
-	async restoreHours(id: string): Promise<ScheduleDTO> {
+	async restoreHours(id: string): Promise<ScheduleModel> {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id },
 			include: { class: true },
@@ -346,14 +330,14 @@ export class ScheduleRepository implements IScheduleRepository {
 
 			await tx.classHourDeduction.update({
 				where: { scheduleId: id },
-				data: { restoredAt: new Date() },
+				data: { restoredAt: DateTime.now().toDate() },
 			});
 
 			return cancelledSchedule;
 		});
 
 		const remainingHours = await this.getRemainingHours(schedule.classId);
-		return toDTO({ ...updatedSchedule, _remainingHours: remainingHours });
+		return ScheduleModel.fromSchedulePrisma(updatedSchedule, remainingHours);
 	}
 
 	async getRemainingHours(classId: string): Promise<number> {
@@ -361,60 +345,507 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async createRecurringSchedule(
-		data: Omit<
-			RecurringScheduleDTO,
-			"id" | "className" | "createdAt" | "updatedAt"
-		>,
-	): Promise<RecurringScheduleDTO> {
-		const recurringSchedule = await prisma.recurringSchedule.create({
-			data: {
-				classId: data.classId,
-				startDate: new Date(data.startDate),
-				notes: data.notes || null,
+		data: RecurringScheduleCreationData,
+	): Promise<ScheduleModel> {
+		const remainingHours = await this.getRemainingHours(data.classId);
+		const scheduleData = this.generateScheduleData(
+			data.classId,
+			data.recurring.startDate,
+			data.recurring.scheduleItems,
+			remainingHours,
+		);
+
+		if (scheduleData.length < 1) {
+			throw AppError.badRequest(
+				"INSUFFICIENT_HOURS",
+				"The class does not have enough remaining hours to create any schedule",
+			);
+		}
+
+		const result = await prisma.$transaction(async (tx) => {
+			const recurringSchedule = await tx.recurringSchedule.create({
+				data: {
+					classId: data.classId,
+					startDate: DateTime.fromDateOnlyString(
+						data.recurring.startDate,
+					).toDate(),
+					notes: data.notes || null,
+				},
+				include: { class: true },
+			});
+
+			await tx.recurringScheduleItem.createMany({
+				data: data.recurring.scheduleItems.map((item) => ({
+					recurringScheduleId: recurringSchedule.id,
+					weekday: item.weekday,
+					time: item.time,
+					durationMinutes: item.durationMinutes,
+				})),
+			});
+
+			if (scheduleData.length > 0) {
+				await this.assertNoRecurringConflicts(tx, data.classId, scheduleData);
+
+				await tx.schedule.createMany({
+					data: scheduleData.map((item) => ({
+						classId: data.classId,
+						recurringScheduleId: recurringSchedule.id,
+						date: DateTime.fromDateOnlyString(item.date).toDate(),
+						time: item.time,
+						durationMinutes: item.durationMinutes,
+						notes: data.notes || null,
+						status: "SCHEDULED",
+					})),
+				});
+			}
+
+			const createdSchedules = await tx.schedule.findMany({
+				where: {
+					classId: data.classId,
+					date: {
+						in: scheduleData.map((item) =>
+							DateTime.fromDateOnlyString(item.date).toDate(),
+						),
+					},
+				},
+				include: { class: true },
+				orderBy: [{ date: "asc" }, { time: "asc" }],
+			});
+
+			return { schedules: createdSchedules };
+		});
+
+		const finalRemainingHours = await this.getRemainingHours(data.classId);
+
+		const firstSchedule = result.schedules[0];
+		if (!firstSchedule) {
+			throw new Error("No schedules were created");
+		}
+
+		return ScheduleModel.fromSchedulePrisma(firstSchedule, finalRemainingHours);
+	}
+
+	async findRecurringScheduleById(
+		recurringScheduleId: string,
+		tutorId: string,
+	): Promise<RecurringScheduleModel | null> {
+		const recurringSchedule = await prisma.recurringSchedule.findFirst({
+			where: {
+				id: recurringScheduleId,
+				class: {
+					tutorId,
+				},
 			},
 			include: {
 				class: true,
+				scheduleItems: true,
 			},
 		});
 
-		return {
-			id: recurringSchedule.id,
-			classId: recurringSchedule.classId,
-			className: recurringSchedule.class.name,
-			startDate: recurringSchedule.startDate.toISOString().split("T")[0]!,
-			notes: recurringSchedule.notes,
-			createdAt: recurringSchedule.createdAt.toISOString(),
-			updatedAt: recurringSchedule.updatedAt.toISOString(),
-			scheduleItems: [],
-		};
+		if (!recurringSchedule) {
+			return null;
+		}
+
+		return RecurringScheduleModel.fromRecurringSchedulePrisma(
+			recurringSchedule,
+		);
 	}
 
-	async createRecurringScheduleItems(
+	async updateRecurringSchedule(
 		recurringScheduleId: string,
+		data: UpdateRecurringScheduleDTO,
+		tutorId: string,
+	): Promise<RecurringScheduleUpdateResultModel> {
+		const existingRecurringSchedule = await prisma.recurringSchedule.findFirst({
+			where: {
+				id: recurringScheduleId,
+				class: {
+					tutorId,
+				},
+			},
+			include: {
+				class: true,
+				scheduleItems: true,
+			},
+		});
+
+		if (!existingRecurringSchedule) {
+			throw AppError.notFound(
+				"RECURRING_SCHEDULE_NOT_FOUND",
+				"Recurring schedule not found",
+			);
+		}
+
+		return prisma.$transaction(async (tx) => {
+			const candidateSchedules = await tx.schedule.findMany({
+				where: {
+					classId: existingRecurringSchedule.classId,
+					date: {
+						gte: DateTime.fromDateOnlyString(data.effectiveDate).toDate(),
+					},
+					status: {
+						in: RECURRING_REPLACEABLE_STATUSES,
+					},
+				},
+				select: {
+					id: true,
+					date: true,
+					time: true,
+					durationMinutes: true,
+					recurringScheduleId: true,
+				},
+			});
+			const schedulesToReplace = candidateSchedules.filter((schedule) =>
+				this.matchesRecurringScheduleItem(schedule, existingRecurringSchedule),
+			);
+
+			if (schedulesToReplace.length > 0) {
+				await tx.schedule.deleteMany({
+					where: {
+						id: {
+							in: schedulesToReplace.map((schedule) => schedule.id),
+						},
+					},
+				});
+			}
+
+			const remainingHours = await this.getRemainingHoursInTransaction(
+				tx,
+				existingRecurringSchedule.classId,
+			);
+			const scheduleData = this.generateScheduleData(
+				existingRecurringSchedule.classId,
+				data.effectiveDate,
+				data.scheduleItems,
+				remainingHours,
+			);
+
+			if (scheduleData.length < 1) {
+				throw AppError.badRequest(
+					"INSUFFICIENT_HOURS",
+					"The class does not have enough remaining hours to recreate any recurring schedule",
+				);
+			}
+
+			await this.assertNoRecurringConflicts(
+				tx,
+				existingRecurringSchedule.classId,
+				scheduleData,
+			);
+
+			const newRecurringSchedule = await tx.recurringSchedule.create({
+				data: {
+					classId: existingRecurringSchedule.classId,
+					startDate: DateTime.fromDateOnlyString(data.effectiveDate).toDate(),
+					notes: data.notes ?? existingRecurringSchedule.notes,
+				},
+				include: {
+					class: true,
+				},
+			});
+
+			await tx.recurringScheduleItem.createMany({
+				data: data.scheduleItems.map((item) => ({
+					recurringScheduleId: newRecurringSchedule.id,
+					weekday: item.weekday,
+					time: item.time,
+					durationMinutes: item.durationMinutes,
+				})),
+			});
+
+			await tx.schedule.createMany({
+				data: scheduleData.map((item) => ({
+					classId: existingRecurringSchedule.classId,
+					recurringScheduleId: newRecurringSchedule.id,
+					date: DateTime.fromDateOnlyString(item.date).toDate(),
+					time: item.time,
+					durationMinutes: item.durationMinutes,
+					notes: data.notes ?? existingRecurringSchedule.notes,
+					status: "SCHEDULED",
+				})),
+			});
+
+			const recurringScheduleWithItems = await tx.recurringSchedule.findUnique({
+				where: {
+					id: newRecurringSchedule.id,
+				},
+				include: {
+					class: true,
+					scheduleItems: {
+						orderBy: [{ weekday: "asc" }, { time: "asc" }],
+					},
+				},
+			});
+
+			if (!recurringScheduleWithItems) {
+				throw new Error("Recurring schedule not found after update");
+			}
+
+			return new RecurringScheduleUpdateResultModel({
+				recurringSchedule: RecurringScheduleModel.fromRecurringSchedulePrisma(
+					recurringScheduleWithItems,
+				),
+				effectiveDate: data.effectiveDate,
+				deletedSchedulesCount: schedulesToReplace.length,
+				createdSchedulesCount: scheduleData.length,
+			});
+		});
+	}
+
+	private generateScheduleData(
+		classId: string,
+		startDate: string,
 		items: Array<{ weekday: Weekday; time: number; durationMinutes: number }>,
-	): Promise<RecurringScheduleItemDTO[]> {
-		await prisma.recurringScheduleItem.createMany({
-			data: items.map((item) => ({
-				recurringScheduleId,
-				weekday: item.weekday,
+		remainingHours: number,
+	): GeneratedScheduleData[] {
+		const scheduleData: GeneratedScheduleData[] = [];
+		let currentDate = DateTime.fromDateOnlyString(startDate);
+		let remainingMinutes = Math.max(0, Math.round(remainingHours * 60));
+
+		while (remainingMinutes > 0) {
+			const nextOccurrence = items
+				.map((item) => ({
+					item,
+					date: this.getNextDateForWeekday(currentDate, item.weekday),
+				}))
+				.sort((a, b) => {
+					const dateDiff = a.date.compareAsc(b.date);
+					if (dateDiff !== 0) {
+						return dateDiff;
+					}
+
+					return a.item.time - b.item.time;
+				})[0];
+
+			if (!nextOccurrence) {
+				break;
+			}
+
+			if (nextOccurrence.item.durationMinutes > remainingMinutes) {
+				return scheduleData;
+			}
+
+			scheduleData.push({
+				classId,
+				date: nextOccurrence.date.toDateOnlyString(),
+				time: nextOccurrence.item.time,
+				durationMinutes: nextOccurrence.item.durationMinutes,
+			});
+
+			remainingMinutes -= nextOccurrence.item.durationMinutes;
+			currentDate = nextOccurrence.date.addDays(1);
+		}
+
+		return scheduleData;
+	}
+
+	private getNextDateForWeekday(
+		startDate: DateTime,
+		weekday: Weekday,
+	): DateTime {
+		const weekdayMap: Record<Weekday, number> = {
+			MONDAY: 1,
+			TUESDAY: 2,
+			WEDNESDAY: 3,
+			THURSDAY: 4,
+			FRIDAY: 5,
+			SATURDAY: 6,
+			SUNDAY: 0,
+		};
+
+		const targetDay = weekdayMap[weekday];
+		const currentDay = startDate.getWeekdayIndex();
+
+		const daysUntilTarget = (targetDay - currentDay + 7) % 7;
+		return startDate.addDays(daysUntilTarget);
+	}
+
+	private async assertNoRecurringConflicts(
+		tx: Prisma.TransactionClient,
+		classId: string,
+		scheduleData: Array<{
+			date: string;
+			time: number;
+			durationMinutes: number;
+		}>,
+	): Promise<void> {
+		if (scheduleData.length === 0) {
+			return;
+		}
+
+		const uniqueDates = [...new Set(scheduleData.map((item) => item.date))];
+		const existingSchedules = await tx.schedule.findMany({
+			where: {
+				classId,
+				date: {
+					in: uniqueDates.map((date) =>
+						DateTime.fromDateOnlyString(date).toDate(),
+					),
+				},
+				status: {
+					in: ACTIVE_SCHEDULE_STATUSES,
+				},
+			},
+			select: {
+				date: true,
+				time: true,
+				durationMinutes: true,
+			},
+		});
+
+		const groupedGeneratedSchedules = scheduleData.reduce<
+			Record<string, Array<{ time: number; durationMinutes: number }>>
+		>((groups, item) => {
+			const group = groups[item.date] ?? [];
+			group.push({
 				time: item.time,
 				durationMinutes: item.durationMinutes,
-			})),
+			});
+			groups[item.date] = group;
+			return groups;
+		}, {});
+
+		const conflictDates = new Set<string>();
+
+		for (const [date, generatedSchedules] of Object.entries(
+			groupedGeneratedSchedules,
+		)) {
+			const existingForDate = existingSchedules.filter(
+				(schedule) => DateTime.from(schedule.date).toDateOnlyString() === date,
+			);
+
+			const allSchedules = [
+				...generatedSchedules.map((item) => ({ ...item, source: "generated" })),
+				...existingForDate.map((item) => ({
+					time: item.time,
+					durationMinutes: item.durationMinutes,
+					source: "existing",
+				})),
+			].sort((a, b) => a.time - b.time);
+
+			for (let index = 0; index < allSchedules.length; index += 1) {
+				const current = allSchedules[index];
+				if (!current) {
+					continue;
+				}
+
+				for (
+					let nextIndex = index + 1;
+					nextIndex < allSchedules.length;
+					nextIndex += 1
+				) {
+					const next = allSchedules[nextIndex];
+					if (!next) {
+						continue;
+					}
+
+					if (next.time >= current.time + current.durationMinutes) {
+						break;
+					}
+
+					if (
+						current.source !== next.source ||
+						current.source === "generated"
+					) {
+						conflictDates.add(date);
+					}
+				}
+			}
+		}
+
+		if (conflictDates.size > 0) {
+			const orderedDates = [...conflictDates].sort().join(", ");
+			throw AppError.badRequest(
+				"RECURRING_CONFLICT",
+				`Recurring schedule conflicts with existing schedules on ${orderedDates}`,
+			);
+		}
+	}
+
+	private async getRemainingHoursInTransaction(
+		tx: Prisma.TransactionClient,
+		classId: string,
+	): Promise<number> {
+		const classData = await tx.class.findUnique({
+			where: { id: classId },
+			select: {
+				totalHours: true,
+				schedules: {
+					where: {
+						status: {
+							in: ACTIVE_SCHEDULE_STATUSES,
+						},
+					},
+					select: {
+						durationMinutes: true,
+					},
+				},
+			},
 		});
 
-		// Fetch and return the created items
-		const scheduleItems = await prisma.recurringScheduleItem.findMany({
-			where: { recurringScheduleId },
-		});
+		if (!classData) {
+			throw AppError.badRequest(
+				"CLASS_NOT_FOUND",
+				"The specified class does not exist",
+			);
+		}
 
-		return scheduleItems.map((item) => ({
-			id: item.id,
-			weekday: item.weekday,
-			time: item.time,
-			durationMinutes: item.durationMinutes,
-		}));
+		const reservedHours =
+			classData.schedules.reduce(
+				(total, schedule) => total + schedule.durationMinutes,
+				0,
+			) / 60;
+
+		return toHoursNumber(classData.totalHours) - reservedHours;
+	}
+
+	private matchesRecurringScheduleItem(
+		schedule: {
+			date: Date;
+			time: number;
+			durationMinutes: number;
+			recurringScheduleId: string | null;
+		},
+		recurringSchedule: {
+			id: string;
+			startDate: Date;
+			scheduleItems: Array<{
+				weekday: Weekday;
+				time: number;
+				durationMinutes: number;
+			}>;
+		},
+	): boolean {
+		if (schedule.recurringScheduleId === recurringSchedule.id) {
+			return true;
+		}
+
+		if (schedule.recurringScheduleId) {
+			return false;
+		}
+
+		if (DateTime.from(schedule.date).isBefore(recurringSchedule.startDate)) {
+			return false;
+		}
+
+		const weekdayMap: Record<Weekday, number> = {
+			MONDAY: 1,
+			TUESDAY: 2,
+			WEDNESDAY: 3,
+			THURSDAY: 4,
+			FRIDAY: 5,
+			SATURDAY: 6,
+			SUNDAY: 0,
+		};
+
+		return recurringSchedule.scheduleItems.some(
+			(item) =>
+				weekdayMap[item.weekday] ===
+					DateTime.from(schedule.date).getWeekdayIndex() &&
+				item.time === schedule.time &&
+				item.durationMinutes === schedule.durationMinutes,
+		);
 	}
 }
 
-// Singleton instance for dependency injection
 export const scheduleRepository = new ScheduleRepository();

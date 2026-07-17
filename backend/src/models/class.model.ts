@@ -1,3 +1,4 @@
+import { DateTime } from "../lib/date-time";
 import type { ClassDTO, StudentInClassDTO } from "../types/class.types";
 import type { RecurringScheduleDTO } from "../types/schedule.types";
 
@@ -110,8 +111,8 @@ export class ClassModel {
 			name: this.name,
 			totalHours: this.totalHours,
 			students: this.students.map(toStudentInClassDTO),
-			createdAt: this.createdAt.toISOString(),
-			updatedAt: this.updatedAt.toISOString(),
+			createdAt: DateTime.from(this.createdAt).toISOString(),
+			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 			remainingHours: this.remainingHours,
 			recurringSchedule: this.recurringSchedule,
 		};
@@ -158,10 +159,10 @@ function toLatestRecurringScheduleDTO(
 		id: recurringSchedule.id,
 		classId: recurringSchedule.classId,
 		className: classData.name,
-		startDate: toDateOnlyString(recurringSchedule.startDate),
+		startDate: DateTime.from(recurringSchedule.startDate).toDateOnlyString(),
 		notes: recurringSchedule.notes,
-		createdAt: recurringSchedule.createdAt.toISOString(),
-		updatedAt: recurringSchedule.updatedAt.toISOString(),
+		createdAt: DateTime.from(recurringSchedule.createdAt).toISOString(),
+		updatedAt: DateTime.from(recurringSchedule.updatedAt).toISOString(),
 		scheduleItems: recurringSchedule.scheduleItems.map((item) => ({
 			id: item.id,
 			weekday: item.weekday,
@@ -169,9 +170,4 @@ function toLatestRecurringScheduleDTO(
 			durationMinutes: item.durationMinutes,
 		})),
 	};
-}
-
-function toDateOnlyString(date: Date): string {
-	const [dateOnly] = date.toISOString().split("T");
-	return dateOnly ?? date.toISOString();
 }

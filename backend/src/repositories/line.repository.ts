@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { DateTime } from "../lib/date-time";
 import { prisma } from "../lib/db";
 import type { ILineRepository } from "../types";
 
@@ -7,7 +8,7 @@ export class LineRepository implements ILineRepository {
 		studentId: string,
 	): Promise<{ token: string; expiresAt: Date }> {
 		const token = uuidv4();
-		const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+		const expiresAt = DateTime.now().addHours(24).toDate();
 
 		await prisma.lineLinkToken.create({
 			data: { studentId, token, expiresAt },
@@ -22,14 +23,14 @@ export class LineRepository implements ILineRepository {
 		});
 		if (!record) return null;
 		if (record.usedAt) return null;
-		if (record.expiresAt < new Date()) return null;
+		if (DateTime.from(record.expiresAt).isBefore(DateTime.now())) return null;
 		return record;
 	}
 
 	async markTokenUsed(tokenId: string): Promise<void> {
 		await prisma.lineLinkToken.update({
 			where: { id: tokenId },
-			data: { usedAt: new Date() },
+			data: { usedAt: DateTime.now().toDate() },
 		});
 	}
 }

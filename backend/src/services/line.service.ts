@@ -1,3 +1,4 @@
+import { DateTime } from "../lib/date-time";
 import { ENV } from "../lib/env";
 import { AppError } from "../lib/error";
 import {
@@ -32,7 +33,7 @@ export class LineService {
 		return {
 			token,
 			linkUrl,
-			expiresAt: expiresAt.toISOString(),
+			expiresAt: DateTime.from(expiresAt).toISOString(),
 		};
 	}
 
