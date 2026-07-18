@@ -16,6 +16,8 @@ export const StudentSchema = z.object({
 	phoneNumber: z.string().nullable(),
 	grade: z.number().int(),
 	lineUserId: z.string().nullable(),
+	lineConnectionId: z.string().uuid().nullable(),
+	lineLinkStatus: z.enum(["linked", "needs_relink", "not_linked"]),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
 });

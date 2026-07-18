@@ -1,4 +1,4 @@
-import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare } from "lucide-react";
+import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,8 @@ interface StudentCardProps {
 
 export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestMessage }: StudentCardProps) {
   const { t } = useTranslation(["students"]);
+  const isLineLinked = student.lineLinkStatus === "linked";
+  const needsLineRelink = student.lineLinkStatus === "needs_relink";
 
   const initials = student.name
     .split(" ")
@@ -44,10 +46,16 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
           <Badge variant="outline" className="shrink-0">
             {t("students:grade", { grade: student.grade })}
           </Badge>
-          {student.lineUserId && (
+          {isLineLinked && (
             <Badge variant="outline" className="shrink-0 gap-1 text-green-600 border-green-600/30">
               <CheckCircle2 className="w-3 h-3" />
               LINE
+            </Badge>
+          )}
+          {needsLineRelink && (
+            <Badge variant="outline" className="shrink-0 gap-1 border-amber-500/30 text-amber-700">
+              <TriangleAlert className="w-3 h-3" />
+              {t("students:line.needsRelink")}
             </Badge>
           )}
         </div>
@@ -68,13 +76,13 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
             <Eye className="w-4 h-4" />
             {t("students:view")}
           </DropdownMenuItem>
-          {!student.lineUserId && (
+          {!isLineLinked && (
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onLinkLine(); }}>
               <Link2 className="w-4 h-4" />
-              {t("students:line.linkLabel")}
+              {t(needsLineRelink ? "students:line.relinkLabel" : "students:line.linkLabel")}
             </DropdownMenuItem>
           )}
-          {student.lineUserId && (
+          {isLineLinked && (
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendTestMessage(); }}>
               <MessageSquare className="w-4 h-4" />
               {t("students:line.testMessage")}

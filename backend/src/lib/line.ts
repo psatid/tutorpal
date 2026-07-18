@@ -1,5 +1,17 @@
 import { ENV } from "./env";
 
+export interface LineLoginCredentials {
+	channelId: string;
+	channelSecret: string;
+}
+
+export interface LineBotInfo {
+	userId: string;
+	basicId: string;
+	premiumId?: string;
+	displayName: string;
+}
+
 interface LineTokenResponse {
 	access_token: string;
 	token_type: string;
@@ -18,6 +30,7 @@ interface LineProfileResponse {
 
 export async function exchangeCodeForToken(
 	code: string,
+	credentials: LineLoginCredentials,
 ): Promise<LineTokenResponse> {
 	const response = await fetch("https://api.line.me/oauth2/v2.1/token", {
 		method: "POST",
@@ -26,8 +39,8 @@ export async function exchangeCodeForToken(
 			grant_type: "authorization_code",
 			code,
 			redirect_uri: ENV.LINE_LINK_REDIRECT_URL,
-			client_id: ENV.LINE_LOGIN_CHANNEL_ID,
-			client_secret: ENV.LINE_LOGIN_CHANNEL_SECRET,
+			client_id: credentials.channelId,
+			client_secret: credentials.channelSecret,
 		}),
 	});
 
@@ -56,13 +69,14 @@ export async function getLineProfile(
 	return response.json() as Promise<LineProfileResponse>;
 }
 
-export function buildLineAuthUrl(state: string): string {
+export function buildLineAuthUrl(state: string, channelId: string): string {
 	const params = new URLSearchParams({
 		response_type: "code",
-		client_id: ENV.LINE_LOGIN_CHANNEL_ID,
+		client_id: channelId,
 		redirect_uri: ENV.LINE_LINK_REDIRECT_URL,
 		state,
 		scope: "profile",
+		bot_prompt: "aggressive",
 	});
 
 	return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
@@ -71,12 +85,13 @@ export function buildLineAuthUrl(state: string): string {
 export async function sendLinePushMessage(
 	lineUserId: string,
 	messages: Array<{ type: string; text: string }>,
+	channelAccessToken: string,
 ): Promise<void> {
 	const response = await fetch("https://api.line.me/v2/bot/message/push", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			Authorization: `Bearer ${ENV.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN}`,
+			Authorization: `Bearer ${channelAccessToken}`,
 		},
 		body: JSON.stringify({
 			to: lineUserId,
@@ -88,5 +103,32 @@ export async function sendLinePushMessage(
 		const text = await response.text();
 		console.error("LINE push message failed:", text);
 		throw new Error("Failed to send LINE push message");
+	}
+}
+
+export async function getLineBotInfo(
+	channelAccessToken: string,
+): Promise<LineBotInfo> {
+	const response = await fetch("https://api.line.me/v2/bot/info", {
+		headers: { Authorization: `Bearer ${channelAccessToken}` },
+	});
+	if (!response.ok) {
+		throw new Error("Failed to verify LINE Messaging API credentials");
+	}
+	return response.json() as Promise<LineBotInfo>;
+}
+
+export async function validateLineRecipient(
+	lineUserId: string,
+	channelAccessToken: string,
+): Promise<void> {
+	const response = await fetch(
+		`https://api.line.me/v2/bot/profile/${encodeURIComponent(lineUserId)}`,
+		{ headers: { Authorization: `Bearer ${channelAccessToken}` } },
+	);
+	if (!response.ok) {
+		throw new Error(
+			"The LINE account has not added this Official Account as a friend",
+		);
 	}
 }

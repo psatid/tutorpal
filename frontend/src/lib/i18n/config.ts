@@ -10,6 +10,7 @@ import students from "./locales/en/students";
 import classes from "./locales/en/classes";
 import schedules from "./locales/en/schedules";
 import navigation from "./locales/en/navigation";
+import settings from "./locales/en/settings";
 
 const resources = {
   en: {
@@ -21,6 +22,7 @@ const resources = {
     classes: classes as Record<string, unknown>,
     schedules: schedules as Record<string, unknown>,
     navigation: navigation as Record<string, unknown>,
+    settings: settings as Record<string, unknown>,
   },
 };
 
@@ -42,6 +44,7 @@ i18n
       "classes",
       "schedules",
       "navigation",
+      "settings",
     ],
     defaultNS: "common",
   });

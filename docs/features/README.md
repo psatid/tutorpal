@@ -7,3 +7,4 @@
 - [Schedule No-Show Status — June 21, 2026](schedule-no-show.md)
 - [Decimal Class Hours — June 26, 2026](decimal-class-hours.md)
 - [Recurring Schedule Editing with Effective Date — June 26, 2026](recurring-schedule-editing.md)
+- [Tutor-Owned LINE Messaging and Settings — July 18, 2026](tutor-line-settings.md)

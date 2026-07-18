@@ -1,27 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/auth-context";
-import { LogOut } from "lucide-react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { Settings } from "lucide-react";
 
 export function TopAppBar() {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = "/login";
-  };
-
-  const getUserInitials = () => {
-    if (!user) return "TP";
-    const name = user.name;
-    if (!name) return "TP";
-    return name
-      .split(" ")
-      .map((n: string) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <header
@@ -31,20 +14,19 @@ export function TopAppBar() {
         TutorPal
       </h1>
       <div className="flex items-center gap-3">
-        <Avatar className="w-10 h-10 ring-2 ring-primary/10">
-          <AvatarImage src={user?.image ?? undefined} alt="Tutor Profile" />
-          <AvatarFallback className="bg-primary-container text-on-primary-container font-headline font-bold">
-            {getUserInitials()}
-          </AvatarFallback>
-        </Avatar>
         <Button
           variant="ghost"
           size="icon"
-          onClick={handleLogout}
-          className="text-primary hover:bg-primary/10"
-          aria-label="Logout"
+          onClick={() =>
+            navigate({
+              to: "/settings",
+              search: { returnTo: location.pathname },
+            })
+          }
+          className="size-11 rounded-full hover:bg-muted"
+          aria-label="Open settings"
         >
-          <LogOut className="w-5 h-5" />
+          <Settings className="size-5" aria-hidden="true" />
         </Button>
       </div>
     </header>

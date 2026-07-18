@@ -1,6 +1,12 @@
-import { createFileRoute, Outlet, Navigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Navigate,
+  useLocation,
+} from "@tanstack/react-router";
 import { TopAppBar } from "@/components/layout/top-app-bar";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { APP_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
 
@@ -10,6 +16,10 @@ export const Route = createFileRoute("/_layout")({
 
 function LayoutRoute() {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+  const isSettingsFlow =
+    location.pathname === APP_ROUTES.SETTINGS ||
+    location.pathname.startsWith(`${APP_ROUTES.SETTINGS}/`);
 
   // Show loading state while checking session
   if (isLoading) {
@@ -23,6 +33,14 @@ function LayoutRoute() {
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
+  }
+
+  if (isSettingsFlow) {
+    return (
+      <main className="min-h-dvh bg-background px-4 py-5 sm:px-6 sm:py-8">
+        <Outlet />
+      </main>
+    );
   }
 
   return (

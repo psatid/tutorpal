@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, Phone, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, CheckCircle2, TriangleAlert } from "lucide-react";
 import { getInitials } from "@/lib/name";
 import type { GetV1StudentsById200 } from "@/api/generated/models/getV1StudentsById200";
 
@@ -65,10 +65,16 @@ export function StudentInfoHeader({
           </Badge>
         )}
 
-        {studentData.lineUserId && (
+        {studentData.lineLinkStatus === "linked" && (
           <Badge variant="outline" className="gap-1 text-green-600 border-green-600/30">
             <CheckCircle2 className="w-3 h-3" />
             LINE
+          </Badge>
+        )}
+        {studentData.lineLinkStatus === "needs_relink" && (
+          <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-700">
+            <TriangleAlert className="w-3 h-3" />
+            {t("students:line.needsRelink")}
           </Badge>
         )}
       </div>

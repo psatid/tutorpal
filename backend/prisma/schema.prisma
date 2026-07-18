@@ -12,15 +12,19 @@ model Student {
   name        String
   phoneNumber String?
   grade       Int
-  lineUserId  String?  @unique
+  lineUserId  String?
+  lineConnectionId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  tutor        Tutor            @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  classes      ClassEnrollment[]
+  tutor          Tutor               @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  classes        ClassEnrollment[]
   lineLinkTokens LineLinkToken[]
+  lineConnection TutorLineConnection? @relation(fields: [lineConnectionId], references: [id], onDelete: SetNull)
 
   @@index([tutorId])
+  @@index([lineConnectionId])
+  @@unique([tutorId, lineUserId])
   @@map("students")
 }
 
@@ -63,9 +67,10 @@ model Tutor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  students Student[]
-  classes  Class[]
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students       Student[]
+  classes        Class[]
+  lineConnection TutorLineConnection?
 
   @@map("tutors")
 }
@@ -142,16 +147,56 @@ model Verification {
 model LineLinkToken {
   id        String    @id @default(uuid())
   studentId String
+  connectionId String
   token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student    Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  connection TutorLineConnection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([studentId])
+  @@index([connectionId])
   @@map("line_link_tokens")
+}
+
+model TutorLineConnection {
+  id                           String   @id @default(uuid())
+  tutorId                      String   @unique
+  messagingAccessTokenEncrypted String
+  loginChannelId               String
+  loginChannelSecretEncrypted  String
+  accountName                  String
+  accountBasicId               String?
+  botUserId                    String
+  testRecipientLineUserId      String?
+  lastVerifiedAt               DateTime @default(now())
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  tutor              Tutor                    @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  students           Student[]
+  studentLinkTokens  LineLinkToken[]
+  testRecipientTokens LineTestRecipientToken[]
+
+  @@map("tutor_line_connections")
+}
+
+model LineTestRecipientToken {
+  id           String   @id @default(uuid())
+  connectionId String
+  token        String   @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  connection TutorLineConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@index([token])
+  @@map("line_test_recipient_tokens")
 }
 
 enum ScheduleStatus {

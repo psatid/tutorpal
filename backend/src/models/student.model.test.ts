@@ -11,6 +11,7 @@ const prismaStudent = {
 	phoneNumber: "0812345678",
 	grade: 9,
 	lineUserId: "line-user-1",
+	lineConnectionId: "connection-1",
 	createdAt,
 	updatedAt,
 };
@@ -25,6 +26,7 @@ describe("Student domain model", () => {
 		expect(student.phoneNumber).toBe("0812345678");
 		expect(student.grade).toBe(9);
 		expect(student.lineUserId).toBe("line-user-1");
+		expect(student.lineConnectionId).toBe("connection-1");
 		expect(student.createdAt).toBe(createdAt);
 		expect(student.updatedAt).toBe(updatedAt);
 	});
@@ -39,6 +41,8 @@ describe("Student domain model", () => {
 			phoneNumber: "0812345678",
 			grade: 9,
 			lineUserId: "line-user-1",
+			lineConnectionId: "connection-1",
+			lineLinkStatus: "linked",
 			createdAt: "2026-06-28T10:00:00.000Z",
 			updatedAt: "2026-06-28T10:30:00.000Z",
 		});
@@ -50,6 +54,7 @@ describe("Student domain model", () => {
 			Student.fromStudentPrisma({
 				...prismaStudent,
 				lineUserId: null,
+				lineConnectionId: null,
 			}).isLineLinked(),
 		).toBe(false);
 	});
@@ -73,6 +78,8 @@ describe("StudentDetail domain model", () => {
 			phoneNumber: "0812345678",
 			grade: 9,
 			lineUserId: "line-user-1",
+			lineConnectionId: "connection-1",
+			lineLinkStatus: "linked",
 			createdAt: "2026-06-28T10:00:00.000Z",
 			updatedAt: "2026-06-28T10:30:00.000Z",
 			classes: [

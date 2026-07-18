@@ -5,8 +5,11 @@ import { requireAuth } from "../middleware/auth";
 import { lineRepository, studentRepository } from "../repositories";
 import {
 	GenerateLinkTokenRequestSchema,
+	LineAuthorizeResponseResolver,
 	LineAuthUrlResponseResolver,
+	LineConnectionStatusResolver,
 	LinkTokenResponseResolver,
+	SaveLineConnectionRequestSchema,
 	SendTestMessageRequestSchema,
 	SendTestMessageResponseResolver,
 	UnlinkLineRequestSchema,
@@ -90,6 +93,11 @@ const lineRoutes = new Hono<AppEnv>()
 
 			try {
 				const result = await lineService.handleCallback(code, state);
+				if (result.kind === "test-recipient") {
+					return c.redirect(
+						`${ENV.FRONTEND_URL}/settings/line?testRecipient=connected`,
+					);
+				}
 				return c.redirect(
 					`${ENV.FRONTEND_URL}/line-link?success=true&name=${encodeURIComponent(result.displayName)}`,
 				);
@@ -101,6 +109,82 @@ const lineRoutes = new Hono<AppEnv>()
 	)
 	// Apply authentication middleware for protected routes below
 	.use(requireAuth)
+	.get(
+		"/connection",
+		describeRoute({
+			tags: ["line"],
+			description: "Get the current tutor's safe LINE connection status",
+			responses: {
+				200: {
+					description: "LINE connection status",
+					content: {
+						"application/json": { schema: LineConnectionStatusResolver },
+					},
+				},
+			},
+		}),
+		async (c) =>
+			c.json(await lineService.getConnectionStatus(c.get("tutorId"))),
+	)
+	.put(
+		"/connection",
+		describeRoute({
+			tags: ["line"],
+			description: "Save and verify the current tutor's LINE credentials",
+			responses: {
+				200: {
+					description: "Verified LINE connection",
+					content: {
+						"application/json": { schema: LineConnectionStatusResolver },
+					},
+				},
+				400: { description: "Invalid credentials" },
+			},
+		}),
+		validator("json", SaveLineConnectionRequestSchema),
+		async (c) =>
+			c.json(
+				await lineService.saveConnection(c.get("tutorId"), c.req.valid("json")),
+			),
+	)
+	.post(
+		"/connection/test-recipient/authorize",
+		describeRoute({
+			tags: ["line"],
+			description:
+				"Begin LINE Login to connect the tutor's test recipient account",
+			responses: {
+				200: {
+					description: "LINE authorization URL",
+					content: {
+						"application/json": { schema: LineAuthorizeResponseResolver },
+					},
+				},
+			},
+		}),
+		async (c) =>
+			c.json(
+				await lineService.startTestRecipientAuthorization(c.get("tutorId")),
+			),
+	)
+	.post(
+		"/connection/test-message",
+		describeRoute({
+			tags: ["line"],
+			description:
+				"Send a test message to the tutor's connected personal LINE account",
+			responses: {
+				200: {
+					description: "Test message sent",
+					content: {
+						"application/json": { schema: SendTestMessageResponseResolver },
+					},
+				},
+			},
+		}),
+		async (c) =>
+			c.json(await lineService.sendConnectionTestMessage(c.get("tutorId"))),
+	)
 	.post(
 		"/link-token",
 		describeRoute({

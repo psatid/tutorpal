@@ -58,7 +58,7 @@ export function StudentList({
   );
 
   const handleLinkLine = (student: GetV1Students200DataItem) => {
-    if (student.lineUserId) {
+    if (student.lineLinkStatus === "linked") {
       toast.info(t("students:line.alreadyLinked"));
       return;
     }
@@ -96,7 +96,7 @@ export function StudentList({
   };
 
   const handleSendTestMessage = (student: GetV1Students200DataItem) => {
-    if (!student.lineUserId) {
+    if (student.lineLinkStatus !== "linked") {
       toast.info(t("students:line.notLinked"));
       return;
     }

@@ -27,3 +27,12 @@ For schedule data, use `ScheduleModel.fromSchedulePrisma(...)` when converting
 persistence records and `scheduleModel.toScheduleDTO()` when returning API
 responses. Recurring schedule responses use `RecurringScheduleModel` and
 `RecurringScheduleUpdateResultModel` for recurring schedule serialization.
+
+## Tutor-owned integrations
+
+Tutor-owned credentials belong in a dedicated one-to-one integration model,
+not in shared environment variables. Secrets must remain encrypted at rest and
+are deliberately excluded from DTOs. Student records may keep an integration
+reference when an external recipient identity is provider-specific; a missing
+reference represents a stale link that needs reconnecting rather than a usable
+recipient.

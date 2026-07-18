@@ -64,6 +64,8 @@ export default {
   },
   line: {
     linkLabel: "Link LINE",
+    relinkLabel: "Reconnect LINE",
+    needsRelink: "Reconnect LINE",
     linkConfirm: "Generate a LINE linking link to send to this student?",
     linkGenerate: "Generate Link",
     linkCopied: "LINE link copied to clipboard!",

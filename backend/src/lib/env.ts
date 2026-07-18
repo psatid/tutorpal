@@ -10,10 +10,8 @@ export const ENV = {
 	RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
 	RESEND_FROM_EMAIL:
 		process.env.RESEND_FROM_EMAIL ?? "TutorPal <no-reply@example.com>",
-	LINE_LOGIN_CHANNEL_ID: process.env.LINE_LOGIN_CHANNEL_ID ?? "",
-	LINE_LOGIN_CHANNEL_SECRET: process.env.LINE_LOGIN_CHANNEL_SECRET ?? "",
-	LINE_MESSAGING_CHANNEL_ACCESS_TOKEN:
-		process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN ?? "",
+	LINE_CREDENTIALS_ENCRYPTION_KEY:
+		process.env.LINE_CREDENTIALS_ENCRYPTION_KEY ?? "",
 	LINE_LINK_REDIRECT_URL:
 		process.env.LINE_LINK_REDIRECT_URL ??
 		"http://localhost:3000/v1/line/callback",

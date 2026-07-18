@@ -1,17 +1,18 @@
 import { v4 as uuidv4 } from "uuid";
 import { DateTime } from "../lib/date-time";
 import { prisma } from "../lib/db";
-import type { ILineRepository } from "../types";
+import type { ILineRepository, StoredLineConnection } from "../types";
 
 export class LineRepository implements ILineRepository {
 	async createToken(
 		studentId: string,
+		connectionId: string,
 	): Promise<{ token: string; expiresAt: Date }> {
 		const token = uuidv4();
 		const expiresAt = DateTime.now().addHours(24).toDate();
 
 		await prisma.lineLinkToken.create({
-			data: { studentId, token, expiresAt },
+			data: { studentId, connectionId, token, expiresAt },
 		});
 
 		return { token, expiresAt };
@@ -31,6 +32,77 @@ export class LineRepository implements ILineRepository {
 		await prisma.lineLinkToken.update({
 			where: { id: tokenId },
 			data: { usedAt: DateTime.now().toDate() },
+		});
+	}
+
+	async findConnectionByTutorId(
+		tutorId: string,
+	): Promise<StoredLineConnection | null> {
+		return prisma.tutorLineConnection.findUnique({ where: { tutorId } });
+	}
+
+	async findConnectionById(id: string): Promise<StoredLineConnection | null> {
+		return prisma.tutorLineConnection.findUnique({ where: { id } });
+	}
+
+	async upsertConnection(
+		data: Omit<StoredLineConnection, "id" | "lastVerifiedAt">,
+	): Promise<StoredLineConnection> {
+		return prisma.tutorLineConnection.upsert({
+			where: { tutorId: data.tutorId },
+			create: data,
+			update: {
+				messagingAccessTokenEncrypted: data.messagingAccessTokenEncrypted,
+				loginChannelId: data.loginChannelId,
+				loginChannelSecretEncrypted: data.loginChannelSecretEncrypted,
+				accountName: data.accountName,
+				accountBasicId: data.accountBasicId,
+				botUserId: data.botUserId,
+				testRecipientLineUserId: data.testRecipientLineUserId,
+				lastVerifiedAt: DateTime.now().toDate(),
+			},
+		});
+	}
+
+	async createTestRecipientToken(
+		connectionId: string,
+	): Promise<{ token: string; expiresAt: Date }> {
+		const token = uuidv4();
+		const expiresAt = DateTime.now().addHours(1).toDate();
+		await prisma.lineTestRecipientToken.create({
+			data: { connectionId, token, expiresAt },
+		});
+		return { token, expiresAt };
+	}
+
+	async findValidTestRecipientToken(token: string) {
+		const record = await prisma.lineTestRecipientToken.findUnique({
+			where: { token },
+		});
+		if (
+			!record ||
+			record.usedAt ||
+			DateTime.from(record.expiresAt).isBefore(DateTime.now())
+		) {
+			return null;
+		}
+		return record;
+	}
+
+	async markTestRecipientTokenUsed(tokenId: string): Promise<void> {
+		await prisma.lineTestRecipientToken.update({
+			where: { id: tokenId },
+			data: { usedAt: DateTime.now().toDate() },
+		});
+	}
+
+	async setTestRecipient(
+		connectionId: string,
+		lineUserId: string,
+	): Promise<void> {
+		await prisma.tutorLineConnection.update({
+			where: { id: connectionId },
+			data: { testRecipientLineUserId: lineUserId },
 		});
 	}
 }

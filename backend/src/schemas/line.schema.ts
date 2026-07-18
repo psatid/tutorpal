@@ -23,6 +23,26 @@ export const SendTestMessageResponseSchema = z.object({
 	sent: z.boolean(),
 });
 
+export const SaveLineConnectionRequestSchema = z.object({
+	messagingAccessToken: z
+		.string()
+		.min(20, "Enter a valid channel access token"),
+	loginChannelId: z.string().min(1, "Enter your LINE Login channel ID"),
+	loginChannelSecret: z.string().min(1, "Enter your LINE Login channel secret"),
+});
+
+export const LineConnectionStatusSchema = z.object({
+	configured: z.boolean(),
+	accountName: z.string().optional(),
+	accountBasicId: z.string().nullable().optional(),
+	lastVerifiedAt: z.string().datetime().optional(),
+	testRecipientConnected: z.boolean(),
+});
+
+export const LineAuthorizeResponseSchema = z.object({
+	authUrl: z.string().url(),
+});
+
 export const UnlinkLineRequestSchema = z.object({
 	studentId: z.string().uuid("Invalid student ID"),
 });
@@ -41,6 +61,15 @@ export const SendTestMessageRequestResolver = resolver(
 );
 export const SendTestMessageResponseResolver = resolver(
 	SendTestMessageResponseSchema,
+);
+export const SaveLineConnectionRequestResolver = resolver(
+	SaveLineConnectionRequestSchema,
+);
+export const LineConnectionStatusResolver = resolver(
+	LineConnectionStatusSchema,
+);
+export const LineAuthorizeResponseResolver = resolver(
+	LineAuthorizeResponseSchema,
 );
 
 export const UnlinkLineRequestResolver = resolver(UnlinkLineRequestSchema);

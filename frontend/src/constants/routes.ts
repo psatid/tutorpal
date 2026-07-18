@@ -10,4 +10,6 @@ export const APP_ROUTES = {
 	CLASSES: "/classes",
 	CLASS_DETAIL: "/classes/$classId",
 	SCHEDULES: "/schedules",
+	SETTINGS: "/settings",
+	LINE_SETTINGS: "/settings/line",
 };

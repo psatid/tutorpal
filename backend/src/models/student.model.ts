@@ -12,6 +12,7 @@ type StudentPrismaRecord = {
 	phoneNumber: string | null;
 	grade: number;
 	lineUserId: string | null;
+	lineConnectionId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -30,6 +31,7 @@ type StudentProps = {
 	phoneNumber: string | null;
 	grade: number;
 	lineUserId: string | null;
+	lineConnectionId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -41,6 +43,7 @@ export class Student {
 	readonly phoneNumber: string | null;
 	readonly grade: number;
 	readonly lineUserId: string | null;
+	readonly lineConnectionId: string | null;
 	readonly createdAt: Date;
 	readonly updatedAt: Date;
 
@@ -51,6 +54,7 @@ export class Student {
 		this.phoneNumber = props.phoneNumber;
 		this.grade = props.grade;
 		this.lineUserId = props.lineUserId;
+		this.lineConnectionId = props.lineConnectionId;
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
 	}
@@ -63,13 +67,18 @@ export class Student {
 			phoneNumber: student.phoneNumber,
 			grade: student.grade,
 			lineUserId: student.lineUserId,
+			lineConnectionId: student.lineConnectionId,
 			createdAt: student.createdAt,
 			updatedAt: student.updatedAt,
 		});
 	}
 
 	isLineLinked(): boolean {
-		return Boolean(this.lineUserId);
+		return Boolean(this.lineUserId && this.lineConnectionId);
+	}
+
+	needsLineRelink(): boolean {
+		return Boolean(this.lineUserId && !this.lineConnectionId);
 	}
 
 	toStudentDTO(): StudentDTO {
@@ -80,6 +89,12 @@ export class Student {
 			phoneNumber: this.phoneNumber,
 			grade: this.grade,
 			lineUserId: this.lineUserId,
+			lineConnectionId: this.lineConnectionId,
+			lineLinkStatus: this.isLineLinked()
+				? "linked"
+				: this.needsLineRelink()
+					? "needs_relink"
+					: "not_linked",
 			createdAt: DateTime.from(this.createdAt).toISOString(),
 			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 		};
@@ -109,6 +124,7 @@ export class StudentDetail extends Student {
 			phoneNumber: student.phoneNumber,
 			grade: student.grade,
 			lineUserId: student.lineUserId,
+			lineConnectionId: student.lineConnectionId,
 			createdAt: student.createdAt,
 			updatedAt: student.updatedAt,
 			classes,

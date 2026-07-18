@@ -6,6 +6,8 @@ export interface Student {
   phoneNumber: string | null;
   grade: number;
   lineUserId: string | null;
+  lineConnectionId: string | null;
+  lineLinkStatus: "linked" | "needs_relink" | "not_linked";
 }
 
 export const studentSchema = z.object({
