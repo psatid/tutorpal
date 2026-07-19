@@ -1,63 +1,47 @@
 import { DateTime } from "../lib/date-time";
-import type { ClassDTO, StudentInClassDTO } from "../types/class.types";
+import type {
+	ClassDTO,
+	CourseInClassDTO,
+	StudentInClassDTO,
+} from "../types/class.types";
 import type { RecurringScheduleDTO } from "../types/schedule.types";
+import { getClassDisplayName } from "./class-display-name";
 
-type DecimalLike = {
-	toNumber(): number;
-};
-
+type DecimalLike = { toNumber(): number };
 type HoursValue = DecimalLike | number;
 
 type ClassPrismaRecord = {
 	id: string;
 	tutorId: string;
-	name: string;
+	name: string | null;
 	totalHours: HoursValue;
 	createdAt: Date;
 	updatedAt: Date;
-	students: ClassEnrollmentPrismaRecord[];
-	recurringSchedules?: RecurringSchedulePrismaRecord[];
-};
-
-type ClassEnrollmentPrismaRecord = {
-	student: {
+	course: { id: string; name: string; defaultTotalHours: HoursValue } | null;
+	students: Array<{ student: StudentInClassDTO }>;
+	recurringSchedules?: Array<{
 		id: string;
-		name: string;
-		phoneNumber: string | null;
-		grade: number;
-	};
-};
-
-type RecurringSchedulePrismaRecord = {
-	id: string;
-	classId: string;
-	startDate: Date;
-	notes: string | null;
-	createdAt: Date;
-	updatedAt: Date;
-	scheduleItems: RecurringScheduleItemPrismaRecord[];
-};
-
-type RecurringScheduleItemPrismaRecord = {
-	id: string;
-	weekday: RecurringScheduleDTO["scheduleItems"][number]["weekday"];
-	time: number;
-	durationMinutes: number;
-};
-
-export type StudentInClass = {
-	id: string;
-	name: string;
-	phoneNumber: string | null;
-	grade: number;
+		classId: string;
+		startDate: Date;
+		notes: string | null;
+		createdAt: Date;
+		updatedAt: Date;
+		scheduleItems: Array<{
+			id: string;
+			weekday: RecurringScheduleDTO["scheduleItems"][number]["weekday"];
+			time: number;
+			durationMinutes: number;
+		}>;
+	}>;
 };
 
 type ClassModelProps = {
 	id: string;
 	tutorId: string;
-	name: string;
+	course: CourseInClassDTO | null;
+	name: string | null;
 	totalHours: number;
-	students: StudentInClass[];
+	students: StudentInClassDTO[];
 	createdAt: Date;
 	updatedAt: Date;
 	remainingHours?: number;
@@ -67,9 +51,11 @@ type ClassModelProps = {
 export class ClassModel {
 	readonly id: string;
 	readonly tutorId: string;
-	readonly name: string;
+	readonly course: CourseInClassDTO | null;
+	readonly name: string | null;
+	readonly displayName: string;
 	readonly totalHours: number;
-	readonly students: StudentInClass[];
+	readonly students: StudentInClassDTO[];
 	readonly createdAt: Date;
 	readonly updatedAt: Date;
 	readonly remainingHours?: number;
@@ -78,9 +64,15 @@ export class ClassModel {
 	constructor(props: ClassModelProps) {
 		this.id = props.id;
 		this.tutorId = props.tutorId;
+		this.course = props.course;
 		this.name = props.name;
-		this.totalHours = props.totalHours;
 		this.students = props.students;
+		this.displayName = getClassDisplayName(
+			props.name,
+			props.students,
+			props.course?.name,
+		);
+		this.totalHours = props.totalHours;
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
 		this.remainingHours = props.remainingHours;
@@ -91,16 +83,28 @@ export class ClassModel {
 		classData: ClassPrismaRecord,
 		remainingHours?: number,
 	): ClassModel {
+		const students = classData.students.map((enrollment) => enrollment.student);
+		const course = classData.course
+			? {
+					id: classData.course.id,
+					name: classData.course.name,
+					defaultTotalHours: toHoursNumber(classData.course.defaultTotalHours),
+				}
+			: null;
 		return new ClassModel({
 			id: classData.id,
 			tutorId: classData.tutorId,
+			course,
 			name: classData.name,
 			totalHours: toHoursNumber(classData.totalHours),
-			students: classData.students.map(toStudentInClass),
+			students,
 			createdAt: classData.createdAt,
 			updatedAt: classData.updatedAt,
 			remainingHours,
-			recurringSchedule: toLatestRecurringScheduleDTO(classData),
+			recurringSchedule: toLatestRecurringScheduleDTO(
+				classData,
+				getClassDisplayName(classData.name, students, course?.name),
+			),
 		});
 	}
 
@@ -108,9 +112,11 @@ export class ClassModel {
 		return {
 			id: this.id,
 			tutorId: this.tutorId,
+			course: this.course,
 			name: this.name,
+			displayName: this.displayName,
 			totalHours: this.totalHours,
-			students: this.students.map(toStudentInClassDTO),
+			students: this.students,
 			createdAt: DateTime.from(this.createdAt).toISOString(),
 			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 			remainingHours: this.remainingHours,
@@ -123,47 +129,23 @@ function toHoursNumber(value: HoursValue): number {
 	return typeof value === "number" ? value : value.toNumber();
 }
 
-function toStudentInClass(
-	enrollment: ClassEnrollmentPrismaRecord,
-): StudentInClass {
-	return {
-		id: enrollment.student.id,
-		name: enrollment.student.name,
-		phoneNumber: enrollment.student.phoneNumber,
-		grade: enrollment.student.grade,
-	};
-}
-
-function toStudentInClassDTO(student: StudentInClass): StudentInClassDTO {
-	return {
-		id: student.id,
-		name: student.name,
-		phoneNumber: student.phoneNumber,
-		grade: student.grade,
-	};
-}
-
 function toLatestRecurringScheduleDTO(
 	classData: ClassPrismaRecord,
+	displayName: string,
 ): RecurringScheduleDTO | null | undefined {
-	if (!classData.recurringSchedules) {
-		return undefined;
-	}
-
-	const recurringSchedule = classData.recurringSchedules[0];
-	if (!recurringSchedule) {
-		return null;
-	}
-
+	if (!classData.recurringSchedules) return undefined;
+	const recurring = classData.recurringSchedules[0];
+	if (!recurring) return null;
 	return {
-		id: recurringSchedule.id,
-		classId: recurringSchedule.classId,
-		className: classData.name,
-		startDate: DateTime.from(recurringSchedule.startDate).toDateOnlyString(),
-		notes: recurringSchedule.notes,
-		createdAt: DateTime.from(recurringSchedule.createdAt).toISOString(),
-		updatedAt: DateTime.from(recurringSchedule.updatedAt).toISOString(),
-		scheduleItems: recurringSchedule.scheduleItems.map((item) => ({
+		id: recurring.id,
+		classId: recurring.classId,
+		className: displayName,
+		courseName: classData.course?.name ?? null,
+		startDate: DateTime.from(recurring.startDate).toDateOnlyString(),
+		notes: recurring.notes,
+		createdAt: DateTime.from(recurring.createdAt).toISOString(),
+		updatedAt: DateTime.from(recurring.updatedAt).toISOString(),
+		scheduleItems: recurring.scheduleItems.map((item) => ({
 			id: item.id,
 			weekday: item.weekday,
 			time: item.time,

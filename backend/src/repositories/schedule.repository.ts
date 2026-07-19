@@ -30,6 +30,14 @@ const RECURRING_REPLACEABLE_STATUSES: ScheduleStatus[] = [
 	"CANCELLED",
 ];
 
+const classContextInclude = {
+	course: true,
+	students: {
+		orderBy: { createdAt: "asc" as const },
+		include: { student: true },
+	},
+} as const;
+
 type GeneratedScheduleData = {
 	classId: string;
 	date: string;
@@ -61,7 +69,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					status: "SCHEDULED",
 				},
 				include: {
-					class: true,
+					class: { include: classContextInclude },
 				},
 			});
 
@@ -81,7 +89,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id: scheduleId },
 			include: {
-				class: true,
+				class: { include: classContextInclude },
 			},
 		});
 
@@ -131,7 +139,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					),
 				},
 			},
-			include: { class: true },
+			include: { class: { include: classContextInclude } },
 			orderBy: [{ date: "asc" }, { time: "asc" }],
 		});
 
@@ -163,10 +171,19 @@ export class ScheduleRepository implements IScheduleRepository {
 		if (query?.search) {
 			where.class = {
 				tutorId,
-				name: {
-					contains: query.search,
-					mode: "insensitive",
-				},
+				OR: [
+					{ name: { contains: query.search, mode: "insensitive" } },
+					{ course: { name: { contains: query.search, mode: "insensitive" } } },
+					{
+						students: {
+							some: {
+								student: {
+									name: { contains: query.search, mode: "insensitive" },
+								},
+							},
+						},
+					},
+				],
 			};
 		}
 
@@ -174,7 +191,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			where,
 			orderBy: [{ date: "asc" }, { time: "asc" }],
 			include: {
-				class: true,
+				class: { include: classContextInclude },
 			},
 		});
 
@@ -194,7 +211,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id },
 			include: {
-				class: true,
+				class: { include: classContextInclude },
 			},
 		});
 
@@ -223,7 +240,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					...(data.status !== undefined && { status: data.status }),
 				},
 				include: {
-					class: true,
+					class: { include: classContextInclude },
 				},
 			});
 
@@ -259,7 +276,7 @@ export class ScheduleRepository implements IScheduleRepository {
 	async completeSchedule(id: string): Promise<ScheduleModel> {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id },
-			include: { class: true },
+			include: { class: { include: classContextInclude } },
 		});
 
 		if (!schedule) {
@@ -276,7 +293,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			const completedSchedule = await tx.schedule.update({
 				where: { id },
 				data: { status: "COMPLETED" },
-				include: { class: true },
+				include: { class: { include: classContextInclude } },
 			});
 
 			await tx.classHourDeduction.upsert({
@@ -302,7 +319,7 @@ export class ScheduleRepository implements IScheduleRepository {
 	async restoreHours(id: string): Promise<ScheduleModel> {
 		const schedule = await prisma.schedule.findUnique({
 			where: { id },
-			include: { class: true },
+			include: { class: { include: classContextInclude } },
 		});
 
 		if (!schedule) {
@@ -325,7 +342,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			const cancelledSchedule = await tx.schedule.update({
 				where: { id },
 				data: { status: "CANCELLED" },
-				include: { class: true },
+				include: { class: { include: classContextInclude } },
 			});
 
 			await tx.classHourDeduction.update({
@@ -371,7 +388,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					).toDate(),
 					notes: data.notes || null,
 				},
-				include: { class: true },
+				include: { class: { include: classContextInclude } },
 			});
 
 			await tx.recurringScheduleItem.createMany({
@@ -408,7 +425,7 @@ export class ScheduleRepository implements IScheduleRepository {
 						),
 					},
 				},
-				include: { class: true },
+				include: { class: { include: classContextInclude } },
 				orderBy: [{ date: "asc" }, { time: "asc" }],
 			});
 
@@ -437,7 +454,7 @@ export class ScheduleRepository implements IScheduleRepository {
 				},
 			},
 			include: {
-				class: true,
+				class: { include: classContextInclude },
 				scheduleItems: true,
 			},
 		});
@@ -464,7 +481,7 @@ export class ScheduleRepository implements IScheduleRepository {
 				},
 			},
 			include: {
-				class: true,
+				class: { include: classContextInclude },
 				scheduleItems: true,
 			},
 		});
@@ -540,7 +557,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					notes: data.notes ?? existingRecurringSchedule.notes,
 				},
 				include: {
-					class: true,
+					class: { include: classContextInclude },
 				},
 			});
 
@@ -570,7 +587,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					id: newRecurringSchedule.id,
 				},
 				include: {
-					class: true,
+					class: { include: classContextInclude },
 					scheduleItems: {
 						orderBy: [{ weekday: "asc" }, { time: "asc" }],
 					},

@@ -8,6 +8,11 @@ const prismaClass = {
 	id: "class-1",
 	tutorId: "tutor-1",
 	name: "Algebra",
+	course: {
+		id: "course-1",
+		name: "Mathematics",
+		defaultTotalHours: { toNumber: () => 20 },
+	},
 	totalHours: {
 		toNumber: () => 12.5,
 	},
@@ -32,6 +37,7 @@ describe("ClassModel", () => {
 		expect(classModel.id).toBe("class-1");
 		expect(classModel.tutorId).toBe("tutor-1");
 		expect(classModel.name).toBe("Algebra");
+		expect(classModel.displayName).toBe("Algebra");
 		expect(classModel.totalHours).toBe(12.5);
 		expect(classModel.remainingHours).toBe(7.5);
 		expect(classModel.createdAt).toBe(createdAt);
@@ -57,7 +63,9 @@ describe("ClassModel", () => {
 		expect(classModel.toClassDTO()).toEqual({
 			id: "class-1",
 			tutorId: "tutor-1",
+			course: { id: "course-1", name: "Mathematics", defaultTotalHours: 20 },
 			name: "Algebra",
+			displayName: "Algebra",
 			totalHours: 12.5,
 			students: [
 				{
@@ -104,6 +112,7 @@ describe("ClassModel", () => {
 			id: "recurring-1",
 			classId: "class-1",
 			className: "Algebra",
+			courseName: "Mathematics",
 			startDate: "2026-07-01",
 			notes: "Weekly practice",
 			createdAt: "2026-06-28T10:00:00.000Z",
@@ -117,5 +126,31 @@ describe("ClassModel", () => {
 				},
 			],
 		});
+	});
+
+	test("derives a class name from students when a linked class has no custom name", () => {
+		const classModel = ClassModel.fromClassPrisma({
+			...prismaClass,
+			name: null,
+			students: [
+				prismaClass.students[0] ?? {
+					student: {
+						id: "student-1",
+						name: "Aom",
+						phoneNumber: null,
+						grade: 9,
+					},
+				},
+				{
+					student: {
+						id: "student-2",
+						name: "Beam",
+						phoneNumber: null,
+						grade: 9,
+					},
+				},
+			],
+		});
+		expect(classModel.displayName).toBe("Jane Student & Beam");
 	});
 });

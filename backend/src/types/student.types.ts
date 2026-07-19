@@ -17,7 +17,9 @@ export interface StudentDTO {
 
 export interface ClassInStudentDTO {
 	id: string;
-	name: string;
+	name: string | null;
+	displayName: string;
+	course: { id: string; name: string } | null;
 	totalHours: number;
 	remainingHours?: number;
 }

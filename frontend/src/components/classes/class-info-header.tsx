@@ -40,8 +40,11 @@ export function ClassInfoHeader({
 
 				<div className="flex-1 min-w-0">
 					<h1 className="font-headline font-bold text-xl text-on-surface truncate">
-						{classData.name}
+						{classData.displayName}
 					</h1>
+					<p className="truncate text-sm text-on-surface-variant">
+						{classData.course?.name ?? "Custom class"}
+					</p>
 				</div>
 
 				<Button

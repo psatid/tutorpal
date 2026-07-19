@@ -20,6 +20,7 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSchedulesRouteImport } from './routes/_layout/schedules'
+import { Route as LayoutCoursesRouteImport } from './routes/_layout/courses'
 import { Route as LayoutClassesRouteImport } from './routes/_layout/classes'
 import { Route as LayoutStudentsIndexRouteImport } from './routes/_layout/students/index'
 import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
@@ -82,6 +83,13 @@ const LayoutSchedulesRoute = LayoutSchedulesRouteImport.update({
   path: '/schedules',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutCoursesRoute = LayoutCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => LayoutRoute,
+} as any).lazy(() =>
+  import('./routes/_layout/courses.lazy').then((d) => d.Route),
+)
 const LayoutClassesRoute = LayoutClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
@@ -91,7 +99,9 @@ const LayoutStudentsIndexRoute = LayoutStudentsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutStudentsRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/students/index.lazy').then((d) => d.Route),
+)
 const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -101,7 +111,9 @@ const LayoutClassesIndexRoute = LayoutClassesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutClassesRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/classes/index.lazy').then((d) => d.Route),
+)
 const LayoutStudentsStudentIdRoute = LayoutStudentsStudentIdRouteImport.update({
   id: '/$studentId',
   path: '/$studentId',
@@ -127,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/classes': typeof LayoutClassesRouteWithChildren
+  '/courses': typeof LayoutCoursesRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/settings': typeof LayoutSettingsRouteWithChildren
   '/students': typeof LayoutStudentsRouteWithChildren
@@ -144,6 +157,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/courses': typeof LayoutCoursesRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/': typeof LayoutIndexRoute
   '/classes/$classId': typeof LayoutClassesClassIdRoute
@@ -163,6 +177,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_layout/classes': typeof LayoutClassesRouteWithChildren
+  '/_layout/courses': typeof LayoutCoursesRoute
   '/_layout/schedules': typeof LayoutSchedulesRoute
   '/_layout/settings': typeof LayoutSettingsRouteWithChildren
   '/_layout/students': typeof LayoutStudentsRouteWithChildren
@@ -185,6 +200,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify-email'
     | '/classes'
+    | '/courses'
     | '/schedules'
     | '/settings'
     | '/students'
@@ -202,6 +218,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/verify-email'
+    | '/courses'
     | '/schedules'
     | '/'
     | '/classes/$classId'
@@ -220,6 +237,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify-email'
     | '/_layout/classes'
+    | '/_layout/courses'
     | '/_layout/schedules'
     | '/_layout/settings'
     | '/_layout/students'
@@ -321,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSchedulesRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/courses': {
+      id: '/_layout/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof LayoutCoursesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/classes': {
       id: '/_layout/classes'
       path: '/classes'
@@ -417,6 +442,7 @@ const LayoutStudentsRouteWithChildren = LayoutStudentsRoute._addFileChildren(
 
 interface LayoutRouteChildren {
   LayoutClassesRoute: typeof LayoutClassesRouteWithChildren
+  LayoutCoursesRoute: typeof LayoutCoursesRoute
   LayoutSchedulesRoute: typeof LayoutSchedulesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRouteWithChildren
   LayoutStudentsRoute: typeof LayoutStudentsRouteWithChildren
@@ -425,6 +451,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutClassesRoute: LayoutClassesRouteWithChildren,
+  LayoutCoursesRoute: LayoutCoursesRoute,
   LayoutSchedulesRoute: LayoutSchedulesRoute,
   LayoutSettingsRoute: LayoutSettingsRouteWithChildren,
   LayoutStudentsRoute: LayoutStudentsRouteWithChildren,

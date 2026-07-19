@@ -1,17 +1,18 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Save, X } from "lucide-react";
+import { Pencil, Plus, Save, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { RHFInputField } from "@/components/ui/form/rhf";
-import { FormDrawer, type DrawerMode } from "@/components/ui/form-drawer";
+import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-drawer";
+import { Button } from "@/components/ui/button";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useUpdateClass } from "@/hooks/mutations/use-update-class";
 import { useStudents } from "@/hooks/queries/use-students";
 import { classSchema, type ClassFormData, type Class } from "@/types/class";
 import { StudentSelectorAccordion } from "./student-selector-accordion";
 
-export type { DrawerMode } from "@/components/ui/form-drawer";
+export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
 interface ClassDrawerProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ interface ClassDrawerProps {
   classData: Class | null;
   onModeChange: (mode: DrawerMode) => void;
 }
+
+const CLASS_DRAWER_FORM_ID = "class-drawer-form";
 
 export function ClassDrawer({
   isOpen,
@@ -49,7 +52,7 @@ export function ClassDrawer({
   useEffect(() => {
     if (isOpen && classData && (mode === "view" || mode === "edit")) {
       form.reset({
-        name: classData.name,
+        name: classData.name ?? "",
         totalHours: classData.totalHours,
         studentIds: classData.students.map((s) => s.id),
       });
@@ -88,7 +91,7 @@ export function ClassDrawer({
 
   const onSubmit = (data: ClassFormData) => {
     if (mode === "create") {
-      createMutation.mutate(data);
+      createMutation.mutate({ ...data, courseId: null });
     } else if (mode === "edit" && classData) {
       updateMutation.mutate({ id: classData.id, data });
     }
@@ -133,20 +136,40 @@ export function ClassDrawer({
     }
   };
 
+  const footer =
+    mode === "view" ? (
+      <Button
+        className="w-full md:w-fit"
+        leftIcon={Pencil}
+        onClick={() => onModeChange("edit")}
+        type="button"
+      >
+        {t("classes:drawer.editButton")}
+      </Button>
+    ) : (
+      <Button
+        className="w-full md:w-fit"
+        form={CLASS_DRAWER_FORM_ID}
+        leftIcon={mode === "create" ? Plus : Save}
+        loading={createMutation.isPending || updateMutation.isPending}
+        type="submit"
+      >
+        {getSubmitButtonText()}
+      </Button>
+    );
+
   return (
-    <FormDrawer
-      isOpen={isOpen}
+	<ResponsiveDrawer
+      footer={footer}
       onOpenChange={onOpenChange}
-      mode={mode}
-      onModeChange={onModeChange}
+      open={isOpen}
       title={getTitle()}
-      editButtonText={t("classes:drawer.editButton")}
-      submitButtonText={getSubmitButtonText()}
-      submitButtonIcon={mode === "create" ? Plus : Save}
-      isLoading={createMutation.isPending || updateMutation.isPending}
-      onSubmit={form.handleSubmit(onSubmit)}
-      onCancel={form.reset}
     >
+      <form
+        className="flex flex-col gap-5"
+        id={CLASS_DRAWER_FORM_ID}
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
       <RHFInputField
         control={form.control}
         name="name"
@@ -178,9 +201,9 @@ export function ClassDrawer({
 
       {/* Student Selection Field */}
       <div className="space-y-2">
-        <label className="font-label font-semibold text-on-surface text-base tracking-wide">
+        <p className="font-label font-semibold text-on-surface text-base tracking-wide">
           {t("classes:drawer.students.label")}
-        </label>
+        </p>
         <p className="font-caption text-on-surface-variant text-sm">
           {t("classes:drawer.students.caption")}
         </p>
@@ -216,6 +239,7 @@ export function ClassDrawer({
           />
         )}
       </div>
-    </FormDrawer>
+	  </form>
+    </ResponsiveDrawer>
   );
 }

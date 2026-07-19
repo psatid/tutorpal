@@ -25,7 +25,9 @@ const main = async () => {
 		process.exit(0);
 	}
 
-	console.log(`Unlinking LINE account for student: ${student.name} (${student.lineUserId})`);
+	console.log(
+		`Unlinking LINE account for student: ${student.name} (${student.lineUserId})`,
+	);
 
 	await prisma.student.update({
 		where: { id: studentId },

@@ -8,7 +8,7 @@ export function TopAppBar() {
 
   return (
     <header
-      className="sticky top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-card border-b border-outline-variant"
+      className="sticky top-0 left-0 right-0 z-40 flex min-h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-6 lg:hidden"
     >
       <h1 className="font-headline font-extrabold text-primary tracking-tight text-xl">
         TutorPal

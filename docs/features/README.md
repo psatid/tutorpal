@@ -8,3 +8,5 @@
 - [Decimal Class Hours — June 26, 2026](decimal-class-hours.md)
 - [Recurring Schedule Editing with Effective Date — June 26, 2026](recurring-schedule-editing.md)
 - [Tutor-Owned LINE Messaging and Settings — July 18, 2026](tutor-line-settings.md)
+- [Courses and Flexible Classes — July 19, 2026](courses-and-flexible-classes.md)
+- [Unified Management Workspaces — July 19, 2026](unified-management-workspaces.md)

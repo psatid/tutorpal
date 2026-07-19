@@ -66,6 +66,8 @@ describe("StudentDetail domain model", () => {
 			{
 				id: "class-1",
 				name: "Algebra",
+				displayName: "Algebra",
+				course: { id: "course-1", name: "Mathematics" },
 				totalHours: 12.5,
 				remainingHours: 7.5,
 			},
@@ -86,6 +88,8 @@ describe("StudentDetail domain model", () => {
 				{
 					id: "class-1",
 					name: "Algebra",
+					displayName: "Algebra",
+					course: { id: "course-1", name: "Mathematics" },
 					totalHours: 12.5,
 					remainingHours: 7.5,
 				},

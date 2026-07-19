@@ -259,7 +259,9 @@ Components are clean, restrained, and functional. Content is the focus; surfaces
 ### Drawer / Modal
 - **Background:** White card surface.
 - **Overlay:** Semi-transparent dark backdrop.
-- **Border-radius:** Top corners only (16px). Feels like a sheet sliding up.
+- **Responsive behavior:** Below `md`, a bottom sheet with 16px top corners and a drag handle slides up. At `md` and above, the same surface slides in from the right as a fixed-width panel.
+- **Structure:** A fixed header and optional action footer frame one scrollable body. Form footers use one primary action (full width on mobile, compact and right-aligned at `md` and above); the close button always has a 44px target. Nested pickers use the same shell and a higher overlay layer.
+- **Overlay portals:** Floating controls opened inside a drawer, including Selects and calendar Popovers, portal into the active drawer surface rather than the document body.
 
 ## 6. Do's and Don'ts
 

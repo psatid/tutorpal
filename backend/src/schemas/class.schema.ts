@@ -2,18 +2,23 @@ import { resolver } from "hono-openapi";
 import { z } from "zod";
 import { RecurringScheduleSchema } from "./schedule.schema";
 
-// Student in class schema
 export const StudentInClassSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	phoneNumber: z.string().nullable(),
 	grade: z.number().int(),
 });
-
-// Base class schema (matches Prisma model with relations)
-export const ClassSchema = z.object({
+export const CourseInClassSchema = z.object({
 	id: z.string(),
 	name: z.string(),
+	defaultTotalHours: z.number(),
+});
+
+export const ClassSchema = z.object({
+	id: z.string(),
+	course: CourseInClassSchema.nullable(),
+	name: z.string().nullable(),
+	displayName: z.string(),
 	totalHours: z.number(),
 	students: z.array(StudentInClassSchema),
 	createdAt: z.string().datetime(),
@@ -22,29 +27,65 @@ export const ClassSchema = z.object({
 	recurringSchedule: RecurringScheduleSchema.nullable().optional(),
 });
 
-// Request schemas
-export const CreateClassSchema = z.object({
-	name: z.string().min(1, "Name is required"),
-	totalHours: z.number().min(1, "Total hours must be at least 1"),
-	studentIds: z.array(z.string()).optional(),
-});
+const studentIdsSchema = z
+	.array(z.string())
+	.min(1, "Select at least one student")
+	.refine((ids) => new Set(ids).size === ids.length, "Students must be unique");
+
+export const CreateClassSchema = z
+	.object({
+		courseId: z.string().nullable(),
+		name: z.string().trim().nullable().optional(),
+		totalHours: z
+			.number()
+			.positive("Total hours must be greater than 0")
+			.optional(),
+		studentIds: studentIdsSchema,
+	})
+	.superRefine((value, ctx) => {
+		if (value.courseId === null && !value.name?.trim())
+			ctx.addIssue({
+				code: "custom",
+				path: ["name"],
+				message: "Class name is required for a custom class",
+			});
+		if (value.courseId === null && value.totalHours === undefined)
+			ctx.addIssue({
+				code: "custom",
+				path: ["totalHours"],
+				message: "Total hours are required for a custom class",
+			});
+	});
 
 export const UpdateClassSchema = z.object({
-	name: z.string().min(1, "Name is required").optional(),
-	totalHours: z.number().min(1, "Total hours must be at least 1").optional(),
-	studentIds: z.array(z.string()).optional(),
+	name: z.string().trim().nullable().optional(),
+	totalHours: z
+		.number()
+		.positive("Total hours must be greater than 0")
+		.optional(),
+	studentIds: studentIdsSchema.optional(),
 });
 
-// Query schemas for pagination and search
-export const ClassListQuerySchema = z.object({
-	page: z.coerce.number().int().positive().default(1),
-	limit: z.coerce.number().int().positive().max(100).default(10),
-	search: z.string().optional(),
-	sortBy: z.enum(["name", "totalHours", "createdAt"]).default("createdAt"),
-	sortOrder: z.enum(["asc", "desc"]).default("desc"),
-});
+export const ClassListQuerySchema = z
+	.object({
+		page: z.coerce.number().int().positive().default(1),
+		limit: z.coerce.number().int().positive().max(100).default(10),
+		search: z.string().optional(),
+		courseId: z.string().optional(),
+		classType: z.enum(["custom", "course-linked"]).optional(),
+		sortBy: z.enum(["name", "totalHours", "createdAt"]).default("createdAt"),
+		sortOrder: z.enum(["asc", "desc"]).default("desc"),
+	})
+	.superRefine((value, ctx) => {
+		if (value.courseId && value.classType) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["classType"],
+				message: "courseId and classType cannot be combined",
+			});
+		}
+	});
 
-// Paginated response schema
 export const PaginatedClassListSchema = z.object({
 	data: z.array(ClassSchema),
 	pagination: z.object({
@@ -57,19 +98,7 @@ export const PaginatedClassListSchema = z.object({
 	}),
 });
 
-// OpenAPI resolvers
-export const StudentInClassSchemaResolver = resolver(StudentInClassSchema);
 export const ClassSchemaResolver = resolver(ClassSchema);
-export const CreateClassSchemaResolver = resolver(CreateClassSchema);
-export const UpdateClassSchemaResolver = resolver(UpdateClassSchema);
-export const ClassListQuerySchemaResolver = resolver(ClassListQuerySchema);
 export const PaginatedClassListSchemaResolver = resolver(
 	PaginatedClassListSchema,
 );
-export const ClassListSchemaResolver = resolver(z.array(ClassSchema));
-
-// Type exports
-export type ClassSchemaType = z.infer<typeof ClassSchema>;
-export type CreateClassSchemaType = z.infer<typeof CreateClassSchema>;
-export type UpdateClassSchemaType = z.infer<typeof UpdateClassSchema>;
-export type StudentInClassSchemaType = z.infer<typeof StudentInClassSchema>;

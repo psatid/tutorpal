@@ -1,13 +1,19 @@
 import type { ClassModel } from "../models/class.model";
 import type { PaginatedResponse, PaginationParams } from "./pagination.types";
-
 import type { RecurringScheduleDTO } from "./schedule.types";
 
-// DTOs for clean data transfer between layers
+export interface CourseInClassDTO {
+	id: string;
+	name: string;
+	defaultTotalHours: number;
+}
+
 export interface ClassDTO {
 	id: string;
 	tutorId: string;
-	name: string;
+	course: CourseInClassDTO | null;
+	name: string | null;
+	displayName: string;
 	totalHours: number;
 	students: StudentInClassDTO[];
 	createdAt: string;
@@ -25,23 +31,28 @@ export interface StudentInClassDTO {
 
 export interface CreateClassDTO {
 	tutorId: string;
-	name: string;
-	totalHours: number;
-	studentIds?: string[];
+	courseId: string | null;
+	name?: string | null;
+	totalHours?: number;
+	studentIds: string[];
 }
 
 export interface UpdateClassDTO {
-	name?: string;
+	name?: string | null;
 	totalHours?: number;
 	studentIds?: string[];
 }
 
-// Repository interface - abstract data access
+export interface ClassListParams extends PaginationParams {
+	courseId?: string;
+	classType?: "custom" | "course-linked";
+}
+
 export interface IClassRepository {
 	create(data: CreateClassDTO): Promise<ClassModel>;
 	findAll(
 		tutorId: string,
-		params?: PaginationParams,
+		params?: ClassListParams,
 	): Promise<PaginatedResponse<ClassModel>>;
 	findById(id: string, tutorId: string): Promise<ClassModel | null>;
 	update(

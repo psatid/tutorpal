@@ -7,36 +7,17 @@ import {
   Tick02Icon,
   UnfoldMoreIcon,
 } from "@hugeicons/core-free-icons";
+import {
+  DrawerOverlayPortalContext,
+  resolveDrawerOverlayPortalContainer,
+} from "@/components/ui/drawer-overlay-portal-context";
 import { cn } from "@/lib/utils";
-
-type DrawerSelectContextValue = {
-  portalContainer: React.RefObject<HTMLElement | null> | HTMLElement | null;
-  modal?: boolean;
-};
-
-const DrawerSelectPortalContext =
-  React.createContext<DrawerSelectContextValue | null>(null);
-
-function resolvePortalContainer(
-  context: DrawerSelectContextValue | null,
-): HTMLElement | null {
-  if (!context) {
-    return null;
-  }
-
-  const container = context.portalContainer;
-  if (!container) {
-    return null;
-  }
-
-  return "current" in container ? container.current : container;
-}
 
 function Select<Value, Multiple extends boolean | undefined = false>({
   modal,
   ...props
 }: SelectPrimitive.Root.Props<Value, Multiple>) {
-  const drawerContext = React.useContext(DrawerSelectPortalContext);
+	const drawerContext = React.useContext(DrawerOverlayPortalContext);
   const resolvedModal = modal ?? drawerContext?.modal;
 
   return <SelectPrimitive.Root modal={resolvedModal} {...props} />;
@@ -75,7 +56,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-1.5 rounded-4xl border border-input bg-input/30 px-3 py-2 text-sm whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-input/30 px-3 py-2 text-sm whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-11 data-[size=sm]:h-9 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -108,8 +89,8 @@ function SelectContent({
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
   >) {
-  const drawerContext = React.useContext(DrawerSelectPortalContext);
-  const portalContainer = resolvePortalContainer(drawerContext);
+	const drawerContext = React.useContext(DrawerOverlayPortalContext);
+	const portalContainer = resolveDrawerOverlayPortalContainer(drawerContext);
 
   return (
     <SelectPrimitive.Portal container={portalContainer || undefined}>
@@ -122,6 +103,7 @@ function SelectContent({
         className="pointer-events-none isolate z-50"
       >
         <SelectPrimitive.Popup
+          data-base-ui-swipe-ignore
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
@@ -281,7 +263,6 @@ export {
   SelectTrigger,
   SelectValue,
   SelectInput,
-  DrawerSelectPortalContext,
-  type SelectInputOption,
+	type SelectInputOption,
   type SelectInputProps,
 };

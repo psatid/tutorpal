@@ -2,23 +2,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { classesKeys } from "@/hooks/queries/query-keys";
-import type { ClassFormData } from "@/types/class";
+import type { PostV1ClassesBody } from "@/api/generated/models/postV1ClassesBody";
 
 export const useCreateClass = (options?: { onSuccess?: () => void }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: ClassFormData) => {
-      const response = await apiClient.postV1Classes({
-        name: data.name,
-        totalHours: data.totalHours,
-        studentIds: data.studentIds,
-      });
+    mutationFn: async (data: PostV1ClassesBody) => {
+			const response = await apiClient.postV1Classes(data);
       return response.data;
     },
     onSuccess: () => {
       toast.success("Class created successfully.");
       queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: ["courses"] });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

@@ -1,16 +1,17 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User, Save } from "lucide-react";
+import { Pencil, Save, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
-import { FormDrawer, type DrawerMode } from "@/components/ui/form-drawer";
+import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-drawer";
+import { Button } from "@/components/ui/button";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { useUpdateStudent } from "@/hooks/mutations/use-update-student";
 import { studentSchema, type StudentFormData } from "@/types/student";
 import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 
-export type { DrawerMode } from "@/components/ui/form-drawer";
+export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
 interface StudentDrawerProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ const gradeOptions = [
   { value: "11", label: "Grade 11" },
   { value: "12", label: "Grade 12" },
 ];
+const STUDENT_DRAWER_FORM_ID = "student-drawer-form";
 
 export function StudentDrawer({
   isOpen,
@@ -121,20 +123,40 @@ export function StudentDrawer({
     }
   };
 
+  const footer =
+    mode === "view" ? (
+      <Button
+        className="w-full md:w-fit"
+        leftIcon={Pencil}
+        onClick={() => onModeChange("edit")}
+        type="button"
+      >
+        {t("students:drawer.editButton")}
+      </Button>
+    ) : (
+      <Button
+        className="w-full md:w-fit"
+        form={STUDENT_DRAWER_FORM_ID}
+        leftIcon={mode === "create" ? User : Save}
+        loading={createMutation.isPending || updateMutation.isPending}
+        type="submit"
+      >
+        {getSubmitButtonText()}
+      </Button>
+    );
+
   return (
-    <FormDrawer
-      isOpen={isOpen}
+	<ResponsiveDrawer
+      footer={footer}
       onOpenChange={onOpenChange}
-      mode={mode}
-      onModeChange={onModeChange}
+      open={isOpen}
       title={getTitle()}
-      editButtonText={t("students:drawer.editButton")}
-      submitButtonText={getSubmitButtonText()}
-      submitButtonIcon={mode === "create" ? User : Save}
-      isLoading={createMutation.isPending || updateMutation.isPending}
-      onSubmit={handleSubmit(onSubmit)}
-      onCancel={reset}
     >
+      <form
+        className="flex flex-col gap-5"
+        id={STUDENT_DRAWER_FORM_ID}
+        onSubmit={handleSubmit(onSubmit)}
+      >
       <RHFInputField
         control={control}
         name="name"
@@ -174,6 +196,7 @@ export function StudentDrawer({
           placeholder: t("students:drawer.grade.placeholder"),
         }}
       />
-    </FormDrawer>
+	  </form>
+    </ResponsiveDrawer>
   );
 }

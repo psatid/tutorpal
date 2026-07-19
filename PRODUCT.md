@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Private tutors managing their own teaching business — students, class schedules, hour tracking, and billing. They are subject-matter experts, not software operators. Their context: juggling multiple students across weekly schedules, tracking remaining class hours, and keeping student records organized. The primary workflow is checking today's schedule, managing student details, and confirming completed classes.
+Private tutors managing their own teaching business — reusable courses, flexible classes, students, schedules, hour tracking, and billing. They are subject-matter experts, not software operators. Their context: enrolling students across course-linked and custom classes, juggling weekly schedules, tracking remaining class hours, and keeping student records organized. The primary workflow is checking today's schedule, managing courses and students, and confirming completed classes.
 
 ## Product Purpose
 
-TutorPal replaces scattered spreadsheets, calendars, and notes with a focused management tool purpose-built for private tutors. It centralizes student records, class scheduling with automatic hour deduction, and LINE messaging integration. Success means a tutor opens the app, immediately sees what matters today, and manages their business without friction.
+TutorPal replaces scattered spreadsheets, calendars, and notes with a focused management tool purpose-built for private tutors. It centralizes reusable course setup, student enrollment, class scheduling with automatic hour deduction, and LINE messaging integration. Success means a tutor opens the app, immediately sees what matters today, and manages their business without friction.
 
 ## Brand Personality
 
@@ -31,6 +31,10 @@ Emotional goal: confidence that nothing is falling through the cracks. The inter
 3. **Earn the border**: Every visual boundary must create hierarchy. No decorative lines.
 4. **Progressive disclosure**: Default to the essential; reveal complexity only when the user seeks it.
 5. **Respect the rhythm**: Consistent spacing and typography create a calm, scannable experience.
+
+## Navigation and Management Workspaces
+
+Home, Students, Courses, Classes, and Schedule are the five primary destinations. This sequence reflects the tutor workflow: create students and reusable courses before creating classes. Desktop uses a persistent side rail, while mobile and tablet use a compact top bar and five-item bottom navigation. Students, Classes, and Courses share a consistent operational workspace: entity title and count, one primary action, search and sorting, divider rows, and a shared responsive drawer for forms.
 
 ## Accessibility & Inclusion
 

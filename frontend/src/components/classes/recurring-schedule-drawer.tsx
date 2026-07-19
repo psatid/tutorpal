@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RHFDateField, RHFInputField, RHFTimeField } from "@/components/ui/form/rhf";
-import { FormDrawer } from "@/components/ui/form-drawer";
+import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useCreateSchedule, useUpdateRecurringSchedule } from "@/hooks/mutations/use-schedules";
 import {
 	timeStringToMinutes,
@@ -68,9 +68,10 @@ const WEEKDAY_ORDER: Weekday[] = [
 	"SATURDAY",
 	"SUNDAY",
 ];
+const RECURRING_SCHEDULE_DRAWER_FORM_ID = "recurring-schedule-drawer-form";
 
 function getTodayDateString() {
-	return new Date().toISOString().split("T")[0]!;
+	return new Date().toISOString().slice(0, 10);
 }
 
 function isLegacyRecurringOccurrence(
@@ -338,28 +339,38 @@ export function RecurringScheduleDrawer({
 		});
 	};
 
+	const footer = (
+		<Button
+			className="w-full md:w-fit"
+			form={RECURRING_SCHEDULE_DRAWER_FORM_ID}
+			loading={createMutation.isPending || updateRecurringMutation.isPending}
+			type="submit"
+		>
+			{t(
+				mode === "create"
+					? "schedules:recurring.createAction"
+					: "schedules:recurring.saveAction",
+			)}
+		</Button>
+	);
+
 	return (
 		<>
-			<FormDrawer
-				isOpen={isOpen}
+			<ResponsiveDrawer
+				footer={footer}
 				onOpenChange={onOpenChange}
-				mode={mode}
+				open={isOpen}
 				title={t(
 					mode === "create"
 						? "schedules:recurring.drawer.createTitle"
 						: "schedules:recurring.drawer.editTitle",
 				)}
-				submitButtonText={t(
-					mode === "create"
-						? "schedules:recurring.createAction"
-						: "schedules:recurring.saveAction",
-				)}
-				isLoading={
-					createMutation.isPending || updateRecurringMutation.isPending
-				}
-				onSubmit={handleSubmit(submitValues)}
-				onCancel={() => reset(getDefaultValues(recurringSchedule))}
 			>
+				<form
+					className="flex flex-col gap-5"
+					id={RECURRING_SCHEDULE_DRAWER_FORM_ID}
+					onSubmit={handleSubmit(submitValues)}
+				>
 				<div className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3">
 					<p className="text-sm font-medium text-on-surface">
 						{t("schedules:recurring.untouchedTitle")}
@@ -399,7 +410,8 @@ export function RecurringScheduleDrawer({
 						</p>
 					</div>
 				) : null}
-			</FormDrawer>
+				</form>
+			</ResponsiveDrawer>
 
 			<AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
 				<AlertDialogContent>

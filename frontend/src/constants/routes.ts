@@ -8,6 +8,7 @@ export const APP_ROUTES = {
 	STUDENTS: "/students",
 	STUDENT_DETAIL: "/students/$studentId",
 	CLASSES: "/classes",
+	COURSES: "/courses",
 	CLASS_DETAIL: "/classes/$classId",
 	SCHEDULES: "/schedules",
 	SETTINGS: "/settings",

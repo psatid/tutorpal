@@ -1,109 +1,168 @@
-import { useCallback, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
-import { useDebounce } from "@/hooks/use-debounce";
-import { StudentScreenHeader } from "@/components/students/student-screen-header";
-import { StudentToolbar } from "@/components/students/student-toolbar";
-import { StudentList } from "@/components/students/student-list";
-import {
-  StudentDrawer,
-  type DrawerMode,
-} from "@/components/students/student-drawer";
+import { Plus, Search } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
+import { StudentForm } from "@/components/students/student-form";
+import { StudentList } from "@/components/students/student-list";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
+	WorkspaceHeader,
+	WorkspaceList,
+	WorkspaceMain,
+	WorkspaceShell,
+	WorkspaceToolbar,
+} from "@/components/workspaces/workspace";
+import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
+import { useDebounce } from "@/hooks/use-debounce";
+
+type StudentSort =
+	| "createdAt-desc"
+	| "createdAt-asc"
+	| "name-asc"
+	| "name-desc"
+	| "grade-asc"
+	| "grade-desc";
+
+function sortParams(
+	value: StudentSort,
+): Pick<GetV1StudentsParams, "sortBy" | "sortOrder"> {
+	const [sortBy, sortOrder] = value.split("-") as [
+		GetV1StudentsParams["sortBy"],
+		GetV1StudentsParams["sortOrder"],
+	];
+	return { sortBy, sortOrder };
+}
 
 export function StudentScreen() {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [sortBy, setSortBy] =
-    useState<GetV1StudentsParams["sortBy"]>("createdAt");
-  const [sortOrder, setSortOrder] =
-    useState<GetV1StudentsParams["sortOrder"]>("desc");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
-  const [selectedStudent, setSelectedStudent] =
-    useState<GetV1Students200DataItem | null>(null);
+	const { t } = useTranslation(["students"]);
+	const navigate = useNavigate();
+	const triggerRef = useRef<HTMLButtonElement>(null);
+	const [search, setSearch] = useState("");
+	const debouncedSearch = useDebounce(search, 300);
+	const [sort, setSort] = useState<StudentSort>("createdAt-desc");
+	const [formOpen, setFormOpen] = useState(false);
+	const query = useInfiniteStudents({
+		search: debouncedSearch || undefined,
+		...sortParams(sort),
+	});
+	const students = query.data?.pages.flatMap((page) => page.data) ?? [];
+	const total = query.data?.pages[0]?.pagination.total ?? 0;
 
-  const {
-    data: infiniteData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteStudents({
-    search: debouncedSearchQuery || undefined,
-    sortBy,
-    sortOrder,
-  });
+	const viewStudent = useCallback(
+		(student: GetV1Students200DataItem) => {
+			void navigate({
+				to: "/students/$studentId",
+				params: { studentId: student.id },
+			});
+		},
+		[navigate],
+	);
 
-  const students = infiniteData?.pages.flatMap((page) => page.data) || [];
+	const form = (
+		<StudentForm key={String(formOpen)} onCreated={() => setFormOpen(false)} />
+	);
+	const submitButton = (
+		<Button className="w-full md:w-fit" form="student-form" type="submit">
+			<Plus data-icon="inline-start" />
+			{t("students:createStudent")}
+		</Button>
+	);
 
-  const handleSortChange = (
-    newSortBy: GetV1StudentsParams["sortBy"],
-    newSortOrder: GetV1StudentsParams["sortOrder"],
-  ) => {
-    setSortBy(newSortBy);
-    setSortOrder(newSortOrder);
-  };
-
-  const handleAddStudent = () => {
-    setSelectedStudent(null);
-    setDrawerMode("create");
-    setIsDrawerOpen(true);
-  };
-
-  const handleViewStudent = useCallback(
-    (student: GetV1Students200DataItem) => {
-      navigate({
-        to: "/students/$studentId",
-        params: { studentId: student.id },
-      });
-    },
-    [navigate],
-  );
-
-  const handleModeChange = (mode: DrawerMode) => {
-    setDrawerMode(mode);
-  };
-
-  const handleDrawerOpenChange = (open: boolean) => {
-    setIsDrawerOpen(open);
-    if (!open) {
-      setDrawerMode("create");
-      setSelectedStudent(null);
-    }
-  };
-
-  return (
-    <div className="flex flex-col">
-      <StudentScreenHeader onAddStudent={handleAddStudent} />
-
-      <StudentToolbar
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-      />
-
-      <StudentList
-        students={students}
-        isLoading={isLoading}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        fetchNextPage={fetchNextPage}
-        onAddStudent={handleAddStudent}
-        onViewStudent={handleViewStudent}
-      />
-
-      <StudentDrawer
-        isOpen={isDrawerOpen}
-        onOpenChange={handleDrawerOpenChange}
-        mode={drawerMode}
-        student={selectedStudent}
-        onModeChange={handleModeChange}
-      />
-    </div>
-  );
+	return (
+		<WorkspaceShell>
+			<WorkspaceHeader
+				action={
+					<Button
+						aria-label={t("students:newStudent")}
+						className="sm:w-auto sm:px-3"
+						onClick={() => setFormOpen(true)}
+						ref={triggerRef}
+						size="icon"
+					>
+						<Plus data-icon="inline-start" />
+						<span className="hidden sm:inline">{t("students:newStudent")}</span>
+					</Button>
+				}
+				countLabel={t("students:count", { count: total })}
+				description={t("students:subtitle")}
+				title={t("students:title")}
+			/>
+			<WorkspaceMain>
+					<WorkspaceToolbar>
+						<Input
+							aria-label={t("students:searchLabel")}
+							className="md:flex-1"
+							leftIcon={Search}
+							onChange={(event) => setSearch(event.target.value)}
+							placeholder={t("students:searchPlaceholder")}
+							value={search}
+						/>
+						<Select
+							onValueChange={(value) =>
+								setSort((value ?? "createdAt-desc") as StudentSort)
+							}
+							value={sort}
+						>
+							<SelectTrigger className="md:w-56">
+								<SelectValue>{t(`students:sort.${sort}`)}</SelectValue>
+							</SelectTrigger>
+							<SelectContent>
+								<SelectGroup>
+									{(
+										[
+											"createdAt-desc",
+											"createdAt-asc",
+											"name-asc",
+											"name-desc",
+											"grade-asc",
+											"grade-desc",
+										] as StudentSort[]
+									).map((value) => (
+										<SelectItem key={value} value={value}>
+											{t(`students:sort.${value}`)}
+										</SelectItem>
+									))}
+								</SelectGroup>
+							</SelectContent>
+						</Select>
+					</WorkspaceToolbar>
+					<WorkspaceList>
+						<StudentList
+							fetchNextPage={() => query.fetchNextPage()}
+							hasNextPage={query.hasNextPage}
+							hasSearch={Boolean(debouncedSearch)}
+							isError={query.isError}
+							isFetchingNextPage={query.isFetchingNextPage}
+							isLoading={query.isLoading}
+							onAddStudent={() => setFormOpen(true)}
+							onRetry={() => query.refetch()}
+							onViewStudent={viewStudent}
+							students={students}
+						/>
+					</WorkspaceList>
+			</WorkspaceMain>
+			<ResponsiveDrawer
+				description={t("students:createDescription")}
+				footer={submitButton}
+				onCloseAutoFocus={() => triggerRef.current?.focus()}
+				onOpenChange={setFormOpen}
+				open={formOpen}
+				title={t("students:createTitle")}
+			>
+				{form}
+			</ResponsiveDrawer>
+		</WorkspaceShell>
+	);
 }

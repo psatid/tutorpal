@@ -1,17 +1,9 @@
 import { useRef, useState } from "react";
-import { Check, X, Search, BookOpen, Clock, Loader2 } from "lucide-react";
+import { Check, Search, BookOpen, Clock, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  Drawer,
-  DrawerPortal,
-  DrawerBackdrop,
-  DrawerViewport,
-  DrawerPopup,
-  DrawerContent,
-  DrawerClose,
-} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { cn } from "@/lib/utils";
@@ -73,38 +65,33 @@ export function ClassSelectorDrawer({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerPortal>
-        <DrawerBackdrop
-          layer="nested"
-          onPointerDown={handleClose}
-          onClick={handleClose}
+    <ResponsiveDrawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      title={t("schedules:classSelector.title")}
+      layer="nested"
+      headerContent={
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("schedules:classSelector.searchPlaceholder")}
+          leftIcon={Search}
         />
-        <DrawerViewport layer="nested" className="pointer-events-none">
-          <DrawerPopup
-            layer="nested"
-            className="pointer-events-auto max-h-[85vh]"
-          >
-            <DrawerContent className="px-0 pb-0">
-              <div className="px-6 pb-4 border-b border-outline-variant">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
-                    {t("schedules:classSelector.title")}
-                  </h2>
-                  <DrawerClose className="p-2 rounded-full hover:bg-surface-variant transition-colors">
-                    <X className="w-6 h-6 text-on-surface-variant" />
-                  </DrawerClose>
-                </div>
-
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t("schedules:classSelector.searchPlaceholder")}
-                  leftIcon={Search}
-                />
-              </div>
-
-              <div className="px-6 py-4 overflow-y-auto max-h-[50vh]">
+      }
+      footer={
+        <Button
+          onClick={handleConfirm}
+          disabled={!localSelectedId}
+          className="w-full"
+          leftIcon={Check}
+        >
+          {t("schedules:classSelector.selectButton")}
+        </Button>
+      }
+    >
+      <div className="min-h-0">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-8 space-y-3">
                     <div className="animate-pulse w-12 h-12 rounded-full bg-surface-variant" />
@@ -154,8 +141,11 @@ export function ClassSelectorDrawer({
 
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-on-surface truncate">
-                              {cls.name}
-                            </p>
+							  {cls.displayName}
+							</p>
+							<p className="text-xs text-on-surface-variant truncate">
+							  {cls.course?.name ?? "Custom class"}
+							</p>
                             {studentNames && (
                               <p className="text-sm text-on-surface-variant truncate">
                                 {studentNames}
@@ -187,22 +177,7 @@ export function ClassSelectorDrawer({
                     </div>
                   </div>
                 )}
-              </div>
-
-              <div className="px-6 py-4 border-t border-outline-variant">
-                <Button
-                  onClick={handleConfirm}
-                  disabled={!localSelectedId}
-                  className="w-full"
-                  leftIcon={Check}
-                >
-                  {t("schedules:classSelector.selectButton")}
-                </Button>
-              </div>
-            </DrawerContent>
-          </DrawerPopup>
-        </DrawerViewport>
-      </DrawerPortal>
-    </Drawer>
+      </div>
+    </ResponsiveDrawer>
   );
 }

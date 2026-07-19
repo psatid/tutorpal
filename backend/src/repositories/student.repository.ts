@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db";
+import { getClassDisplayName } from "../models/class-display-name";
 import {
 	type ClassInStudent,
 	Student,
@@ -88,7 +89,15 @@ export class StudentRepository implements IStudentRepository {
 			include: {
 				classes: {
 					include: {
-						class: true,
+						class: {
+							include: {
+								course: true,
+								students: {
+									orderBy: { createdAt: "asc" },
+									include: { student: true },
+								},
+							},
+						},
 					},
 				},
 			},
@@ -105,6 +114,14 @@ export class StudentRepository implements IStudentRepository {
 		const classes: ClassInStudent[] = student.classes.map((enrollment) => ({
 			id: enrollment.class.id,
 			name: enrollment.class.name,
+			displayName: getClassDisplayName(
+				enrollment.class.name,
+				enrollment.class.students.map((item) => item.student),
+				enrollment.class.course?.name,
+			),
+			course: enrollment.class.course
+				? { id: enrollment.class.course.id, name: enrollment.class.course.name }
+				: null,
 			totalHours: toHoursNumber(enrollment.class.totalHours),
 			remainingHours: remainingHoursMap.get(enrollment.classId),
 		}));

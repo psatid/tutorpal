@@ -9,7 +9,9 @@ export interface StudentInClass {
 
 export interface Class {
 	id: string;
-	name: string;
+	name: string | null;
+	displayName: string;
+	course: { id: string; name: string } | null;
 	totalHours: number;
 	students: StudentInClass[];
 	remainingHours?: number;
@@ -17,12 +19,12 @@ export interface Class {
 
 // Form schema - all fields required for form
 export const classSchema = z.object({
-	name: z.string().min(1, "Class name is required"),
+	name: z.string(),
 	totalHours: z
 		.number()
 		.finite("Total hours is required")
 		.min(1, "Total hours must be at least 1"),
-	studentIds: z.array(z.string()),
+	studentIds: z.array(z.string()).min(1, "Select at least one student"),
 });
 
 export type ClassFormData = z.infer<typeof classSchema>;

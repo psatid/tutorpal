@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Save } from "lucide-react";
+import { Pencil, Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/ui/form/form-field";
 import {
@@ -14,7 +15,7 @@ import {
 	RHFSelectField,
 	RHFTimeField,
 } from "@/components/ui/form/rhf";
-import { type DrawerMode, FormDrawer } from "@/components/ui/form-drawer";
+import { type DrawerMode, ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import {
 	useCreateSchedule,
 	useUpdateSchedule,
@@ -28,7 +29,9 @@ import {
 	timeStringToMinutes,
 } from "@/types/schedule";
 
-export type { DrawerMode } from "@/components/ui/form-drawer";
+export type { DrawerMode } from "@/components/ui/responsive-drawer";
+
+const SCHEDULE_DRAWER_FORM_ID = "schedule-drawer-form";
 
 interface ScheduleDrawerProps {
 	isOpen: boolean;
@@ -76,7 +79,7 @@ export function ScheduleDrawer({
 		mode !== "create" ? scheduleId : null,
 	);
 
-	const selectedClassName = selectedClass?.name || "";
+	const selectedClassName = selectedClass?.displayName || "";
 
 	useEffect(() => {
 		if (scheduleData && (mode === "view" || mode === "edit")) {
@@ -182,32 +185,45 @@ export function ScheduleDrawer({
 		}
 	};
 
+	const footer =
+		mode === "view" ? (
+			<Button
+				className="w-full md:w-fit"
+				leftIcon={Pencil}
+				onClick={() => onModeChange("edit")}
+				type="button"
+			>
+				{t("schedules:drawer.editButton")}
+			</Button>
+		) : (
+			<Button
+				className="w-full md:w-fit"
+				form={SCHEDULE_DRAWER_FORM_ID}
+				leftIcon={mode === "create" ? Plus : Save}
+				loading={createMutation.isPending || updateMutation.isPending}
+				type="submit"
+			>
+				{getSubmitButtonText()}
+			</Button>
+		);
+
 	return (
-		<FormDrawer
-			isOpen={isOpen}
+		<ResponsiveDrawer
+			footer={footer}
 			onOpenChange={onOpenChange}
-			mode={mode}
-			onModeChange={onModeChange}
+			open={isOpen}
 			title={getTitle()}
-			editButtonText={t("schedules:drawer.editButton")}
-			submitButtonText={getSubmitButtonText()}
-			submitButtonIcon={mode === "create" ? Plus : Save}
-			isLoading={createMutation.isPending || updateMutation.isPending}
-			onSubmit={handleSubmit(onSubmit)}
-			onCancel={reset}
 		>
+			<form
+				className="flex flex-col gap-5"
+				id={SCHEDULE_DRAWER_FORM_ID}
+				onSubmit={handleSubmit(onSubmit)}
+			>
 			{mode === "create" || mode === "edit" ? (
-				<div
-					role="button"
-					tabIndex={0}
+				<button
+					className="w-full cursor-pointer text-left"
 					onClick={() => !isDisabled && setIsClassDrawerOpen(true)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							if (!isDisabled) setIsClassDrawerOpen(true);
-						}
-					}}
-					className="cursor-pointer"
+					type="button"
 				>
 					<FormField
 						label={t("schedules:drawer.class.label")}
@@ -229,7 +245,7 @@ export function ScheduleDrawer({
 							)}
 						</div>
 					</FormField>
-				</div>
+				</button>
 			) : (
 				<FormField
 					label={t("schedules:drawer.class.label")}
@@ -351,6 +367,7 @@ export function ScheduleDrawer({
 					}}
 				/>
 			)}
-		</FormDrawer>
+			</form>
+		</ResponsiveDrawer>
 	);
 }

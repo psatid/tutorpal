@@ -1,10 +1,10 @@
 import { AppError } from "../lib/error";
 import type { ClassModel } from "../models/class.model";
 import type {
+	ClassListParams,
 	CreateClassDTO,
 	IClassRepository,
 	PaginatedResponse,
-	PaginationParams,
 	UpdateClassDTO,
 } from "../types";
 
@@ -17,7 +17,7 @@ export class ClassService {
 
 	async getAllClasses(
 		tutorId: string,
-		params?: PaginationParams,
+		params?: ClassListParams,
 	): Promise<PaginatedResponse<ClassModel>> {
 		return this.repository.findAll(tutorId, params);
 	}

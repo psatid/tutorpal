@@ -22,6 +22,14 @@ persistence records and `student.toStudentDTO()` or
 
 For class data, use `ClassModel.fromClassPrisma(...)` when converting
 persistence records and `classModel.toClassDTO()` when returning API responses.
+Classes may be course-linked or custom. Treat `courseId` as immutable, use the
+class's hour snapshot for scheduling, and expose `displayName` wherever a class
+label is shown.
+
+For course data, use `CourseModel.fromPrisma(...)` when converting persistence
+records and `course.toCourseDTO()` when returning API responses. Courses are
+tutor-owned reusable defaults; changing a course never mutates existing class
+hour snapshots.
 
 For schedule data, use `ScheduleModel.fromSchedulePrisma(...)` when converting
 persistence records and `scheduleModel.toScheduleDTO()` when returning API

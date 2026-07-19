@@ -1,11 +1,5 @@
-import {
-  Drawer,
-  DrawerPortal,
-  DrawerBackdrop,
-  DrawerViewport,
-  DrawerPopup,
-  DrawerContent,
-} from "@/components/ui/drawer";
+import { useTranslation } from "react-i18next";
+import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { CalendarView } from "./calendar-view";
 
 export interface CalendarDrawerProps {
@@ -21,6 +15,7 @@ export function CalendarDrawer({
   selectedDate,
   onSelectDate,
 }: CalendarDrawerProps) {
+	const { t } = useTranslation(["schedules"]);
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       onSelectDate(date);
@@ -28,18 +23,13 @@ export function CalendarDrawer({
     }
   };
 
-  return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerPortal>
-        <DrawerBackdrop />
-        <DrawerViewport>
-          <DrawerPopup>
-            <DrawerContent>
-              <CalendarView selected={selectedDate} onSelect={handleDateSelect} />
-            </DrawerContent>
-          </DrawerPopup>
-        </DrawerViewport>
-      </DrawerPortal>
-    </Drawer>
-  );
+	return (
+		<ResponsiveDrawer
+			open={isOpen}
+			onOpenChange={onOpenChange}
+			title={t("schedules:weekSelector.calendarTitle")}
+		>
+			<CalendarView selected={selectedDate} onSelect={handleDateSelect} />
+		</ResponsiveDrawer>
+	);
 }

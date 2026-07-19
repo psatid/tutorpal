@@ -28,20 +28,39 @@ model Student {
   @@map("students")
 }
 
+model Course {
+  id                String   @id @default(uuid())
+  tutorId           String
+  name              String
+  defaultTotalHours Decimal  @db.Decimal(10, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tutor   Tutor   @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  classes Class[]
+
+  @@index([tutorId])
+  @@index([tutorId, name])
+  @@map("courses")
+}
+
 model Class {
   id         String   @id @default(uuid())
   tutorId    String
-  name       String
+  courseId   String?
+  name       String?
   totalHours Decimal  @db.Decimal(10, 2)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   tutor              Tutor              @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  course             Course?            @relation(fields: [courseId], references: [id], onDelete: Restrict)
   students           ClassEnrollment[]
   schedules          Schedule[]
   recurringSchedules RecurringSchedule[]
 
   @@index([tutorId])
+  @@index([courseId])
   @@map("classes")
 }
 
@@ -70,6 +89,7 @@ model Tutor {
   user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   students       Student[]
   classes        Class[]
+  courses        Course[]
   lineConnection TutorLineConnection?
 
   @@map("tutors")

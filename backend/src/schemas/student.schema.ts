@@ -4,7 +4,9 @@ import { z } from "zod";
 // Class in student schema (for detail view)
 export const ClassInStudentSchema = z.object({
 	id: z.string(),
-	name: z.string(),
+	name: z.string().nullable(),
+	displayName: z.string(),
+	course: z.object({ id: z.string(), name: z.string() }).nullable(),
 	totalHours: z.number(),
 	remainingHours: z.number().optional(),
 });

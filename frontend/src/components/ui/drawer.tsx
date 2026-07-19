@@ -114,10 +114,10 @@ const DrawerPopup = React.forwardRef<
       ref={ref}
       data-slot="drawer-popup"
       className={cn(
-        `fixed inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-2xl bg-popover text-popover-foreground shadow-xl outline-none transition-transform duration-300 ease-out
+        `fixed inset-x-0 bottom-0 flex max-h-[min(85dvh,44rem)] flex-col rounded-t-2xl border border-border bg-popover text-popover-foreground outline-none transition-transform duration-250 ease-out
         data-[swipe-direction=down]:data-starting-style:translate-y-full data-[swipe-direction=down]:data-ending-style:translate-y-full 
         data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full 
-        md:inset-y-0 md:right-0 md:left-auto md:w-[min(400px,100vw)] md:rounded-none md:max-h-none`,
+        md:inset-y-0 md:right-0 md:left-auto md:w-[min(26rem,100vw)] md:max-h-none md:rounded-none md:border-y-0 md:border-r-0`,
         drawerLayerClasses[layer].popup,
         className,
       )}

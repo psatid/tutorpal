@@ -1,17 +1,9 @@
 import { useState, useMemo } from "react";
-import { Check, X, Search, Users } from "lucide-react";
+import { Check, Search, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  Drawer,
-  DrawerPortal,
-  DrawerBackdrop,
-  DrawerViewport,
-  DrawerPopup,
-  DrawerContent,
-  DrawerClose,
-} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useStudents } from "@/hooks/queries/use-students";
 
 interface StudentSelectorDrawerProps {
@@ -91,57 +83,45 @@ export function StudentSelectorDrawer({
     filteredStudents.every((s) => localSelectedIds.includes(s.id));
 
   return (
-    <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerPortal>
-        <DrawerBackdrop />
-        <DrawerViewport>
-          <DrawerPopup className="max-h-[85vh]">
-            <DrawerContent className="px-0 pb-0">
-              {/* Handle */}
-              <div className="w-12 h-1.5 bg-surface-variant rounded-full mx-auto my-4" />
-
-              {/* Header */}
-              <div className="px-6 pb-4 border-b border-outline-variant">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
-                    {t("classes:selector.title")}
-                  </h2>
-                  <DrawerClose className="p-2 rounded-full hover:bg-surface-variant transition-colors">
-                    <X className="w-6 h-6 text-on-surface-variant" />
-                  </DrawerClose>
-                </div>
-
-                {/* Selected count */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-on-surface-variant">
-                    {t("classes:selector.selectedCount", { count: selectedCount })}
-                  </span>
-                  <button
-                    onClick={handleSelectAll}
-                    disabled={filteredStudents.length === 0}
-                    className="text-sm font-medium text-primary hover:text-primary-dim disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {allVisibleSelected
-                      ? t("classes:selector.deselectAll")
-                      : t("classes:selector.selectAll")}
-                  </button>
-                </div>
-
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t("classes:selector.searchPlaceholder")}
-                    className="pl-10"
-                    leftIcon={Search}
-                  />
-                </div>
-              </div>
-
-              {/* Student List */}
-              <div className="px-6 py-4 overflow-y-auto max-h-[50vh]">
+    <ResponsiveDrawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      title={t("classes:selector.title")}
+      layer="nested"
+      headerContent={
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground">
+              {t("classes:selector.selectedCount", { count: selectedCount })}
+            </span>
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              disabled={filteredStudents.length === 0}
+              className="min-h-11 rounded-full px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {allVisibleSelected
+                ? t("classes:selector.deselectAll")
+                : t("classes:selector.selectAll")}
+            </button>
+          </div>
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("classes:selector.searchPlaceholder")}
+            leftIcon={Search}
+          />
+        </div>
+      }
+      footer={
+        <Button onClick={handleDone} className="w-full" leftIcon={Check}>
+          {t("classes:selector.done", { count: selectedCount })}
+        </Button>
+      }
+    >
+      <div className="min-h-0">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-8 space-y-3">
                     <div className="animate-pulse w-12 h-12 rounded-full bg-surface-variant" />
@@ -163,6 +143,7 @@ export function StudentSelectorDrawer({
                       return (
                         <button
                           key={student.id}
+						  type="button"
                           onClick={() => handleToggleStudent(student.id)}
                           className={`
                             w-full flex items-center gap-3 p-3 rounded-xl transition-all
@@ -203,22 +184,7 @@ export function StudentSelectorDrawer({
                     })}
                   </div>
                 )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-outline-variant space-y-3">
-                <Button
-                  onClick={handleDone}
-                  className="w-full"
-                  leftIcon={Check}
-                >
-                  {t("classes:selector.done", { count: selectedCount })}
-                </Button>
-              </div>
-            </DrawerContent>
-          </DrawerPopup>
-        </DrawerViewport>
-      </DrawerPortal>
-    </Drawer>
+      </div>
+    </ResponsiveDrawer>
   );
 }

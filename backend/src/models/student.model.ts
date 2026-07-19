@@ -19,7 +19,9 @@ type StudentPrismaRecord = {
 
 export type ClassInStudent = {
 	id: string;
-	name: string;
+	name: string | null;
+	displayName: string;
+	course: { id: string; name: string } | null;
 	totalHours: number;
 	remainingHours?: number;
 };
@@ -143,6 +145,8 @@ function toClassInStudentDTO(classData: ClassInStudent): ClassInStudentDTO {
 	return {
 		id: classData.id,
 		name: classData.name,
+		displayName: classData.displayName,
+		course: classData.course,
 		totalHours: classData.totalHours,
 		remainingHours: classData.remainingHours,
 	};

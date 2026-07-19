@@ -74,7 +74,10 @@ export function StudentClassList({
 					>
 						<div className="flex-1 min-w-0">
 							<p className="font-medium text-on-surface truncate">
-								{classItem.name}
+								{classItem.displayName}
+							</p>
+							<p className="text-xs text-on-surface-variant truncate">
+								{classItem.course?.name ?? "Custom class"}
 							</p>
 						</div>
 

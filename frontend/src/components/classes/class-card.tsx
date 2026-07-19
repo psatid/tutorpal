@@ -42,8 +42,11 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 			<div className="flex-1 min-w-0">
 				<div className="flex items-center gap-2 flex-wrap">
 					<p className="font-medium text-on-surface truncate">
-						{classData.name}
+						{classData.displayName}
 					</p>
+					<Badge variant="outline" className="shrink-0">
+						{classData.course?.name ?? "Custom class"}
+					</Badge>
 					<Badge variant="outline" className="shrink-0 gap-1">
 						<Clock className="w-3 h-3" />
 						{classData.remainingHours !== undefined
