@@ -6,7 +6,7 @@ Students, Classes, and Courses now use one responsive management pattern. The sh
 
 ## Navigation
 
-- Desktop displays a persistent side rail for Home, Students, Courses, Classes, Schedule, and Settings. Courses precede Classes to follow the setup workflow.
+- Desktop displays a collapsible side rail for Home, Students, Courses, Classes, Schedule, and Settings. The collapsed state retains navigation icons and persists across reloads; Courses precede Classes to follow the setup workflow.
 - Mobile and tablet retain the compact top bar and five-item bottom navigation.
 - List and detail routes activate the same parent navigation item.
 

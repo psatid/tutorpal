@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Toaster } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ENV } from "@/lib/env";
 
@@ -19,7 +20,9 @@ export const Route = createRootRoute({
   component: () => (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <Outlet />
+        <TooltipProvider>
+          <Outlet />
+        </TooltipProvider>
       </QueryClientProvider>
       <Toaster richColors duration={3000} />
       {ENV.IS_DEV && <TanStackRouterDevtools />}

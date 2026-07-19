@@ -5,10 +5,11 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { type CSSProperties, useEffect } from "react";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { DesktopSidebar } from "@/components/layout/desktop-sidebar";
 import { TopAppBar } from "@/components/layout/top-app-bar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { APP_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -53,15 +54,20 @@ function LayoutRoute() {
 	}
 
 	return (
-		<div className="min-h-dvh lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
-			<DesktopSidebar />
-			<div className="flex min-h-dvh min-w-0 flex-col bg-accent">
-				<TopAppBar />
-				<main className="min-h-0 grow p-3 sm:p-4 lg:p-6">
-					<Outlet />
-				</main>
-				<BottomNav />
+		<SidebarProvider
+			className="min-h-dvh"
+			style={{ "--sidebar-width": "15rem" } as CSSProperties}
+		>
+			<div className="hidden lg:block">
+				<AppSidebar />
 			</div>
-		</div>
+			<SidebarInset className="min-h-dvh min-w-0">
+				<TopAppBar />
+				<div className="min-h-0 grow bg-accent p-3 sm:p-4 lg:p-6">
+					<Outlet />
+				</div>
+				<BottomNav />
+			</SidebarInset>
+		</SidebarProvider>
 	);
 }

@@ -35,7 +35,7 @@ Class listing supports `courseId` and `classType=custom|course-linked` filtering
 Courses and classes are separate top-level workspaces. `/courses` manages reusable templates, `/classes` manages active teaching groups, and class detail URLs remain `/classes/$classId`.
 
 - The five-item navigation exposes Home, Students, Courses, Classes, and Schedule directly, placing the reusable course setup before class creation.
-- On desktop these destinations appear in a persistent side rail; mobile and tablet use the five-item bottom navigation.
+- On desktop these destinations appear in a collapsible side rail that retains an icon-only navigation state; mobile and tablet use the five-item bottom navigation.
 - Courses presents a searchable, sortable catalog with default hours, class counts, editing, deletion, and links to filtered class results.
 - Classes presents a searchable mixed list with All, Custom, Course-linked, and individual-course filters.
 - Students, Classes, and Courses share the same header, toolbar, divider-list, state, and form-surface patterns.
