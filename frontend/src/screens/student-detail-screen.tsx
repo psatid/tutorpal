@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useStudent } from "@/hooks/queries/use-student";
+import { useStudentDetails } from "@/hooks/queries/use-student-details";
 import { StudentInfoHeader } from "@/components/students/student-info-header";
 import { StudentClassList } from "@/components/students/student-class-list";
 import {
@@ -18,7 +18,7 @@ export function StudentDetailScreen({ studentId }: StudentDetailScreenProps) {
   const { t } = useTranslation(["students"]);
   const navigate = useNavigate();
 
-  const { data: studentData, isLoading } = useStudent(studentId);
+  const { data: studentData, isLoading } = useStudentDetails(studentId);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("edit");
@@ -102,7 +102,7 @@ export function StudentDetailScreen({ studentId }: StudentDetailScreenProps) {
       />
 
       <StudentClassList
-        classes={studentData.classes}
+        classes={studentData.getClasses()}
         onViewClass={handleViewClass}
       />
 

@@ -2,16 +2,16 @@ import { Search, ArrowUpDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
+import type { StudentSortBy, StudentSortOrder } from "@/types/student-query";
 
 interface StudentToolbarProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  sortBy: GetV1StudentsParams["sortBy"];
-  sortOrder: GetV1StudentsParams["sortOrder"];
+  sortBy: StudentSortBy;
+  sortOrder: StudentSortOrder;
   onSortChange: (
-    sortBy: GetV1StudentsParams["sortBy"],
-    sortOrder: GetV1StudentsParams["sortOrder"],
+    sortBy: StudentSortBy,
+    sortOrder: StudentSortOrder,
   ) => void;
 }
 
@@ -26,8 +26,8 @@ export function StudentToolbar({
 
   const sortOptions: {
     value: string;
-    sortBy: GetV1StudentsParams["sortBy"];
-    sortOrder: GetV1StudentsParams["sortOrder"];
+    sortBy: StudentSortBy;
+    sortOrder: StudentSortOrder;
     label: string;
   }[] = [
     { value: "createdAt-desc", sortBy: "createdAt", sortOrder: "desc", label: t("students:sort.newest") },

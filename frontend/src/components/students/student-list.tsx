@@ -2,7 +2,6 @@ import { Plus, UserPlus } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 import { LineLinkModal } from "@/components/students/line-link-modal";
 import { StudentRow } from "@/components/students/student-row";
 import { Button } from "@/components/ui/button";
@@ -15,15 +14,16 @@ import { useDeleteStudent } from "@/hooks/mutations/use-delete-student";
 import { useGenerateLineLink } from "@/hooks/mutations/use-generate-line-link";
 import { useSendLineTestMessage } from "@/hooks/mutations/use-send-line-test-message";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { Student } from "@/models/student";
 
 interface StudentListProps {
-	students: GetV1Students200DataItem[];
+	students: Student[];
 	isLoading: boolean;
 	hasNextPage: boolean;
 	isFetchingNextPage: boolean;
 	fetchNextPage: () => void;
 	onAddStudent: () => void;
-	onViewStudent: (student: GetV1Students200DataItem) => void;
+	onViewStudent: (student: Student) => void;
 	isError: boolean;
 	onRetry: () => void;
 	hasSearch: boolean;
@@ -65,8 +65,8 @@ export function StudentList({
 		},
 	);
 
-	const handleLinkLine = (student: GetV1Students200DataItem) => {
-		if (student.lineLinkStatus === "linked") {
+	const handleLinkLine = (student: Student) => {
+		if (student.isLineLinked()) {
 			toast.info(t("students:line.alreadyLinked"));
 			return;
 		}
@@ -79,11 +79,11 @@ export function StudentList({
 
 					const loadingToastId = toast.loading(t("students:line.generating"));
 
-					lineLinkMutation.mutate(student.id, {
+					lineLinkMutation.mutate(student.getId(), {
 						onSuccess: (data) => {
 							toast.dismiss(loadingToastId);
 							setGeneratedLinkUrl(data.linkUrl);
-							setLinkStudentName(student.name);
+						setLinkStudentName(student.getName());
 							setLineLinkModalOpen(true);
 						},
 						onError: (error) => {
@@ -103,16 +103,16 @@ export function StudentList({
 		});
 	};
 
-	const handleSendTestMessage = (student: GetV1Students200DataItem) => {
-		if (student.lineLinkStatus !== "linked") {
+	const handleSendTestMessage = (student: Student) => {
+		if (!student.isLineLinked()) {
 			toast.info(t("students:line.notLinked"));
 			return;
 		}
 		toast(t("students:line.testMessageConfirm"), {
 			action: {
 				label: t("students:line.testMessageSend"),
-				onClick: () => {
-					sendTestMessageMutation.mutate(student.id);
+					onClick: () => {
+						sendTestMessageMutation.mutate(student.getId());
 				},
 			},
 			cancel: {
@@ -122,11 +122,11 @@ export function StudentList({
 		});
 	};
 
-	const handleDeleteStudent = (student: GetV1Students200DataItem) => {
+	const handleDeleteStudent = (student: Student) => {
 		toast(t("students:delete.confirm"), {
 			action: {
 				label: t("students:delete.confirmButton"),
-				onClick: () => deleteMutation.mutate(student.id),
+				onClick: () => deleteMutation.mutate(student.getId()),
 			},
 			cancel: {
 				label: t("students:delete.cancelButton"),
@@ -176,7 +176,7 @@ export function StudentList({
 			<div>
 				{students.map((student) => (
 					<StudentRow
-						key={student.id}
+						key={student.getId()}
 						onDelete={() => handleDeleteStudent(student)}
 						onLinkLine={() => handleLinkLine(student)}
 						onSendTestMessage={() => handleSendTestMessage(student)}

@@ -17,7 +17,7 @@ export function StudentSelectorAccordion({
 }: StudentSelectorAccordionProps) {
   const { t } = useTranslation(["classes", "students"]);
   const { data: studentsData, isLoading } = useStudents();
-  const students = studentsData?.data || [];
+  const students = studentsData?.students ?? [];
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelectedIds, setLocalSelectedIds] =
@@ -51,8 +51,8 @@ export function StudentSelectorAccordion({
     const query = searchQuery.toLowerCase();
     return students.filter(
       (student) =>
-        student.name.toLowerCase().includes(query) ||
-        student.grade.toString().includes(query)
+        student.getName().toLowerCase().includes(query) ||
+        student.getGrade().toString().includes(query)
     );
   }, [students, searchQuery]);
 
@@ -66,7 +66,7 @@ export function StudentSelectorAccordion({
 
   const handleSelectAll = () => {
     if (filteredStudents.length === 0) return;
-    const allIds = filteredStudents.map((s) => s.id);
+    const allIds = filteredStudents.map((student) => student.getId());
     const allSelected = allIds.every((id) => localSelectedIds.includes(id));
 
     if (allSelected) {
@@ -92,7 +92,7 @@ export function StudentSelectorAccordion({
   const selectedCount = localSelectedIds.length;
   const allVisibleSelected =
     filteredStudents.length > 0 &&
-    filteredStudents.every((s) => localSelectedIds.includes(s.id));
+    filteredStudents.every((student) => localSelectedIds.includes(student.getId()));
 
   const displayCount = isOpen ? selectedCount : selectedIds.length;
 
@@ -177,12 +177,12 @@ export function StudentSelectorAccordion({
             ) : (
               <div className="space-y-1">
                 {filteredStudents.map((student) => {
-                  const isSelected = localSelectedIds.includes(student.id);
+                  const isSelected = localSelectedIds.includes(student.getId());
                   return (
                     <button
                       type="button"
-                      key={student.id}
-                      onClick={() => handleToggleStudent(student.id)}
+                      key={student.getId()}
+                      onClick={() => handleToggleStudent(student.getId())}
                       className={`
                         w-full flex items-center gap-3 p-3 rounded-xl transition-all
                         ${
@@ -194,15 +194,15 @@ export function StudentSelectorAccordion({
                     >
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={() => handleToggleStudent(student.id)}
+                        onCheckedChange={() => handleToggleStudent(student.getId())}
                         onClick={(e) => e.stopPropagation()}
                       />
                       <div className="flex-1 text-left">
                         <p className="font-medium text-on-surface">
-                          {student.name}
+                          {student.getName()}
                         </p>
                         <p className="text-sm text-on-surface-variant">
-                          {t("students:grade", { grade: student.grade })}
+                          {t("students:grade", { grade: student.getGrade() })}
                         </p>
                       </div>
                     </button>

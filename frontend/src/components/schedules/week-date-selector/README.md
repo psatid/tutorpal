@@ -33,9 +33,12 @@ interface WeekDateSelectorProps {
 
 ```typescript
 import { WeekDateSelector } from "@/components/schedules/week-date-selector";
+import { DateTime } from "@/lib/date-time";
 
 function SchedulesScreen() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    DateTime.today().toDate(),
+  );
 
   return (
     <WeekDateSelector
@@ -50,7 +53,7 @@ function SchedulesScreen() {
 
 ### Week-Based Navigation
 
-- **Week starts on Monday**: Uses `startOfWeek(date, { weekStartsOn: 1 })`
+- **Week starts on Monday**: Uses `DateTime.startOfWeek()`
 - **Fixed 7-day display**: Shows exactly 7 days from Monday to Sunday
 - **Swipe gestures**: Touch swipe left/right changes weeks
 - **Arrow buttons**: Click arrows to navigate weeks

@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -7,6 +6,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { DateTime } from "@/lib/date-time";
 import { FormField } from "./form-field";
 import { useState } from "react";
 
@@ -34,13 +34,11 @@ function DateField({
   className,
 }: DateFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const parsedDate = value ? new Date(`${value}T00:00:00`) : undefined;
-  const date = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : undefined;
+  const date = DateTime.tryFromDateOnlyString(value)?.toDate();
 
   const handleSelect = (selected: Date | undefined) => {
     if (selected && onChange) {
-      const isoString = format(selected, "yyyy-MM-dd");
-      onChange(isoString);
+      onChange(DateTime.from(selected).toDateOnlyString());
       setIsOpen(false);
     }
   };
@@ -63,7 +61,7 @@ function DateField({
           )}
         >
           <CalendarIcon className="size-4 shrink-0" />
-          {date ? format(date, "PPP") : <span>{placeholder}</span>}
+          {date ? DateTime.from(date).format("PPP") : <span>{placeholder}</span>}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar

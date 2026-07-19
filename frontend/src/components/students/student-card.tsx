@@ -10,10 +10,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
+import { Student } from "@/models/student";
 
 interface StudentCardProps {
-  student: GetV1Students200DataItem;
+  student: Student;
   onView: () => void;
   onDelete: () => void;
   onLinkLine: () => void;
@@ -22,29 +22,23 @@ interface StudentCardProps {
 
 export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestMessage }: StudentCardProps) {
   const { t } = useTranslation(["students"]);
-  const isLineLinked = student.lineLinkStatus === "linked";
-  const needsLineRelink = student.lineLinkStatus === "needs_relink";
-
-  const initials = student.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const data = student.getListItemData();
+  const isLineLinked = data.isLineLinked;
+  const needsLineRelink = data.needsLineRelink;
 
   return (
     <InfoCard onClick={onView}>
       <Avatar size="lg">
         <AvatarFallback className="bg-primary text-white font-semibold">
-          {initials}
+          {data.initials}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-on-surface truncate">{student.name}</p>
+          <p className="font-medium text-on-surface truncate">{data.name}</p>
           <Badge variant="outline" className="shrink-0">
-            {t("students:grade", { grade: student.grade })}
+            {t("students:grade", { grade: data.grade })}
           </Badge>
           {isLineLinked && (
             <Badge variant="outline" className="shrink-0 gap-1 text-green-600 border-green-600/30">
@@ -59,10 +53,10 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
             </Badge>
           )}
         </div>
-        {student.phoneNumber && (
+        {data.phoneNumber && (
           <span className="flex items-center gap-1 text-sm text-on-surface-variant mt-0.5">
             <Phone className="w-3 h-3" />
-            {student.phoneNumber}
+            {data.phoneNumber}
           </span>
         )}
       </div>

@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import { studentsKeys } from "@/hooks/queries/query-keys";
+import {
+  classesKeys,
+  schedulesKeys,
+} from "@/hooks/queries/query-keys";
+import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import type { StudentFormData } from "@/types/student";
 
 export const useUpdateStudent = (options?: { onSuccess?: () => void }) => {
@@ -22,12 +26,17 @@ export const useUpdateStudent = (options?: { onSuccess?: () => void }) => {
       });
       return response.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast.success("Student profile updated successfully.");
-      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() });
-      queryClient.invalidateQueries({
-        queryKey: studentsKeys.detail(variables.studentId),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: studentsQueryKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: studentsQueryKeys.infinites() }),
+        queryClient.invalidateQueries({
+          queryKey: studentsQueryKeys.detail(variables.studentId),
+        }),
+        queryClient.invalidateQueries({ queryKey: classesKeys.all }),
+        queryClient.invalidateQueries({ queryKey: schedulesKeys.all }),
+      ]);
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeftIcon, ArrowRightIcon, ArrowDownIcon } from "@hugeicons/core-free-icons"
+import { DateTime } from "@/lib/date-time"
 
 function Calendar({
   className,
@@ -39,7 +40,7 @@ function Calendar({
       locale={locale}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString(locale?.code, { month: "short" }),
+          DateTime.from(date).format("LLL", { locale }),
         ...formatters,
       }}
       classNames={{
@@ -197,7 +198,7 @@ function CalendarDayButton({
     <Button
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString(locale?.code)}
+      data-day={DateTime.from(day.date).format("P", { locale })}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

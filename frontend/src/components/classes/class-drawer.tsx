@@ -43,11 +43,11 @@ export function ClassDrawer({
 
   const { data: studentsData } = useStudents();
 
-  const students = studentsData?.data || [];
+  const students = studentsData?.students ?? [];
 
   const selectedStudentIds = form.watch("studentIds") || [];
   const selectedStudents =
-    students.filter((student) => selectedStudentIds.includes(student.id)) || [];
+    students.filter((student) => selectedStudentIds.includes(student.getId())) || [];
 
   useEffect(() => {
     if (isOpen && classData && (mode === "view" || mode === "edit")) {
@@ -213,14 +213,14 @@ export function ClassDrawer({
           <div className="flex flex-wrap gap-2 mb-3">
             {selectedStudents.map((student) => (
               <span
-                key={student.id}
+                key={student.getId()}
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm bg-secondary-container text-on-secondary-container"
               >
-                {student.name}
+                {student.getName()}
                 {!isDisabled && (
                   <button
                     type="button"
-                    onClick={() => handleRemoveStudent(student.id)}
+                    onClick={() => handleRemoveStudent(student.getId())}
                     className="p-0.5 rounded-full hover:bg-on-secondary-container/10 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />

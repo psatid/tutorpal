@@ -4,18 +4,11 @@ import { BookOpen, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { GetV1StudentsById200ClassesItem } from "@/api/generated/models/getV1StudentsById200ClassesItem";
+import type { StudentEnrollmentClass } from "@/models/student";
 
 interface StudentClassListProps {
-	classes: GetV1StudentsById200ClassesItem[];
+	classes: StudentEnrollmentClass[];
 	onViewClass: (classId: string) => void;
-}
-
-function formatHours(hours: number) {
-	return new Intl.NumberFormat(undefined, {
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 2,
-	}).format(hours);
 }
 
 function EmptyClassList({ onAddClass }: { onAddClass?: () => void }) {
@@ -58,9 +51,11 @@ export function StudentClassList({
 				</h2>
 			</div>
 			<div className="space-y-2">
-				{classes.map((classItem, index) => (
+				{classes.map((classItem, index) => {
+					const hours = classItem.getHoursData();
+					return (
 					<motion.button
-						key={classItem.id}
+						key={classItem.getId()}
 						type="button"
 						initial={{ opacity: 0, y: 6 }}
 						animate={{ opacity: 1, y: 0 }}
@@ -69,15 +64,15 @@ export function StudentClassList({
 							delay: index * 0.04,
 							ease: [0.25, 0.1, 0.25, 1],
 						}}
-						onClick={() => onViewClass(classItem.id)}
+						onClick={() => onViewClass(classItem.getId())}
 						className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-outline-variant hover:border-primary transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 					>
 						<div className="flex-1 min-w-0">
 							<p className="font-medium text-on-surface truncate">
-								{classItem.displayName}
+								{classItem.getDisplayName()}
 							</p>
 							<p className="text-xs text-on-surface-variant truncate">
-								{classItem.course?.name ?? "Custom class"}
+								{classItem.getCourseName() ?? "Custom class"}
 							</p>
 						</div>
 
@@ -85,24 +80,25 @@ export function StudentClassList({
 							variant="outline"
 							className={cn(
 								"shrink-0 gap-1",
-								classItem.remainingHours !== undefined &&
-									classItem.remainingHours > 0
+								hours.remainingHours !== undefined &&
+									hours.remainingHours > 0
 									? "text-green-600 border-green-600/30"
 									: undefined,
 							)}
 						>
 							<Clock className="w-3 h-3" />
-							{classItem.remainingHours !== undefined
+							{hours.remainingHours !== undefined
 								? t("classes:hoursWithRemaining", {
-										total: formatHours(classItem.totalHours),
-										remaining: formatHours(classItem.remainingHours),
+										total: hours.formattedTotalHours,
+										remaining: hours.formattedRemainingHours,
 									})
 								: t("classes:hours", {
-										hours: formatHours(classItem.totalHours),
+										hours: hours.formattedTotalHours,
 									})}
 						</Badge>
 					</motion.button>
-				))}
+					);
+				})}
 			</div>
 		</div>
 	);

@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateTime } from "@/lib/date-time";
 import {
   getLineConnection,
   saveLineConnection,
@@ -150,10 +151,7 @@ export function LineSettingsScreen() {
             <div className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
               {configuredConnection.lastVerifiedAt
                 ? t("settings:line.lastVerified", {
-                    date: new Intl.DateTimeFormat(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    }).format(new Date(configuredConnection.lastVerifiedAt)),
+                    date: DateTime.from(configuredConnection.lastVerifiedAt).format("PPp"),
                   })
                 : t("settings:line.connected")}
             </div>

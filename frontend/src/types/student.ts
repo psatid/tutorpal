@@ -1,15 +1,5 @@
 import { z } from "zod";
 
-export interface Student {
-  id: string;
-  name: string;
-  phoneNumber: string | null;
-  grade: number;
-  lineUserId: string | null;
-  lineConnectionId: string | null;
-  lineLinkStatus: "linked" | "needs_relink" | "not_linked";
-}
-
 export const studentSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   phone: z

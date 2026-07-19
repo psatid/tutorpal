@@ -3,7 +3,6 @@ import { Pencil, Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import {
 	RHFTimeField,
 } from "@/components/ui/form/rhf";
 import { type DrawerMode, ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { DateTime } from "@/lib/date-time";
 import {
 	useCreateSchedule,
 	useUpdateSchedule,
@@ -64,7 +64,7 @@ export function ScheduleDrawer({
 			resolver: zodResolver(scheduleSchema),
 			defaultValues: {
 				classId: "",
-				date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+				date: selectedDate ? DateTime.from(selectedDate).toDateOnlyString() : "",
 				time: "09:00",
 				durationMinutes: 60,
 				notes: "",
@@ -96,7 +96,7 @@ export function ScheduleDrawer({
 		if (!isOpen) {
 			reset({
 				classId: "",
-				date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+				date: selectedDate ? DateTime.from(selectedDate).toDateOnlyString() : "",
 				time: "09:00",
 				durationMinutes: 60,
 				notes: "",

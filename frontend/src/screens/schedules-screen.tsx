@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Plus, Search, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { DateTime } from "@/lib/date-time";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSchedules } from "@/hooks/queries/use-schedules";
@@ -26,7 +26,7 @@ export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(DateTime.today().toDate());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
@@ -34,7 +34,7 @@ export function SchedulesScreen() {
   );
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
-  const formattedDate = format(selectedDate, "yyyy-MM-dd");
+  const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
   const { data: schedules, isLoading } = useSchedules({
     date: formattedDate,
     search: debouncedSearchQuery || undefined,

@@ -65,17 +65,17 @@ export function CreateClassForm({
 	const validName = !custom || name.trim().length > 0;
 	const validHours = Number(hours) > 0;
 	const validStudents = studentIds.length > 0;
-	const selectedStudents = (studentsQuery.data?.data ?? []).filter((student) =>
-		studentIds.includes(student.id),
+	const selectedStudents = (studentsQuery.data?.students ?? []).filter((student) =>
+		studentIds.includes(student.getId()),
 	);
 	const previewName =
 		name.trim() ||
 		(selectedStudents.length === 1
-			? selectedStudents[0]?.name
+			? selectedStudents[0]?.getName()
 			: selectedStudents.length === 2
-				? `${selectedStudents[0]?.name} & ${selectedStudents[1]?.name}`
+				? `${selectedStudents[0]?.getName()} & ${selectedStudents[1]?.getName()}`
 				: selectedStudents.length > 2
-					? `${selectedStudents[0]?.name}, ${selectedStudents[1]?.name} +${selectedStudents.length - 2}`
+					? `${selectedStudents[0]?.getName()}, ${selectedStudents[1]?.getName()} +${selectedStudents.length - 2}`
 					: selectedCourse?.name || t("classes:createForm.previewName"));
 
 	function changeCourse(value: string | null) {
@@ -192,13 +192,13 @@ export function CreateClassForm({
 								<Skeleton className="h-10 w-full" />
 								<Skeleton className="h-10 w-full" />
 							</div>
-						) : (studentsQuery.data?.data ?? []).length === 0 ? (
+						) : (studentsQuery.data?.students ?? []).length === 0 ? (
 							<p className="p-4 text-sm text-muted-foreground">
 								{t("classes:createForm.noStudents")}
 							</p>
 						) : (
-							(studentsQuery.data?.data ?? []).map((student) => {
-								const selected = studentIds.includes(student.id);
+							(studentsQuery.data?.students ?? []).map((student) => {
+				const selected = studentIds.includes(student.getId());
 								return (
 									<button
 										aria-pressed={selected}
@@ -206,17 +206,17 @@ export function CreateClassForm({
 											"flex min-h-11 w-full items-center justify-between border-b border-border px-3 text-left text-sm last:border-0",
 											selected && "bg-primary/5 text-primary",
 										)}
-										key={student.id}
+									key={student.getId()}
 										onClick={() =>
 											setStudentIds((current) =>
 												selected
-													? current.filter((id) => id !== student.id)
-													: [...current, student.id],
+													? current.filter((id) => id !== student.getId())
+													: [...current, student.getId()],
 											)
 										}
 										type="button"
 									>
-										<span className="truncate font-medium">{student.name}</span>
+										<span className="truncate font-medium">{student.getName()}</span>
 										<span>
 											{selected
 												? t("classes:createForm.selected")

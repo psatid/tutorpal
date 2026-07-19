@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { format, isToday, isYesterday, parseISO } from "date-fns";
 import {
   CalendarDays,
   CheckCircle2,
@@ -11,6 +10,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DateTime } from "@/lib/date-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,10 +40,10 @@ interface ScheduleLogProps {
 }
 
 function formatDateHeader(dateStr: string, t: (key: string) => string): string {
-  const date = parseISO(dateStr);
-  if (isToday(date)) return t("classDetail.dateHeaders.today");
-  if (isYesterday(date)) return t("classDetail.dateHeaders.yesterday");
-  return format(date, "EEEE, MMMM d");
+  const date = DateTime.fromDateOnlyString(dateStr);
+  if (date.isToday()) return t("classDetail.dateHeaders.today");
+  if (date.isYesterday()) return t("classDetail.dateHeaders.yesterday");
+  return date.format("EEEE, MMMM d");
 }
 
 function ScheduleLogSkeleton() {

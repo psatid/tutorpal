@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import { studentsKeys } from "@/hooks/queries/query-keys";
+import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import type { StudentFormData } from "@/types/student";
 
 export const useCreateStudent = (options?: { onSuccess?: () => void }) => {
@@ -16,9 +16,12 @@ export const useCreateStudent = (options?: { onSuccess?: () => void }) => {
       });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Student profile created successfully.");
-      queryClient.invalidateQueries({ queryKey: studentsKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: studentsQueryKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: studentsQueryKeys.infinites() }),
+      ]);
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

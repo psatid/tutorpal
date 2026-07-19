@@ -8,8 +8,8 @@ import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-dr
 import { Button } from "@/components/ui/button";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { useUpdateStudent } from "@/hooks/mutations/use-update-student";
+import { Student } from "@/models/student";
 import { studentSchema, type StudentFormData } from "@/types/student";
-import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
 
 export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
@@ -17,7 +17,7 @@ interface StudentDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   mode: DrawerMode;
-  student: GetV1Students200DataItem | null;
+  student: Student | null;
   onModeChange: (mode: DrawerMode) => void;
 }
 
@@ -51,10 +51,11 @@ export function StudentDrawer({
 
   useEffect(() => {
     if (isOpen && student && (mode === "view" || mode === "edit")) {
+      const data = student.getFormData();
       reset({
-        name: student.name,
-        phone: student.phoneNumber || "",
-        grade: student.grade.toString() as StudentFormData["grade"],
+        name: data.name,
+        phone: data.phoneNumber || "",
+        grade: data.grade.toString() as StudentFormData["grade"],
       });
     } else if (isOpen && mode === "create") {
       reset({
@@ -93,7 +94,7 @@ export function StudentDrawer({
     if (mode === "create") {
       createMutation.mutate(data);
     } else if (mode === "edit" && student) {
-      updateMutation.mutate({ studentId: student.id, data });
+      updateMutation.mutate({ studentId: student.getId(), data });
     }
   };
 

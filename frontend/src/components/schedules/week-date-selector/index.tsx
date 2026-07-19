@@ -1,17 +1,9 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import {
-  startOfWeek,
-  addWeeks,
-  subWeeks,
-  eachDayOfInterval,
-  endOfWeek,
-  format,
-  isBefore,
-} from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DateTime } from "@/lib/date-time";
 import { WeekdayView } from "./weekday-view";
 import { CalendarDrawer } from "./calendar-drawer";
 
@@ -32,40 +24,38 @@ export function WeekDateSelector({
 
   const weekDates = useMemo(() => {
     if (!selectedDate) return [];
-    const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    return eachDayOfInterval({ start, end: endOfWeek(start, { weekStartsOn: 1 }) });
+    return DateTime.getWeekDates(selectedDate).map((date) => date.toDate());
   }, [selectedDate]);
 
   const monthLabel = selectedDate
-    ? format(selectedDate, "MMMM yyyy")
+    ? DateTime.from(selectedDate).format("MMMM yyyy")
     : "";
 
   const handlePrevWeek = () => {
     if (selectedDate) {
       setSlideDirection(-1);
-      onDateSelect(subWeeks(selectedDate, 1));
+      onDateSelect(DateTime.from(selectedDate).subWeeks(1).toDate());
     }
   };
 
   const handleNextWeek = () => {
     if (selectedDate) {
       setSlideDirection(1);
-      onDateSelect(addWeeks(selectedDate, 1));
+      onDateSelect(DateTime.from(selectedDate).addWeeks(1).toDate());
     }
   };
 
   const handleToday = () => {
     if (!selectedDate) {
       setSlideDirection(0);
-      onDateSelect(new Date());
+      onDateSelect(DateTime.today().toDate());
       return;
     }
-    const today = new Date();
-    const currentWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    const todayWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const direction = isBefore(todayWeekStart, currentWeekStart) ? -1 : 1;
-    setSlideDirection(direction);
-    onDateSelect(today);
+    const today = DateTime.today();
+    const currentWeekStart = DateTime.from(selectedDate).startOfWeek();
+    const todayWeekStart = today.startOfWeek();
+    setSlideDirection(todayWeekStart.isBefore(currentWeekStart) ? -1 : 1);
+    onDateSelect(today.toDate());
   };
 
   const handleWeekChange = (direction: "prev" | "next") => {
@@ -91,10 +81,9 @@ export function WeekDateSelector({
       setIsCalendarDrawerOpen(false);
       return;
     }
-    const currentWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    const newWeekStart = startOfWeek(date, { weekStartsOn: 1 });
-    const direction = isBefore(newWeekStart, currentWeekStart) ? -1 : 1;
-    setSlideDirection(direction);
+    const currentWeekStart = DateTime.from(selectedDate).startOfWeek();
+    const newWeekStart = DateTime.from(date).startOfWeek();
+    setSlideDirection(newWeekStart.isBefore(currentWeekStart) ? -1 : 1);
     onDateSelect(date);
     setIsCalendarDrawerOpen(false);
   };

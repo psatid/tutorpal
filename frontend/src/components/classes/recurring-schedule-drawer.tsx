@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RHFDateField, RHFInputField, RHFTimeField } from "@/components/ui/form/rhf";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useCreateSchedule, useUpdateRecurringSchedule } from "@/hooks/mutations/use-schedules";
+import { DateTime } from "@/lib/date-time";
 import {
 	timeStringToMinutes,
 	type RecurringScheduleSummary,
@@ -71,7 +72,7 @@ const WEEKDAY_ORDER: Weekday[] = [
 const RECURRING_SCHEDULE_DRAWER_FORM_ID = "recurring-schedule-drawer-form";
 
 function getTodayDateString() {
-	return new Date().toISOString().slice(0, 10);
+	return DateTime.today().toDateOnlyString();
 }
 
 function isLegacyRecurringOccurrence(
@@ -90,7 +91,9 @@ function isLegacyRecurringOccurrence(
 		return false;
 	}
 
-	const scheduleWeekday = new Date(`${schedule.date}T00:00:00`).getDay();
+	const scheduleWeekday = DateTime.fromDateOnlyString(
+		schedule.date,
+	).getWeekdayIndex();
 	const weekdayMap: Record<Weekday, number> = {
 		MONDAY: 1,
 		TUESDAY: 2,

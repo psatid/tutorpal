@@ -2,8 +2,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { GetV1Students200DataItem } from "@/api/generated/models/getV1Students200DataItem";
-import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
 import { StudentForm } from "@/components/students/student-form";
 import { StudentList } from "@/components/students/student-list";
 import { Button } from "@/components/ui/button";
@@ -26,6 +24,8 @@ import {
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Student } from "@/models/student";
+import type { StudentListFilters } from "@/types/student-query";
 
 type StudentSort =
 	| "createdAt-desc"
@@ -37,10 +37,10 @@ type StudentSort =
 
 function sortParams(
 	value: StudentSort,
-): Pick<GetV1StudentsParams, "sortBy" | "sortOrder"> {
+): Pick<StudentListFilters, "sortBy" | "sortOrder"> {
 	const [sortBy, sortOrder] = value.split("-") as [
-		GetV1StudentsParams["sortBy"],
-		GetV1StudentsParams["sortOrder"],
+		NonNullable<StudentListFilters["sortBy"]>,
+		NonNullable<StudentListFilters["sortOrder"]>,
 	];
 	return { sortBy, sortOrder };
 }
@@ -57,14 +57,14 @@ export function StudentScreen() {
 		search: debouncedSearch || undefined,
 		...sortParams(sort),
 	});
-	const students = query.data?.pages.flatMap((page) => page.data) ?? [];
+	const students = query.data?.pages.flatMap((page) => page.students) ?? [];
 	const total = query.data?.pages[0]?.pagination.total ?? 0;
 
 	const viewStudent = useCallback(
-		(student: GetV1Students200DataItem) => {
+		(student: Student) => {
 			void navigate({
 				to: "/students/$studentId",
-				params: { studentId: student.id },
+				params: { studentId: student.getId() },
 			});
 		},
 		[navigate],

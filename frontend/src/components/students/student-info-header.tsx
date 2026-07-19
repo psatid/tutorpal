@@ -3,11 +3,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Phone, CheckCircle2, TriangleAlert } from "lucide-react";
-import { getInitials } from "@/lib/name";
-import type { GetV1StudentsById200 } from "@/api/generated/models/getV1StudentsById200";
+import { Student } from "@/models/student";
 
 interface StudentInfoHeaderProps {
-  studentData: GetV1StudentsById200;
+  studentData: Student;
   onBack: () => void;
   onEdit: () => void;
 }
@@ -18,6 +17,7 @@ export function StudentInfoHeader({
   onEdit,
 }: StudentInfoHeaderProps) {
   const { t } = useTranslation(["students"]);
+  const data = studentData.getDetailsHeaderData();
 
   return (
     <div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
@@ -33,13 +33,13 @@ export function StudentInfoHeader({
 
         <Avatar size="lg">
           <AvatarFallback className="bg-primary text-white font-semibold">
-            {getInitials(studentData.name)}
+            {data.initials}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
           <h1 className="font-headline font-bold text-xl text-on-surface truncate">
-            {studentData.name}
+            {data.name}
           </h1>
         </div>
 
@@ -55,23 +55,23 @@ export function StudentInfoHeader({
 
       <div className="flex items-center gap-3 flex-wrap">
         <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-          {t("students:grade", { grade: studentData.grade })}
+          {t("students:grade", { grade: data.grade })}
         </Badge>
 
-        {studentData.phoneNumber && (
+        {data.phoneNumber && (
           <Badge variant="outline" className="gap-1">
             <Phone className="w-3 h-3" />
-            {studentData.phoneNumber}
+            {data.phoneNumber}
           </Badge>
         )}
 
-        {studentData.lineLinkStatus === "linked" && (
+        {data.isLineLinked && (
           <Badge variant="outline" className="gap-1 text-green-600 border-green-600/30">
             <CheckCircle2 className="w-3 h-3" />
             LINE
           </Badge>
         )}
-        {studentData.lineLinkStatus === "needs_relink" && (
+        {data.needsLineRelink && (
           <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-700">
             <TriangleAlert className="w-3 h-3" />
             {t("students:line.needsRelink")}

@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { format, isSameDay, isToday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { DateTime } from "@/lib/date-time";
 import { weekSlideVariants } from "./constants";
 
 export interface WeekdayViewProps {
@@ -62,13 +62,14 @@ export function WeekdayView({
             className="grid grid-cols-7 gap-2 md:flex md:items-stretch md:justify-around md:gap-3"
           >
             {dates.map((date) => {
+              const dateTime = DateTime.from(date);
               const isSelected = selectedDate
-                ? isSameDay(date, selectedDate)
+                ? dateTime.isSameDay(selectedDate)
                 : false;
-              const isDateToday = isToday(date);
-              const dayName = format(date, "EEE");
-              const dayNumber = format(date, "d");
-              const monthName = format(date, "MMM");
+              const isDateToday = dateTime.isToday();
+              const dayName = dateTime.format("EEE");
+              const dayNumber = dateTime.format("d");
+              const monthName = dateTime.format("MMM");
 
               return (
                 <motion.button

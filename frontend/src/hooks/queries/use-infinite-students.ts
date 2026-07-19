@@ -1,26 +1,21 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { studentsKeys } from "./query-keys";
-import type { GetV1StudentsParams } from "@/api/generated/models/getV1StudentsParams";
+import type { InfiniteData } from "@tanstack/react-query";
+import type { GetV1Students200 } from "@/api/generated/models/getV1Students200";
+import { Student } from "@/models/student";
+import type { InfiniteStudentListFilters, StudentList } from "@/types/student-query";
+import { useFetchInfiniteStudents } from "./use-fetch-infinite-students";
 
-export const useInfiniteStudents = (params?: GetV1StudentsParams) => {
-	return useInfiniteQuery({
-		queryKey: studentsKeys.infinite(params),
-		queryFn: async ({ pageParam = 1 }) => {
-			const response = await apiClient.getV1Students({
-				...params,
-				page: pageParam,
-				limit: 10, // Fixed page size of 10
-			});
-			return response.data;
-		},
-		initialPageParam: 1,
-		getNextPageParam: (lastPage) => {
-			// Use hasNext from API response to determine if more pages exist
-			if (lastPage.pagination.hasNext) {
-				return lastPage.pagination.page + 1;
-			}
-			return undefined; // No more pages
-		},
-	});
-};
+type InfiniteStudentList = InfiniteData<StudentList>;
+
+const selectInfiniteStudents = (
+	data: InfiniteData<GetV1Students200> | undefined,
+): InfiniteStudentList => ({
+	pages:
+		data?.pages.map((page) => ({
+			students: page.data.map(Student.fromListItem),
+			pagination: page.pagination,
+		})) ?? [],
+	pageParams: data?.pageParams ?? [],
+});
+
+export const useInfiniteStudents = (filters?: InfiniteStudentListFilters) =>
+	useFetchInfiniteStudents({ filters, select: selectInfiniteStudents });

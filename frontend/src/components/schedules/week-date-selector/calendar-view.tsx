@@ -1,5 +1,6 @@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DateTime } from "@/lib/date-time";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -164,7 +165,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={DateTime.from(day.date).format("P")}
       data-selected={modifiers.selected}
       className={cn(
         "relative isolate z-10 flex aspect-square size-auto w-full min-w-8 flex-col gap-0 border-0 leading-none font-normal rounded-full transition-all duration-200",
