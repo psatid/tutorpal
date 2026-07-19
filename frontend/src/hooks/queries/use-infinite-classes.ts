@@ -1,25 +1,21 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { classesKeys } from "./query-keys";
-import type { GetV1ClassesParams } from "@/api/generated/models/getV1ClassesParams";
+import type { InfiniteData } from "@tanstack/react-query";
+import type { GetV1Classes200 } from "@/api/generated/models/getV1Classes200";
+import { Class } from "@/models/class";
+import type { ClassList, InfiniteClassListFilters } from "@/types/class-query";
+import { useFetchInfiniteClasses } from "./use-fetch-infinite-classes";
 
-export const useInfiniteClasses = (params?: GetV1ClassesParams) => {
-  return useInfiniteQuery({
-    queryKey: classesKeys.infinite(params),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await apiClient.getV1Classes({
-        ...params,
-        page: pageParam,
-        limit: 10,
-      });
-      return response.data;
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.hasNext) {
-        return lastPage.pagination.page + 1;
-      }
-      return undefined;
-    },
-  });
-};
+type InfiniteClassList = InfiniteData<ClassList>;
+
+const selectInfiniteClasses = (
+	data: InfiniteData<GetV1Classes200> | undefined,
+): InfiniteClassList => ({
+	pages:
+		data?.pages.map((page) => ({
+			classes: page.data.map(Class.fromListItem),
+			pagination: page.pagination,
+		})) ?? [],
+	pageParams: data?.pageParams ?? [],
+});
+
+export const useInfiniteClasses = (filters?: InfiniteClassListFilters) =>
+	useFetchInfiniteClasses({ filters, select: selectInfiniteClasses });

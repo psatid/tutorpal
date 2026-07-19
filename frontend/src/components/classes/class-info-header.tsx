@@ -3,20 +3,12 @@ import { Avatar, AvatarFallback, AvatarGroup } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Pencil, ArrowLeft } from "lucide-react";
-import { getInitials } from "@/lib/name";
-import type { GetV1ClassesById200 } from "@/api/generated/models/getV1ClassesById200";
+import { Class } from "@/models/class";
 
 interface ClassInfoHeaderProps {
-	classData: GetV1ClassesById200;
+	classData: Class;
 	onBack: () => void;
 	onEdit: () => void;
-}
-
-function formatHours(hours: number) {
-	return new Intl.NumberFormat(undefined, {
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 2,
-	}).format(hours);
 }
 
 export function ClassInfoHeader({
@@ -25,6 +17,7 @@ export function ClassInfoHeader({
 	onEdit,
 }: ClassInfoHeaderProps) {
 	const { t } = useTranslation(["classes"]);
+	const data = classData.getDetailsHeaderData();
 
 	return (
 		<div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
@@ -40,10 +33,10 @@ export function ClassInfoHeader({
 
 				<div className="flex-1 min-w-0">
 					<h1 className="font-headline font-bold text-xl text-on-surface truncate">
-						{classData.displayName}
+						{data.displayName}
 					</h1>
 					<p className="truncate text-sm text-on-surface-variant">
-						{classData.course?.name ?? "Custom class"}
+						{data.courseName ?? "Custom class"}
 					</p>
 				</div>
 
@@ -60,32 +53,32 @@ export function ClassInfoHeader({
 			<div className="flex items-center gap-3 flex-wrap">
 				<Badge variant="outline" className="gap-1">
 					<Clock className="w-3 h-3" />
-					{classData.remainingHours !== undefined
+					{data.remainingHours !== undefined
 						? t("classes:hoursWithRemaining", {
-								total: formatHours(classData.totalHours),
-								remaining: formatHours(classData.remainingHours),
+								total: data.formattedTotalHours,
+								remaining: data.formattedRemainingHours,
 							})
-						: t("classes:hours", { hours: formatHours(classData.totalHours) })}
+						: t("classes:hours", { hours: data.formattedTotalHours })}
 				</Badge>
 
-				{classData.students.length > 0 && (
+				{data.students.length > 0 && (
 					<div className="flex items-center gap-2">
 						<AvatarGroup className="shrink-0">
-							{classData.students.slice(0, 4).map((student) => (
-								<Avatar key={student.id} size="sm">
+							{data.students.slice(0, 4).map((student) => (
+								<Avatar key={student.getId()} size="sm">
 									<AvatarFallback className="bg-accent text-on-primary-container font-semibold text-xs">
-										{getInitials(student.name)}
+									{student.getInitials()}
 									</AvatarFallback>
 								</Avatar>
 							))}
-							{classData.students.length > 4 && (
+							{data.students.length > 4 && (
 								<span className="text-xs text-on-surface-variant ml-1">
-									+{classData.students.length - 4}
+									+{data.students.length - 4}
 								</span>
 							)}
 						</AvatarGroup>
 						<span className="text-sm text-on-surface-variant">
-							{t("classes:students", { count: classData.students.length })}
+							{t("classes:students", { count: data.students.length })}
 						</span>
 					</div>
 				)}

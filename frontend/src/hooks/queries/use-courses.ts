@@ -1,11 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import type { GetV1CoursesParams } from "@/api/generated/models/getV1CoursesParams";
-import { apiClient } from "@/lib/api-client";
-import { coursesKeys } from "./query-keys";
+import type { GetV1Courses200 } from "@/api/generated/models/getV1Courses200";
+import { Course } from "@/models/course";
+import type { CourseList, CourseListFilters } from "@/types/course-query";
+import { useFetchCourses } from "./use-fetch-courses";
 
-export function useCourses(params?: GetV1CoursesParams) {
-	return useQuery({
-		queryKey: coursesKeys.list(params),
-		queryFn: async () => (await apiClient.getV1Courses(params)).data,
-	});
-}
+const selectCourseList = (data: GetV1Courses200 | undefined): CourseList => ({
+	courses: data?.data.map(Course.fromListItem) ?? [],
+	pagination: {
+		total: data?.pagination.total ?? 0,
+		page: data?.pagination.page ?? 1,
+		limit: data?.pagination.limit ?? 0,
+		totalPages: data?.pagination.totalPages ?? 0,
+		hasNext: data?.pagination.hasNext ?? false,
+		hasPrev: data?.pagination.hasPrev ?? false,
+	},
+});
+
+export const useCourses = (filters?: CourseListFilters) =>
+	useFetchCourses({ filters, select: selectCourseList });

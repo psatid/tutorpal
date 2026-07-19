@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useUpdateClass } from "@/hooks/mutations/use-update-class";
 import { useStudents } from "@/hooks/queries/use-students";
-import { classSchema, type ClassFormData, type Class } from "@/types/class";
+import { Class } from "@/models/class";
+import { classSchema, type ClassFormData } from "@/types/class";
 import { StudentSelectorAccordion } from "./student-selector-accordion";
 
 export type { DrawerMode } from "@/components/ui/responsive-drawer";
@@ -51,10 +52,11 @@ export function ClassDrawer({
 
   useEffect(() => {
     if (isOpen && classData && (mode === "view" || mode === "edit")) {
+      const data = classData.getFormData();
       form.reset({
-        name: classData.name ?? "",
-        totalHours: classData.totalHours,
-        studentIds: classData.students.map((s) => s.id),
+        name: data.name,
+        totalHours: data.totalHours,
+        studentIds: data.studentIds,
       });
     } else if (isOpen && mode === "create") {
       form.reset({
@@ -93,7 +95,7 @@ export function ClassDrawer({
     if (mode === "create") {
       createMutation.mutate({ ...data, courseId: null });
     } else if (mode === "edit" && classData) {
-      updateMutation.mutate({ id: classData.id, data });
+      updateMutation.mutate({ id: classData.getId(), data });
     }
   };
 

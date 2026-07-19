@@ -20,7 +20,7 @@ import {
 	useCreateSchedule,
 	useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
-import { useClass } from "@/hooks/queries/use-class";
+import { useClassDetails } from "@/hooks/queries/use-class-details";
 import { useGetSchedule } from "@/hooks/queries/use-get-schedule";
 import {
 	minutesToTimeString,
@@ -74,12 +74,12 @@ export function ScheduleDrawer({
 		});
 
 	const classIdValue = watch("classId");
-	const { data: selectedClass } = useClass(classIdValue || null);
+	const { data: selectedClass } = useClassDetails(classIdValue || null);
 	const { data: scheduleData } = useGetSchedule(
 		mode !== "create" ? scheduleId : null,
 	);
 
-	const selectedClassName = selectedClass?.displayName || "";
+	const selectedClassName = selectedClass?.getDisplayName() || "";
 
 	useEffect(() => {
 		if (scheduleData && (mode === "view" || mode === "edit")) {

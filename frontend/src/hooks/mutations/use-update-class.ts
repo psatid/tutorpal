@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import { classesKeys } from "@/hooks/queries/query-keys";
+import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
+import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import type { ClassFormData } from "@/types/class";
 
 export const useUpdateClass = (options?: { onSuccess?: () => void }) => {
@@ -16,12 +17,12 @@ export const useUpdateClass = (options?: { onSuccess?: () => void }) => {
       });
       return response.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async () => {
       toast.success("Class updated successfully.");
-      queryClient.invalidateQueries({ queryKey: classesKeys.lists() });
-      queryClient.invalidateQueries({
-        queryKey: classesKeys.detail(variables.id),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
+      ]);
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

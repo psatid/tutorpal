@@ -1,7 +1,6 @@
 import { Search } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { GetV1Courses200DataItem } from "@/api/generated/models/getV1Courses200DataItem";
 import {
 	Field,
 	FieldDescription,
@@ -21,18 +20,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useStudents } from "@/hooks/queries/use-students";
+import type { Course } from "@/models/course";
+import { DateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
 
 export const CUSTOM_CLASS_VALUE = "__custom__";
 
-function formatHours(value: number) {
-	return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(
-		value,
-	);
-}
-
 interface CreateClassFormProps {
-	courses: GetV1Courses200DataItem[];
+	courses: Course[];
 	preferredCourseId?: string | null;
 	onCreated: () => void;
 }
@@ -46,10 +41,10 @@ export function CreateClassForm({
 	const initialCourse = preferredCourseId ?? CUSTOM_CLASS_VALUE;
 	const [courseId, setCourseId] = useState(initialCourse);
 	const selectedCourse =
-		courses.find((course) => course.id === courseId) ?? null;
+		courses.find((course) => course.getId() === courseId) ?? null;
 	const [name, setName] = useState("");
 	const [hours, setHours] = useState(
-		selectedCourse ? String(selectedCourse.defaultTotalHours) : "",
+		selectedCourse ? String(selectedCourse.getDefaultTotalHours()) : "",
 	);
 	const [studentIds, setStudentIds] = useState<string[]>([]);
 	const [studentSearch, setStudentSearch] = useState("");
@@ -76,13 +71,13 @@ export function CreateClassForm({
 				? `${selectedStudents[0]?.getName()} & ${selectedStudents[1]?.getName()}`
 				: selectedStudents.length > 2
 					? `${selectedStudents[0]?.getName()}, ${selectedStudents[1]?.getName()} +${selectedStudents.length - 2}`
-					: selectedCourse?.name || t("classes:createForm.previewName"));
+					: selectedCourse?.getName() || t("classes:createForm.previewName"));
 
 	function changeCourse(value: string | null) {
 		const next = value ?? CUSTOM_CLASS_VALUE;
 		setCourseId(next);
-		const course = courses.find((item) => item.id === next);
-		setHours(course ? String(course.defaultTotalHours) : "");
+		const course = courses.find((item) => item.getId() === next);
+		setHours(course ? String(course.getDefaultTotalHours()) : "");
 	}
 
 	function submit(event: FormEvent) {
@@ -107,7 +102,7 @@ export function CreateClassForm({
 							<SelectValue
 								placeholder={t("classes:createForm.coursePlaceholder")}
 							>
-								{custom ? t("classes:customClass") : selectedCourse?.name}
+								{custom ? t("classes:customClass") : selectedCourse?.getName()}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
@@ -116,8 +111,8 @@ export function CreateClassForm({
 									{t("classes:customClass")}
 								</SelectItem>
 								{courses.map((course) => (
-									<SelectItem key={course.id} value={course.id}>
-										{course.name}
+									<SelectItem key={course.getId()} value={course.getId()}>
+										{course.getName()}
 									</SelectItem>
 								))}
 							</SelectGroup>
@@ -237,11 +232,11 @@ export function CreateClassForm({
 			<div aria-live="polite" className="rounded-xl bg-primary/5 p-4">
 				<p className="truncate font-semibold text-foreground">{previewName}</p>
 				<p className="mt-1 text-sm text-muted-foreground">
-					{custom ? t("classes:customClass") : selectedCourse?.name} ·{" "}
+					{custom ? t("classes:customClass") : selectedCourse?.getName()} ·{" "}
 					{t("classes:createForm.studentCount", { count: studentIds.length })} ·{" "}
 					{validHours
 						? t("classes:createForm.hours", {
-								hours: formatHours(Number(hours)),
+								hours: DateTime.formatDurationHours(Number(hours)),
 							})
 						: t("classes:createForm.hoursNotSet")}
 				</p>

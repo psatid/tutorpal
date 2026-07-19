@@ -9,16 +9,16 @@ import { InfoCard } from "@/components/ui/info-card";
 import { useDeleteClass } from "@/hooks/mutations/use-delete-class";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { ClassCard } from "@/components/classes/class-card";
-import type { GetV1Classes200DataItem } from "@/api/generated/models/getV1Classes200DataItem";
+import { Class } from "@/models/class";
 
 interface ClassListProps {
-  classes: GetV1Classes200DataItem[];
+  classes: Class[];
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   onAddClass: () => void;
-  onViewClass: (classData: GetV1Classes200DataItem) => void;
+  onViewClass: (classData: Class) => void;
 }
 
 export function ClassList({
@@ -48,11 +48,11 @@ export function ClassList({
     },
   );
 
-  const handleDeleteClass = (classData: GetV1Classes200DataItem) => {
+  const handleDeleteClass = (classData: Class) => {
     toast(t("classes:delete.confirm"), {
       action: {
         label: t("classes:delete.confirmButton"),
-        onClick: () => deleteMutation.mutate(classData.id),
+        onClick: () => deleteMutation.mutate(classData.getId()),
       },
       cancel: {
         label: t("classes:delete.cancelButton"),
@@ -119,7 +119,7 @@ export function ClassList({
       >
         {classes.map((classData) => (
           <motion.div
-            key={classData.id}
+            key={classData.getId()}
             variants={{
               hidden: { opacity: 0, y: 8 },
               visible: { opacity: 1, y: 0 },

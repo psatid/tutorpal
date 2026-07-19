@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import { classesKeys } from "@/hooks/queries/query-keys";
+import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
+import { coursesQueryKeys } from "@/constants/query-keys/courses-query-keys";
+import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import type { PostV1ClassesBody } from "@/api/generated/models/postV1ClassesBody";
 
 export const useCreateClass = (options?: { onSuccess?: () => void }) => {
@@ -12,10 +14,13 @@ export const useCreateClass = (options?: { onSuccess?: () => void }) => {
 			const response = await apiClient.postV1Classes(data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Class created successfully.");
-      queryClient.invalidateQueries({ queryKey: classesKeys.all });
-			queryClient.invalidateQueries({ queryKey: ["courses"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
+			queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all }),
+			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
+      ]);
       options?.onSuccess?.();
     },
     onError: (error: Error) => {

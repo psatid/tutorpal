@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { useClass } from "@/hooks/queries/use-class";
+import { useClassDetails } from "@/hooks/queries/use-class-details";
 import { useClassSchedules } from "@/hooks/queries/use-class-schedules";
 import {
   useDeleteSchedule,
@@ -24,7 +24,6 @@ import {
 } from "@/components/schedules/schedule-drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
-import type { GetV1Classes200DataItem } from "@/api/generated/models/getV1Classes200DataItem";
 
 interface ClassDetailScreenProps {
   classId: string;
@@ -34,7 +33,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   const { t } = useTranslation(["classes", "schedules"]);
   const navigate = useNavigate();
 
-  const { data: classData, isLoading: isLoadingClass } = useClass(classId);
+  const { data: classData, isLoading: isLoadingClass } = useClassDetails(classId);
   const { data: schedules, isLoading: isLoadingSchedules } =
     useClassSchedules(classId);
 
@@ -241,7 +240,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
       />
 
       <RecurringScheduleSection
-        recurringSchedule={classData.recurringSchedule}
+        recurringSchedule={classData.getRecurringSchedule()}
         onEdit={handleOpenRecurringDrawer}
         onCreate={handleOpenRecurringDrawer}
       />
@@ -261,7 +260,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
         isOpen={isClassDrawerOpen}
         onOpenChange={handleClassDrawerOpenChange}
         mode={classDrawerMode}
-        classData={classData as GetV1Classes200DataItem}
+        classData={classData}
         onModeChange={setClassDrawerMode}
       />
 
@@ -277,7 +276,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
         isOpen={isRecurringDrawerOpen}
         onOpenChange={setIsRecurringDrawerOpen}
         classId={classId}
-        recurringSchedule={classData.recurringSchedule}
+        recurringSchedule={classData.getRecurringSchedule()}
         schedules={schedules ?? []}
       />
     </div>

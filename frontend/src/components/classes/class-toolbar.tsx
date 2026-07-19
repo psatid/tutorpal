@@ -2,16 +2,16 @@ import { Search, ArrowUpDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { GetV1ClassesParams } from "@/api/generated/models/getV1ClassesParams";
+import type { ClassSortBy, ClassSortOrder } from "@/types/class-query";
 
 interface ClassToolbarProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  sortBy: GetV1ClassesParams["sortBy"];
-  sortOrder: GetV1ClassesParams["sortOrder"];
+  sortBy: ClassSortBy | undefined;
+  sortOrder: ClassSortOrder | undefined;
   onSortChange: (
-    sortBy: GetV1ClassesParams["sortBy"],
-    sortOrder: GetV1ClassesParams["sortOrder"],
+    sortBy: ClassSortBy,
+    sortOrder: ClassSortOrder,
   ) => void;
 }
 
@@ -26,8 +26,8 @@ export function ClassToolbar({
 
   const sortOptions: {
     value: string;
-    sortBy: GetV1ClassesParams["sortBy"];
-    sortOrder: GetV1ClassesParams["sortOrder"];
+    sortBy: ClassSortBy;
+    sortOrder: ClassSortOrder;
     label: string;
   }[] = [
     { value: "createdAt-desc", sortBy: "createdAt", sortOrder: "desc", label: t("classes:sort.newest") },

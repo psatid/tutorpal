@@ -2,7 +2,6 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { BookOpen, Plus, Search } from "lucide-react";
 import { type ReactNode, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { GetV1ClassesParams } from "@/api/generated/models/getV1ClassesParams";
 import { ClassRow } from "@/components/classes/class-row";
 import {
 	CreateClassForm,
@@ -33,6 +32,7 @@ import {
 } from "@/components/workspaces/workspace-state";
 import { useCourses } from "@/hooks/queries/use-courses";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
+import type { ClassListFilters } from "@/types/class-query";
 
 type ClassesSearch = {
 	courseId?: string;
@@ -42,7 +42,7 @@ type SortValue = "createdAt-desc" | "name-asc" | "totalHours-desc";
 
 function sortParams(
 	value: SortValue,
-): Pick<GetV1ClassesParams, "sortBy" | "sortOrder"> {
+): Pick<ClassListFilters, "sortBy" | "sortOrder"> {
 	if (value === "name-asc") return { sortBy: "name", sortOrder: "asc" };
 	if (value === "totalHours-desc")
 		return { sortBy: "totalHours", sortOrder: "desc" };
@@ -62,7 +62,7 @@ export function ClassesScreen() {
 		sortBy: "name",
 		sortOrder: "asc",
 	});
-	const courses = coursesQuery.data?.data ?? [];
+	const courses = coursesQuery.data?.courses ?? [];
 	const filterValue = routeSearch.courseId
 		? `course:${routeSearch.courseId}`
 		: routeSearch.classType === "custom"
@@ -77,14 +77,14 @@ export function ClassesScreen() {
 		...sortParams(sort),
 	});
 	const classes = useMemo(
-		() => classesQuery.data?.pages.flatMap((page) => page.data) ?? [],
+		() => classesQuery.data?.pages.flatMap((page) => page.classes) ?? [],
 		[classesQuery.data],
 	);
 	const total = classesQuery.data?.pages[0]?.pagination.total ?? 0;
 	const selectedCourse =
-		courses.find((course) => course.id === routeSearch.courseId) ?? null;
+		courses.find((course) => course.getId() === routeSearch.courseId) ?? null;
 	const filterLabel =
-		selectedCourse?.name ??
+		selectedCourse?.getName() ??
 		(routeSearch.classType === "custom"
 			? t("classes:customClasses")
 			: routeSearch.classType === "course-linked"
@@ -176,11 +176,11 @@ export function ClassesScreen() {
 				{classes.map((item) => (
 					<ClassRow
 						item={item}
-						key={item.id}
+						key={item.getId()}
 						onOpen={() =>
 							navigate({
 								to: "/classes/$classId",
-								params: { classId: item.id },
+								params: { classId: item.getId() },
 							})
 						}
 					/>
@@ -248,8 +248,8 @@ export function ClassesScreen() {
 										{t("classes:courseLinkedClasses")}
 									</SelectItem>
 									{courses.map((course) => (
-										<SelectItem key={course.id} value={`course:${course.id}`}>
-											{course.name}
+									<SelectItem key={course.getId()} value={`course:${course.getId()}`}>
+										{course.getName()}
 										</SelectItem>
 									))}
 								</SelectGroup>

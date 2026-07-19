@@ -1,10 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import {
-  classesKeys,
-  schedulesKeys,
-} from "@/hooks/queries/query-keys";
+import { schedulesKeys } from "@/hooks/queries/query-keys";
+import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 
 export const useDeleteStudent = (options?: { onSuccess?: () => void }) => {
@@ -20,7 +18,7 @@ export const useDeleteStudent = (options?: { onSuccess?: () => void }) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: studentsQueryKeys.lists() }),
         queryClient.invalidateQueries({ queryKey: studentsQueryKeys.infinites() }),
-        queryClient.invalidateQueries({ queryKey: classesKeys.all }),
+        queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
         queryClient.invalidateQueries({ queryKey: schedulesKeys.all }),
       ]);
       options?.onSuccess?.();

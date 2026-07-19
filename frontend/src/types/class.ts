@@ -1,22 +1,5 @@
 import { z } from "zod";
 
-export interface StudentInClass {
-	id: string;
-	name: string;
-	phoneNumber: string | null;
-	grade: number;
-}
-
-export interface Class {
-	id: string;
-	name: string | null;
-	displayName: string;
-	course: { id: string; name: string } | null;
-	totalHours: number;
-	students: StudentInClass[];
-	remainingHours?: number;
-}
-
 // Form schema - all fields required for form
 export const classSchema = z.object({
 	name: z.string(),

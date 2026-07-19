@@ -1,9 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-	classesKeys,
-	schedulesKeys,
-} from "@/hooks/queries/query-keys";
+import { schedulesKeys } from "@/hooks/queries/query-keys";
+import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import { apiClient } from "@/lib/api-client";
 import type { Weekday } from "@/types/schedule";
@@ -66,7 +64,7 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 		onSuccess: () => {
 			toast.success("Schedule created successfully.");
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
-			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},
@@ -105,7 +103,7 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables.id),
 			});
-			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},
@@ -127,7 +125,7 @@ export const useDeleteSchedule = (options?: { onSuccess?: () => void }) => {
 		onSuccess: () => {
 			toast.success("Schedule deleted successfully.");
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
-			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},
@@ -153,7 +151,7 @@ export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables),
 			});
-			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},
@@ -179,7 +177,7 @@ export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables),
 			});
-			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},
@@ -215,7 +213,7 @@ export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void })
 		onSuccess: () => {
 			toast.success("Recurring schedule updated successfully.");
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
-			queryClient.invalidateQueries({ queryKey: classesKeys.all });
+			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},

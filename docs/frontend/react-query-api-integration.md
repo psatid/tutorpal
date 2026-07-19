@@ -4,9 +4,9 @@ This guide defines how TutorPal integrates API-backed server state with TanStack
 Query. Use it for new features and when refactoring existing ones.
 
 > **Adoption status:** students are the reference implementation for this
-> convention. Their raw hooks live in `src/hooks/queries/use-fetch-*.ts`, their
-> selected domain hooks live alongside them, and `src/models/student.ts` owns
-> the `Student` class. Classes and courses still await migration.
+> convention. Students, classes, and courses now use raw `use-fetch-*.ts`
+> hooks, stable selected domain hooks, resource-owned keys, and class models in
+> `src/models/`. Schedules remain the next migration candidate.
 
 ## Goals
 
@@ -416,5 +416,6 @@ Adopt the convention feature by feature:
 6. Move cache reconciliation into the related mutation hooks.
 7. Build and exercise the migrated feature before starting the next one.
 
-Students now establish the working reference. Migrate classes and courses next,
-following the same raw-hook, stable-selector, and class-model boundaries.
+Students, classes, and courses establish the working reference. Migrate
+schedules next, following the same raw-hook, stable-selector, and class-model
+boundaries.

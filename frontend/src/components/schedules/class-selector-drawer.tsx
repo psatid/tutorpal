@@ -33,7 +33,7 @@ export function ClassSelectorDrawer({
       search: searchQuery || undefined,
     });
 
-  const classes = data?.pages.flatMap((page) => page.data) ?? [];
+  const classes = data?.pages.flatMap((page) => page.classes) ?? [];
 
   useIntersectionObserver(
     loadMoreRef,
@@ -109,16 +109,16 @@ export function ClassSelectorDrawer({
                 ) : (
                   <div className="space-y-2">
                     {classes.map((cls) => {
-                      const isSelected = localSelectedId === cls.id;
-                      const studentNames = cls.students
-                        .map((s) => s.name)
+                      const data = cls.getListItemData();
+                      const isSelected = localSelectedId === data.id;
+                      const studentNames = data.studentNames
                         .join(", ");
 
                       return (
                         <button
-                          key={cls.id}
+                          key={data.id}
                           type="button"
-                          onClick={() => handleSelect(cls.id)}
+                          onClick={() => handleSelect(data.id)}
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
                             isSelected
@@ -141,10 +141,10 @@ export function ClassSelectorDrawer({
 
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-on-surface truncate">
-							  {cls.displayName}
+							  {data.displayName}
 							</p>
 							<p className="text-xs text-on-surface-variant truncate">
-							  {cls.course?.name ?? "Custom class"}
+							  {data.courseName ?? "Custom class"}
 							</p>
                             {studentNames && (
                               <p className="text-sm text-on-surface-variant truncate">
@@ -153,12 +153,12 @@ export function ClassSelectorDrawer({
                             )}
                           </div>
 
-                          {cls.remainingHours !== undefined && (
+                          {data.remainingHours !== undefined && (
                             <div className="shrink-0 flex items-center gap-1 text-xs text-on-surface-variant">
                               <Clock className="w-3 h-3" />
                               <span>
                                 {t("schedules:classSelector.remainingHours", {
-                                  hours: cls.remainingHours,
+                                  hours: data.formattedRemainingHours,
                                 })}
                               </span>
                             </div>

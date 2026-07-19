@@ -12,8 +12,6 @@ import {
 import { type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { GetV1Courses200DataItem } from "@/api/generated/models/getV1Courses200DataItem";
-import type { GetV1CoursesParams } from "@/api/generated/models/getV1CoursesParams";
 import { CourseForm } from "@/components/courses/course-form";
 import {
 	AlertDialog,
@@ -58,16 +56,13 @@ import {
 } from "@/components/workspaces/workspace-state";
 import { useDeleteCourse } from "@/hooks/mutations/use-courses";
 import { useCourses } from "@/hooks/queries/use-courses";
+import { Course } from "@/models/course";
+import type { CourseListFilters } from "@/types/course-query";
 
-function formatHours(value: number) {
-	return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(
-		value,
-	);
-}
 type CourseSort = "name-asc" | "createdAt-desc" | "defaultTotalHours-desc";
 function sortParams(
 	value: CourseSort,
-): Pick<GetV1CoursesParams, "sortBy" | "sortOrder"> {
+): Pick<CourseListFilters, "sortBy" | "sortOrder"> {
 	if (value === "createdAt-desc")
 		return { sortBy: "createdAt", sortOrder: "desc" };
 	if (value === "defaultTotalHours-desc")
@@ -83,15 +78,15 @@ export function CoursesScreen() {
 	const [sort, setSort] = useState<CourseSort>("name-asc");
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingCourse, setEditingCourse] =
-		useState<GetV1Courses200DataItem | null>(null);
+		useState<Course | null>(null);
 	const [deletingCourse, setDeletingCourse] =
-		useState<GetV1Courses200DataItem | null>(null);
+		useState<Course | null>(null);
 	const query = useCourses({
 		limit: 100,
 		search: search || undefined,
 		...sortParams(sort),
 	});
-	const courses = query.data?.data ?? [];
+	const courses = query.data?.courses ?? [];
 	const total = query.data?.pagination.total ?? courses.length;
 	const deleteCourse = useDeleteCourse(() => setDeletingCourse(null));
 
@@ -99,7 +94,7 @@ export function CoursesScreen() {
 		setEditingCourse(null);
 		setFormOpen(true);
 	}
-	function openEdit(course: GetV1Courses200DataItem) {
+	function openEdit(course: Course) {
 		setEditingCourse(course);
 		setFormOpen(true);
 	}
@@ -108,8 +103,8 @@ export function CoursesScreen() {
 		setEditingCourse(null);
 		triggerRef.current?.focus();
 	}
-	function requestDelete(course: GetV1Courses200DataItem) {
-		if (course.classCount > 0) {
+	function requestDelete(course: Course) {
+		if (course.hasClasses()) {
 			toast.error(t("courses:courseInUse"));
 			return;
 		}
@@ -122,7 +117,7 @@ export function CoursesScreen() {
 	const form = (
 		<CourseForm
 			course={editingCourse}
-			key={`${editingCourse?.id ?? "new"}-${formOpen}`}
+			key={`${editingCourse?.getId() ?? "new"}-${formOpen}`}
 			onSaved={closeForm}
 		/>
 	);
@@ -165,40 +160,42 @@ export function CoursesScreen() {
 	else
 		content = (
 			<div>
-				{courses.map((course) => (
+				{courses.map((course) => {
+					const data = course.getListItemData();
+					return (
 					<div
 						className="flex min-h-20 items-center gap-3 border-b border-border py-4 last:border-0"
-						key={course.id}
+						key={data.id}
 					>
 						<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
 							<BookOpen className="size-5" />
 						</div>
 						<div className="min-w-0 flex-1">
 							<p className="truncate font-semibold text-foreground">
-								{course.name}
+								{data.name}
 							</p>
 							<p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
 								<Clock className="size-4" />
 								{t("courses:defaultHours", {
-									hours: formatHours(course.defaultTotalHours),
+									hours: data.formattedDefaultTotalHours,
 								})}
 							</p>
 						</div>
 						<Button
 							className="hidden shrink-0 sm:inline-flex"
 							onClick={() =>
-								navigate({ to: "/classes", search: { courseId: course.id } })
+								navigate({ to: "/classes", search: { courseId: data.id } })
 							}
 							variant="ghost"
 						>
-							{t("courses:classCount", { count: course.classCount })}
+							{t("courses:classCount", { count: data.classCount })}
 							<ChevronRight data-icon="inline-end" />
 						</Button>
 						<DropdownMenu>
 							<DropdownMenuTrigger
 								render={
 									<Button
-										aria-label={t("courses:actionsFor", { name: course.name })}
+										aria-label={t("courses:actionsFor", { name: data.name })}
 										size="icon"
 										variant="ghost"
 									/>
@@ -212,12 +209,12 @@ export function CoursesScreen() {
 										onClick={() =>
 											navigate({
 												to: "/classes",
-												search: { courseId: course.id },
+											search: { courseId: data.id },
 											})
 										}
 									>
 										<ChevronRight />
-										{t("courses:viewClasses", { count: course.classCount })}
+										{t("courses:viewClasses", { count: data.classCount })}
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => openEdit(course)}>
 										<Edit3 />
@@ -237,7 +234,8 @@ export function CoursesScreen() {
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
-				))}
+					);
+				})}
 			</div>
 		);
 
@@ -317,7 +315,7 @@ export function CoursesScreen() {
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							{t("courses:deleteTitle", { name: deletingCourse?.name })}
+							{t("courses:deleteTitle", { name: deletingCourse?.getName() })}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{t("courses:deleteDescription")}
@@ -328,7 +326,7 @@ export function CoursesScreen() {
 						<AlertDialogAction
 							disabled={deleteCourse.isPending}
 							onClick={() => {
-								if (deletingCourse) deleteCourse.mutate(deletingCourse.id);
+								if (deletingCourse) deleteCourse.mutate(deletingCourse.getId());
 							}}
 							variant="destructive"
 						>

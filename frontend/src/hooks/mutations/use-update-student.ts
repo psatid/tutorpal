@@ -1,10 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import {
-  classesKeys,
-  schedulesKeys,
-} from "@/hooks/queries/query-keys";
+import { schedulesKeys } from "@/hooks/queries/query-keys";
+import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import type { StudentFormData } from "@/types/student";
 
@@ -34,7 +32,7 @@ export const useUpdateStudent = (options?: { onSuccess?: () => void }) => {
         queryClient.invalidateQueries({
           queryKey: studentsQueryKeys.detail(variables.studentId),
         }),
-        queryClient.invalidateQueries({ queryKey: classesKeys.all }),
+        queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
         queryClient.invalidateQueries({ queryKey: schedulesKeys.all }),
       ]);
       options?.onSuccess?.();
