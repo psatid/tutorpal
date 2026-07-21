@@ -97,6 +97,10 @@ Use `setValue` for a targeted update from a custom selector. Pass
 `{ shouldValidate: true }` when the user action should immediately revalidate
 that field. Prefer `reset` when replacing the whole form with fetched data.
 
+Use `useWatch` when form values control conditional UI. Do not mirror a form
+value in `useState`; duplicated state can make the rendered fields disagree
+with the values validated and submitted by React Hook Form.
+
 ## 5. Support actions outside the form
 
 Drawer and dialog footers may render outside the `<form>`. Give the form a

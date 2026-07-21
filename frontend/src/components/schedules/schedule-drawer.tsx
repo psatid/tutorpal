@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { FormField } from "@/components/ui/form/form-field";
 import {
 	RHFDateField,
@@ -14,14 +15,18 @@ import {
 	RHFSelectField,
 	RHFTimeField,
 } from "@/components/ui/form/rhf";
-import { type DrawerMode, ResponsiveDrawer } from "@/components/ui/responsive-drawer";
-import { DateTime } from "@/lib/date-time";
+import {
+	type DrawerMode,
+	ResponsiveDrawer,
+} from "@/components/ui/responsive-drawer";
 import {
 	useCreateSchedule,
 	useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { useClassDetails } from "@/hooks/queries/use-class-details";
 import { useGetSchedule } from "@/hooks/queries/use-get-schedule";
+import { DateTime } from "@/lib/date-time";
+import { cn } from "@/lib/utils";
 import {
 	minutesToTimeString,
 	type ScheduleFormData,
@@ -32,6 +37,18 @@ import {
 export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
 const SCHEDULE_DRAWER_FORM_ID = "schedule-drawer-form";
+
+function getScheduleDefaultValues(date: string): ScheduleFormData {
+	return {
+		classId: "",
+		date,
+		time: "09:00",
+		durationMinutes: 60,
+		notes: "",
+		status: "SCHEDULED",
+		recurring: undefined,
+	};
+}
 
 interface ScheduleDrawerProps {
 	isOpen: boolean;
@@ -57,23 +74,23 @@ export function ScheduleDrawer({
 		{ value: "NO_SHOW", label: t("schedules:status.NO_SHOW") },
 		{ value: "CANCELLED", label: t("schedules:status.CANCELLED") },
 	];
-	const [isRecurring, setIsRecurring] = useState(false);
 	const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
-	const { handleSubmit, reset, control, setValue, watch } =
-		useForm<ScheduleFormData>({
-			resolver: zodResolver(scheduleSchema),
-			defaultValues: {
-				classId: "",
-				date: selectedDate ? DateTime.from(selectedDate).toDateOnlyString() : "",
-				time: "09:00",
-				durationMinutes: 60,
-				notes: "",
-				status: "SCHEDULED",
-				recurring: undefined,
-			},
-		});
-
-	const classIdValue = watch("classId");
+	const selectedDateValue = selectedDate
+		? DateTime.from(selectedDate).toDateOnlyString()
+		: "";
+	const {
+		control,
+		formState: { errors },
+		handleSubmit,
+		reset,
+		setValue,
+	} = useForm<ScheduleFormData>({
+		resolver: zodResolver(scheduleSchema),
+		defaultValues: getScheduleDefaultValues(selectedDateValue),
+	});
+	const classIdValue = useWatch({ control, name: "classId" });
+	const recurring = useWatch({ control, name: "recurring" });
+	const isRecurring = recurring !== undefined;
 	const { data: selectedClass } = useClassDetails(classIdValue || null);
 	const { data: scheduleData } = useGetSchedule(
 		mode !== "create" ? scheduleId : null,
@@ -82,34 +99,28 @@ export function ScheduleDrawer({
 	const selectedClassName = selectedClass?.getDisplayName() || "";
 
 	useEffect(() => {
-		if (scheduleData && (mode === "view" || mode === "edit")) {
-			setValue("classId", scheduleData.classId);
-			setValue("date", scheduleData.date);
-			setValue("time", minutesToTimeString(scheduleData.time));
-			setValue("durationMinutes", scheduleData.durationMinutes);
-			setValue("notes", scheduleData.notes || "");
-			setValue("status", scheduleData.status);
+		if (!isOpen || mode === "create") {
+			reset(getScheduleDefaultValues(selectedDateValue));
+			if (!isOpen) setIsClassDrawerOpen(false);
+			return;
 		}
-	}, [scheduleData, mode, setValue]);
 
-	useEffect(() => {
-		if (!isOpen) {
+		if (scheduleData) {
 			reset({
-				classId: "",
-				date: selectedDate ? DateTime.from(selectedDate).toDateOnlyString() : "",
-				time: "09:00",
-				durationMinutes: 60,
-				notes: "",
-				status: "SCHEDULED",
+				classId: scheduleData.classId,
+				date: scheduleData.date,
+				time: minutesToTimeString(scheduleData.time),
+				durationMinutes: scheduleData.durationMinutes,
+				notes: scheduleData.notes || "",
+				status: scheduleData.status,
 				recurring: undefined,
 			});
-			setIsRecurring(false);
 		}
-	}, [isOpen, reset, selectedDate]);
+	}, [isOpen, mode, reset, scheduleData, selectedDateValue]);
 
 	const createMutation = useCreateSchedule({
 		onSuccess: () => {
-			reset();
+			reset(getScheduleDefaultValues(selectedDateValue));
 			onOpenChange(false);
 		},
 	});
@@ -122,7 +133,7 @@ export function ScheduleDrawer({
 	});
 
 	const onSubmit = (data: ScheduleFormData) => {
-		const timeInMinutes = isRecurring
+		const timeInMinutes = data.recurring
 			? 0
 			: timeStringToMinutes(data.time || "");
 
@@ -214,159 +225,157 @@ export function ScheduleDrawer({
 			open={isOpen}
 			title={getTitle()}
 		>
-			<form
-				className="flex flex-col gap-5"
-				id={SCHEDULE_DRAWER_FORM_ID}
-				onSubmit={handleSubmit(onSubmit)}
-			>
-			{mode === "create" || mode === "edit" ? (
-				<button
-					className="w-full cursor-pointer text-left"
-					onClick={() => !isDisabled && setIsClassDrawerOpen(true)}
-					type="button"
-				>
+			<form id={SCHEDULE_DRAWER_FORM_ID} onSubmit={handleSubmit(onSubmit)}>
+				<FieldGroup className="gap-5">
 					<FormField
-						label={t("schedules:drawer.class.label")}
 						caption={
-							mode === "create" ? t("schedules:drawer.class.caption") : undefined
+							mode === "create"
+								? t("schedules:drawer.class.caption")
+								: undefined
 						}
+						disabled={isDisabled}
+						error={errors.classId?.message}
+						htmlFor="schedule-class"
+						label={t("schedules:drawer.class.label")}
 					>
-						<div
-							className={`h-9 w-full rounded-4xl border border-input bg-input/30 px-3 py-1 text-base flex items-center transition-colors ${
-								!isDisabled
-									? "hover:bg-input/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-primary/40"
-									: "opacity-50 cursor-not-allowed"
-							}`}
+						<button
+							aria-haspopup="dialog"
+							aria-invalid={!!errors.classId}
+							className={cn(
+								"flex h-9 w-full items-center rounded-4xl border border-input bg-input/30 px-3 py-1 text-left text-base transition-colors outline-none",
+								"hover:bg-input/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/40",
+								"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+								"aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20",
+							)}
+							disabled={isDisabled}
+							id="schedule-class"
+							onClick={() => setIsClassDrawerOpen(true)}
+							type="button"
 						>
 							{selectedClassName || (
 								<span className="text-muted-foreground">
 									{t("schedules:drawer.class.placeholder")}
 								</span>
 							)}
-						</div>
+						</button>
 					</FormField>
-				</button>
-			) : (
-				<FormField
-					label={t("schedules:drawer.class.label")}
-				>
-					<div className="h-9 w-full rounded-4xl border border-input bg-input/30 px-3 py-1 text-base flex items-center opacity-50">
-						{selectedClassName || t("schedules:drawer.class.placeholder")}
-					</div>
-				</FormField>
-			)}
 
-			<ClassSelectorDrawer
-				isOpen={isClassDrawerOpen}
-				onOpenChange={setIsClassDrawerOpen}
-				selectedClassId={classIdValue || null}
-				onSelect={(id) => setValue("classId", id)}
-			/>
+					<ClassSelectorDrawer
+						isOpen={isClassDrawerOpen}
+						onOpenChange={setIsClassDrawerOpen}
+						onSelect={(id) =>
+							setValue("classId", id, {
+								shouldDirty: true,
+								shouldValidate: true,
+							})
+						}
+						selectedClassId={classIdValue || null}
+					/>
 
-			{mode === "create" && (
-				<div className="flex items-center space-x-2">
-					<Checkbox
-						id="recurring"
-						checked={isRecurring}
-						onCheckedChange={(checked) => {
-							setIsRecurring(checked === true);
-							if (checked) {
-								setValue("recurring", {
-									scheduleItems: [],
-								});
-							} else {
-								setValue("recurring", undefined);
-							}
-						}}
+					{mode === "create" && (
+						<Field orientation="horizontal">
+							<Checkbox
+								checked={isRecurring}
+								id="schedule-recurring"
+								onCheckedChange={(checked) =>
+									setValue(
+										"recurring",
+										checked === true ? { scheduleItems: [] } : undefined,
+										{ shouldDirty: true, shouldValidate: true },
+									)
+								}
+								disabled={isDisabled}
+							/>
+							<FieldLabel htmlFor="schedule-recurring">
+								{t("schedules:drawer.recurring.label")}
+							</FieldLabel>
+						</Field>
+					)}
+
+					<RHFDateField
+						control={control}
+						name="date"
+						label={
+							isRecurring && mode === "create"
+								? t("schedules:drawer.date.recurringLabel")
+								: t("schedules:drawer.date.label")
+						}
+						caption={
+							mode === "create"
+								? isRecurring
+									? t("schedules:drawer.date.recurringCaption")
+									: t("schedules:drawer.date.caption")
+								: undefined
+						}
 						disabled={isDisabled}
 					/>
-					<label htmlFor="recurring" className="text-sm font-medium">
-						{t("schedules:drawer.recurring.label")}
-					</label>
-				</div>
-			)}
 
-			<RHFDateField
-				control={control}
-				name="date"
-				label={
-					isRecurring && mode === "create"
-						? t("schedules:drawer.date.recurringLabel")
-						: t("schedules:drawer.date.label")
-				}
-				caption={
-					mode === "create"
-						? isRecurring
-							? t("schedules:drawer.date.recurringCaption")
-							: t("schedules:drawer.date.caption")
-						: undefined
-				}
-				disabled={isDisabled}
-			/>
+					{!isRecurring && (
+						<RHFTimeField
+							control={control}
+							name="time"
+							label={t("schedules:drawer.time.label")}
+							caption={
+								mode === "create"
+									? t("schedules:drawer.time.caption")
+									: undefined
+							}
+							disabled={isDisabled}
+						/>
+					)}
 
-			{!isRecurring && (
-				<RHFTimeField
-					control={control}
-					name="time"
-					label={t("schedules:drawer.time.label")}
-					caption={
-						mode === "create" ? t("schedules:drawer.time.caption") : undefined
-					}
-					disabled={isDisabled}
-				/>
-			)}
+					{isRecurring && mode === "create" && (
+						<WeekdayTimeSelector
+							name="recurring.scheduleItems"
+							control={control}
+							disabled={isDisabled}
+						/>
+					)}
 
-			{isRecurring && mode === "create" && (
-				<WeekdayTimeSelector
-					name="recurring.scheduleItems"
-					control={control}
-					disabled={isDisabled}
-				/>
-			)}
+					{!isRecurring && (
+						<RHFInputField
+							control={control}
+							name="durationMinutes"
+							label={t("schedules:drawer.duration.label")}
+							caption={
+								mode === "create"
+									? t("schedules:drawer.duration.caption")
+									: undefined
+							}
+							disabled={isDisabled}
+							inputProps={{
+								type: "number",
+								min: 1,
+								placeholder: t("schedules:drawer.duration.placeholder"),
+							}}
+						/>
+					)}
 
-			{!isRecurring && (
-				<RHFInputField
-					control={control}
-					name="durationMinutes"
-					label={t("schedules:drawer.duration.label")}
-					caption={
-						mode === "create"
-							? t("schedules:drawer.duration.caption")
-							: undefined
-					}
-					disabled={isDisabled}
-					inputProps={{
-						type: "number",
-						min: 1,
-						placeholder: t("schedules:drawer.duration.placeholder"),
-					}}
-				/>
-			)}
+					<RHFInputField
+						control={control}
+						name="notes"
+						label={t("schedules:drawer.notes.label")}
+						caption={t("schedules:drawer.notes.caption")}
+						disabled={isDisabled}
+						inputProps={{
+							type: "text",
+							placeholder: t("schedules:drawer.notes.placeholder"),
+						}}
+					/>
 
-			<RHFInputField
-				control={control}
-				name="notes"
-				label={t("schedules:drawer.notes.label")}
-				caption={t("schedules:drawer.notes.caption")}
-				disabled={isDisabled}
-				inputProps={{
-					type: "text",
-					placeholder: t("schedules:drawer.notes.placeholder"),
-				}}
-			/>
-
-			{mode !== "create" && (
-				<RHFSelectField
-					control={control}
-					name="status"
-					label={t("schedules:drawer.status.label")}
-					options={statusOptions}
-					disabled={isDisabled}
-					selectProps={{
-						placeholder: t("schedules:drawer.status.placeholder"),
-					}}
-				/>
-			)}
+					{mode !== "create" && (
+						<RHFSelectField
+							control={control}
+							name="status"
+							label={t("schedules:drawer.status.label")}
+							options={statusOptions}
+							disabled={isDisabled}
+							selectProps={{
+								placeholder: t("schedules:drawer.status.placeholder"),
+							}}
+						/>
+					)}
+				</FieldGroup>
 			</form>
 		</ResponsiveDrawer>
 	);
