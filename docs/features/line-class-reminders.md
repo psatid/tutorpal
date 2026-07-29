@@ -47,15 +47,18 @@ Before enabling the worker:
 1. Apply the migration and verify it against the target PostgreSQL database.
 2. Bind the existing `DATABASE_URL` to the worker.
 3. Bind the same valid `LINE_CREDENTIALS_ENCRYPTION_KEY` to both the API and
-   worker. The backend app spec uses a placeholder which `deploy.sh` replaces
-   only from its environment; it never writes or prints the secret. Set that
-   environment variable to base64-encoded 32-byte key material before running
-   `./scripts/deploy.sh <environment> backend`. The repository does not
-   contain this secret.
-4. Build and push the matching `backend-api` and `backend-worker` images from
-   the same Git SHA, release both environment tags, then deploy the app spec.
-   The API uses `backend-api`; the `class-reminder-worker` component uses
-   `backend-worker` and no longer overrides its image command.
+   worker. The key must be base64-encoded 32-byte material; the repository
+   does not contain this secret. When it is present in the deployment
+   environment, `deploy.sh` replaces the backend app-spec placeholder without
+   writing or printing the secret. `deploy.sh` does not validate or require it,
+   so a missing or invalid key can leave LINE reminder functionality unavailable
+   at runtime.
+4. Build and push the matching API and worker images from the same Git SHA.
+   They share the `backend` repository and use component-prefixed tags:
+   `api-git-<sha>`/`worker-git-<sha>`, `api-latest`/`worker-latest`, and
+   `api-<environment>`/`worker-<environment>`. Release both environment tags,
+   then deploy the app spec. The `class-reminder-worker` component uses the
+   worker tag and does not override its image command.
 
 The raw PostgreSQL migration and `SKIP LOCKED` claim path should receive a
 target-environment smoke test before production delivery is enabled.

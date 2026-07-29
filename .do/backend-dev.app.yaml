@@ -8,7 +8,7 @@ envs:
   - key: LINE_CREDENTIALS_ENCRYPTION_KEY
     scope: RUN_TIME
     type: SECRET
-    value: __LINE_CREDENTIALS_ENCRYPTION_KEY__
+    value: EV[1:ri9K9Acd8aHYb1ewWwgpgaG3iVR4i10S:L+H805oZjl/4qOcNB2EMjIHaDLYB/awDurIC8mpKZXMWsRcp42Cc/yGLh6ZW735hlC08BLryarDBXciy]
 ingress:
   rules:
     - component:
@@ -88,19 +88,23 @@ services:
       timeout_seconds: 5
     http_port: 3000
     image:
+      deploy_on_push:
+        enabled: false
       registry: tutor-pal
       registry_type: DOCR
-      repository: backend-api
-      tag: dev
+      repository: backend
+      tag: api-dev
     instance_count: 1
     instance_size_slug: basic-xxs
     name: backend
 workers:
   - image:
+      deploy_on_push:
+        enabled: false
       registry: tutor-pal
       registry_type: DOCR
-      repository: backend-worker
-      tag: dev
+      repository: backend
+      tag: worker-dev
     envs:
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME

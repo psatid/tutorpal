@@ -16,6 +16,7 @@ NC='\033[0m'
 
 REGISTRY="registry.digitalocean.com"
 REGISTRY_NAMESPACE="tutor-pal"
+REPOSITORY="backend"
 COMPONENTS=("api" "worker")
 
 print_error() { echo -e "${RED}✗ $1${NC}"; }
@@ -23,12 +24,14 @@ print_success() { echo -e "${GREEN}✓ $1${NC}"; }
 print_info() { echo -e "${BLUE}ℹ $1${NC}"; }
 print_warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
 
-repository_for() {
-    echo "backend-$1"
-}
-
 local_image_for() {
     echo "tutor-pal-backend-$1"
+}
+
+remote_tag_for() {
+    local component=$1
+    local suffix=$2
+    echo "${component}-${suffix}"
 }
 
 PUSH_TO_REGISTRY=false
@@ -48,8 +51,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --help    Show this help message"
             echo ""
             echo "Images:"
-            echo "  tutor-pal/backend-api:git-<sha>, latest"
-            echo "  tutor-pal/backend-worker:git-<sha>, latest"
+            echo "  tutor-pal/backend:api-git-<sha>, api-latest"
+            echo "  tutor-pal/backend:worker-git-<sha>, worker-latest"
             exit 0
             ;;
         *)
@@ -113,19 +116,32 @@ if [[ "$PUSH_TO_REGISTRY" == true ]]; then
     doctl registry login
     print_success "Logged in successfully"
 
+    remote_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}"
+
+    # Push every immutable image first so no alias can point at a release whose
+    # paired component has not reached the registry yet.
     for component in "${COMPONENTS[@]}"; do
-        repository=$(repository_for "$component")
         local_image=$(local_image_for "$component")
-        remote_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}"
+        immutable_tag=$(remote_tag_for "$component" "git-${GIT_SHA}")
 
         print_info "Tagging ${component} image for registry..."
-        docker tag "${local_image}:git-${GIT_SHA}" "${remote_image}:git-${GIT_SHA}"
-        docker tag "${local_image}:latest" "${remote_image}:latest"
+        docker tag "${local_image}:git-${GIT_SHA}" "${remote_image}:${immutable_tag}"
 
-        print_info "Pushing ${component} image..."
-        docker push "${remote_image}:git-${GIT_SHA}"
-        docker push "${remote_image}:latest"
-        print_success "${component} image pushed successfully"
+        print_info "Pushing immutable ${component} image..."
+        docker push "${remote_image}:${immutable_tag}"
+        print_success "${component} immutable image pushed successfully"
+    done
+
+    for component in "${COMPONENTS[@]}"; do
+        local_image=$(local_image_for "$component")
+        latest_tag=$(remote_tag_for "$component" "latest")
+
+        print_info "Tagging ${component} latest alias for registry..."
+        docker tag "${local_image}:latest" "${remote_image}:${latest_tag}"
+
+        print_info "Pushing ${component} latest alias..."
+        docker push "${remote_image}:${latest_tag}"
+        print_success "${component} latest alias pushed successfully"
     done
 fi
 
@@ -139,11 +155,10 @@ fi
 echo "=========================================="
 echo ""
 for component in "${COMPONENTS[@]}"; do
-    repository=$(repository_for "$component")
     local_image=$(local_image_for "$component")
     if [[ "$PUSH_TO_REGISTRY" == true ]]; then
-        echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:git-${GIT_SHA}"
-        echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:latest"
+        echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(remote_tag_for "$component" "git-${GIT_SHA}")"
+        echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(remote_tag_for "$component" "latest")"
     else
         echo "  ${local_image}:git-${GIT_SHA}"
         echo "  ${local_image}:latest"

@@ -48,31 +48,6 @@ print_warning() {
     echo -e "${YELLOW}⚠ $1${NC}"
 }
 
-validate_line_credentials_encryption_key() {
-    local key="${LINE_CREDENTIALS_ENCRYPTION_KEY:-}"
-    local decoded_size
-
-    if [[ -z "$key" ]]; then
-        print_error "LINE_CREDENTIALS_ENCRYPTION_KEY is required for backend deployments"
-        exit 1
-    fi
-
-    if [[ ! "$key" =~ ^[A-Za-z0-9+/]+={0,2}$ ]] || (( ${#key} % 4 != 0 )); then
-        print_error "LINE_CREDENTIALS_ENCRYPTION_KEY must be valid base64 for exactly 32 bytes"
-        exit 1
-    fi
-
-    if ! decoded_size=$(printf '%s' "$key" | openssl base64 -d -A 2>/dev/null | wc -c | tr -d '[:space:]'); then
-        print_error "LINE_CREDENTIALS_ENCRYPTION_KEY must be valid base64 for exactly 32 bytes"
-        exit 1
-    fi
-
-    if [[ "$decoded_size" != "32" ]]; then
-        print_error "LINE_CREDENTIALS_ENCRYPTION_KEY must decode to exactly 32 bytes"
-        exit 1
-    fi
-}
-
 render_backend_spec() {
     awk '
         {
@@ -103,13 +78,12 @@ show_help() {
     echo "  $0 prod backend     # Deploy backend to production"
     echo ""
     echo "Prerequisites:"
-    echo "  - API and worker images must be released together (see release.sh)"
+    echo "  - API and worker tags in tutor-pal/backend must be released together (see release.sh)"
     echo "  - App spec must exist at .do/<component>-<environment>.app.yaml"
-    echo "  - Backend deployments require LINE_CREDENTIALS_ENCRYPTION_KEY (base64, 32 bytes)"
     echo ""
     echo "Deployment Workflow:"
-    echo "  1. Build:    ./scripts/build-push.sh --push  # API and worker images"
-    echo "  2. Release:  ./scripts/release.sh <env> [sha] # promote both images"
+    echo "  1. Build:    ./scripts/build-push.sh --push  # backend:api-* and backend:worker-* tags"
+    echo "  2. Release:  ./scripts/release.sh <env> [sha] # promote both component tags"
     echo "  3. Deploy:   ./scripts/deploy.sh <env> [component]  ← You are here"
 }
 
@@ -175,16 +149,7 @@ if ! command -v curl &> /dev/null; then
     exit 1
 fi
 
-if [[ "$COMPONENT" == "backend" ]] && ! command -v openssl &> /dev/null; then
-    print_error "openssl is not installed (required to validate LINE_CREDENTIALS_ENCRYPTION_KEY)"
-    exit 1
-fi
-
 print_success "All prerequisites met"
-
-if [[ "$COMPONENT" == "backend" ]]; then
-    validate_line_credentials_encryption_key
-fi
 
 # Special handling for production
 if [[ "$ENVIRONMENT" == "prod" ]]; then

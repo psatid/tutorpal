@@ -15,6 +15,7 @@ NC='\033[0m'
 
 REGISTRY="registry.digitalocean.com"
 REGISTRY_NAMESPACE="tutor-pal"
+REPOSITORY="backend"
 COMPONENTS=("api" "worker")
 VERIFY_ATTEMPTS=6
 VERIFY_DELAY_SECONDS=2
@@ -31,29 +32,36 @@ print_success() { echo -e "${GREEN}✓ $1${NC}"; }
 print_info() { echo -e "${BLUE}ℹ $1${NC}"; }
 print_warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
 
-repository_for() {
-    echo "backend-$1"
+registry_repository() {
+    # Docker image references include the registry namespace, while doctl's
+    # registry repository commands expect the bare repository name.
+    echo "${REPOSITORY}"
 }
 
-registry_repository_for() {
-    echo "${REGISTRY_NAMESPACE}/$1"
+tag_for() {
+    local component=$1
+    local suffix=$2
+    echo "${component}-${suffix}"
 }
 
 environment_digest_for() {
-    local repository=$1
+    local component=$1
+    local environment_tag
     local tags
 
-    if ! tags=$(doctl registry repository list-tags "$(registry_repository_for "$repository")" --format Tag,ManifestDigest --no-header); then
+    environment_tag=$(tag_for "$component" "$ENVIRONMENT")
+
+    if ! tags=$(doctl registry repository list-tags "$(registry_repository)" --format Tag,ManifestDigest --no-header); then
         return 1
     fi
 
-    printf '%s\n' "$tags" | awk -v tag="$ENVIRONMENT" '$1 == tag { print $NF; exit }'
+    printf '%s\n' "$tags" | awk -v tag="$environment_tag" '$1 == tag { print $NF; exit }'
 }
 
 source_digest_for() {
-    local repository=$1
-    local source_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:git-${GIT_SHA}"
-    local source_repository="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}"
+    local component=$1
+    local source_repository="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}"
+    local source_image="${source_repository}:$(tag_for "$component" "git-${GIT_SHA}")"
     local repo_digests
     local digest_reference
 
@@ -74,14 +82,14 @@ source_digest_for() {
 }
 
 verify_environment_tag() {
-    local repository=$1
+    local component=$1
     local expected_digest=$2
     local registry_digest
     local attempt=1
 
     while [[ $attempt -le $VERIFY_ATTEMPTS ]]; do
-        if registry_digest=$(environment_digest_for "$repository") && [[ -n "$registry_digest" && "$registry_digest" == "$expected_digest" ]]; then
-            print_success "${repository}:${ENVIRONMENT} verified: ${registry_digest}"
+        if registry_digest=$(environment_digest_for "$component") && [[ -n "$registry_digest" && "$registry_digest" == "$expected_digest" ]]; then
+            print_success "${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT") verified: ${registry_digest}"
             return 0
         fi
 
@@ -91,20 +99,20 @@ verify_environment_tag() {
         attempt=$((attempt + 1))
     done
 
-    print_error "Could not verify ${repository}:${ENVIRONMENT} at the expected digest"
+    print_error "Could not verify ${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT") at the expected digest"
     print_info "Expected: ${expected_digest}"
     print_info "Last observed: ${registry_digest:-missing}"
     return 1
 }
 
 verify_environment_tag_absent() {
-    local repository=$1
+    local component=$1
     local registry_digest
     local attempt=1
 
     while [[ $attempt -le $VERIFY_ATTEMPTS ]]; do
-        if registry_digest=$(environment_digest_for "$repository") && [[ -z "$registry_digest" ]]; then
-            print_success "${repository}:${ENVIRONMENT} removed"
+        if registry_digest=$(environment_digest_for "$component") && [[ -z "$registry_digest" ]]; then
+            print_success "${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT") removed"
             return 0
         fi
 
@@ -114,14 +122,13 @@ verify_environment_tag_absent() {
         attempt=$((attempt + 1))
     done
 
-    print_error "Could not verify removal of ${repository}:${ENVIRONMENT}"
+    print_error "Could not verify removal of ${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT")"
     return 1
 }
 
 rollback_promotions() {
     local index
     local component
-    local repository
     local environment_image
     local rollback_failed=0
 
@@ -130,24 +137,23 @@ rollback_promotions() {
         [[ "${CHANGED_COMPONENTS[$index]}" == "true" ]] || continue
 
         component=${COMPONENTS[$index]}
-        repository=$(repository_for "$component")
-        environment_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:${ENVIRONMENT}"
+        environment_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT")"
 
         if [[ "${PREVIOUS_TAG_EXISTS[$index]}" == "true" ]]; then
             print_info "Restoring ${component} ${ENVIRONMENT} tag..."
             if ! docker tag "${PREVIOUS_BACKUPS[$index]}" "$environment_image" || \
                 ! docker push "$environment_image" || \
-                ! verify_environment_tag "$repository" "${PREVIOUS_DIGESTS[$index]}"; then
+                ! verify_environment_tag "$component" "${PREVIOUS_DIGESTS[$index]}"; then
                 print_error "Failed to restore ${component} ${ENVIRONMENT} tag"
                 rollback_failed=1
             fi
         else
             print_info "Removing newly-created ${component} ${ENVIRONMENT} tag..."
-            if ! doctl registry repository delete-tag "$(registry_repository_for "$repository")" "$ENVIRONMENT" --force && \
-                ! verify_environment_tag_absent "$repository"; then
+            if ! doctl registry repository delete-tag "$(registry_repository)" "$(tag_for "$component" "$ENVIRONMENT")" --force && \
+                ! verify_environment_tag_absent "$component"; then
                 print_error "Failed to remove newly-created ${component} ${ENVIRONMENT} tag"
                 rollback_failed=1
-            elif ! verify_environment_tag_absent "$repository"; then
+            elif ! verify_environment_tag_absent "$component"; then
                 print_error "Failed to verify removal of ${component} ${ENVIRONMENT} tag"
                 rollback_failed=1
             fi
@@ -173,7 +179,7 @@ fail_release() {
 show_help() {
     echo "Usage: $0 <environment> [git-sha]"
     echo ""
-    echo "Promotes both backend-api and backend-worker images with the same git SHA."
+    echo "Promotes API and worker tags in tutor-pal/backend with the same git SHA."
     echo ""
     echo "Arguments:"
     echo "  environment    Target environment (dev, staging, prod)"
@@ -243,8 +249,7 @@ print_success "Logged in successfully"
 # Preflight every immutable source image before changing any environment tag.
 for ((index = 0; index < ${#COMPONENTS[@]}; index++)); do
     component=${COMPONENTS[$index]}
-    repository=$(repository_for "$component")
-    source_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:git-${GIT_SHA}"
+    source_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "git-${GIT_SHA}")"
     print_info "Preflighting ${component} source image..."
     if ! docker pull "$source_image"; then
         print_error "Failed to pull image: ${source_image}"
@@ -252,7 +257,7 @@ for ((index = 0; index < ${#COMPONENTS[@]}; index++)); do
         exit 1
     fi
 
-    if ! SOURCE_DIGESTS[$index]=$(source_digest_for "$repository") || [[ -z "${SOURCE_DIGESTS[$index]}" ]]; then
+    if ! SOURCE_DIGESTS[$index]=$(source_digest_for "$component") || [[ -z "${SOURCE_DIGESTS[$index]}" ]]; then
         print_error "Could not determine an immutable digest for ${source_image}"
         exit 1
     fi
@@ -263,11 +268,10 @@ done
 # local backup tag preserves it when the environment tag is overwritten below.
 for ((index = 0; index < ${#COMPONENTS[@]}; index++)); do
     component=${COMPONENTS[$index]}
-    repository=$(repository_for "$component")
-    environment_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:${ENVIRONMENT}"
+    environment_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT")"
     CHANGED_COMPONENTS[$index]=false
 
-    if ! PREVIOUS_DIGESTS[$index]=$(environment_digest_for "$repository"); then
+    if ! PREVIOUS_DIGESTS[$index]=$(environment_digest_for "$component"); then
         print_error "Could not read the current ${component} ${ENVIRONMENT} tag"
         exit 1
     fi
@@ -291,9 +295,8 @@ done
 # Only promote after all source and previous environment tags are available.
 for ((index = 0; index < ${#COMPONENTS[@]}; index++)); do
     component=${COMPONENTS[$index]}
-    repository=$(repository_for "$component")
-    source_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:git-${GIT_SHA}"
-    environment_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:${ENVIRONMENT}"
+    source_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "git-${GIT_SHA}")"
+    environment_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT")"
     print_info "Promoting ${component} image to ${ENVIRONMENT}..."
     if ! docker tag "$source_image" "$environment_image"; then
         fail_release "Failed to tag ${component} image for ${ENVIRONMENT}"
@@ -307,8 +310,7 @@ done
 
 for ((index = 0; index < ${#COMPONENTS[@]}; index++)); do
     component=${COMPONENTS[$index]}
-    repository=$(repository_for "$component")
-    if ! verify_environment_tag "$repository" "${SOURCE_DIGESTS[$index]}"; then
+    if ! verify_environment_tag "$component" "${SOURCE_DIGESTS[$index]}"; then
         fail_release "${component} ${ENVIRONMENT} tag did not reach the expected digest"
     fi
 done
@@ -323,9 +325,8 @@ fi
 echo "=========================================="
 echo ""
 for component in "${COMPONENTS[@]}"; do
-    repository=$(repository_for "$component")
-    echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:git-${GIT_SHA}"
-    echo "  → ${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:${ENVIRONMENT}"
+    echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "git-${GIT_SHA}")"
+    echo "  → ${REGISTRY}/${REGISTRY_NAMESPACE}/${REPOSITORY}:$(tag_for "$component" "$ENVIRONMENT")"
 done
 echo ""
 print_info "Next step: ./scripts/deploy.sh ${ENVIRONMENT}"
