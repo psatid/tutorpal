@@ -25,6 +25,7 @@ export default {
     description: "Description",
     required: "This field is required",
     invalidEmail: "Please enter a valid email address",
+    chooseDate: "Choose date",
   },
   loading: "Loading...",
   error: "An error occurred",

@@ -6,7 +6,7 @@ The `WeekDateSelector` is a week-based date navigation component for the schedul
 - Navigate weeks by swiping left/right or using navigation arrows
 - Select specific days within the current week
 - Jump to today's date
-- Open a full calendar drawer for date selection
+- Open the shared responsive date picker for date selection
 
 ## Architecture
 
@@ -14,8 +14,6 @@ The `WeekDateSelector` is a week-based date navigation component for the schedul
 src/components/schedules/week-date-selector/
 ├── index.tsx              # Main component controller
 ├── weekday-view.tsx       # 7-day week row display
-├── calendar-drawer.tsx    # Bottom sheet calendar
-├── calendar-view.tsx      # Calendar body (reused from shadcn)
 └── constants.ts           # Animation constants
 ```
 
@@ -66,16 +64,19 @@ function SchedulesScreen() {
 
 ### Header Controls
 
-- **Month label**: Clickable month/year display (e.g., "June 2026")
-  - Opens full calendar drawer when clicked
+- **Month label**: The existing month/year header button (for example, "June
+  2026") is supplied as `DateField`'s custom trigger and opens its shared
+  responsive picker
 - **Today button**: Quick jump to current date with calendar icon
 
-### Calendar Drawer
+### Date Picker
 
-- **Bottom sheet**: Full calendar in modal bottom drawer
+- **Desktop popover**: Compact anchored calendar
+- **Mobile sheet**: Full-width nested calendar sheet
 - **Month navigation**: Browse months with arrow buttons
 - **Date selection**: Tap any date to select and close drawer
-- **Proper drawer primitives**: Uses Base UI drawer components
+- **Shared presentation**: Uses `DateField`, which renders the shared
+  `Calendar` with the appropriate responsive presentation
 
 ## Component Details
 
@@ -103,23 +104,6 @@ interface WeekdayViewProps {
 **Touch Behavior:**
 - Swipe left (>50px): Move to next week
 - Swipe right (>50px): Move to previous week
-
-### CalendarDrawer
-
-```typescript
-interface CalendarDrawerProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedDate: Date | null;
-  onSelectDate: (date: Date) => void;
-}
-```
-
-**Features:**
-- Bottom sheet drawer with backdrop
-- Reuses `CalendarView` component
-- Closes automatically on date selection
-- Uses Base UI drawer primitives
 
 ## Styling
 
@@ -159,8 +143,8 @@ className={cn(
     : "bg-card border border-outline-variant text-on-surface hover:border-primary/30 hover:bg-surface-container-low"
 )}
 
-// Month label button
-className="px-3 py-1.5 rounded-full hover:bg-card transition-colors font-headline font-semibold text-base text-on-surface"
+// Month label custom DateField trigger
+className="min-w-0 rounded-full px-3 py-1.5 font-headline text-base font-semibold text-on-surface transition-colors hover:bg-card"
 ```
 
 ## Animation
@@ -207,6 +191,7 @@ const weekdayItemVariants = {
 ```typescript
 // locales/en/schedules.ts
 weekSelector: {
+  openCalendar: "Open calendar for {{month}}",
   today: "Today",
 }
 ```
@@ -224,13 +209,7 @@ weekSelector: {
 
 1. **No auto-scroll**: Selected date does NOT auto-scroll to center (removed old behavior)
 2. **Week update**: Selecting a date outside current week updates the week view
-3. **Calendar drawer**: Closing drawer after selection shows new week
-
-### Month Display
-
-- **Single month**: Shows month of selected date (e.g., "June 2026")
-- **Cross-month weeks**: Still shows selected date's month for consistency
-- **Clickable**: Opens calendar drawer for quick month navigation
+3. **Picker dismissal**: Selecting a date closes the popover or sheet and shows the new week
 
 ## Migration Notes
 
@@ -246,8 +225,8 @@ weekSelector: {
 
 - ✅ Fixed 7-day week display
 - ✅ Week-based navigation
-- ✅ Bottom drawer calendar
-- ✅ Month header with click-to-open
+- ✅ Shared responsive date picker
+- ✅ Month header button backed by the shared DateField
 - ✅ Today quick action
 
 ## Troubleshooting
@@ -264,11 +243,12 @@ weekSelector: {
 
 **Solution**: Check that `WeekdayView` has touch event handlers and threshold is >50px
 
-### Calendar Not Opening
+### Date Picker Not Opening
 
-**Issue**: Month label doesn't open calendar drawer
+**Issue**: Month label doesn't open the calendar
 
-**Solution**: Verify `isCalendarDrawerOpen` state is managed and `onOpenChange` is called
+**Solution**: Verify the `DateField` has a valid date-only value and its
+`onChange` callback updates `selectedDate`
 
 ### TypeScript Errors
 

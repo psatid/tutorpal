@@ -11,7 +11,9 @@ interface FormFieldProps {
   label?: string;
   htmlFor?: string;
   caption?: string;
+  captionId?: string;
   error?: string | string[];
+  errorId?: string;
   required?: boolean;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
@@ -23,7 +25,9 @@ function FormField({
   label,
   htmlFor,
   caption,
+  captionId,
   error,
+  errorId,
   required,
   disabled,
   orientation,
@@ -51,8 +55,8 @@ function FormField({
       )}
       <FieldContent>
         {children}
-        {caption && <FieldDescription>{caption}</FieldDescription>}
-        {errors && <FieldError errors={errors} />}
+        {caption && <FieldDescription id={captionId}>{caption}</FieldDescription>}
+        {errors && <FieldError id={errorId} errors={errors} />}
       </FieldContent>
     </Field>
   );

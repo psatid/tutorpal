@@ -15,6 +15,7 @@ import { DateTime } from "@/lib/date-time"
 function Calendar({
   className,
   classNames,
+  fullWidth = false,
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
@@ -24,6 +25,7 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+  fullWidth?: boolean
 }) {
   const defaultClassNames = getDefaultClassNames()
 
@@ -32,6 +34,7 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn(
         "group/calendar bg-background p-3 [--cell-radius:var(--radius-4xl)] [--cell-size:--spacing(8)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
+        fullWidth && "w-full p-0",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
@@ -44,12 +47,17 @@ function Calendar({
         ...formatters,
       }}
       classNames={{
-        root: cn("w-fit", defaultClassNames.root),
+        root: cn(fullWidth ? "w-full" : "w-fit", defaultClassNames.root),
         months: cn(
           "relative flex flex-col gap-4 md:flex-row",
+          fullWidth && "w-full",
           defaultClassNames.months
         ),
-        month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
+        month: cn(
+          "flex w-full flex-col gap-4",
+          fullWidth && "w-full",
+          defaultClassNames.month
+        ),
         nav: cn(
           "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
           defaultClassNames.nav
@@ -88,12 +96,20 @@ function Calendar({
           defaultClassNames.caption_label
         ),
         table: "w-full border-collapse",
-        weekdays: cn("flex", defaultClassNames.weekdays),
+        weekdays: cn(
+          fullWidth && (props.showWeekNumber ? "grid grid-cols-8" : "grid grid-cols-7"),
+          !fullWidth && "flex",
+          defaultClassNames.weekdays
+        ),
         weekday: cn(
-          "flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
+          fullWidth ? "min-w-0 rounded-(--cell-radius) text-center text-[0.8rem] font-normal text-muted-foreground select-none" : "flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
           defaultClassNames.weekday
         ),
-        week: cn("mt-2 flex w-full", defaultClassNames.week),
+        week: cn(
+          fullWidth && (props.showWeekNumber ? "mt-2 grid w-full grid-cols-8" : "mt-2 grid w-full grid-cols-7"),
+          !fullWidth && "mt-2 flex w-full",
+          defaultClassNames.week
+        ),
         week_number_header: cn(
           "w-(--cell-size) select-none",
           defaultClassNames.week_number_header
@@ -104,6 +120,7 @@ function Calendar({
         ),
         day: cn(
           "group/day relative aspect-square h-full w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)",
+          fullWidth && "min-w-0",
           props.showWeekNumber
             ? "[&:nth-child(2)[data-selected=true]_button]:rounded-l-(--cell-radius)"
             : "[&:first-child[data-selected=true]_button]:rounded-l-(--cell-radius)",
@@ -162,7 +179,7 @@ function Calendar({
           )
         },
         DayButton: ({ ...props }) => (
-          <CalendarDayButton locale={locale} {...props} />
+          <CalendarDayButton fullWidth={fullWidth} locale={locale} {...props} />
         ),
         WeekNumber: ({ children, ...props }) => {
           return (
@@ -185,8 +202,12 @@ function CalendarDayButton({
   day,
   modifiers,
   locale,
+  fullWidth,
   ...props
-}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
+}: React.ComponentProps<typeof DayButton> & {
+  locale?: Partial<Locale>
+  fullWidth?: boolean
+}) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -210,6 +231,7 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       className={cn(
         "relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-foreground [&>span]:text-xs [&>span]:opacity-70",
+        fullWidth && "min-w-0",
         defaultClassNames.day,
         className
       )}

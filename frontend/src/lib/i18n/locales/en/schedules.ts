@@ -154,7 +154,6 @@ export default {
 		remainingHours: "{{hours}}h left",
 	},
 	weekSelector: {
-		calendarTitle: "Choose date",
 		previousWeek: "Previous week",
 		nextWeek: "Next week",
 		today: "Today",

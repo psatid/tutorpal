@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/form/date-field";
 import { DateTime } from "@/lib/date-time";
 import { WeekdayView } from "./weekday-view";
-import { CalendarDrawer } from "./calendar-drawer";
 
 export interface WeekDateSelectorProps {
   selectedDate: Date | null;
@@ -19,7 +19,6 @@ export function WeekDateSelector({
   className,
 }: WeekDateSelectorProps) {
   const { t } = useTranslation(["schedules"]);
-  const [isCalendarDrawerOpen, setIsCalendarDrawerOpen] = useState(false);
   const [slideDirection, setSlideDirection] = useState(0);
 
   const weekDates = useMemo(() => {
@@ -66,33 +65,36 @@ export function WeekDateSelector({
     }
   };
 
-  const handleMonthClick = () => {
-    setIsCalendarDrawerOpen(true);
-  };
-
-  const handleDrawerOpenChange = (open: boolean) => {
-    setIsCalendarDrawerOpen(open);
-  };
-
   const handleCalendarDateSelect = (date: Date) => {
     if (!selectedDate) {
       setSlideDirection(0);
       onDateSelect(date);
-      setIsCalendarDrawerOpen(false);
       return;
     }
     const currentWeekStart = DateTime.from(selectedDate).startOfWeek();
     const newWeekStart = DateTime.from(date).startOfWeek();
     setSlideDirection(newWeekStart.isBefore(currentWeekStart) ? -1 : 1);
     onDateSelect(date);
-    setIsCalendarDrawerOpen(false);
+  };
+
+  const handleDateFieldChange = (value: string) => {
+    const date = DateTime.tryFromDateOnlyString(value)?.toDate();
+
+    if (date) {
+      handleCalendarDateSelect(date);
+    }
   };
 
   return (
-    <div className={cn("bg-surface rounded-2xl mb-4 overflow-hidden border border-outline-variant", className)}>
+    <div
+      className={cn(
+        "bg-surface rounded-2xl mb-4 overflow-hidden border border-outline-variant",
+        className,
+      )}
+    >
       <div className="border-b border-outline-variant px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex items-center rounded-full border border-outline-variant bg-card p-0.5">
               <Button
                 variant="ghost"
@@ -113,14 +115,27 @@ export function WeekDateSelector({
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <button
-              type="button"
-              onClick={handleMonthClick}
-              aria-label={t("schedules:weekSelector.openCalendar", { month: monthLabel })}
-              className="min-w-0 rounded-full px-3 py-1.5 font-headline text-base font-semibold text-on-surface transition-colors hover:bg-card"
-            >
-              {monthLabel}
-            </button>
+            <div className="min-w-0 flex-1">
+              <DateField
+                value={
+                  selectedDate
+                    ? DateTime.from(selectedDate).toDateOnlyString()
+                    : undefined
+                }
+                onChange={handleDateFieldChange}
+                ariaLabel={t("schedules:weekSelector.openCalendar", {
+                  month: monthLabel,
+                })}
+                trigger={
+                  <button
+                    type="button"
+                    className="min-w-0 rounded-full px-3 py-1.5 font-headline text-base font-semibold text-on-surface transition-colors hover:bg-card"
+                  >
+                    {monthLabel}
+                  </button>
+                }
+              />
+            </div>
           </div>
           <Button
             variant="outline"
@@ -140,13 +155,6 @@ export function WeekDateSelector({
         onDateSelect={onDateSelect}
         onWeekChange={handleWeekChange}
         slideDirection={slideDirection}
-      />
-
-      <CalendarDrawer
-        isOpen={isCalendarDrawerOpen}
-        onOpenChange={handleDrawerOpenChange}
-        selectedDate={selectedDate}
-        onSelectDate={handleCalendarDateSelect}
       />
     </div>
   );

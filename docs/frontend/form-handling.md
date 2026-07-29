@@ -70,6 +70,10 @@ Use the lower-level components such as `InputField`, `DateField`, and
 `FormField` only when a control is not owned by React Hook Form. Do not recreate
 label, description, error, or invalid-state markup in a feature component.
 
+`DateField` uses an anchored calendar on desktop. Below the `md` breakpoint it
+opens the calendar in a nested drawer, which avoids shifting the parent form
+drawer while keeping the same date-only form value.
+
 ## 3. Submit through `handleSubmit`
 
 Wrap the mutation call with `handleSubmit`. The handler then receives validated
