@@ -178,7 +178,10 @@ const scheduleRoutes = new Hono<AppEnv>()
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			const schedule = await scheduleService.getScheduleById(id);
+			const schedule = await scheduleService.getScheduleById(
+				id,
+				c.get("tutorId"),
+			);
 			return c.json(schedule.toScheduleDTO());
 		},
 	)
@@ -239,7 +242,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			await scheduleService.deleteSchedule(id);
+			await scheduleService.deleteSchedule(id, c.get("tutorId"));
 			return c.body(null, 204);
 		},
 	)
@@ -273,7 +276,10 @@ const scheduleRoutes = new Hono<AppEnv>()
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			const schedule = await scheduleService.completeSchedule(id);
+			const schedule = await scheduleService.completeSchedule(
+				id,
+				c.get("tutorId"),
+			);
 			return c.json(schedule.toScheduleDTO());
 		},
 	)
@@ -308,7 +314,7 @@ const scheduleRoutes = new Hono<AppEnv>()
 		}),
 		async (c) => {
 			const id = c.req.param("id");
-			const schedule = await scheduleService.restoreHours(id);
+			const schedule = await scheduleService.restoreHours(id, c.get("tutorId"));
 			return c.json(schedule.toScheduleDTO());
 		},
 	)
@@ -338,7 +344,10 @@ const scheduleRoutes = new Hono<AppEnv>()
 		}),
 		async (c) => {
 			const classId = c.req.param("classId");
-			const remainingHours = await scheduleService.getRemainingHours(classId);
+			const remainingHours = await scheduleService.getRemainingHours(
+				classId,
+				c.get("tutorId"),
+			);
 			return c.json({ remainingHours });
 		},
 	);

@@ -10,3 +10,4 @@
 - [Tutor-Owned LINE Messaging and Settings — July 18, 2026](tutor-line-settings.md)
 - [Courses and Flexible Classes — July 19, 2026](courses-and-flexible-classes.md)
 - [Unified Management Workspaces — July 19, 2026](unified-management-workspaces.md)
+- [LINE Class Reminders — July 28, 2026](line-class-reminders.md)

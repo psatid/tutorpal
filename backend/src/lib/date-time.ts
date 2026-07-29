@@ -6,8 +6,10 @@ import {
 	isBefore as isBeforeDate,
 	parseISO,
 } from "date-fns";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const SCHEDULE_TIME_ZONE = "Asia/Bangkok";
 
 export type DateTimeInput = string | Date | DateTime;
 
@@ -38,6 +40,20 @@ export class DateTime {
 		return new DateTime(new Date());
 	}
 
+	static fromBangkokDateAndMinutes(
+		date: string,
+		minutesAfterMidnight: number,
+	): DateTime {
+		const hours = Math.floor(minutesAfterMidnight / 60);
+		const minutes = minutesAfterMidnight % 60;
+		return new DateTime(
+			fromZonedTime(
+				`${date}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`,
+				SCHEDULE_TIME_ZONE,
+			),
+		);
+	}
+
 	toDate(): Date {
 		return new Date(this.dateTime);
 	}
@@ -51,6 +67,18 @@ export class DateTime {
 
 	toISOString(): string {
 		return this.dateTime.toISOString();
+	}
+
+	toBangkokDateAndMinutes(): { date: string; time: number } {
+		const date = formatInTimeZone(
+			this.dateTime,
+			SCHEDULE_TIME_ZONE,
+			"yyyy-MM-dd",
+		);
+		const time =
+			Number(formatInTimeZone(this.dateTime, SCHEDULE_TIME_ZONE, "H")) * 60 +
+			Number(formatInTimeZone(this.dateTime, SCHEDULE_TIME_ZONE, "m"));
+		return { date, time };
 	}
 
 	addDays(days: number): DateTime {

@@ -63,4 +63,20 @@ describe("DateTime", () => {
 		expect(monday.compareAsc(tuesday)).toBeLessThan(0);
 		expect(monday.getWeekdayIndex()).toBe(1);
 	});
+
+	test("converts Bangkok wall time to UTC even when it crosses the UTC day", () => {
+		const dateTime = DateTime.fromBangkokDateAndMinutes("2026-07-01", 15);
+
+		expect(dateTime.toISOString()).toBe("2026-06-30T17:15:00.000Z");
+		expect(dateTime.toBangkokDateAndMinutes()).toEqual({
+			date: "2026-07-01",
+			time: 15,
+		});
+	});
+
+	test("converts a 10:00 Bangkok class start to 03:00 UTC", () => {
+		expect(
+			DateTime.fromBangkokDateAndMinutes("2026-07-01", 10 * 60).toISOString(),
+		).toBe("2026-07-01T03:00:00.000Z");
+	});
 });

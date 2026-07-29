@@ -207,9 +207,9 @@ export class ScheduleRepository implements IScheduleRepository {
 		);
 	}
 
-	async findById(id: string): Promise<ScheduleModel | null> {
-		const schedule = await prisma.schedule.findUnique({
-			where: { id },
+	async findById(id: string, tutorId?: string): Promise<ScheduleModel | null> {
+		const schedule = await prisma.schedule.findFirst({
+			where: { id, ...(tutorId && { class: { tutorId } }) },
 			include: {
 				class: { include: classContextInclude },
 			},

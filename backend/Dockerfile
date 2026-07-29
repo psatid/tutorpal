@@ -1,46 +1,55 @@
-# Multi-stage Dockerfile for TutorPal Backend
-# Optimized for minimal image size using Bun's bundler
-# Prisma uses WASM engine (no native binary needed)
+# Multi-stage Dockerfile for TutorPal Backend.
+# Build one component at a time:
+#   docker buildx build --build-arg APP_COMPONENT=api ./backend
+#   docker buildx build --build-arg APP_COMPONENT=worker ./backend
+#
+# APP_COMPONENT is intentionally used as the final stage selector. Values other
+# than "api" or "worker" fail because no matching runtime stage exists.
 
-# Stage 1: Build
-FROM oven/bun:1-alpine AS builder
+ARG APP_COMPONENT=api
+
+# Shared build base: dependencies and generated Prisma client are identical for
+# the API and reminder worker.
+FROM oven/bun:1-alpine AS builder-base
 
 WORKDIR /app
 
-# Copy package files
 COPY package.json bun.lock ./
-
-# Install all dependencies
 RUN bun install --frozen-lockfile
 
-# Copy Prisma schema and source
 COPY prisma ./prisma/
 COPY src ./src/
 COPY tsconfig.json ./
-
-# Generate Prisma client (uses WASM engine)
 RUN bun run db:generate
 
-# Build standalone executable with Prisma files bundled
+FROM builder-base AS api-builder
 RUN bun build --target=bun --outfile=dist/index.js src/index.ts
 
-# Stage 2: Production - Minimal runtime
-FROM oven/bun:1-alpine AS production
+FROM builder-base AS worker-builder
+RUN bun build --target=bun --outfile=dist/worker.js src/worker.ts
+
+# API runtime: only the HTTP application needs curl, a port, and a health check.
+FROM oven/bun:1-alpine AS api-runtime
 
 WORKDIR /app
-
-# Install curl for health checks
 RUN apk add --no-cache curl
+COPY --from=api-builder /app/dist/index.js ./index.js
 
-# Copy the bundled application
-COPY --from=builder /app/dist/index.js ./index.js
-
-# Expose the application port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/v1/health || exit 1
 
-# Start the application
 CMD ["bun", "run", "./index.js"]
+
+# Worker runtime: no HTTP server, health check, exposed port, or curl.
+FROM oven/bun:1-alpine AS worker-runtime
+
+WORKDIR /app
+COPY --from=worker-builder /app/dist/worker.js ./worker.js
+
+CMD ["bun", "run", "./worker.js"]
+
+# Select either api-runtime or worker-runtime. An unsupported APP_COMPONENT
+# resolves to a non-existent stage and Docker exits before producing an image.
+FROM ${APP_COMPONENT}-runtime AS final

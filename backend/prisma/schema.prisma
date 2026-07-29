@@ -21,6 +21,7 @@ model Student {
   classes        ClassEnrollment[]
   lineLinkTokens LineLinkToken[]
   lineConnection TutorLineConnection? @relation(fields: [lineConnectionId], references: [id], onDelete: SetNull)
+  reminderDeliveries ClassReminderDelivery[]
 
   @@index([tutorId])
   @@index([lineConnectionId])
@@ -243,9 +244,11 @@ model Schedule {
   class             Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
   recurringSchedule RecurringSchedule?  @relation(fields: [recurringScheduleId], references: [id], onDelete: SetNull)
   hourDeduction     ClassHourDeduction?
+  reminderDeliveries ClassReminderDelivery[]
 
   @@index([classId])
   @@index([date])
+  @@index([status, date])
   @@index([recurringScheduleId])
   @@map("schedules")
 }
@@ -279,6 +282,48 @@ model RecurringSchedule {
 
   @@index([classId])
   @@map("recurring_schedules")
+}
+
+enum ClassReminderDeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+
+  @@map("class_reminder_delivery_status")
+}
+
+model ClassReminderDelivery {
+  id               String                      @id @default(uuid())
+  scheduleId       String
+  studentId        String
+  scheduledStartAt DateTime                    @db.Timestamptz(3)
+  dueAt            DateTime                    @db.Timestamptz(3)
+  status           ClassReminderDeliveryStatus @default(PENDING)
+  retryKey         String                      @unique
+  attemptCount     Int                         @default(0)
+  nextAttemptAt    DateTime?                   @db.Timestamptz(3)
+  leaseExpiresAt   DateTime?                   @db.Timestamptz(3)
+  lineConnectionId String
+  recipientLineUserId String
+  message          String
+  lastErrorCode    String?
+  providerRequestId String?
+  sentAt           DateTime?                   @db.Timestamptz(3)
+  createdAt        DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime                    @updatedAt @db.Timestamptz(3)
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, studentId, scheduledStartAt])
+  @@index([status, dueAt])
+  @@index([status, nextAttemptAt])
+  @@index([leaseExpiresAt])
+  @@index([scheduleId])
+  @@index([studentId])
+  @@map("class_reminder_deliveries")
 }
 
 model RecurringScheduleItem {

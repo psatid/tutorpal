@@ -12,6 +12,16 @@ export interface LineBotInfo {
 	displayName: string;
 }
 
+export class LinePushError extends Error {
+	constructor(
+		readonly kind: "timeout" | "network" | "server" | "client",
+		readonly status?: number,
+		readonly providerRequestId?: string,
+	) {
+		super("LINE push message failed");
+	}
+}
+
 interface LineTokenResponse {
 	access_token: string;
 	token_type: string;
@@ -86,24 +96,41 @@ export async function sendLinePushMessage(
 	lineUserId: string,
 	messages: Array<{ type: string; text: string }>,
 	channelAccessToken: string,
-): Promise<void> {
-	const response = await fetch("https://api.line.me/v2/bot/message/push", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${channelAccessToken}`,
-		},
-		body: JSON.stringify({
-			to: lineUserId,
-			messages,
-		}),
-	});
-
-	if (!response.ok) {
-		const text = await response.text();
-		console.error("LINE push message failed:", text);
-		throw new Error("Failed to send LINE push message");
+	retryKey?: string,
+): Promise<string | undefined> {
+	let response: Response;
+	try {
+		response = await fetch("https://api.line.me/v2/bot/message/push", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${channelAccessToken}`,
+				...(retryKey && { "X-Line-Retry-Key": retryKey }),
+			},
+			body: JSON.stringify({
+				to: lineUserId,
+				messages,
+			}),
+			signal: AbortSignal.timeout(10_000),
+		});
+	} catch (error) {
+		throw new LinePushError(
+			error instanceof DOMException &&
+				(error.name === "AbortError" || error.name === "TimeoutError")
+				? "timeout"
+				: "network",
+		);
 	}
+
+	if (!response.ok && response.status !== 409) {
+		throw new LinePushError(
+			response.status >= 500 ? "server" : "client",
+			response.status,
+			response.headers.get("x-line-request-id") ?? undefined,
+		);
+	}
+
+	return response.headers.get("x-line-request-id") ?? undefined;
 }
 
 export async function getLineBotInfo(

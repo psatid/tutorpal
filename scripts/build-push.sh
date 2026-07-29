@@ -1,50 +1,36 @@
 #!/bin/bash
 
-# Build and Push Docker Image for TutorPal Backend
+# Build and optionally push the TutorPal API and reminder-worker images.
 #
 # Usage:
-#   ./scripts/build-push.sh           # Build only (default)
-#   ./scripts/build-push.sh --push    # Build and push to registry
-#
-# This script:
-#   - Builds Docker image with git-<sha> tag (immutable)
-#   - Tags as 'latest' for local reference
-#   - Pushes to registry only with --push flag
-#
-# The image is tagged with the short git SHA for traceability.
-# Environment-specific tags (dev/staging/prod) are handled by release.sh
+#   ./scripts/build-push.sh           # Build both images locally
+#   ./scripts/build-push.sh --push    # Build and push both images
 
-set -e  # Exit on any error
+set -e
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Registry configuration
 REGISTRY="registry.digitalocean.com"
-REPOSITORY="tutor-pal/backend"
+REGISTRY_NAMESPACE="tutor-pal"
+COMPONENTS=("api" "worker")
 
-# Functions
-print_error() {
-    echo -e "${RED}✗ $1${NC}"
+print_error() { echo -e "${RED}✗ $1${NC}"; }
+print_success() { echo -e "${GREEN}✓ $1${NC}"; }
+print_info() { echo -e "${BLUE}ℹ $1${NC}"; }
+print_warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
+
+repository_for() {
+    echo "backend-$1"
 }
 
-print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
+local_image_for() {
+    echo "tutor-pal-backend-$1"
 }
 
-print_info() {
-    echo -e "${BLUE}ℹ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
-}
-
-# Parse arguments
 PUSH_TO_REGISTRY=false
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -55,13 +41,15 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             echo "Usage: $0 [--push]"
             echo ""
+            echo "Builds API and worker images from the same git SHA."
+            echo ""
             echo "Options:"
-            echo "  --push    Push images to registry after building"
+            echo "  --push    Push both images to DigitalOcean Container Registry"
             echo "  --help    Show this help message"
             echo ""
-            echo "Examples:"
-            echo "  $0              # Build only"
-            echo "  $0 --push       # Build and push"
+            echo "Images:"
+            echo "  tutor-pal/backend-api:git-<sha>, latest"
+            echo "  tutor-pal/backend-worker:git-<sha>, latest"
             exit 0
             ;;
         *)
@@ -72,29 +60,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check prerequisites
 print_info "Checking prerequisites..."
-
-if ! command -v git &> /dev/null; then
-    print_error "git is not installed"
-    exit 1
-fi
-
-if ! command -v docker &> /dev/null; then
-    print_error "docker is not installed"
-    exit 1
-fi
-
+for command in git docker; do
+    if ! command -v "$command" &> /dev/null; then
+        print_error "$command is not installed"
+        exit 1
+    fi
+done
 print_success "All prerequisites met"
 
-# Check for uncommitted changes
 print_info "Checking git status..."
 if [[ -n $(git status --porcelain) ]]; then
     print_warning "Uncommitted changes detected"
     echo ""
     git status --short
     echo ""
-    print_warning "Building with uncommitted changes (image will include these changes)"
+    print_warning "Both images will include the current working tree"
     read -p "Continue anyway? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -105,78 +86,67 @@ else
     print_success "Working directory is clean"
 fi
 
-# Get git SHA (shortened to 7 characters)
 GIT_SHA=$(git rev-parse --short=7 HEAD)
-print_info "Git commit SHA: ${GIT_SHA}"
-
-# Get current branch
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
+print_info "Git commit SHA: ${GIT_SHA}"
 print_info "Current branch: ${BRANCH}"
 
-# Build Docker image
-echo ""
-print_info "Building Docker image..."
-echo "  Tag: git-${GIT_SHA}"
-echo "  Tag: latest"
+for component in "${COMPONENTS[@]}"; do
+    local_image=$(local_image_for "$component")
+    echo ""
+    print_info "Building ${component} image..."
+    docker buildx build --platform linux/amd64 \
+        --build-arg "APP_COMPONENT=${component}" \
+        -t "${local_image}:git-${GIT_SHA}" \
+        ./backend --load
+    docker tag "${local_image}:git-${GIT_SHA}" "${local_image}:latest"
+    print_success "${component} image built successfully"
+done
 
-docker buildx build --platform linux/amd64 -t tutor-pal-backend:git-${GIT_SHA} ./backend --load
-docker tag tutor-pal-backend:git-${GIT_SHA} tutor-pal-backend:latest
-
-print_success "Docker image built successfully"
-
-# Push to registry if requested
 if [[ "$PUSH_TO_REGISTRY" == true ]]; then
-    # Check for doctl
     if ! command -v doctl &> /dev/null; then
         print_error "doctl is not installed (required for pushing to registry)"
         exit 1
     fi
 
-    # Login to DO Registry
-    echo ""
     print_info "Logging into DigitalOcean Container Registry..."
     doctl registry login
     print_success "Logged in successfully"
 
-    # Tag for registry
-    echo ""
-    print_info "Tagging images for registry..."
-    docker tag tutor-pal-backend:git-${GIT_SHA} ${REGISTRY}/${REPOSITORY}:git-${GIT_SHA}
-    docker tag tutor-pal-backend:latest ${REGISTRY}/${REPOSITORY}:latest
-    print_success "Images tagged for registry"
+    for component in "${COMPONENTS[@]}"; do
+        repository=$(repository_for "$component")
+        local_image=$(local_image_for "$component")
+        remote_image="${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}"
 
-    # Push to registry
-    echo ""
-    print_info "Pushing images to registry..."
-    echo "  Pushing: git-${GIT_SHA}"
-    docker push ${REGISTRY}/${REPOSITORY}:git-${GIT_SHA}
-    echo "  Pushing: latest"
-    docker push ${REGISTRY}/${REPOSITORY}:latest
-    print_success "Images pushed successfully"
+        print_info "Tagging ${component} image for registry..."
+        docker tag "${local_image}:git-${GIT_SHA}" "${remote_image}:git-${GIT_SHA}"
+        docker tag "${local_image}:latest" "${remote_image}:latest"
 
-    # Summary
-    echo ""
-    echo "=========================================="
-    print_success "Build and push complete!"
-    echo "=========================================="
-    echo ""
-    print_info "Images in registry:"
-    echo "  ${REGISTRY}/${REPOSITORY}:git-${GIT_SHA}"
-    echo "  ${REGISTRY}/${REPOSITORY}:latest"
-    echo ""
-else
-    # Summary (local build only)
-    echo ""
-    echo "=========================================="
-    print_success "Build complete!"
-    echo "=========================================="
-    echo ""
-    print_info "Local images:"
-    echo "  tutor-pal-backend:git-${GIT_SHA}"
-    echo "  tutor-pal-backend:latest"
-    echo ""
-    print_info "To push to registry, run:"
-    echo "  $0 --push"
+        print_info "Pushing ${component} image..."
+        docker push "${remote_image}:git-${GIT_SHA}"
+        docker push "${remote_image}:latest"
+        print_success "${component} image pushed successfully"
+    done
 fi
 
+echo ""
+echo "=========================================="
+if [[ "$PUSH_TO_REGISTRY" == true ]]; then
+    print_success "Build and push complete!"
+else
+    print_success "Build complete!"
+fi
+echo "=========================================="
+echo ""
+for component in "${COMPONENTS[@]}"; do
+    repository=$(repository_for "$component")
+    local_image=$(local_image_for "$component")
+    if [[ "$PUSH_TO_REGISTRY" == true ]]; then
+        echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:git-${GIT_SHA}"
+        echo "  ${REGISTRY}/${REGISTRY_NAMESPACE}/${repository}:latest"
+    else
+        echo "  ${local_image}:git-${GIT_SHA}"
+        echo "  ${local_image}:latest"
+    fi
+done
 echo ""

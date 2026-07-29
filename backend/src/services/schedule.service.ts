@@ -130,8 +130,8 @@ export class ScheduleService {
 		return this.repository.findAll(tutorId, query);
 	}
 
-	async getScheduleById(id: string): Promise<ScheduleModel> {
-		const schedule = await this.repository.findById(id);
+	async getScheduleById(id: string, tutorId: string): Promise<ScheduleModel> {
+		const schedule = await this.repository.findById(id, tutorId);
 		if (!schedule) {
 			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
 		}
@@ -144,7 +144,7 @@ export class ScheduleService {
 		tutorId: string,
 	): Promise<ScheduleModel> {
 		// Check if schedule exists first
-		const existingSchedule = await this.repository.findById(id);
+		const existingSchedule = await this.repository.findById(id, tutorId);
 		if (!existingSchedule) {
 			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
 		}
@@ -265,9 +265,9 @@ export class ScheduleService {
 		);
 	}
 
-	async deleteSchedule(id: string): Promise<void> {
+	async deleteSchedule(id: string, tutorId: string): Promise<void> {
 		// Check if schedule exists first
-		const existingSchedule = await this.repository.findById(id);
+		const existingSchedule = await this.repository.findById(id, tutorId);
 		if (!existingSchedule) {
 			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
 		}
@@ -275,15 +275,21 @@ export class ScheduleService {
 		await this.repository.delete(id);
 	}
 
-	async completeSchedule(id: string): Promise<ScheduleModel> {
+	async completeSchedule(id: string, tutorId: string): Promise<ScheduleModel> {
+		await this.getScheduleById(id, tutorId);
 		return this.repository.completeSchedule(id);
 	}
 
-	async restoreHours(id: string): Promise<ScheduleModel> {
+	async restoreHours(id: string, tutorId: string): Promise<ScheduleModel> {
+		await this.getScheduleById(id, tutorId);
 		return this.repository.restoreHours(id);
 	}
 
-	async getRemainingHours(classId: string): Promise<number> {
+	async getRemainingHours(classId: string, tutorId: string): Promise<number> {
+		const classData = await classRepository.findById(classId, tutorId);
+		if (!classData) {
+			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
+		}
 		return this.repository.getRemainingHours(classId);
 	}
 }

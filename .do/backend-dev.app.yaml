@@ -4,6 +4,11 @@ domains:
     zone: tutorpal.io
 features:
   - buildpack-stack=ubuntu-22
+envs:
+  - key: LINE_CREDENTIALS_ENCRYPTION_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: __LINE_CREDENTIALS_ENCRYPTION_KEY__
 ingress:
   rules:
     - component:
@@ -85,8 +90,22 @@ services:
     image:
       registry: tutor-pal
       registry_type: DOCR
-      repository: backend
+      repository: backend-api
       tag: dev
     instance_count: 1
     instance_size_slug: basic-xxs
     name: backend
+workers:
+  - image:
+      registry: tutor-pal
+      registry_type: DOCR
+      repository: backend-worker
+      tag: dev
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: EV[1:F/4n8QMTkQBG1khhBdlCGRnZpTU6j3K3:h/V/tpeXD6Y8vUolt4FI/pUVdMCavolK8VXirLnC4UcWqjhUmanUhjhA+Bdy49oxQfcLkCRf4kXQcJ9Kn9Gx8hqk/kfXhcEV+3FiVPgb8tUG8uyA/3eB5px3jPXijwz+VTuBIxWQc+Qkm40HPZS5KDPzjnxYz2SX7U6MQVA8guq+bBkd55UhNagmbXNf54uUwq0qR4wSKw==]
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    name: class-reminder-worker

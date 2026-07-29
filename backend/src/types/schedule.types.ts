@@ -113,7 +113,7 @@ export interface IScheduleRepository {
 		tutorId: string,
 		query?: ScheduleListQueryDTO,
 	): Promise<ScheduleModel[]>;
-	findById(id: string): Promise<ScheduleModel | null>;
+	findById(id: string, tutorId?: string): Promise<ScheduleModel | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel>;
 	delete(id: string): Promise<void>;
 	completeSchedule(id: string): Promise<ScheduleModel>;
