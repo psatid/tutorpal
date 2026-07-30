@@ -87,6 +87,8 @@ export default {
 	line: {
 		linkLabel: "Link LINE",
 		relinkLabel: "Reconnect LINE",
+		connectionChecking: "Checking LINE connection…",
+		connectionUnavailable: "LINE is unavailable or not set up. Check Settings.",
 		needsRelink: "Reconnect LINE",
 		linkConfirm: "Generate a LINE linking link to send to this student?",
 		linkGenerate: "Generate Link",

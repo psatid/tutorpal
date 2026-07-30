@@ -56,6 +56,10 @@
 - **i18n** (`students.ts`):
   - Added `line.linkLabel`, `line.linkConfirm`, `line.linkGenerate`, `line.linkCopied`, `line.alreadyLinked`
 
+**Student List availability**:
+- The Link LINE and Reconnect LINE actions are enabled only after the tutor configures LINE.
+- While the connection is checking, or when it is unavailable, errors, or unconfigured, the action is disabled with explanatory copy and cannot generate a linking token.
+
 **Linking Flow**:
 1. Tutor clicks "Link LINE" on student card dropdown
 2. Confirmation dialog appears

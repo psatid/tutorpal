@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ interface UseLogoutOptions {
  */
 export const useLogout = (options?: UseLogoutOptions) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
@@ -20,6 +21,7 @@ export const useLogout = (options?: UseLogoutOptions) => {
     },
     onSuccess: () => {
       toast.success("You have been logged out.");
+      queryClient.removeQueries();
       navigate({ to: "/login" });
       options?.onSuccess?.();
     },

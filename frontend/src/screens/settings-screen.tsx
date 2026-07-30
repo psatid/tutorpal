@@ -1,12 +1,11 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, LogOut, MessageCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { useLogout } from "@/hooks/mutations/use-logout";
-import { getLineConnection } from "@/lib/line-settings-api";
+import { useLineConnection } from "@/hooks/queries/use-line-connection";
 import { APP_ROUTES } from "@/constants/routes";
 
 function initials(name?: string) {
@@ -24,11 +23,7 @@ export function SettingsScreen() {
   const logout = useLogout();
   const location = useLocation();
   const navigate = useNavigate();
-  const connection = useQuery({
-    queryKey: ["line", "connection"],
-    queryFn: getLineConnection,
-    retry: false,
-  });
+  const connection = useLineConnection();
   const status = connection.data?.configured
     ? t("settings:line.connected")
     : t("settings:line.notConnected");

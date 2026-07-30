@@ -14,6 +14,7 @@ import { useDeleteStudent } from "@/hooks/mutations/use-delete-student";
 import { useGenerateLineLink } from "@/hooks/mutations/use-generate-line-link";
 import { useSendLineTestMessage } from "@/hooks/mutations/use-send-line-test-message";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { useLineConnection } from "@/hooks/queries/use-line-connection";
 import { Student } from "@/models/student";
 
 interface StudentListProps {
@@ -47,6 +48,12 @@ export function StudentList({
 	const deleteMutation = useDeleteStudent();
 	const lineLinkMutation = useGenerateLineLink();
 	const sendTestMessageMutation = useSendLineTestMessage();
+	const lineConnection = useLineConnection();
+	const lineConnectionAvailability = lineConnection.data?.configured
+		? "configured"
+		: lineConnection.isLoading
+			? "checking"
+			: "unavailable";
 
 	const [lineLinkModalOpen, setLineLinkModalOpen] = useState(false);
 	const [generatedLinkUrl, setGeneratedLinkUrl] = useState("");
@@ -178,6 +185,7 @@ export function StudentList({
 					<StudentRow
 						key={student.getId()}
 						onDelete={() => handleDeleteStudent(student)}
+						lineConnectionAvailability={lineConnectionAvailability}
 						onLinkLine={() => handleLinkLine(student)}
 						onSendTestMessage={() => handleSendTestMessage(student)}
 						onView={() => onViewStudent(student)}

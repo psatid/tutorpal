@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -15,9 +15,10 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { lineQueryKeys } from "@/constants/query-keys/line-query-keys";
+import { useLineConnection } from "@/hooks/queries/use-line-connection";
 import { DateTime } from "@/lib/date-time";
 import {
-  getLineConnection,
   saveLineConnection,
   sendLineConnectionTestMessage,
   startLineTestRecipientAuthorization,
@@ -45,16 +46,12 @@ export function LineSettingsScreen() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [credentials, setCredentials] = useState(emptyCredentials);
-  const connection = useQuery({
-    queryKey: ["line", "connection"],
-    queryFn: getLineConnection,
-    retry: false,
-  });
+  const connection = useLineConnection();
 
   const save = useMutation({
     mutationFn: saveLineConnection,
     onSuccess: (data) => {
-      queryClient.setQueryData(["line", "connection"], data);
+      queryClient.setQueryData(lineQueryKeys.connection(), data);
       setCredentials(emptyCredentials);
       setEditing(false);
       toast.success(t("settings:line.saved"));
@@ -77,7 +74,7 @@ export function LineSettingsScreen() {
   useEffect(() => {
     const testRecipient = new URLSearchParams(window.location.search).get("testRecipient");
     if (testRecipient === "connected") {
-      queryClient.invalidateQueries({ queryKey: ["line", "connection"] });
+      queryClient.invalidateQueries({ queryKey: lineQueryKeys.connection() });
       toast.success(t("settings:line.testAccountConnected"));
       window.history.replaceState({}, "", "/settings/line");
     }
