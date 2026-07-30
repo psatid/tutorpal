@@ -12,8 +12,7 @@ export function errorHandler(err: Error, c: Context) {
 		);
 	}
 
-	// Log unexpected errors for debugging
-	console.error("Unexpected error:", err);
+	c.set("unexpectedError", err);
 
 	return c.json(
 		{

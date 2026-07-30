@@ -31,8 +31,9 @@ prisma/migrations/
 *.md
 docs/
 
-# Scripts (not needed in production image)
-scripts/
+# Scripts (only the API bundle helper is needed in the build image)
+scripts/*
+!scripts/build-api.ts
 
 # OpenAPI spec (generated at runtime)
 openapi/

@@ -19,11 +19,12 @@ RUN bun install --frozen-lockfile
 
 COPY prisma ./prisma/
 COPY src ./src/
+COPY scripts ./scripts/
 COPY tsconfig.json ./
 RUN bun run db:generate
 
 FROM builder-base AS api-builder
-RUN bun build --target=bun --outfile=dist/index.js src/index.ts
+RUN bun run build:api
 
 FROM builder-base AS worker-builder
 RUN bun build --target=bun --outfile=dist/worker.js src/worker.ts
@@ -33,7 +34,7 @@ FROM oven/bun:1-alpine AS api-runtime
 
 WORKDIR /app
 RUN apk add --no-cache curl
-COPY --from=api-builder /app/dist/index.js ./index.js
+COPY --from=api-builder /app/dist ./
 
 EXPOSE 3000
 

@@ -1,18 +1,21 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 import { openAPIRouteHandler } from "hono-openapi";
 import { auth } from "./lib/auth";
 import { ENV } from "./lib/env";
+import { createLogger } from "./lib/logger";
 import { errorHandler } from "./middleware/error-handler";
+import { createRequestLogger } from "./middleware/request-logger";
 import { createRoutes } from "./routes";
 
 const port = Number(ENV.PORT);
 
 const routes = createRoutes();
+const apiLogger = createLogger("api");
 
 const app = new Hono();
-app.use(logger());
+app.use(createRequestLogger(apiLogger));
+app.onError(errorHandler);
 
 // Enable CORS for all routes
 const corsMiddleware = cors({
@@ -32,7 +35,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 });
 
 // Mount API routes
-app.route("/", routes).onError(errorHandler);
+app.route("/", routes);
 
 // Serve OpenAPI spec generated from describeRoute metadata
 app.get(
