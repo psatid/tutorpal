@@ -25,7 +25,7 @@ export const Route = createRootRoute({
         </TooltipProvider>
       </QueryClientProvider>
       <Toaster richColors duration={3000} />
-      {ENV.IS_DEV && <TanStackRouterDevtools />}
+      {/* {ENV.IS_DEV && <TanStackRouterDevtools />} */}
     </AuthProvider>
   ),
 });

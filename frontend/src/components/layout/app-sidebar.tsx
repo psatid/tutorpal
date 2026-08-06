@@ -1,111 +1,155 @@
-import { BookOpen01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Link, useLocation } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-	SidebarRail,
-	SidebarSeparator,
-	SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { APP_ROUTES } from "@/constants/routes";
-import { isNavigationItemActive, navigationItems } from "./navigation-items";
+import { Link, useLocation } from "@tanstack/react-router";
+import {
+  ChevronsUpDown,
+  CommandIcon,
+  HomeIcon,
+  CalendarCheck2Icon,
+  BookOpenIcon,
+  UsersIcon,
+  SchoolIcon,
+} from "lucide-react";
+import {
+  RailCollapse,
+  TriggerLeftSidebarCollapse,
+  TriggerMobileSidebar,
+} from "./triggers";
+import UserSetting from "./user-settings";
+import { useTranslation } from "react-i18next";
+import { useSession } from "@/hooks/use-session";
+import { isNavigationItemActive } from "./navigation-items";
 
-export function AppSidebar() {
-	const { t } = useTranslation(["navigation", "settings"]);
-	const location = useLocation();
+const navigationItems = [
+  { labelKey: "navigation:home", href: APP_ROUTES.HOME, icon: HomeIcon },
+  {
+    labelKey: "navigation:students",
+    href: APP_ROUTES.STUDENTS,
+    icon: UsersIcon,
+  },
+  {
+    labelKey: "navigation:courses",
+    href: APP_ROUTES.COURSES,
+    icon: BookOpenIcon,
+  },
+  {
+    labelKey: "navigation:classes",
+    href: APP_ROUTES.CLASSES,
+    icon: SchoolIcon,
+  },
+  {
+    labelKey: "navigation:schedules",
+    href: APP_ROUTES.SCHEDULES,
+    icon: CalendarCheck2Icon,
+  },
+] as const;
 
-	return (
-		<Sidebar collapsible="icon">
-			<SidebarHeader>
-				<div className="flex h-12 items-center gap-2 group-data-[collapsible=icon]:justify-center">
-					<Link
-						aria-label="TutorPal home"
-						className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden px-1 group-data-[collapsible=icon]:hidden"
-						preload="intent"
-						to={APP_ROUTES.HOME}
-					>
-						<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-							<HugeiconsIcon
-								className="size-5"
-								icon={BookOpen01Icon}
-								strokeWidth={2}
-							/>
-						</span>
-						<span className="truncate text-lg font-extrabold tracking-tight">
-							TutorPal
-						</span>
-					</Link>
-					<SidebarTrigger className="shrink-0" />
-				</div>
-			</SidebarHeader>
+export const AppSidebar = () => {
+  const { t } = useTranslation(["navigation", "settings"]);
+  const { session } = useSession();
+  const location = useLocation();
 
-			<SidebarContent>
-				<nav aria-label="Primary navigation">
-					<SidebarGroup>
-						<SidebarGroupContent>
-							<SidebarMenu>
-								{navigationItems.map((item) => {
-									const active = isNavigationItemActive(
-										location.pathname,
-										item.href,
-									);
-									const label = t(item.labelKey);
+  return (
+    <>
+      <div className="jun-header">
+        <div className="container flex items-center gap-4 px-4">
+          <TriggerMobileSidebar />
+          <TriggerLeftSidebarCollapse />
+        </div>
+      </div>
 
-									return (
-										<SidebarMenuItem key={item.href}>
-											<SidebarMenuButton
-												isActive={active}
-												render={
-													<Link
-														aria-current={active ? "page" : undefined}
-														preload="intent"
-														to={item.href}
-													/>
-												}
-												tooltip={label}
-												variant="navigation"
-											>
-												<HugeiconsIcon icon={item.icon} strokeWidth={2} />
-												<span>{label}</span>
-											</SidebarMenuButton>
-										</SidebarMenuItem>
-									);
-								})}
-							</SidebarMenu>
-						</SidebarGroupContent>
-					</SidebarGroup>
-				</nav>
-			</SidebarContent>
+      <aside
+        className="jun-edgeSidebar
+          jun-edgeSidebar-drawer
+          md:jun-edgeSidebar-permanent
+          md:jun-edgeSidebar-w-[280px]
+          md:jun-edgeSidebar-collapsed-w-[3rem]
+          jun-edgeSidebar-permanent-autoCollapse-lg"
+      >
+        <div className="jun-edgeContent jun-sidebarContainer">
+          <div className="flex flex-col p-2">
+            <button className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
+              <div className="jun-sidebarIcon flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <CommandIcon className="size-4" />
+              </div>
+              <div className="jun-sidebarText text-left text-sm leading-tight flex items-center">
+                <div className="flex-1">
+                  <div className="truncate font-semibold">TutorPal</div>
+                  <div className="truncate text-xs">
+                    Hello, {session?.user?.name}
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <nav className="jun-sidebarGroup" aria-label="Primary navigation">
+              <ul className="jun-sidebarMenu">
+                {navigationItems.map((item) => {
+                  const active = isNavigationItemActive(
+                    location.pathname,
+                    item.href,
+                  );
+                  const label = t(item.labelKey);
 
-			<SidebarSeparator />
-			<SidebarFooter>
-				<nav aria-label="Application settings">
-					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton
-								render={
-									<Link preload="intent" to={APP_ROUTES.SETTINGS} />
-								}
-								tooltip={t("settings:title")}
-								variant="navigation"
-							>
-								<HugeiconsIcon icon={Settings01Icon} strokeWidth={2} />
-								<span>{t("settings:title")}</span>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</nav>
-			</SidebarFooter>
-			<SidebarRail />
-		</Sidebar>
-	);
-}
+                  return (
+                    <li className="jun-sidebarMenuItem" key={item.href}>
+                      <Link
+                        aria-current={active ? "page" : undefined}
+                        aria-label={label}
+                        className={
+                          active
+                            ? "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-sidebar-primary/10 text-primary hover:bg-primary/10 hover:text-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary dark:focus-visible:ring-primary-foreground"
+                            : "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-foreground"
+                        }
+                        preload="intent"
+                        to={item.href}
+                      >
+                        <item.icon className="jun-sidebarIcon" />
+                        <span className="jun-sidebarText font-semibold">
+                          {label}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
+          <div className="p-2">
+            <ul className="jun-sidebarMenu">
+              <li className="jun-sidebarMenuItem">
+                <UserSetting>
+                  <button className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
+                    <Avatar className="jun-sidebarIcon h-8 w-8 rounded-lg">
+                      <AvatarImage src="/unknow.png" alt="Unknown" />
+                      <AvatarFallback className="rounded-lg">
+                        {session?.user?.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="jun-sidebarText flex items-center flex-1 text-left text-sm leading-tight">
+                      <div className="flex-1">
+                        <div className="truncate font-semibold">
+                          {session?.user?.name || "Unknown"}
+                        </div>
+                        <div className="truncate text-xs">
+                          {session?.user?.email || "unknown@test.com"}
+                        </div>
+                      </div>
+                      <ChevronsUpDown className="ml-auto size-4" />
+                    </div>
+                  </button>
+                </UserSetting>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <RailCollapse />
+      </aside>
+    </>
+  );
+};

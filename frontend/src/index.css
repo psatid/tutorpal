@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-jun-layout";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource/manrope/400.css";
@@ -142,6 +143,9 @@
 }
 
 @layer utilities {
+  .jun-edgeSidebar::before {
+    backdrop-filter: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
