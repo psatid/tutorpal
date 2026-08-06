@@ -11,3 +11,4 @@
 - [Courses and Flexible Classes — July 19, 2026](courses-and-flexible-classes.md)
 - [Unified Management Workspaces — July 19, 2026](unified-management-workspaces.md)
 - [LINE Class Reminders — July 28, 2026](line-class-reminders.md)
+- [On-site / Online Schedule Types — August 6, 2026](schedule-type.md)

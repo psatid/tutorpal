@@ -1,4 +1,4 @@
-import { CalendarRange, Pencil, Repeat2 } from "lucide-react";
+import { CalendarRange, MapPin, Monitor, Pencil, Repeat2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,17 +113,27 @@ export function RecurringScheduleSection({
 							<p className="text-base font-semibold text-on-surface">
 								{t("schedules:recurring.sectionTitle")}
 							</p>
-							<Badge
-								variant="outline"
-								className="inline-flex max-w-full gap-1 self-start whitespace-normal text-left"
-							>
-								<CalendarRange className="mt-0.5 h-3 w-3 shrink-0" />
-								<span>
-									{t("schedules:recurring.startsOn", {
-										date: recurringSchedule.startDate,
-									})}
-								</span>
-							</Badge>
+							<div className="flex flex-wrap gap-2">
+								<Badge
+									variant="outline"
+									className="inline-flex max-w-full gap-1 self-start whitespace-normal text-left"
+								>
+									<CalendarRange className="mt-0.5 h-3 w-3 shrink-0" />
+									<span>
+										{t("schedules:recurring.startsOn", {
+											date: recurringSchedule.startDate,
+										})}
+									</span>
+								</Badge>
+								<Badge variant="outline" className="inline-flex gap-1">
+									{recurringSchedule.type === "ONLINE" ? (
+										<Monitor className="h-3 w-3 shrink-0" aria-hidden="true" />
+									) : (
+										<MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+									)}
+									<span>{t(`schedules:type.${recurringSchedule.type}`)}</span>
+								</Badge>
+							</div>
 						</div>
 
 						<div className="flex flex-wrap gap-2">

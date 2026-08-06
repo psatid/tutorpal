@@ -14,6 +14,10 @@ export default {
 		NO_SHOW: "No Show",
 		CANCELLED: "Cancelled",
 	},
+	type: {
+		ON_SITE: "On-site",
+		ONLINE: "Online",
+	},
 	delete: {
 		confirm: "Are you sure you want to delete this schedule?",
 		confirmButton: "Delete",
@@ -63,7 +67,9 @@ export default {
 			"Starting {{date}}, {{count}} future generated sessions will be replaced.",
 		confirmTitle: "Update recurring schedule?",
 		confirmDescription:
-			"Starting {{date}}, TutorPal will recreate {{count}} future generated sessions to follow the new pattern. Past schedules will not change.",
+			"Starting {{date}}, TutorPal will recreate {{count}} future generated sessions to follow the new pattern. Type: {{type}}. Past schedules will not change.",
+		previewType: "Schedule type: {{type}}",
+		typeNotSelected: "a schedule type",
 		notSelected: "your selected date",
 		drawer: {
 			createTitle: "Create Recurring Schedule",
@@ -110,6 +116,11 @@ export default {
 			caption: "Required",
 			placeholder: "Select status",
 		},
+		type: {
+			label: "Schedule type",
+			caption: "Choose where this session will take place.",
+			error: "Choose a schedule type.",
+		},
 		recurring: {
 			label: "Make this recurring",
 			startDate: {
@@ -140,7 +151,6 @@ export default {
 	},
 	addSchedule: "Add Schedule",
 	description: "View and manage your tutoring calendar and upcoming sessions.",
-	online: "Online",
 	empty: "No schedules found. Create your first schedule to get started.",
 	filter: {
 		all: "All",

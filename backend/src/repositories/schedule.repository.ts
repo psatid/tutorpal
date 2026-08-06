@@ -1,4 +1,9 @@
-import type { Prisma, ScheduleStatus, Weekday } from "@prisma/client";
+import type {
+	Prisma,
+	ScheduleStatus,
+	ScheduleType,
+	Weekday,
+} from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import { prisma } from "../lib/db";
 import { AppError } from "../lib/error";
@@ -41,6 +46,7 @@ const classContextInclude = {
 type GeneratedScheduleData = {
 	classId: string;
 	date: string;
+	type: ScheduleType;
 	time: number;
 	durationMinutes: number;
 };
@@ -67,6 +73,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					durationMinutes,
 					notes: data.notes || null,
 					status: "SCHEDULED",
+					type: data.type,
 				},
 				include: {
 					class: { include: classContextInclude },
@@ -105,6 +112,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		data: Array<{
 			classId: string;
 			date: string;
+			type: ScheduleType;
 			time: number;
 			durationMinutes: number;
 		}>,
@@ -121,6 +129,7 @@ export class ScheduleRepository implements IScheduleRepository {
 				durationMinutes: item.durationMinutes,
 				notes: null,
 				status: "SCHEDULED",
+				type: item.type,
 			})),
 		});
 
@@ -236,6 +245,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					...(data.durationMinutes !== undefined && {
 						durationMinutes: data.durationMinutes,
 					}),
+					...(data.type !== undefined && { type: data.type }),
 					...(data.notes !== undefined && { notes: data.notes || null }),
 					...(data.status !== undefined && { status: data.status }),
 				},
@@ -369,6 +379,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			data.classId,
 			data.recurring.startDate,
 			data.recurring.scheduleItems,
+			data.type,
 			remainingHours,
 		);
 
@@ -387,6 +398,7 @@ export class ScheduleRepository implements IScheduleRepository {
 						data.recurring.startDate,
 					).toDate(),
 					notes: data.notes || null,
+					type: data.type,
 				},
 				include: { class: { include: classContextInclude } },
 			});
@@ -412,6 +424,7 @@ export class ScheduleRepository implements IScheduleRepository {
 						durationMinutes: item.durationMinutes,
 						notes: data.notes || null,
 						status: "SCHEDULED",
+						type: item.type,
 					})),
 				});
 			}
@@ -530,10 +543,12 @@ export class ScheduleRepository implements IScheduleRepository {
 				tx,
 				existingRecurringSchedule.classId,
 			);
+			const recurringType = data.type ?? existingRecurringSchedule.type;
 			const scheduleData = this.generateScheduleData(
 				existingRecurringSchedule.classId,
 				data.effectiveDate,
 				data.scheduleItems,
+				recurringType,
 				remainingHours,
 			);
 
@@ -555,6 +570,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					classId: existingRecurringSchedule.classId,
 					startDate: DateTime.fromDateOnlyString(data.effectiveDate).toDate(),
 					notes: data.notes ?? existingRecurringSchedule.notes,
+					type: recurringType,
 				},
 				include: {
 					class: { include: classContextInclude },
@@ -579,6 +595,7 @@ export class ScheduleRepository implements IScheduleRepository {
 					durationMinutes: item.durationMinutes,
 					notes: data.notes ?? existingRecurringSchedule.notes,
 					status: "SCHEDULED",
+					type: item.type,
 				})),
 			});
 
@@ -613,6 +630,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		classId: string,
 		startDate: string,
 		items: Array<{ weekday: Weekday; time: number; durationMinutes: number }>,
+		type: ScheduleType,
 		remainingHours: number,
 	): GeneratedScheduleData[] {
 		const scheduleData: GeneratedScheduleData[] = [];
@@ -645,6 +663,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			scheduleData.push({
 				classId,
 				date: nextOccurrence.date.toDateOnlyString(),
+				type,
 				time: nextOccurrence.item.time,
 				durationMinutes: nextOccurrence.item.durationMinutes,
 			});

@@ -98,7 +98,7 @@ export class ScheduleService {
 		data: CreateScheduleDTO,
 		tutorId: string,
 	): Promise<ScheduleModel> {
-		const { classId, notes, recurring } = data;
+		const { classId, notes, recurring, type } = data;
 		if (!recurring) {
 			throw new Error("Recurring pattern is required");
 		}
@@ -114,6 +114,7 @@ export class ScheduleService {
 
 		return this.repository.createRecurringSchedule({
 			classId,
+			type,
 			notes,
 			recurring,
 		});
@@ -169,6 +170,7 @@ export class ScheduleService {
 			data.date !== undefined ||
 			data.time !== undefined ||
 			data.durationMinutes !== undefined ||
+			data.type !== undefined ||
 			data.notes !== undefined;
 
 		const hasEnoughHours = await this.validateScheduleCapacity(

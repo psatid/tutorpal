@@ -1,8 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
 import { Button } from "@/components/ui/button";
@@ -38,10 +40,11 @@ export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
 const SCHEDULE_DRAWER_FORM_ID = "schedule-drawer-form";
 
-function getScheduleDefaultValues(date: string): ScheduleFormData {
+function getScheduleDefaultValues(date: string): DefaultValues<ScheduleFormData> {
 	return {
 		classId: "",
 		date,
+		type: undefined,
 		time: "09:00",
 		durationMinutes: 60,
 		notes: "",
@@ -109,6 +112,7 @@ export function ScheduleDrawer({
 			reset({
 				classId: scheduleData.classId,
 				date: scheduleData.date,
+				type: scheduleData.type,
 				time: minutesToTimeString(scheduleData.time),
 				durationMinutes: scheduleData.durationMinutes,
 				notes: scheduleData.notes || "",
@@ -133,6 +137,10 @@ export function ScheduleDrawer({
 	});
 
 	const onSubmit = (data: ScheduleFormData) => {
+		if (!data.type) {
+			return;
+		}
+
 		const timeInMinutes = data.recurring
 			? 0
 			: timeStringToMinutes(data.time || "");
@@ -141,6 +149,7 @@ export function ScheduleDrawer({
 			createMutation.mutate({
 				classId: data.classId,
 				date: data.date,
+				type: data.type,
 				time: timeInMinutes,
 				durationMinutes: data.durationMinutes,
 				notes: data.notes,
@@ -161,6 +170,7 @@ export function ScheduleDrawer({
 				data: {
 					classId: data.classId,
 					date: data.date,
+					type: data.type,
 					time: timeInMinutes,
 					durationMinutes: data.durationMinutes,
 					notes: data.notes,
@@ -201,7 +211,11 @@ export function ScheduleDrawer({
 			<Button
 				className="w-full md:w-fit"
 				leftIcon={Pencil}
-				onClick={() => onModeChange("edit")}
+				onClick={(event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					onModeChange("edit");
+				}}
 				type="button"
 			>
 				{t("schedules:drawer.editButton")}
@@ -270,6 +284,23 @@ export function ScheduleDrawer({
 							})
 						}
 						selectedClassId={classIdValue || null}
+					/>
+
+					<Controller
+						control={control}
+						name="type"
+						render={({ field, fieldState }) => (
+							<ScheduleTypeField
+								caption={t("schedules:drawer.type.caption")}
+								disabled={isDisabled}
+								error={fieldState.error?.message}
+								label={t("schedules:drawer.type.label")}
+								name="schedule-type"
+								onChange={field.onChange}
+								readOnly={mode === "view"}
+								value={field.value}
+							/>
+						)}
 					/>
 
 					{mode === "create" && (

@@ -8,6 +8,8 @@ import {
   RotateCcw,
   Trash2,
   MoreVertical,
+  MapPin,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
@@ -144,6 +146,8 @@ export function ScheduleLog({
               );
               const status = statusColors[schedule.status];
               const StatusIcon = status?.icon;
+              const ScheduleTypeIcon =
+                schedule.type === "ONLINE" ? Monitor : MapPin;
 
               return (
                 <motion.div
@@ -169,6 +173,13 @@ export function ScheduleLog({
                       <span className="text-xs text-on-surface-variant">
                         {formatDuration(schedule.durationMinutes)}
                       </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1 text-xs text-on-surface-variant">
+                      <ScheduleTypeIcon
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
+                      <span>{t(`schedules:type.${schedule.type}`)}</span>
                     </div>
                     {schedule.notes && (
                       <p className="text-xs text-on-surface-variant truncate mt-0.5">

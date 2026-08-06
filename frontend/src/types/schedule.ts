@@ -9,10 +9,15 @@ export type Weekday =
 	| "SATURDAY"
 	| "SUNDAY";
 
+export type ScheduleType = "ON_SITE" | "ONLINE";
+
+export const scheduleTypeSchema = z.enum(["ON_SITE", "ONLINE"]);
+
 export interface RecurringScheduleSummary {
 	id: string;
 	startDate: string;
 	notes?: string | null;
+	type: ScheduleType;
 	scheduleItems: Array<{
 		id?: string;
 		weekday: Weekday;
@@ -26,6 +31,9 @@ export const scheduleSchema = z
 	.object({
 		classId: z.string().min(1, "Class is required"),
 		date: z.string().min(1, "Date is required"),
+		type: scheduleTypeSchema
+			.optional()
+			.refine((value) => value !== undefined, "Choose a schedule type."),
 		time: z.string().optional(),
 		durationMinutes: z
 			.number()

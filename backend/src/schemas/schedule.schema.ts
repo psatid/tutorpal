@@ -9,6 +9,8 @@ export const ScheduleStatusSchema = z.enum([
 	"CANCELLED",
 ]);
 
+export const ScheduleTypeSchema = z.enum(["ON_SITE", "ONLINE"]);
+
 // Weekday enum
 export const WeekdaySchema = z.enum([
 	"MONDAY",
@@ -55,6 +57,7 @@ export const RecurringScheduleSchema = z.object({
 	courseName: z.string().nullable(),
 	startDate: z.string(),
 	notes: z.string().nullable(),
+	type: ScheduleTypeSchema,
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
 	scheduleItems: z.array(RecurringScheduleItemSchema),
@@ -72,6 +75,7 @@ export const ScheduleSchema = z.object({
 	durationMinutes: z.number().int().min(1), // At least 1 minute
 	notes: z.string().nullable(),
 	status: ScheduleStatusSchema,
+	type: ScheduleTypeSchema,
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
 	remainingHours: z.number().optional(),
@@ -82,6 +86,7 @@ export const CreateScheduleSchema = z
 	.object({
 		classId: z.string().min(1, "Class is required"),
 		date: z.string().regex(DATE_REGEX, "Date must be in YYYY-MM-DD format"),
+		type: ScheduleTypeSchema,
 		time: z
 			.number()
 			.int()
@@ -123,6 +128,7 @@ export const UpdateScheduleSchema = z.object({
 		.string()
 		.regex(DATE_REGEX, "Date must be in YYYY-MM-DD format")
 		.optional(),
+	type: ScheduleTypeSchema.optional(),
 	time: z
 		.number()
 		.int()
@@ -152,6 +158,7 @@ export const UpdateRecurringScheduleSchema = z.object({
 	effectiveDate: z
 		.string()
 		.regex(DATE_REGEX, "Effective date must be in YYYY-MM-DD format"),
+	type: ScheduleTypeSchema.optional(),
 	notes: z.string().optional(),
 	scheduleItems: z
 		.array(RecurringScheduleItemInputSchema)
@@ -188,6 +195,7 @@ export type ScheduleSchemaType = z.infer<typeof ScheduleSchema>;
 export type CreateScheduleSchemaType = z.infer<typeof CreateScheduleSchema>;
 export type UpdateScheduleSchemaType = z.infer<typeof UpdateScheduleSchema>;
 export type ScheduleStatusSchemaType = z.infer<typeof ScheduleStatusSchema>;
+export type ScheduleTypeSchemaType = z.infer<typeof ScheduleTypeSchema>;
 export type WeekdaySchemaType = z.infer<typeof WeekdaySchema>;
 export type RecurringPatternSchemaType = z.infer<typeof RecurringPatternSchema>;
 export type ScheduleListQuerySchemaType = z.infer<

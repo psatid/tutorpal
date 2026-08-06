@@ -1,4 +1,4 @@
-import type { ScheduleStatus, Weekday } from "@prisma/client";
+import type { ScheduleStatus, ScheduleType, Weekday } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import type {
 	RecurringScheduleDTO,
@@ -22,6 +22,7 @@ type SchedulePrismaRecord = {
 	durationMinutes: number;
 	notes: string | null;
 	status: ScheduleStatus;
+	type: ScheduleType;
 	createdAt: Date;
 	updatedAt: Date;
 	class: ClassContext;
@@ -32,6 +33,7 @@ type RecurringSchedulePrismaRecord = {
 	classId: string;
 	startDate: Date;
 	notes: string | null;
+	type: ScheduleType;
 	createdAt: Date;
 	updatedAt: Date;
 	class: ClassContext;
@@ -65,6 +67,7 @@ export class ScheduleModel {
 	readonly durationMinutes!: number;
 	readonly notes!: string | null;
 	readonly status!: ScheduleStatus;
+	readonly type!: ScheduleType;
 	readonly createdAt!: Date;
 	readonly updatedAt!: Date;
 	readonly remainingHours?: number;
@@ -87,6 +90,7 @@ export class ScheduleModel {
 			durationMinutes: schedule.durationMinutes,
 			notes: schedule.notes,
 			status: schedule.status,
+			type: schedule.type,
 			createdAt: schedule.createdAt,
 			updatedAt: schedule.updatedAt,
 			remainingHours,
@@ -105,6 +109,7 @@ export class ScheduleModel {
 			durationMinutes: this.durationMinutes,
 			notes: this.notes,
 			status: this.status,
+			type: this.type,
 			createdAt: DateTime.from(this.createdAt).toISOString(),
 			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 			remainingHours: this.remainingHours,
@@ -119,6 +124,7 @@ export class RecurringScheduleModel {
 	readonly courseName!: string | null;
 	readonly startDate!: Date;
 	readonly notes!: string | null;
+	readonly type!: ScheduleType;
 	readonly createdAt!: Date;
 	readonly updatedAt!: Date;
 	readonly scheduleItems!: RecurringSchedulePrismaRecord["scheduleItems"];
@@ -136,6 +142,7 @@ export class RecurringScheduleModel {
 			...classContext(item.class),
 			startDate: item.startDate,
 			notes: item.notes,
+			type: item.type,
 			createdAt: item.createdAt,
 			updatedAt: item.updatedAt,
 			scheduleItems: item.scheduleItems,
@@ -150,6 +157,7 @@ export class RecurringScheduleModel {
 			courseName: this.courseName,
 			startDate: DateTime.from(this.startDate).toDateOnlyString(),
 			notes: this.notes,
+			type: this.type,
 			createdAt: DateTime.from(this.createdAt).toISOString(),
 			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 			scheduleItems: this.scheduleItems.map((item) => ({

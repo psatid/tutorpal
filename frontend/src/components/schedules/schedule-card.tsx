@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   AlertCircle,
   RotateCcw,
+  MapPin,
+  Monitor,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -44,6 +46,7 @@ export function ScheduleCard({
   const startTime = formatTime24Hour(schedule.time);
   const scheduleEndTime = schedule.time + schedule.durationMinutes;
   const endTime = formatTime24Hour(scheduleEndTime);
+  const ScheduleTypeIcon = schedule.type === "ONLINE" ? Monitor : MapPin;
 
   return (
     <InfoCard onClick={onView}>
@@ -65,6 +68,10 @@ export function ScheduleCard({
             })()}
             {t(`schedules:status.${schedule.status}`)}
           </Badge>
+        </div>
+        <div className="mt-1 flex items-center gap-1 text-xs text-on-surface-variant">
+          <ScheduleTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>{t(`schedules:type.${schedule.type}`)}</span>
         </div>
       </div>
 

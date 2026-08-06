@@ -4,7 +4,7 @@ import { schedulesKeys } from "@/hooks/queries/query-keys";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import { apiClient } from "@/lib/api-client";
-import type { Weekday } from "@/types/schedule";
+import type { ScheduleType, Weekday } from "@/types/schedule";
 
 export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 	const queryClient = useQueryClient();
@@ -13,6 +13,7 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 		mutationFn: async (data: {
 			classId: string;
 			date: string;
+			type: ScheduleType;
 			time: number;
 			durationMinutes?: number;
 			notes?: string;
@@ -28,6 +29,7 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 			const payload: {
 				classId: string;
 				date: string;
+				type: ScheduleType;
 				time: number;
 				durationMinutes?: number;
 				notes?: string;
@@ -42,6 +44,7 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 			} = {
 				classId: data.classId,
 				date: data.recurring ? data.recurring.startDate : data.date,
+				type: data.type,
 				time: data.recurring ? 0 : data.time, // Time is ignored for recurring schedules
 				durationMinutes: data.durationMinutes,
 				notes: data.notes,
@@ -88,6 +91,7 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 			data: Partial<{
 				classId: string;
 				date: string;
+				type?: ScheduleType;
 				time: number;
 				durationMinutes: number;
 				notes?: string;
@@ -200,6 +204,7 @@ export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void })
 			id: string;
 			data: {
 				effectiveDate: string;
+				type?: ScheduleType;
 				scheduleItems: Array<{
 					weekday: Weekday;
 					time: number;

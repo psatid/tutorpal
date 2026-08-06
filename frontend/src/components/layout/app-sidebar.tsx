@@ -19,6 +19,8 @@ import UserSetting from "./user-settings";
 import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/use-session";
 import { isNavigationItemActive } from "./navigation-items";
+import { cn } from "@/lib/utils";
+import { triggerEdgeDrawer } from "tailwindcss-jun-layout";
 
 const navigationItems = [
   { labelKey: "navigation:home", href: APP_ROUTES.HOME, icon: HomeIcon },
@@ -97,13 +99,14 @@ export const AppSidebar = () => {
                       <Link
                         aria-current={active ? "page" : undefined}
                         aria-label={label}
-                        className={
-                          active
-                            ? "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-sidebar-primary/10 text-primary hover:bg-primary/10 hover:text-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary dark:focus-visible:ring-primary-foreground"
-                            : "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-foreground"
-                        }
+                        className={cn(
+                          "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-foreground",
+                          active &&
+                            "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-sidebar-primary/10 text-primary hover:bg-primary/10 hover:text-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary dark:focus-visible:ring-primary-foreground",
+                        )}
                         preload="intent"
                         to={item.href}
+                        onClick={() => triggerEdgeDrawer()}
                       >
                         <item.icon className="jun-sidebarIcon" />
                         <span className="jun-sidebarText font-semibold">

@@ -1,4 +1,4 @@
-import type { ScheduleStatus, Weekday } from "@prisma/client";
+import type { ScheduleStatus, ScheduleType, Weekday } from "@prisma/client";
 import type {
 	RecurringScheduleModel,
 	RecurringScheduleUpdateResultModel,
@@ -17,6 +17,7 @@ export interface ScheduleDTO {
 	durationMinutes: number;
 	notes: string | null;
 	status: ScheduleStatus;
+	type: ScheduleType;
 	createdAt: string;
 	updatedAt: string;
 	remainingHours?: number; // Remaining hours for the class after this schedule
@@ -25,6 +26,7 @@ export interface ScheduleDTO {
 export interface CreateScheduleDTO {
 	classId: string;
 	date: string; // ISO date string (YYYY-MM-DD)
+	type: ScheduleType;
 	time?: number; // Minutes since midnight
 	durationMinutes?: number;
 	notes?: string;
@@ -43,6 +45,7 @@ export interface RecurringPattern {
 export interface UpdateScheduleDTO {
 	classId?: string;
 	date?: string; // ISO date string (YYYY-MM-DD)
+	type?: ScheduleType;
 	time?: number; // Minutes since midnight
 	durationMinutes?: number;
 	notes?: string;
@@ -63,6 +66,7 @@ export interface RecurringScheduleDTO {
 	courseName: string | null;
 	startDate: string;
 	notes: string | null;
+	type: ScheduleType;
 	createdAt: string;
 	updatedAt: string;
 	scheduleItems: RecurringScheduleItemDTO[];
@@ -77,6 +81,7 @@ export interface RecurringScheduleItemDTO {
 
 export interface UpdateRecurringScheduleDTO {
 	effectiveDate: string;
+	type?: ScheduleType;
 	notes?: string;
 	scheduleItems: Array<{
 		weekday: Weekday;
@@ -94,6 +99,7 @@ export interface RecurringScheduleUpdateResultDTO {
 
 export interface RecurringScheduleCreationData {
 	classId: string;
+	type: ScheduleType;
 	notes?: string;
 	recurring: RecurringPattern;
 }
@@ -105,6 +111,7 @@ export interface IScheduleRepository {
 		data: Array<{
 			classId: string;
 			date: string;
+			type: ScheduleType;
 			time: number;
 			durationMinutes: number;
 		}>,

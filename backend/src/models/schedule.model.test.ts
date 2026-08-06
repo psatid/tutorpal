@@ -17,6 +17,7 @@ const prismaSchedule = {
 	durationMinutes: 90,
 	notes: "Bring workbook",
 	status: "SCHEDULED" as const,
+	type: "ONLINE" as const,
 	createdAt,
 	updatedAt,
 	class: {
@@ -31,6 +32,7 @@ const prismaRecurringSchedule = {
 	classId: "class-1",
 	startDate: new Date("2026-07-01T00:00:00.000Z"),
 	notes: "Weekly practice",
+	type: "ON_SITE" as const,
 	createdAt,
 	updatedAt,
 	class: {
@@ -56,6 +58,7 @@ describe("ScheduleModel", () => {
 		expect(schedule.classId).toBe("class-1");
 		expect(schedule.className).toBe("Algebra");
 		expect(schedule.recurringScheduleId).toBe("recurring-1");
+		expect(schedule.type).toBe("ONLINE");
 		expect(schedule.remainingHours).toBe(7.5);
 	});
 
@@ -73,6 +76,7 @@ describe("ScheduleModel", () => {
 			durationMinutes: 90,
 			notes: "Bring workbook",
 			status: "SCHEDULED",
+			type: "ONLINE",
 			createdAt: "2026-06-28T10:00:00.000Z",
 			updatedAt: "2026-06-28T10:30:00.000Z",
 			remainingHours: 7.5,
@@ -94,6 +98,7 @@ describe("RecurringScheduleModel", () => {
 			courseName: "Mathematics",
 			startDate: "2026-07-01",
 			notes: "Weekly practice",
+			type: "ON_SITE",
 			createdAt: "2026-06-28T10:00:00.000Z",
 			updatedAt: "2026-06-28T10:30:00.000Z",
 			scheduleItems: [

@@ -147,6 +147,7 @@ function toClassDetails(
 					id: response.recurringSchedule.id,
 					startDate: response.recurringSchedule.startDate,
 					notes: response.recurringSchedule.notes,
+					type: response.recurringSchedule.type,
 					scheduleItems: response.recurringSchedule.scheduleItems,
 				}
 			: null,

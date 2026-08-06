@@ -221,25 +221,33 @@ model LineTestRecipientToken {
 }
 
 enum ScheduleStatus {
-  SCHEDULED
-  COMPLETED
-  NO_SHOW
-  CANCELLED
+	SCHEDULED
+	COMPLETED
+	NO_SHOW
+	CANCELLED
 
-  @@map("schedule_status")
+	@@map("schedule_status")
+}
+
+enum ScheduleType {
+	ON_SITE
+	ONLINE
+
+	@@map("schedule_type")
 }
 
 model Schedule {
-  id              String         @id @default(uuid())
-  classId         String
-  recurringScheduleId String?
-  date            DateTime       @db.Date
-  time            Int
-  durationMinutes Int
-  notes           String?
-  status          ScheduleStatus @default(SCHEDULED)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+	id              String         @id @default(uuid())
+	classId         String
+	recurringScheduleId String?
+	date            DateTime       @db.Date
+	time            Int
+	durationMinutes Int
+	notes           String?
+	status          ScheduleStatus @default(SCHEDULED)
+	type            ScheduleType   @default(ON_SITE)
+	createdAt       DateTime       @default(now())
+	updatedAt       DateTime       @updatedAt
 
   class             Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
   recurringSchedule RecurringSchedule?  @relation(fields: [recurringScheduleId], references: [id], onDelete: SetNull)
@@ -269,12 +277,13 @@ model ClassHourDeduction {
 }
 
 model RecurringSchedule {
-  id        String   @id @default(uuid())
-  classId   String
-  startDate DateTime @db.Date
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+	id        String   @id @default(uuid())
+	classId   String
+	startDate DateTime @db.Date
+	notes     String?
+	type      ScheduleType @default(ON_SITE)
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
 
   class         Class                   @relation(fields: [classId], references: [id], onDelete: Cascade)
   scheduleItems RecurringScheduleItem[]

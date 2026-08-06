@@ -24,6 +24,7 @@ type ClassPrismaRecord = {
 		classId: string;
 		startDate: Date;
 		notes: string | null;
+		type: RecurringScheduleDTO["type"];
 		createdAt: Date;
 		updatedAt: Date;
 		scheduleItems: Array<{
@@ -143,6 +144,7 @@ function toLatestRecurringScheduleDTO(
 		courseName: classData.course?.name ?? null,
 		startDate: DateTime.from(recurring.startDate).toDateOnlyString(),
 		notes: recurring.notes,
+		type: recurring.type,
 		createdAt: DateTime.from(recurring.createdAt).toISOString(),
 		updatedAt: DateTime.from(recurring.updatedAt).toISOString(),
 		scheduleItems: recurring.scheduleItems.map((item) => ({

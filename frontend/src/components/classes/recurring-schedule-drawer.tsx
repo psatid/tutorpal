@@ -1,6 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import {
+	Controller,
+	useFieldArray,
+	useForm,
+	useWatch,
+} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
@@ -16,18 +21,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RHFDateField, RHFInputField, RHFTimeField } from "@/components/ui/form/rhf";
+import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useCreateSchedule, useUpdateRecurringSchedule } from "@/hooks/mutations/use-schedules";
 import { DateTime } from "@/lib/date-time";
 import {
 	timeStringToMinutes,
 	type RecurringScheduleSummary,
+	scheduleTypeSchema,
 	type Weekday,
 } from "@/types/schedule";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 
 const recurringScheduleFormSchema = z.object({
 	effectiveDate: z.string().min(1, "Effective date is required"),
+	type: scheduleTypeSchema
+		.optional()
+		.refine((value) => value !== undefined, "Choose a schedule type."),
 	scheduleItems: z
 		.array(
 			z.object({
@@ -117,6 +127,7 @@ function getDefaultValues(
 ): RecurringScheduleFormData {
 	return {
 		effectiveDate: recurringSchedule?.startDate ?? getTodayDateString(),
+		type: recurringSchedule?.type,
 		scheduleItems:
 			recurringSchedule?.scheduleItems.map((item) => ({
 				weekday: item.weekday,
@@ -269,13 +280,22 @@ export function RecurringScheduleDrawer({
 			onOpenChange(false);
 		},
 	});
-	const { control, handleSubmit, reset } = useForm<RecurringScheduleFormData>({
+	const {
+		control,
+		formState: { errors },
+		handleSubmit,
+		reset,
+	} = useForm<RecurringScheduleFormData>({
 		resolver: zodResolver(recurringScheduleFormSchema),
 		defaultValues: getDefaultValues(recurringSchedule),
 	});
 	const effectiveDate = useWatch({
 		control,
 		name: "effectiveDate",
+	});
+	const selectedType = useWatch({
+		control,
+		name: "type",
 	});
 
 	useEffect(() => {
@@ -303,10 +323,15 @@ export function RecurringScheduleDrawer({
 	}, [effectiveDate, recurringSchedule, schedules]);
 
 	const submitValues = (values: RecurringScheduleFormData) => {
+		if (!values.type) {
+			return;
+		}
+
 		if (mode === "create") {
 			createMutation.mutate({
 				classId,
 				date: values.effectiveDate,
+				type: values.type,
 				time: 0,
 				recurring: {
 					startDate: values.effectiveDate,
@@ -333,6 +358,7 @@ export function RecurringScheduleDrawer({
 			id: recurringSchedule.id,
 			data: {
 				effectiveDate: pendingValues.effectiveDate,
+				type: pendingValues.type,
 				scheduleItems: pendingValues.scheduleItems.map((item) => ({
 					weekday: item.weekday,
 					time: timeStringToMinutes(item.time),
@@ -383,6 +409,21 @@ export function RecurringScheduleDrawer({
 					</p>
 				</div>
 
+				<Controller
+					control={control}
+					name="type"
+					render={({ field, fieldState }) => (
+						<ScheduleTypeField
+							caption={t("schedules:drawer.type.caption")}
+							error={fieldState.error?.message ?? errors.type?.message}
+							label={t("schedules:drawer.type.label")}
+							name="recurring-schedule-type"
+							onChange={field.onChange}
+							value={field.value}
+						/>
+					)}
+				/>
+
 				<RHFDateField
 					control={control}
 					name="effectiveDate"
@@ -411,6 +452,13 @@ export function RecurringScheduleDrawer({
 								date: effectiveDate || t("schedules:recurring.notSelected"),
 							})}
 						</p>
+						<p className="mt-1 text-sm font-medium text-on-surface-variant">
+							{t("schedules:recurring.previewType", {
+								type: selectedType
+									? t(`schedules:type.${selectedType}`)
+									: t("schedules:recurring.typeNotSelected"),
+							})}
+						</p>
 					</div>
 				) : null}
 				</form>
@@ -428,6 +476,9 @@ export function RecurringScheduleDrawer({
 								date:
 									pendingValues?.effectiveDate ??
 									t("schedules:recurring.notSelected"),
+								type: pendingValues?.type
+									? t(`schedules:type.${pendingValues.type}`)
+									: t("schedules:recurring.typeNotSelected"),
 							})}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
