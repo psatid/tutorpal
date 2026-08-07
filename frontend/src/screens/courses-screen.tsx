@@ -48,6 +48,7 @@ import {
 	WorkspaceShell,
 	WorkspaceToolbar,
 } from "@/components/workspaces/workspace";
+import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import {
 	WorkspaceEmptyState,
@@ -74,6 +75,9 @@ export function CoursesScreen() {
 	const { t } = useTranslation(["courses"]);
 	const navigate = useNavigate();
 	const triggerRef = useRef<HTMLButtonElement>(null);
+	const fabRef = useRef<HTMLButtonElement>(null);
+	const activeTriggerRef = useRef<HTMLButtonElement>(null);
+	const emptyActionRef = useRef<HTMLButtonElement>(null);
 	const [search, setSearch] = useState("");
 	const [sort, setSort] = useState<CourseSort>("name-asc");
 	const [formOpen, setFormOpen] = useState(false);
@@ -90,18 +94,31 @@ export function CoursesScreen() {
 	const total = query.data?.pagination.total ?? courses.length;
 	const deleteCourse = useDeleteCourse(() => setDeletingCourse(null));
 
-	function openCreate() {
+	function openCreate(trigger: HTMLButtonElement | null) {
 		setEditingCourse(null);
+		activeTriggerRef.current = trigger ?? fabRef.current ?? triggerRef.current;
 		setFormOpen(true);
 	}
 	function openEdit(course: Course) {
 		setEditingCourse(course);
+		activeTriggerRef.current = triggerRef.current;
 		setFormOpen(true);
 	}
 	function closeForm() {
 		setFormOpen(false);
 		setEditingCourse(null);
-		triggerRef.current?.focus();
+		focusTrigger();
+	}
+	function focusTrigger() {
+		const trigger = [
+			activeTriggerRef.current,
+			fabRef.current,
+			triggerRef.current,
+		].find(
+				(candidate) =>
+					candidate?.isConnected && candidate.getClientRects().length > 0,
+			);
+		trigger?.focus();
 	}
 	function requestDelete(course: Course) {
 		if (course.hasClasses()) {
@@ -142,7 +159,10 @@ export function CoursesScreen() {
 			<WorkspaceEmptyState
 				action={
 					!search ? (
-						<Button onClick={openCreate}>
+						<Button
+							onClick={() => openCreate(emptyActionRef.current)}
+							ref={emptyActionRef}
+						>
 							<Plus data-icon="inline-start" />
 							{t("courses:createCourse")}
 						</Button>
@@ -245,8 +265,8 @@ export function CoursesScreen() {
 				action={
 					<Button
 						aria-label={t("courses:newCourse")}
-						className="sm:w-auto sm:px-3"
-						onClick={openCreate}
+						className="hidden sm:inline-flex sm:w-auto sm:px-3"
+						onClick={() => openCreate(triggerRef.current)}
 						ref={triggerRef}
 						size="icon"
 					>
@@ -294,12 +314,17 @@ export function CoursesScreen() {
 							</SelectContent>
 						</Select>
 					</WorkspaceToolbar>
-					<WorkspaceList>{content}</WorkspaceList>
+					<WorkspaceList className="pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">{content}</WorkspaceList>
 			</WorkspaceMain>
+			<WorkspaceFab
+				label={t("courses:newCourse")}
+				onClick={() => openCreate(fabRef.current)}
+				triggerRef={fabRef}
+			/>
 			<ResponsiveDrawer
 				description={t("courses:formDescription")}
 				footer={submitButton}
-				onCloseAutoFocus={() => triggerRef.current?.focus()}
+				onCloseAutoFocus={focusTrigger}
 				onOpenChange={setFormOpen}
 				open={formOpen}
 				title={formTitle}

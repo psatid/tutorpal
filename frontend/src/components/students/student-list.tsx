@@ -23,7 +23,7 @@ interface StudentListProps {
 	hasNextPage: boolean;
 	isFetchingNextPage: boolean;
 	fetchNextPage: () => void;
-	onAddStudent: () => void;
+	onAddStudent: (trigger: HTMLButtonElement | null) => void;
 	onViewStudent: (student: Student) => void;
 	isError: boolean;
 	onRetry: () => void;
@@ -44,6 +44,7 @@ export function StudentList({
 }: StudentListProps) {
 	const { t } = useTranslation(["students"]);
 	const loadMoreRef = useRef<HTMLDivElement>(null);
+	const emptyActionRef = useRef<HTMLButtonElement>(null);
 
 	const deleteMutation = useDeleteStudent();
 	const lineLinkMutation = useGenerateLineLink();
@@ -161,7 +162,10 @@ export function StudentList({
 			<WorkspaceEmptyState
 				action={
 					!hasSearch ? (
-						<Button onClick={onAddStudent}>
+						<Button
+							onClick={() => onAddStudent(emptyActionRef.current)}
+							ref={emptyActionRef}
+						>
 							<Plus data-icon="inline-start" />
 							{t("students:createStudent")}
 						</Button>

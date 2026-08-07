@@ -59,6 +59,7 @@ interface ScheduleDrawerProps {
 	mode: DrawerMode;
 	scheduleId: string | null;
 	onModeChange: (mode: DrawerMode) => void;
+	onCloseAutoFocus?: () => void;
 	selectedDate?: Date;
 }
 
@@ -68,6 +69,7 @@ export function ScheduleDrawer({
 	mode,
 	scheduleId,
 	onModeChange,
+	onCloseAutoFocus,
 	selectedDate,
 }: ScheduleDrawerProps) {
 	const { t } = useTranslation(["schedules"]);
@@ -235,6 +237,7 @@ export function ScheduleDrawer({
 	return (
 		<ResponsiveDrawer
 			footer={footer}
+			onCloseAutoFocus={onCloseAutoFocus}
 			onOpenChange={onOpenChange}
 			open={isOpen}
 			title={getTitle()}

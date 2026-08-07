@@ -78,6 +78,12 @@ services:
       - key: EMAIL_VERIFICATION_CALLBACK_URL
         scope: RUN_AND_BUILD_TIME
         value: https://dev.tutorpal.io/verify-email
+      - key: ENVIRONMENT
+        scope: RUN_AND_BUILD_TIME
+        value: "dev"
+      - key: LOG_LEVEL
+        scope: RUN_AND_BUILD_TIME
+        value: "debug"
     health_check:
       failure_threshold: 3
       http_path: /v1/health

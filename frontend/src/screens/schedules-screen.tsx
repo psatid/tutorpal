@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Plus, Search, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
   useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
+import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import {
   ScheduleDrawer,
   type DrawerMode,
@@ -25,6 +26,10 @@ import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedule
 
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const activeTriggerRef = useRef<HTMLButtonElement>(null);
+  const emptyActionRef = useRef<HTMLButtonElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedDate, setSelectedDate] = useState<Date>(DateTime.today().toDate());
@@ -52,10 +57,23 @@ export function SchedulesScreen() {
     return schedules.filter((s) => s.status === statusFilter);
   }, [schedules, statusFilter]);
 
-  const handleAddSchedule = () => {
+  const handleAddSchedule = (trigger: HTMLButtonElement | null) => {
+    activeTriggerRef.current = trigger ?? fabRef.current ?? triggerRef.current;
     setSelectedScheduleId(null);
     setDrawerMode("create");
     setIsDrawerOpen(true);
+  };
+
+  const focusTrigger = () => {
+    const trigger = [
+      activeTriggerRef.current,
+      fabRef.current,
+      triggerRef.current,
+    ].find(
+      (candidate) =>
+        candidate?.isConnected && candidate.getClientRects().length > 0,
+    );
+    trigger?.focus();
   };
 
   const handleViewSchedule = (schedule: GetV1Schedules200Item) => {
@@ -154,7 +172,12 @@ export function SchedulesScreen() {
               leftIcon={Search}
             />
           </div>
-          <Button onClick={handleAddSchedule} leftIcon={Plus}>
+          <Button
+            className="hidden sm:inline-flex"
+            onClick={() => handleAddSchedule(triggerRef.current)}
+            ref={triggerRef}
+            leftIcon={Plus}
+          >
             {t("schedules:addSchedule")}
           </Button>
         </div>
@@ -193,7 +216,7 @@ export function SchedulesScreen() {
       )}
 
       {/* Content */}
-      <div className="px-3 sm:px-4 lg:px-6">
+      <div className="px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 space-y-4">
             <div className="animate-pulse w-16 h-16 rounded-full bg-muted" />
@@ -220,7 +243,11 @@ export function SchedulesScreen() {
             <p className="font-body text-muted-foreground max-w-xs mb-6">
               {t("schedules:noSchedulesDescription")}
             </p>
-            <Button onClick={handleAddSchedule} leftIcon={Plus}>
+            <Button
+              onClick={() => handleAddSchedule(emptyActionRef.current)}
+              ref={emptyActionRef}
+              leftIcon={Plus}
+            >
               {t("schedules:addSchedule")}
             </Button>
           </div>
@@ -247,6 +274,12 @@ export function SchedulesScreen() {
         )}
       </div>
 
+      <WorkspaceFab
+        label={t("schedules:addSchedule")}
+        onClick={() => handleAddSchedule(fabRef.current)}
+        triggerRef={fabRef}
+      />
+
       {/* Schedule Drawer */}
       <ScheduleDrawer
         isOpen={isDrawerOpen}
@@ -254,6 +287,7 @@ export function SchedulesScreen() {
         mode={drawerMode}
         scheduleId={selectedScheduleId}
         onModeChange={handleModeChange}
+        onCloseAutoFocus={focusTrigger}
         selectedDate={selectedDate}
       />
     </div>

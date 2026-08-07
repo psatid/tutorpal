@@ -11,11 +11,7 @@ const LOG_LEVELS = [
 type LogLevel = (typeof LOG_LEVELS)[number];
 
 function getLogLevel(): LogLevel {
-  const logLevel =
-    process.env.LOG_LEVEL ??
-    ((process.env.NODE_ENV ?? "development") === "development"
-      ? "debug"
-      : "info");
+  const logLevel = process.env.LOG_LEVEL;
 
   if (!LOG_LEVELS.includes(logLevel as LogLevel)) {
     throw new Error(
@@ -34,7 +30,6 @@ export const ENV = {
     "postgresql://postgres:postgres@localhost:5432/tutorpal",
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "secret",
-  NODE_ENV: process.env.NODE_ENV ?? "development",
   ENVIRONMENT: process.env.ENVIRONMENT ?? "local",
   LOG_LEVEL: getLogLevel(),
   RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",

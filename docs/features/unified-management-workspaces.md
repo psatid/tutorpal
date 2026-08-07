@@ -23,6 +23,7 @@ Create and edit forms use the shared responsive drawer: an accessible bottom she
 - Violet is reserved for primary actions, active navigation, focus, and selected states.
 - Controls use medium radii, clear borders, 44px primary touch targets, visible keyboard focus, and reduced-motion-safe transitions.
 - Long names truncate without hiding actions; mobile toolbars stack without horizontal overflow.
+- On small screens, persistent create actions use a fixed 56px circular FAB with safe-area-aware spacing; from `sm` upward, Students, Courses, and Classes retain their header actions and Schedule retains its inline add action. Scrollable content reserves space for the mobile FAB, while empty-state instructional actions remain inline.
 - All overlays use the shared responsive drawer: below `md` it is a bottom sheet with a drag handle, while at `md` and above it enters from the right. Forms, selectors, and calendar pickers share focus trapping, close behavior, scroll regions, footer actions, and nested layering.
 - Create and edit forms use one primary action in the fixed footer. Read-only drawers use one Edit action; the shared header close control handles dismissal in every state.
 - Select menus and Popovers opened in a drawer portal into that drawer. Selects stay modal on mobile and non-modal on desktop so keyboard focus and pointer selection remain reliable; calendar Popovers remain within the drawer's stacking boundary.

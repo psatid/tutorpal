@@ -24,6 +24,7 @@ import {
 	WorkspaceShell,
 	WorkspaceToolbar,
 } from "@/components/workspaces/workspace";
+import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import {
 	WorkspaceEmptyState,
@@ -54,6 +55,9 @@ export function ClassesScreen() {
 	const navigate = useNavigate();
 	const routeSearch = useSearch({ strict: false }) as ClassesSearch;
 	const triggerRef = useRef<HTMLButtonElement>(null);
+	const fabRef = useRef<HTMLButtonElement>(null);
+	const activeTriggerRef = useRef<HTMLButtonElement>(null);
+	const emptyActionRef = useRef<HTMLButtonElement>(null);
 	const [search, setSearch] = useState("");
 	const [sort, setSort] = useState<SortValue>("createdAt-desc");
 	const [formOpen, setFormOpen] = useState(false);
@@ -121,9 +125,24 @@ export function ClassesScreen() {
 		else void navigate({ to: "/classes", search: {}, replace: true });
 	}
 
+	const openCreate = (trigger: HTMLButtonElement | null) => {
+		activeTriggerRef.current = trigger ?? fabRef.current ?? triggerRef.current;
+		setFormOpen(true);
+	};
+	const focusTrigger = () => {
+		const trigger = [
+			activeTriggerRef.current,
+			fabRef.current,
+			triggerRef.current,
+		].find(
+				(candidate) =>
+					candidate?.isConnected && candidate.getClientRects().length > 0,
+			);
+		trigger?.focus();
+	};
 	const closeForm = () => {
 		setFormOpen(false);
-		triggerRef.current?.focus();
+		focusTrigger();
 	};
 	const form = (
 		<CreateClassForm
@@ -155,7 +174,10 @@ export function ClassesScreen() {
 			<WorkspaceEmptyState
 				action={
 					!search ? (
-						<Button onClick={() => setFormOpen(true)}>
+						<Button
+							onClick={() => openCreate(emptyActionRef.current)}
+							ref={emptyActionRef}
+						>
 							<Plus data-icon="inline-start" />
 							{t("classes:createClass")}
 						</Button>
@@ -206,8 +228,8 @@ export function ClassesScreen() {
 				action={
 					<Button
 						aria-label={t("classes:newClass")}
-						className="sm:w-auto sm:px-3"
-						onClick={() => setFormOpen(true)}
+						className="hidden sm:inline-flex sm:w-auto sm:px-3"
+						onClick={() => openCreate(triggerRef.current)}
 						ref={triggerRef}
 						size="icon"
 					>
@@ -281,12 +303,17 @@ export function ClassesScreen() {
 							</SelectContent>
 						</Select>
 					</WorkspaceToolbar>
-					<WorkspaceList>{content}</WorkspaceList>
+					<WorkspaceList className="pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">{content}</WorkspaceList>
 			</WorkspaceMain>
+			<WorkspaceFab
+				label={t("classes:newClass")}
+				onClick={() => openCreate(fabRef.current)}
+				triggerRef={fabRef}
+			/>
 			<ResponsiveDrawer
 				description={t("classes:createDescription")}
 				footer={submitButton}
-				onCloseAutoFocus={() => triggerRef.current?.focus()}
+				onCloseAutoFocus={focusTrigger}
 				onOpenChange={setFormOpen}
 				open={formOpen}
 				title={t("classes:createTitle")}

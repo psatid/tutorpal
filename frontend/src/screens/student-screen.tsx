@@ -21,6 +21,7 @@ import {
 	WorkspaceShell,
 	WorkspaceToolbar,
 } from "@/components/workspaces/workspace";
+import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -49,10 +50,27 @@ export function StudentScreen() {
 	const { t } = useTranslation(["students"]);
 	const navigate = useNavigate();
 	const triggerRef = useRef<HTMLButtonElement>(null);
+	const fabRef = useRef<HTMLButtonElement>(null);
+	const activeTriggerRef = useRef<HTMLButtonElement>(null);
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 300);
 	const [sort, setSort] = useState<StudentSort>("createdAt-desc");
 	const [formOpen, setFormOpen] = useState(false);
+	const openCreate = (trigger: HTMLButtonElement | null) => {
+		activeTriggerRef.current = trigger ?? fabRef.current ?? triggerRef.current;
+		setFormOpen(true);
+	};
+	const focusTrigger = () => {
+		const trigger = [
+			activeTriggerRef.current,
+			fabRef.current,
+			triggerRef.current,
+		].find(
+				(candidate) =>
+					candidate?.isConnected && candidate.getClientRects().length > 0,
+			);
+		trigger?.focus();
+	};
 	const query = useInfiniteStudents({
 		search: debouncedSearch || undefined,
 		...sortParams(sort),
@@ -86,8 +104,8 @@ export function StudentScreen() {
 				action={
 					<Button
 						aria-label={t("students:newStudent")}
-						className="sm:w-auto sm:px-3"
-						onClick={() => setFormOpen(true)}
+						className="hidden sm:inline-flex sm:w-auto sm:px-3"
+						onClick={() => openCreate(triggerRef.current)}
 						ref={triggerRef}
 						size="icon"
 					>
@@ -138,7 +156,7 @@ export function StudentScreen() {
 							</SelectContent>
 						</Select>
 					</WorkspaceToolbar>
-					<WorkspaceList>
+					<WorkspaceList className="pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
 						<StudentList
 							fetchNextPage={() => query.fetchNextPage()}
 							hasNextPage={query.hasNextPage}
@@ -146,17 +164,22 @@ export function StudentScreen() {
 							isError={query.isError}
 							isFetchingNextPage={query.isFetchingNextPage}
 							isLoading={query.isLoading}
-							onAddStudent={() => setFormOpen(true)}
+							onAddStudent={openCreate}
 							onRetry={() => query.refetch()}
 							onViewStudent={viewStudent}
 							students={students}
 						/>
 					</WorkspaceList>
 			</WorkspaceMain>
+			<WorkspaceFab
+				label={t("students:newStudent")}
+				onClick={() => openCreate(fabRef.current)}
+				triggerRef={fabRef}
+			/>
 			<ResponsiveDrawer
 				description={t("students:createDescription")}
 				footer={submitButton}
-				onCloseAutoFocus={() => triggerRef.current?.focus()}
+				onCloseAutoFocus={focusTrigger}
 				onOpenChange={setFormOpen}
 				open={formOpen}
 				title={t("students:createTitle")}

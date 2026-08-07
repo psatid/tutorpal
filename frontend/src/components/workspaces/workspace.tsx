@@ -29,7 +29,7 @@ export function WorkspaceHeader({
 	title: string;
 	description: string;
 	countLabel?: string;
-	action: ReactNode;
+	action?: ReactNode;
 }) {
 	return (
 		<header className="flex items-start justify-between gap-4 border-b border-border px-4 py-5 sm:px-6">
@@ -48,7 +48,7 @@ export function WorkspaceHeader({
 					{description}
 				</p>
 			</div>
-			<div className="shrink-0">{action}</div>
+			{action ? <div className="shrink-0">{action}</div> : null}
 		</header>
 	);
 }
@@ -67,6 +67,16 @@ export function WorkspaceToolbar({ children }: { children: ReactNode }) {
 	);
 }
 
-export function WorkspaceList({ children }: { children: ReactNode }) {
-	return <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>;
+export function WorkspaceList({
+	children,
+	className,
+}: {
+	children: ReactNode;
+	className?: string;
+}) {
+	return (
+		<div className={cn("min-h-0 flex-1 overflow-y-auto", className)}>
+			{children}
+		</div>
+	);
 }
