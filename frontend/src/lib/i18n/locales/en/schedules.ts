@@ -4,6 +4,11 @@ export default {
 	managingCount_plural: "Managing {{count}} scheduled sessions this term.",
 	searchPlaceholder: "Search by class...",
 	loading: "Loading schedules...",
+	error: {
+		title: "Couldn't load schedules",
+		description: "Please try again.",
+		retry: "Try again",
+	},
 	duration: "{{minutes}} min",
 	noSchedules: "No schedules yet",
 	noSchedulesDescription: "Create your first schedule to get started.",
@@ -164,9 +169,11 @@ export default {
 		remainingHours: "{{hours}}h left",
 	},
 	weekSelector: {
-		previousWeek: "Previous week",
-		nextWeek: "Next week",
 		today: "Today",
+		selected: "Selected",
 		openCalendar: "Open calendar for {{month}}",
+		dateRailLabel: "Schedule date selector",
+		dateRailInstruction:
+			"Scroll horizontally to browse dates. Use the Left and Right Arrow keys to select a day. Use Page Up and Page Down to move by a week.",
 	},
 } as const;

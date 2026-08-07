@@ -3,12 +3,12 @@ import { APP_ROUTES } from "@/constants/routes";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   ChevronsUpDown,
-  CommandIcon,
   HomeIcon,
   CalendarCheck2Icon,
   BookOpenIcon,
   UsersIcon,
   SchoolIcon,
+  SettingsIcon,
 } from "lucide-react";
 import {
   RailCollapse,
@@ -44,19 +44,40 @@ const navigationItems = [
     href: APP_ROUTES.SCHEDULES,
     icon: CalendarCheck2Icon,
   },
+  {
+    labelKey: "navigation:settings",
+    href: APP_ROUTES.SETTINGS,
+    icon: SettingsIcon,
+  },
 ] as const;
 
 export const AppSidebar = () => {
   const { t } = useTranslation(["navigation", "settings"]);
   const { session } = useSession();
   const location = useLocation();
+  const currentNavigationItem = navigationItems.find((item) =>
+    isNavigationItemActive(location.pathname, item.href),
+  );
+  const isSettingsRoute =
+    location.pathname === APP_ROUTES.SETTINGS ||
+    location.pathname.startsWith(`${APP_ROUTES.SETTINGS}/`);
+  const pageTitle = currentNavigationItem
+    ? t(currentNavigationItem.labelKey)
+    : isSettingsRoute
+      ? t("settings:title")
+      : "";
 
   return (
     <>
       <div className="jun-header">
-        <div className="container flex items-center gap-4 px-4">
+        <div className="container flex min-w-0 items-center gap-4 px-4">
           <TriggerMobileSidebar />
           <TriggerLeftSidebarCollapse />
+          {pageTitle && (
+            <h1 className="min-w-0 flex-1 truncate font-headline text-base font-bold text-on-surface md:text-lg">
+              {pageTitle}
+            </h1>
+          )}
         </div>
       </div>
 
@@ -70,10 +91,17 @@ export const AppSidebar = () => {
       >
         <div className="jun-edgeContent jun-sidebarContainer">
           <div className="flex flex-col p-2">
-            <button className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
-              <div className="jun-sidebarIcon flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <CommandIcon className="size-4" />
-              </div>
+            <Link
+              aria-label="TutorPal"
+              className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0"
+              to={APP_ROUTES.HOME}
+              onClick={() => triggerEdgeDrawer()}
+            >
+              <img
+                src="/app-icon.png"
+                alt=""
+                className="jun-sidebarIcon size-10"
+              />
               <div className="jun-sidebarText text-left text-sm leading-tight flex items-center">
                 <div className="flex-1">
                   <div className="truncate font-semibold">TutorPal</div>
@@ -82,7 +110,7 @@ export const AppSidebar = () => {
                   </div>
                 </div>
               </div>
-            </button>
+            </Link>
           </div>
           <div className="flex-1 min-h-0 overflow-auto">
             <nav className="jun-sidebarGroup" aria-label="Primary navigation">
@@ -108,10 +136,8 @@ export const AppSidebar = () => {
                         to={item.href}
                         onClick={() => triggerEdgeDrawer()}
                       >
-                        <item.icon className="jun-sidebarIcon" />
-                        <span className="jun-sidebarText font-semibold">
-                          {label}
-                        </span>
+                        <item.icon className="jun-sidebarIcon size-4" />
+                        <span className="jun-sidebarText">{label}</span>
                       </Link>
                     </li>
                   );
@@ -124,9 +150,9 @@ export const AppSidebar = () => {
               <li className="jun-sidebarMenuItem">
                 <UserSetting>
                   <button className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
-                    <Avatar className="jun-sidebarIcon h-8 w-8 rounded-lg">
+                    <Avatar className="jun-sidebarIcon h-8 w-8">
                       <AvatarImage src="/unknow.png" alt="Unknown" />
-                      <AvatarFallback className="rounded-lg">
+                      <AvatarFallback>
                         {session?.user?.name
                           ?.split(" ")
                           .map((n) => n[0])

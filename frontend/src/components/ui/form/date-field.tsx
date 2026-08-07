@@ -61,7 +61,8 @@ function DateField({
   const hasError = Array.isArray(error) ? error.length > 0 : Boolean(error);
   const captionId = caption ? `${fieldId}-description` : undefined;
   const errorId = hasError ? `${fieldId}-error` : undefined;
-  const describedBy = [captionId, errorId].filter(Boolean).join(" ") || undefined;
+  const describedBy =
+    [captionId, errorId].filter(Boolean).join(" ") || undefined;
 
   const handleSelect = (selected: Date | undefined) => {
     if (selected && onChange) {
@@ -94,12 +95,10 @@ function DateField({
               placeholder={placeholder}
               className={className}
               trigger={trigger}
+              data-state={isOpen ? "open" : "closed"}
             />
           </PopoverTrigger>
-          <PopoverContent
-            className="w-auto p-0"
-            align={trigger ? "center" : "start"}
-          >
+          <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
               selected={date}
@@ -123,6 +122,7 @@ function DateField({
             trigger={trigger}
             aria-expanded={isOpen}
             aria-haspopup="dialog"
+            data-state={isOpen ? "open" : "closed"}
             onClick={() => setIsOpen(true)}
           />
           <ResponsiveDrawer
@@ -198,12 +198,10 @@ const CustomDateFieldTrigger = forwardRef<
 ) {
   const triggerProps = trigger.props;
   const isDisabled = Boolean(disabled || triggerProps.disabled);
-  const describedBy = [
-    triggerProps["aria-describedby"],
-    props["aria-describedby"],
-  ]
-    .filter(Boolean)
-    .join(" ") || undefined;
+  const describedBy =
+    [triggerProps["aria-describedby"], props["aria-describedby"]]
+      .filter(Boolean)
+      .join(" ") || undefined;
   const handleClick: MouseEventHandler<HTMLButtonElement> = (event) => {
     triggerProps.onClick?.(event);
 

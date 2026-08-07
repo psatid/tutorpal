@@ -2,19 +2,14 @@
 
 ## Overview
 
-The `WeekDateSelector` is a week-based date navigation component for the schedules screen. It allows users to:
-- Navigate weeks by swiping left/right or using navigation arrows
-- Select specific days within the current week
-- Jump to today's date
-- Open the shared responsive date picker for date selection
+`WeekDateSelector` is an infinite date navigation component for the schedules screen. Tutors can scroll through dates without changing the committed schedule date, then explicitly select a day from the rail, keyboard, Today action, or date picker.
 
 ## Architecture
 
 ```
 src/components/schedules/week-date-selector/
-├── index.tsx              # Main component controller
-├── weekday-view.tsx       # 7-day week row display
-└── constants.ts           # Animation constants
+├── index.tsx              # Header controls and bounded date buffer
+└── weekday-view.tsx       # Accessible infinite date rail
 ```
 
 ## Component API
@@ -27,234 +22,68 @@ interface WeekDateSelectorProps {
 }
 ```
 
-## Usage
-
-```typescript
-import { WeekDateSelector } from "@/components/schedules/week-date-selector";
-import { DateTime } from "@/lib/date-time";
-
-function SchedulesScreen() {
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    DateTime.today().toDate(),
-  );
-
-  return (
-    <WeekDateSelector
-      selectedDate={selectedDate}
-      onDateSelect={setSelectedDate}
-    />
-  );
-}
-```
-
 ## Features
 
-### Week-Based Navigation
+### Infinite date rail
 
-- **Week starts on Monday**: Uses `DateTime.startOfWeek()`
-- **Fixed 7-day display**: Shows exactly 7 days from Monday to Sunday
-- **Swipe gestures**: Touch swipe left/right changes weeks
-- **Arrow buttons**: Click arrows to navigate weeks
+- Starts with 28 days before and 27 days after the committed date. The DOM buffer is always 56 dates: each edge extension rotates the opposite-edge week out while retaining a continuous visible sequence.
+- Passive drag, swipe, and trackpad scrolling only moves and replenishes the rail; it never calls `onDateSelect` or changes the schedule query date.
+- Prepending corrects `scrollLeft` by the measured inserted track width before paint, so the visible dates do not jump, skip, or repeat.
+- Date tiles remain 56px square with 8px gaps at every breakpoint. The track has screen gutters and a one-tile continuation width, does not wrap or hide dates at `md`, and intentionally exposes a partial adjacent tile at an edge.
 
-### Date Selection
+### Selection and header controls
 
-- **Tap to select**: Click any day in the week to select it
-- **Visual feedback**: Selected day uses a tinted card with a solid primary number chip
-- **Today indicator**: Unselected today shows a subtle primary ring on the date plus a small dot
+- The month label remains a `DateField` trigger and always reflects the committed selected date, never the passively visible dates. When the external date is `null`, the rail and header use today as an internal fallback until a date is selected.
+- Today and calendar selections call `onDateSelect`; a date outside the current buffer rebuilds the bounded range around that date.
+- Clicking/tapping a tile, ArrowLeft/ArrowRight, PageUp/PageDown, Today, and date-picker selections smoothly center the selected tile by default. Reduced-motion users receive instant positioning.
+- Selected dates use the primary tile treatment. Unselected today has a primary outline and dot; month boundaries show a compact month marker.
 
-### Header Controls
+### Accessibility and motion
 
-- **Month label**: The existing month/year header button (for example, "June
-  2026") is supplied as `DateField`'s custom trigger and opens its shared
-  responsive picker
-- **Today button**: Quick jump to current date with calendar icon
+- The rail is a named radiogroup with a visually hidden instruction that explains horizontal scrolling and keyboard selection.
+- Roving tab focus keeps only the selected date in the tab order. Arrow keys select and focus the adjacent day; Page Up/Page Down move seven days and request more buffer before crossing an edge. If passive scrolling has rotated the committed date out of the fixed DOM window, the radiogroup retains a screen-reader-only checked representation of that logical selection; Tab restores and focuses its visible tile without changing the committed date.
+- Tile labels include the localized full date plus Today and Selected state where applicable. All controls meet the 44px target minimum and retain visible focus rings.
+- There is no slide or tap-scale animation. Explicit selection centering uses native smooth scrolling by default and is instant for reduced-motion users; buffer compensation, resize re-centering, and logical selected-date restoration are always instant.
+- While native smooth centering is active, its emitted scroll events cannot extend the buffer. `scrollend` clears that guard when available, with a short post-scroll fallback; wheel, pointer/touch, and date-navigation input cancel it immediately.
 
-### Date Picker
-
-- **Desktop popover**: Compact anchored calendar
-- **Mobile sheet**: Full-width nested calendar sheet
-- **Month navigation**: Browse months with arrow buttons
-- **Date selection**: Tap any date to select and close drawer
-- **Shared presentation**: Uses `DateField`, which renders the shared
-  `Calendar` with the appropriate responsive presentation
-
-## Component Details
-
-### WeekdayView
+## WeekdayView API
 
 ```typescript
 interface WeekdayViewProps {
-  dates: Date[];              // Exactly 7 days (Monday-Sunday)
+  dates: Date[];
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
-  onWeekChange: (direction: "prev" | "next") => void;
+  onExtendDateBuffer: (direction: "previous" | "next") => void;
+  onRestoreSelectedDate: () => void;
+  centerRequest: {
+    id: number;
+    behavior: ScrollBehavior;
+  };
   className?: string;
 }
 ```
 
-**Features:**
-- Displays 7 date buttons in a horizontal row
-- Each button shows: month abbreviation, day number, weekday name
-- Uses max-width day buttons with distributed spacing on tablet so the row stays compact instead of inflating into oversized squares
-- Swipe detection for week navigation
-- Animation on tap (scale down effect)
-- Selected state with calmer product-style emphasis instead of a full saturated tile
-- Today indicator (small dot)
-
-**Touch Behavior:**
-- Swipe left (>50px): Move to next week
-- Swipe right (>50px): Move to previous week
-
-## Styling
-
-### Design System Tokens
-
-```css
-/* Colors */
-bg-primary-container  /* Selected day card background */
-text-on-primary-container /* Selected day card text */
-bg-primary            /* Selected day number chip */
-text-primary-foreground /* Selected day number chip text */
-bg-surface           /* Component background */
-text-on-surface       /* Default text */
-text-on-surface-variant /* Weekday names */
-
-/* Spacing */
-rounded-2xl          /* Component corners */
-rounded-[20px]       /* Day buttons */
-rounded-full         /* Today indicator, day circle */
-
-/* Typography */
-font-headline        /* Month label */
-font-body            /* Day numbers, weekday names */
-```
-
-### Component Styling
-
-```typescript
-// Main container
-className="bg-surface rounded-2xl mb-4 overflow-hidden"
-
-// Week day buttons
-className={cn(
-  "min-h-24 min-w-0 flex flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-3 md:max-w-[96px] md:flex-1",
-  isSelected
-    ? "border-primary bg-primary-container text-on-primary-container"
-    : "bg-card border border-outline-variant text-on-surface hover:border-primary/30 hover:bg-surface-container-low"
-)}
-
-// Month label custom DateField trigger
-className="min-w-0 rounded-full px-3 py-1.5 font-headline text-base font-semibold text-on-surface transition-colors hover:bg-card"
-```
-
-## Animation
-
-### Motion Variants
-
-```typescript
-const weekdayItemVariants = {
-  hidden: { opacity: 0, y: 8, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.25,
-      ease: [0.23, 1, 0.32, 1],
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -8,
-    scale: 0.95,
-    transition: {
-      duration: 0.15,
-      ease: [0.23, 1, 0.32, 1],
-    },
-  },
-};
-```
-
-**Interactions:**
-- Tap animation: `whileTap={{ scale: 0.97 }}`
-- Selected item: `layoutId` for smooth transitions
-
-## Accessibility
-
-- **ARIA labels**: Proper labels for buttons (e.g., "Previous week", "Today")
-- **Keyboard navigation**: Tab through week days, Enter/Space to select
-- **Touch support**: Swipe gestures for week navigation
-- **Screen reader**: Descriptive labels include day name and "today" indicator
-
 ## Translations
 
 ```typescript
-// locales/en/schedules.ts
 weekSelector: {
   openCalendar: "Open calendar for {{month}}",
   today: "Today",
+  selected: "Selected",
+  dateRailLabel: "Schedule date selector",
+  dateRailInstruction: "Scroll horizontally to browse dates. Use the Left and Right Arrow keys to select a day. Use Page Up and Page Down to move by a week.",
 }
 ```
 
-## Behavior Notes
+## Styling
 
-### Week Navigation
-
-1. **Navigation arrows**: Click left/right arrows to change weeks
-2. **Swipe gestures**: Touch swipe left/right on week row
-3. **Week preservation**: When changing weeks, maintains the same weekday
-4. **Month updates**: Week navigation updates the displayed month
-
-### Date Selection
-
-1. **No auto-scroll**: Selected date does NOT auto-scroll to center (removed old behavior)
-2. **Week update**: Selecting a date outside current week updates the week view
-3. **Picker dismissal**: Selecting a date closes the popover or sheet and shows the new week
-
-## Migration Notes
-
-### Previous Behavior (Removed)
-
-- ❌ Infinite horizontal scroll
-- ❌ Sentinel-based lazy loading
-- ❌ Auto-scroll to center on selection
-- ❌ Inline expand/collapse calendar
-- ❌ Buffer days concept
-
-### New Behavior
-
-- ✅ Fixed 7-day week display
-- ✅ Week-based navigation
-- ✅ Shared responsive date picker
-- ✅ Month header button backed by the shared DateField
-- ✅ Today quick action
-
-## Troubleshooting
-
-### Week Not Updating
-
-**Issue**: Date selection doesn't change week view
-
-**Solution**: Ensure `selectedDate` prop is updated via `onDateSelect` callback
-
-### Swipe Not Working
-
-**Issue**: Touch swipe doesn't change weeks
-
-**Solution**: Check that `WeekdayView` has touch event handlers and threshold is >50px
-
-### Date Picker Not Opening
-
-**Issue**: Month label doesn't open the calendar
-
-**Solution**: Verify the `DateField` has a valid date-only value and its
-`onChange` callback updates `selectedDate`
-
-### TypeScript Errors
-
-**Issue**: Type errors with touch events
-
-**Solution**: Use optional chaining for touch coordinates:
 ```typescript
-touchStartX = e.touches[0]?.clientX || 0;
+// Scrollport and internally-guttered fixed-width track
+className="relative min-w-0 max-w-full overflow-x-auto py-1 scroll-py-1 overscroll-x-contain touch-pan-x"
+className="flex w-max min-w-[calc(100%+4rem)] gap-2 px-3 sm:px-4 lg:px-6"
+
+// Date tiles
+className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5"
 ```
+
+The component uses existing color, border, typography, and focus-ring tokens. It intentionally does not add a scrollbar treatment, edge gradient, or shadow.

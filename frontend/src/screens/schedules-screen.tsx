@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -35,7 +36,7 @@ export function SchedulesScreen() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
-  const { data: schedules, isLoading } = useSchedules({
+  const { data: schedules, isLoading, isError, refetch } = useSchedules({
     date: formattedDate,
     search: debouncedSearchQuery || undefined,
   });
@@ -136,22 +137,6 @@ export function SchedulesScreen() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-200px)]">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-start justify-between">
-          <h2 className="font-headline font-extrabold text-3xl text-on-surface tracking-tight leading-tight">
-            {t("schedules:title")}
-          </h2>
-          <Button
-            size="icon"
-            onClick={handleAddSchedule}
-            aria-label={t("schedules:addSchedule")}
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
-        </div>
-      </div>
-
       {/* Week Date Selector */}
       <WeekDateSelector
         selectedDate={selectedDate}
@@ -159,85 +144,108 @@ export function SchedulesScreen() {
       />
 
       {/* Search */}
-      <div className="mb-4">
-        <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t("schedules:searchPlaceholder")}
-          leftIcon={Search}
-        />
-      </div>
-
-      {/* Status Filter */}
-      {schedules && schedules.length > 0 && (
-        <div className="flex gap-2 mb-4 overflow-x-auto">
-          {(["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const).map(
-            (status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                  statusFilter === status
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-surface-container text-on-surface-variant hover:bg-surface-container-low",
-                )}
-              >
-                {status === "ALL"
-                  ? t("schedules:filter.all")
-                  : t(`schedules:status.${status}`)}
-              </button>
-            ),
-          )}
-        </div>
-      )}
-
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
-          <div className="animate-pulse w-16 h-16 rounded-full bg-surface-variant" />
-          <div className="animate-pulse h-4 w-40 bg-surface-variant rounded" />
-          <p className="text-sm text-on-surface-variant">
-            {t("schedules:loading")}
-          </p>
-        </div>
-      ) : !schedules || schedules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-primary-container flex items-center justify-center mb-6">
-            <CalendarDays className="w-10 h-10 text-primary" />
+      <div className="mb-4 px-3 sm:px-4 lg:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("schedules:searchPlaceholder")}
+              leftIcon={Search}
+            />
           </div>
-          <h3 className="font-headline font-bold text-xl text-on-surface mb-2">
-            {t("schedules:noSchedules")}
-          </h3>
-          <p className="font-body text-on-surface-variant max-w-xs mb-6">
-            {t("schedules:noSchedulesDescription")}
-          </p>
           <Button onClick={handleAddSchedule} leftIcon={Plus}>
             {t("schedules:addSchedule")}
           </Button>
         </div>
-      ) : filteredSchedules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-on-surface-variant">
-            {t("schedules:noResults")}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filteredSchedules.map((schedule) => (
-            <ScheduleCard
-              key={schedule.id}
-              schedule={schedule}
-              onView={() => handleViewSchedule(schedule)}
-              onDelete={() => handleDeleteSchedule(schedule)}
-              onComplete={() => handleCompleteSchedule(schedule)}
-              onNoShow={() => handleNoShowSchedule(schedule)}
-              onRestore={() => handleRestoreHours(schedule)}
-            />
-          ))}
+      </div>
+
+      {/* Status Filter */}
+      {schedules && schedules.length > 0 && (
+        <div className="mb-4 px-3 sm:px-4 lg:px-6">
+          <div className="flex gap-2 overflow-x-auto">
+            {(["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const).map(
+              (status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(status)}
+                  aria-pressed={statusFilter === status}
+                  className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1.5 leading-5 transition-colors",
+                      statusFilter === status
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground group-hover:bg-accent",
+                    )}
+                  >
+                    {status === "ALL"
+                      ? t("schedules:filter.all")
+                      : t(`schedules:status.${status}`)}
+                  </span>
+                </button>
+              ),
+            )}
+          </div>
         </div>
       )}
+
+      {/* Content */}
+      <div className="px-3 sm:px-4 lg:px-6">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <div className="animate-pulse w-16 h-16 rounded-full bg-muted" />
+            <div className="animate-pulse h-4 w-40 bg-muted rounded" />
+            <p className="text-sm text-muted-foreground">
+              {t("schedules:loading")}
+            </p>
+          </div>
+        ) : isError ? (
+          <WorkspaceErrorState
+            description={t("schedules:error.description")}
+            onRetry={() => refetch()}
+            retryLabel={t("schedules:error.retry")}
+            title={t("schedules:error.title")}
+          />
+        ) : !schedules || schedules.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-6">
+              <CalendarDays className="w-10 h-10 text-primary-foreground" />
+            </div>
+            <h2 className="font-headline font-bold text-xl text-foreground mb-2">
+              {t("schedules:noSchedules")}
+            </h2>
+            <p className="font-body text-muted-foreground max-w-xs mb-6">
+              {t("schedules:noSchedulesDescription")}
+            </p>
+            <Button onClick={handleAddSchedule} leftIcon={Plus}>
+              {t("schedules:addSchedule")}
+            </Button>
+          </div>
+        ) : filteredSchedules.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-muted-foreground">
+              {t("schedules:noResults")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredSchedules.map((schedule) => (
+              <ScheduleCard
+                key={schedule.id}
+                schedule={schedule}
+                onView={() => handleViewSchedule(schedule)}
+                onDelete={() => handleDeleteSchedule(schedule)}
+                onComplete={() => handleCompleteSchedule(schedule)}
+                onNoShow={() => handleNoShowSchedule(schedule)}
+                onRestore={() => handleRestoreHours(schedule)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Schedule Drawer */}
       <ScheduleDrawer

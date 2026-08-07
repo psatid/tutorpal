@@ -180,7 +180,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
 
   if (isLoadingClass) {
     return (
-      <div className="flex flex-col h-full p-4 space-y-4">
+      <div className="flex flex-col h-full py-4 space-y-4">
         <div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
           <div className="flex items-center gap-3">
             <Skeleton className="w-9 h-9 rounded-full" />
@@ -218,7 +218,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
 
   if (!classData) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+      <div className="flex flex-col items-center justify-center h-full text-center py-8">
         <p className="text-on-surface-variant">{t("classDetail.notFound")}</p>
         <button
           type="button"
@@ -232,7 +232,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   }
 
   return (
-    <div className="flex flex-col h-full p-4 space-y-4">
+    <div className="flex flex-col h-full py-4 space-y-4">
       <ClassInfoHeader
         classData={classData}
         onBack={handleBack}

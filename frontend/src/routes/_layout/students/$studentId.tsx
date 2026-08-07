@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ScreenLayout } from "@/components/layout/screen-layout";
 import { StudentDetailScreen } from "@/screens/student-detail-screen";
 
 export const Route = createFileRoute("/_layout/students/$studentId")({
@@ -7,5 +8,9 @@ export const Route = createFileRoute("/_layout/students/$studentId")({
 
 function StudentDetailRoute() {
   const { studentId } = Route.useParams();
-  return <StudentDetailScreen studentId={studentId} />;
+  return (
+    <ScreenLayout>
+      <StudentDetailScreen studentId={studentId} />
+    </ScreenLayout>
+  );
 }

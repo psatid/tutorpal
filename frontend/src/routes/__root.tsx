@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { RouteNotFound } from "@/components/route-fallback";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 
@@ -25,4 +26,5 @@ export const Route = createRootRoute({
       <Toaster richColors duration={3000} />
     </AuthProvider>
   ),
+  notFoundComponent: RouteNotFound,
 });

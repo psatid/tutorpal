@@ -9,6 +9,7 @@ Students, Classes, and Courses now use one responsive management pattern. The sh
 - Jun Layout provides one responsive side rail for Home, Students, Courses, Classes, Schedule, and Settings. Below `md` it is an overlay drawer; from `md` through below `lg` it becomes a 48px icon rail; at `lg` and above it expands to 15rem and can be manually collapsed or expanded. Courses precede Classes to follow the setup workflow.
 - The mobile bottom navigation has been removed so navigation has a single, consistent home across screen sizes.
 - List and detail routes activate the same parent navigation item.
+- The shared top bar shows the active screen name from the existing navigation labels, with Settings used for settings routes and their nested pages.
 
 ## Workspace pattern
 

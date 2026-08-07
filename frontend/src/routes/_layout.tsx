@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { RouteError } from "@/components/route-fallback";
 import { useAuth } from "@/contexts/auth-context";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
@@ -6,6 +7,7 @@ import { useEffect } from "react";
 
 export const Route = createFileRoute("/_layout")({
   component: LayoutRoute,
+  errorComponent: RouteError,
 });
 
 function LayoutRoute() {
@@ -35,7 +37,7 @@ function LayoutRoute() {
   return (
     <div className="jun-layout jun-layout-safeArea min-h-dvh">
       <AppSidebar />
-      <main className="jun-content min-w-0 bg-accent p-3 sm:p-4 lg:p-6">
+      <main className="jun-content min-w-0 bg-accent">
         <Outlet />
       </main>
     </div>

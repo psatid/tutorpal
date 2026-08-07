@@ -4,4 +4,5 @@ export default {
   classes: "Classes",
   courses: "Courses",
   schedules: "Schedules",
+  settings: "Settings",
 } as const;

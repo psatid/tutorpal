@@ -26,25 +26,25 @@ export function AuthShell({
         )}
       >
         <div className="space-y-8 sm:space-y-10">
-          <div className="space-y-5">
-            <div className="inline-flex h-14 min-w-14 items-center justify-center rounded-2xl border border-border bg-accent px-4 text-lg font-extrabold text-primary">
-              TP
-            </div>
-            <div className="space-y-2">
-              {eyebrow ? (
-                <p className="text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  {eyebrow}
-                </p>
-              ) : null}
-              <h1 className="max-w-[12ch] text-4xl font-extrabold tracking-[-0.02em] text-foreground text-balance sm:text-5xl">
-                {title}
-              </h1>
-              {subtitle ? (
-                <p className="max-w-[34ch] text-sm leading-6 text-muted-foreground sm:text-base">
-                  {subtitle}
-                </p>
-              ) : null}
-            </div>
+          <div className="space-y-2">
+            <img
+              src="/app-icon.png"
+              alt="Logo"
+              className="jun-sidebarIcon size-10"
+            />
+            {eyebrow ? (
+              <p className="text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {eyebrow}
+              </p>
+            ) : null}
+            <h1 className="max-w-[12ch] text-4xl font-extrabold tracking-[-0.02em] text-foreground text-balance sm:text-5xl">
+              {title}
+            </h1>
+            {subtitle ? (
+              <p className="max-w-[34ch] text-sm leading-6 text-muted-foreground sm:text-base">
+                {subtitle}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-6">{form}</div>

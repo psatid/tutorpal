@@ -36,7 +36,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 type ButtonProps = ButtonPrimitive.Props &
@@ -54,12 +54,14 @@ function Button({
   leftIcon: LeftIcon,
   rightIcon: RightIcon,
   children,
+  disabled,
   ...props
 }: ButtonProps) {
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || loading}
       {...props}
     >
       {loading && <Loader2 className={cn("animate-spin")} />}

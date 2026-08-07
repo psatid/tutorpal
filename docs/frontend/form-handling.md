@@ -74,6 +74,10 @@ label, description, error, or invalid-state markup in a feature component.
 opens the calendar in a nested drawer, which avoids shifting the parent form
 drawer while keeping the same date-only form value.
 
+Its trigger exposes the controlled picker state as `data-state="open"` or
+`"closed"` in both presentations, so custom triggers can style their open
+state consistently.
+
 ## 3. Submit through `handleSubmit`
 
 Wrap the mutation call with `handleSubmit`. The handler then receives validated

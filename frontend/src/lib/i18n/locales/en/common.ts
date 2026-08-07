@@ -32,4 +32,18 @@ export default {
   retry: "Retry",
   empty: "No items found",
   today: "Today",
+  routeError: {
+    title: "We couldn’t open this page",
+    description:
+      "Something went wrong while opening TutorPal. Your work is safe—try again or return to your dashboard.",
+    retry: "Try again",
+    retrying: "Trying again…",
+    dashboard: "Go to dashboard",
+  },
+  notFound: {
+    title: "This page isn’t here",
+    description:
+      "The link may be out of date or the page may have moved. Let’s get you back to TutorPal.",
+    dashboard: "Go to dashboard",
+  },
 } as const;

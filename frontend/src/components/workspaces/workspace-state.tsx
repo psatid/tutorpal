@@ -27,10 +27,12 @@ export function WorkspaceErrorState({
 	title,
 	description,
 	onRetry,
+	retryLabel = "Try again",
 }: {
 	title: string;
 	description: string;
 	onRetry: () => void;
+	retryLabel?: string;
 }) {
 	return (
 		<div className="flex min-h-64 flex-col items-center justify-center px-4 text-center">
@@ -39,7 +41,7 @@ export function WorkspaceErrorState({
 				{description}
 			</p>
 			<Button className="mt-4" onClick={onRetry} variant="outline">
-				Try again
+				{retryLabel}
 			</Button>
 		</div>
 	);
