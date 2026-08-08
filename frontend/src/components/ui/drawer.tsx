@@ -2,6 +2,7 @@ import * as React from "react";
 import { Drawer } from "@base-ui/react/drawer";
 
 import { cn } from "@/lib/utils";
+import { overlayLayers } from "@/components/ui/overlay-layers";
 
 type DrawerLayer = "base" | "nested";
 
@@ -10,14 +11,14 @@ const drawerLayerClasses: Record<
   { backdrop: string; viewport: string; popup: string }
 > = {
   base: {
-    backdrop: "z-50",
-    viewport: "z-60",
-    popup: "z-60",
+    backdrop: overlayLayers.baseBackdrop,
+    viewport: overlayLayers.baseSurface,
+    popup: overlayLayers.baseSurface,
   },
   nested: {
-    backdrop: "z-70",
-    viewport: "z-80",
-    popup: "z-80",
+    backdrop: overlayLayers.nestedBackdrop,
+    viewport: overlayLayers.nestedSurface,
+    popup: overlayLayers.nestedSurface,
   },
 };
 
