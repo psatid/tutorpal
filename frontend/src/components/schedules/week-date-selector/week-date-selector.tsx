@@ -27,9 +27,9 @@ function getDateByDayOffset(date: Date, dayOffset: number): Date {
   const targetWeekdayIndex =
     ((targetDayIndex % WEEK_DAYS) + WEEK_DAYS) % WEEK_DAYS;
 
-  return DateTime.getWeekDates(
-    dateTime.startOfWeek().addWeeks(weekOffset),
-  )[targetWeekdayIndex]!.toDate();
+  return DateTime.getWeekDates(dateTime.startOfWeek().addWeeks(weekOffset))[
+    targetWeekdayIndex
+  ]!.toDate();
 }
 
 function createDateBuffer(selectedDate: Date): Date[] {
@@ -164,7 +164,7 @@ export function WeekDateSelector({
           </div>
           <Button
             variant="outline"
-            size="default"
+            size="sm"
             onClick={handleToday}
             leftIcon={CalendarDays}
             className="shrink-0 bg-card px-2 sm:px-3"

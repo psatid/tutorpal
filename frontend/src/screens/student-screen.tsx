@@ -119,7 +119,6 @@ export function StudentScreen() {
           </Button>
         }
         countLabel={t("students:count", { count: total })}
-        description={t("students:subtitle")}
         title={t("students:title")}
       />
       <WorkspaceMain>

@@ -32,7 +32,9 @@ export function SchedulesScreen() {
   const emptyActionRef = useRef<HTMLButtonElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [selectedDate, setSelectedDate] = useState<Date>(DateTime.today().toDate());
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    DateTime.today().toDate(),
+  );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("create");
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
@@ -41,7 +43,12 @@ export function SchedulesScreen() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
-  const { data: schedules, isLoading, isError, refetch } = useSchedules({
+  const {
+    data: schedules,
+    isLoading,
+    isError,
+    refetch,
+  } = useSchedules({
     date: formattedDate,
     search: debouncedSearchQuery || undefined,
   });
@@ -187,30 +194,30 @@ export function SchedulesScreen() {
       {schedules && schedules.length > 0 && (
         <div className="mb-4 px-3 sm:px-4 lg:px-6">
           <div className="flex gap-2 overflow-x-auto">
-            {(["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const).map(
-              (status) => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => setStatusFilter(status)}
-                  aria-pressed={statusFilter === status}
-                  className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            {(
+              ["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const
+            ).map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setStatusFilter(status)}
+                aria-pressed={statusFilter === status}
+                className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <span
+                  className={cn(
+                    "rounded-full px-3 py-1.5 leading-5 transition-colors",
+                    statusFilter === status
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground group-hover:bg-accent",
+                  )}
                 >
-                  <span
-                    className={cn(
-                      "rounded-full px-3 py-1.5 leading-5 transition-colors",
-                      statusFilter === status
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground group-hover:bg-accent",
-                    )}
-                  >
-                    {status === "ALL"
-                      ? t("schedules:filter.all")
-                      : t(`schedules:status.${status}`)}
-                  </span>
-                </button>
-              ),
-            )}
+                  {status === "ALL"
+                    ? t("schedules:filter.all")
+                    : t(`schedules:status.${status}`)}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -253,9 +260,7 @@ export function SchedulesScreen() {
           </div>
         ) : filteredSchedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">
-              {t("schedules:noResults")}
-            </p>
+            <p className="text-muted-foreground">{t("schedules:noResults")}</p>
           </div>
         ) : (
           <div className="space-y-2">
