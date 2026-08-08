@@ -1,26 +1,15 @@
-import {
-  AudioWaveform,
-  BadgeCheck,
-  Bell,
-  Command,
-  CreditCard,
-  GalleryVerticalEnd,
-  Loader2,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
+import { useLogout } from "@/hooks/mutations/use-logout";
+import { useSession } from "@/hooks/use-session";
+import { Loader2, LogOut } from "lucide-react";
+import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import React from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { useSession } from "@/hooks/use-session";
-import { useLogout } from "@/hooks/mutations/use-logout";
 
 export default function UserSetting({
   children,
