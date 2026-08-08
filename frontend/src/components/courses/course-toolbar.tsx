@@ -1,14 +1,8 @@
-import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
 import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+	WorkspaceSearchControls,
+	type WorkspaceControlChoice,
+} from "@/components/workspaces/workspace-search-controls";
 
 export type CourseSort =
 	| "name-asc"
@@ -18,53 +12,46 @@ export type CourseSort =
 interface CourseToolbarProps {
 	search: string;
 	sort: CourseSort;
+	isDirty: boolean;
 	onSearchChange: (value: string) => void;
+	onReset: () => void;
 	onSortChange: (value: CourseSort) => void;
 }
 
 export function CourseToolbar({
 	search,
 	sort,
+	isDirty,
 	onSearchChange,
+	onReset,
 	onSortChange,
 }: CourseToolbarProps) {
 	const { t } = useTranslation(["courses"]);
+	const sortChoices: WorkspaceControlChoice<CourseSort>[] = (
+		[
+			"name-asc",
+			"createdAt-desc",
+			"defaultTotalHours-desc",
+		] as CourseSort[]
+	).map((value) => ({ value, label: t(`courses:sort.${value}`) }));
 
 	return (
-		<div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
-			<Input
-				aria-label={t("courses:searchLabel")}
-				className="md:flex-1"
-				leftIcon={Search}
-				onChange={(event) => onSearchChange(event.target.value)}
-				placeholder={t("courses:searchCourses")}
-				value={search}
-			/>
-			<Select
-				onValueChange={(value) =>
-					onSortChange((value ?? "name-asc") as CourseSort)
-				}
-				value={sort}
-			>
-				<SelectTrigger className="md:w-56">
-					<SelectValue>{t(`courses:sort.${sort}`)}</SelectValue>
-				</SelectTrigger>
-				<SelectContent>
-					<SelectGroup>
-						{(
-							[
-								"name-asc",
-								"createdAt-desc",
-								"defaultTotalHours-desc",
-							] as CourseSort[]
-						).map((value) => (
-							<SelectItem key={value} value={value}>
-								{t(`courses:sort.${value}`)}
-							</SelectItem>
-						))}
-					</SelectGroup>
-				</SelectContent>
-			</Select>
-		</div>
+		<WorkspaceSearchControls
+			clearSearchLabel={t("courses:clearSearch")}
+			isDirty={isDirty}
+			onReset={onReset}
+			onSearchChange={onSearchChange}
+			onSortChange={onSortChange}
+			resetLabel={t("courses:reset")}
+			search={search}
+			searchLabel={t("courses:searchLabel")}
+			searchPlaceholder={t("courses:searchCourses")}
+			sort={
+				sortChoices.find((choice) => choice.value === sort) ??
+				sortChoices[0]!
+			}
+			sortChoices={sortChoices}
+			sortLabel={t("courses:sortLabel")}
+		/>
 	);
 }

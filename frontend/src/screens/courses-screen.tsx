@@ -29,6 +29,7 @@ import {
 	useDeleteCourse,
 } from "@/hooks/mutations/use-courses";
 import { useCourses } from "@/hooks/queries/use-courses";
+import { useWorkspaceSearchControls } from "@/hooks/use-workspace-search-controls";
 import { Course } from "@/models/course";
 import type { CourseListFilters } from "@/types/course-query";
 
@@ -55,8 +56,17 @@ export function CoursesScreen() {
 	const conflictActionRef = useRef<HTMLButtonElement>(null);
 	const revalidationErrorActionRef = useRef<HTMLButtonElement>(null);
 	const deleteRevalidationRef = useRef(0);
-	const [search, setSearch] = useState("");
-	const [sort, setSort] = useState<CourseSort>("name-asc");
+	const {
+		debouncedSearch,
+		isDirty,
+		reset,
+		search,
+		setSearch,
+		setSort,
+		sort,
+	} = useWorkspaceSearchControls<CourseSort>({
+		defaultSort: "name-asc",
+	});
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 	const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
@@ -71,7 +81,7 @@ export function CoursesScreen() {
 	>(null);
 	const query = useCourses({
 		limit: 100,
-		search: search || undefined,
+		search: debouncedSearch || undefined,
 		...sortParams(sort),
 	});
 	const courses = query.data?.courses ?? [];
@@ -319,7 +329,7 @@ export function CoursesScreen() {
 		);
 
 	return (
-		<WorkspaceShell className="max-w-6xl">
+		<WorkspaceShell>
 			<WorkspaceHeader
 				action={
 					<Button
@@ -339,7 +349,9 @@ export function CoursesScreen() {
 			/>
 			<WorkspaceMain>
 				<CourseToolbar
+					isDirty={isDirty}
 					onSearchChange={setSearch}
+					onReset={reset}
 					onSortChange={setSort}
 					search={search}
 					sort={sort}

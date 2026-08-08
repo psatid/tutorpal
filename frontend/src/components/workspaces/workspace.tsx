@@ -9,12 +9,7 @@ export function WorkspaceShell({
 	className?: string;
 }) {
 	return (
-		<section
-			className={cn(
-				"mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col overflow-hidden border border-border bg-card sm:rounded-xl",
-				className,
-			)}
-		>
+		<section className={cn("mx-auto w-full max-w-7xl", className)}>
 			{children}
 		</section>
 	);
@@ -32,7 +27,7 @@ export function WorkspaceHeader({
 	action?: ReactNode;
 }) {
 	return (
-		<header className="flex items-start justify-between gap-4 border-b border-border px-4 py-5 sm:px-6">
+		<header className="flex items-start justify-between gap-4 border-b border-border py-5">
 			<div className="min-w-0">
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 					<h1 className="text-balance text-2xl font-extrabold tracking-tight text-foreground">
@@ -54,9 +49,7 @@ export function WorkspaceHeader({
 }
 
 export function WorkspaceMain({ children }: { children: ReactNode }) {
-	return (
-		<main className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">{children}</main>
-	);
+	return <div>{children}</div>;
 }
 
 export function WorkspaceToolbar({ children }: { children: ReactNode }) {
@@ -74,9 +67,5 @@ export function WorkspaceList({
 	children: ReactNode;
 	className?: string;
 }) {
-	return (
-		<div className={cn("min-h-0 flex-1 overflow-y-auto", className)}>
-			{children}
-		</div>
-	);
+	return <div className={cn("min-w-0", className)}>{children}</div>;
 }

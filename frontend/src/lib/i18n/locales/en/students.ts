@@ -9,6 +9,10 @@ export default {
 	createDescription:
 		"Add the learner details you use for classes and communication.",
 	searchLabel: "Search students",
+	clearSearch: "Clear search",
+	reset: "Reset",
+	sortLabel: "Sort",
+	filterLabel: "Filter",
 	actionsFor: "Actions for {{name}}",
 	noPhone: "No phone number",
 	managingCount: "Managing {{count}} active scholar this term.",

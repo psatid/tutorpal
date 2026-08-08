@@ -154,11 +154,12 @@ This system explicitly rejects the corporate spreadsheet look (dense data tables
 - Surface color shifts for depth: layering solid blocks of color, not elevation
 - Bold Manrope typography: high-contrast headlines, scannable body text
 - Warm violet identity: `#6C63FF` as the singular accent, used with restraint
+- Semantic green and amber are reserved for status and attention states, never decoration
 - Clean & restrained components: content does the talking, surfaces stay quiet
 
 ## 2. Colors
 
-The palette is a restrained system built around a single saturated violet accent against warm-tinted neutrals. One accent carries the brand; the rest serve hierarchy.
+The palette is a restrained system built around a single saturated violet accent against warm-tinted neutrals. One accent carries the brand; semantic colors communicate status without becoming decoration.
 
 ### Primary
 - **Scholar's Ink** (#6C63FF): The brand anchor. Used on primary actions (FAB, active nav, submit buttons), form focus rings, and brand markers. Its rarity on screen is the point — it signals "this matters."
@@ -168,6 +169,11 @@ The palette is a restrained system built around a single saturated violet accent
 ### Tertiary
 - **Amber Warning** (#914800): Urgent notifications, destructive-adjacent states. A sophisticated warm tone that reads as "pay attention" without the harshness of pure red.
 - **Amber Container** (#B65C00): Backgrounds for urgent highlights and warning badges.
+
+### Semantic status
+- **Success:** Green container and foreground tokens are used for confirmed states such as a linked LINE account.
+- **Warning:** Amber container and foreground tokens are used for attention states such as a LINE relink requirement or exhausted class hours.
+- Status color is always paired with visible text or an icon; it is never the only indicator.
 
 ### Neutral
 - **Page** (#FCF8FF): The base layer. A barely-there violet tint — warm but not cream.
@@ -182,7 +188,9 @@ The palette is a restrained system built around a single saturated violet accent
 ### Named Rules
 **The Solid Boundary Rule.** No gradients, no transparency (except disabled states), no standard box-shadows. Depth is communicated through surface color layering and solid 1px borders. The system is unapologetically flat.
 
-**The One Accent Rule.** The primary violet is used on ≤10% of any given screen. Its rarity creates hierarchy. When in doubt, use a neutral surface shift instead of adding more purple.
+**The One Accent Rule.** The primary violet is used on ≤10% of any given screen. Its rarity creates hierarchy. Semantic success and warning colors appear only where the data has that meaning. When in doubt, use a neutral surface shift instead of adding more color.
+
+**The Shared Control Rule.** Search, filter, sort, reset, and clear actions reuse the existing Input, Button, and Select component styles. Workspace-specific classes may control layout and responsive behavior, but do not redefine their visual vocabulary.
 
 ## 3. Typography
 
@@ -244,6 +252,7 @@ Components are clean, restrained, and functional. Content is the focus; surfaces
 ### Chips / Badges
 - **Default:** Primary background, white text. For counts and active states.
 - **Outline:** Tinted background, foreground text with border. For metadata and labels.
+- **Success / Warning:** Semantic tinted backgrounds with matching readable foregrounds for confirmed and attention states.
 - **Shape:** Full pill. Small, scannable, never dominant.
 
 ### Navigation

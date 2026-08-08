@@ -32,6 +32,12 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-container: var(--success-container);
+  --color-success-container-foreground: var(--success-container-foreground);
+  --color-warning: var(--warning);
+  --color-warning-container: var(--warning-container);
+  --color-warning-container-foreground: var(--warning-container-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -71,6 +77,12 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.43 0.12 155);
+  --success-container: oklch(0.93 0.05 155);
+  --success-container-foreground: oklch(0.28 0.08 155);
+  --warning: oklch(0.47 0.13 78);
+  --warning-container: oklch(0.94 0.06 85);
+  --warning-container-foreground: oklch(0.32 0.09 78);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -106,6 +118,12 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.78 0.14 155);
+  --success-container: oklch(0.27 0.07 155);
+  --success-container-foreground: oklch(0.86 0.12 155);
+  --warning: oklch(0.82 0.14 85);
+  --warning-container: oklch(0.29 0.08 78);
+  --warning-container-foreground: oklch(0.88 0.12 85);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -125,12 +143,6 @@
 }
 
 @layer base {
-  *, *::before, *::after {
-    scrollbar-width: none;
-  }
-  *::-webkit-scrollbar {
-    display: none;
-  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -143,6 +155,14 @@
 }
 
 @layer utilities {
+  .workspace-refinement-rail {
+    scrollbar-width: none;
+  }
+
+  .workspace-refinement-rail::-webkit-scrollbar {
+    display: none;
+  }
+
   .jun-edgeSidebar::before {
     backdrop-filter: none;
   }

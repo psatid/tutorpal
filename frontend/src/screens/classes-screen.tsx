@@ -1,6 +1,13 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { BookOpen, Plus, Search } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, Plus } from "lucide-react";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ClassRow } from "@/components/classes/class-row";
@@ -19,23 +26,17 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	WorkspaceHeader,
 	WorkspaceList,
 	WorkspaceMain,
 	WorkspaceShell,
-	WorkspaceToolbar,
 } from "@/components/workspaces/workspace";
 import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
+import {
+	WorkspaceSearchControls,
+	type WorkspaceControlChoice,
+} from "@/components/workspaces/workspace-search-controls";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import {
 	WorkspaceEmptyState,
@@ -44,6 +45,7 @@ import {
 } from "@/components/workspaces/workspace-state";
 import { useCourses } from "@/hooks/queries/use-courses";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
+import { useWorkspaceSearchControls } from "@/hooks/use-workspace-search-controls";
 import {
 	type ClassDeleteErrorKind,
 	useDeleteClass,
@@ -78,8 +80,6 @@ export function ClassesScreen() {
 	const classActionTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
 	const deleteOriginRef = useRef<HTMLButtonElement>(null);
 	const deleteOriginIndexRef = useRef(-1);
-	const [search, setSearch] = useState("");
-	const [sort, setSort] = useState<SortValue>("createdAt-desc");
 	const [formOpen, setFormOpen] = useState(false);
 	const [deletingClass, setDeletingClass] = useState<Class | null>(null);
 	const [deleteError, setDeleteError] = useState<ClassDeleteErrorKind | null>(
@@ -101,8 +101,25 @@ export function ClassesScreen() {
 			: routeSearch.classType === "course-linked"
 				? "__course_linked__"
 				: "all";
+	const hasActiveFilter = filterValue !== "all";
+	const resetClassFilter = useCallback(() => {
+		void navigate({ to: "/classes", search: {}, replace: true });
+	}, [navigate]);
+	const {
+		debouncedSearch,
+		isDirty,
+		reset,
+		search,
+		setSearch,
+		setSort,
+		sort,
+	} = useWorkspaceSearchControls<SortValue>({
+		additionalDirty: hasActiveFilter,
+		defaultSort: "createdAt-desc",
+		onResetAdditional: resetClassFilter,
+	});
 	const classesQuery = useInfiniteClasses({
-		search: search || undefined,
+		search: debouncedSearch || undefined,
 		courseId: routeSearch.courseId,
 		classType: routeSearch.courseId ? undefined : routeSearch.classType,
 		...sortParams(sort),
@@ -121,13 +138,25 @@ export function ClassesScreen() {
 			: routeSearch.classType === "course-linked"
 				? t("classes:courseLinkedClasses")
 				: t("classes:allClasses"));
-	const emptyTitle = routeSearch.courseId
-		? t("classes:noCourseClasses", { course: filterLabel })
-		: routeSearch.classType === "custom"
-			? t("classes:noCustomClasses")
-			: routeSearch.classType === "course-linked"
-				? t("classes:noCourseLinkedClasses")
-				: t("classes:noClasses");
+	const filterChoices: WorkspaceControlChoice<string>[] = [
+		{ value: "all", label: t("classes:allClasses") },
+		{ value: CUSTOM_CLASS_VALUE, label: t("classes:customClasses") },
+		{
+			value: "__course_linked__",
+			label: t("classes:courseLinkedClasses"),
+		},
+		...courses.map((course) => ({
+			value: `course:${course.getId()}`,
+			label: course.getName(),
+		})),
+	];
+	const sortChoices: WorkspaceControlChoice<SortValue>[] = (
+		[
+			"createdAt-desc",
+			"name-asc",
+			"totalHours-desc",
+		] as SortValue[]
+	).map((value) => ({ value, label: t(`classes:workspaceSort.${value}`) }));
 	const deleteClass = useDeleteClass({
 		onSuccess: () => {
 			setDeletingClass(null);
@@ -170,7 +199,6 @@ export function ClassesScreen() {
 			});
 		else void navigate({ to: "/classes", search: {}, replace: true });
 	}
-
 	const openCreate = (trigger: HTMLButtonElement | null) => {
 		activeTriggerRef.current = trigger ?? fabRef.current ?? triggerRef.current;
 		setFormOpen(true);
@@ -277,7 +305,7 @@ export function ClassesScreen() {
 		content = (
 			<WorkspaceEmptyState
 				action={
-					!search ? (
+					!debouncedSearch && !hasActiveFilter ? (
 						<Button
 							onClick={() => openCreate(emptyActionRef.current)}
 							ref={emptyActionRef}
@@ -288,17 +316,21 @@ export function ClassesScreen() {
 					) : undefined
 				}
 				description={
-					search
+					debouncedSearch || hasActiveFilter
 						? t("classes:noMatchesDescription")
 						: t("classes:noClassesDescription")
 				}
 				icon={<BookOpen />}
-				title={search ? t("classes:noMatches") : emptyTitle}
+				title={
+					debouncedSearch || hasActiveFilter
+						? t("classes:noMatches")
+						: t("classes:noClasses")
+				}
 			/>
 		);
 	else
 		content = (
-			<div>
+			<ul className="space-y-3">
 				{classes.map((item, index) => (
 					<ClassRow
 						actionTriggerRef={(node) => {
@@ -317,18 +349,20 @@ export function ClassesScreen() {
 					/>
 				))}
 				{classesQuery.hasNextPage ? (
-					<Button
-						className="mt-3 w-full"
-						disabled={classesQuery.isFetchingNextPage}
-						onClick={() => classesQuery.fetchNextPage()}
-						variant="ghost"
-					>
-						{classesQuery.isFetchingNextPage
-							? t("classes:loadingMore")
-							: t("classes:loadMore")}
-					</Button>
+					<li>
+						<Button
+							className="w-full"
+							disabled={classesQuery.isFetchingNextPage}
+							onClick={() => classesQuery.fetchNextPage()}
+							variant="ghost"
+						>
+							{classesQuery.isFetchingNextPage
+								? t("classes:loadingMore")
+								: t("classes:loadMore")}
+						</Button>
+					</li>
 				) : null}
-			</div>
+			</ul>
 		);
 
 	return (
@@ -351,68 +385,38 @@ export function ClassesScreen() {
 				title={t("classes:title")}
 			/>
 			<WorkspaceMain>
-					<div className="mb-4">
-						<h2 className="truncate text-lg font-bold text-foreground">
-							{filterLabel}
-						</h2>
-					</div>
-					<WorkspaceToolbar>
-						<div className="md:flex-1" ref={searchFallbackRef}>
-							<Input
-								aria-label={t("classes:searchLabel")}
-								leftIcon={Search}
-								onChange={(event) => setSearch(event.target.value)}
-								placeholder={t("classes:searchWorkspacePlaceholder")}
-								value={search}
-							/>
-						</div>
-						<Select onValueChange={changeFilter} value={filterValue}>
-							<SelectTrigger className="md:w-60">
-								<SelectValue>{filterLabel}</SelectValue>
-							</SelectTrigger>
-							<SelectContent>
-								<SelectGroup>
-									<SelectItem value="all">{t("classes:allClasses")}</SelectItem>
-									<SelectItem value={CUSTOM_CLASS_VALUE}>
-										{t("classes:customClasses")}
-									</SelectItem>
-									<SelectItem value="__course_linked__">
-										{t("classes:courseLinkedClasses")}
-									</SelectItem>
-									{courses.map((course) => (
-									<SelectItem key={course.getId()} value={`course:${course.getId()}`}>
-										{course.getName()}
-										</SelectItem>
-									))}
-								</SelectGroup>
-							</SelectContent>
-						</Select>
-						<Select
-							onValueChange={(value) =>
-								setSort((value ?? "createdAt-desc") as SortValue)
+					<div ref={searchFallbackRef}>
+						<WorkspaceSearchControls
+							clearSearchLabel={t("classes:clearSearch")}
+							filter={{
+								choices: filterChoices,
+								disabled: coursesQuery.isLoading,
+								label: t("classes:filterLabel"),
+								onValueChange: changeFilter,
+								isActive: hasActiveFilter,
+								value: {
+									value: filterValue,
+									label: coursesQuery.isLoading
+										? t("classes:loadingFilters")
+										: filterLabel,
+								},
+							}}
+							isDirty={isDirty}
+							onReset={reset}
+							onSearchChange={setSearch}
+							onSortChange={setSort}
+							resetLabel={t("classes:reset")}
+							search={search}
+							searchLabel={t("classes:searchLabel")}
+							searchPlaceholder={t("classes:searchWorkspacePlaceholder")}
+							sort={
+								sortChoices.find((choice) => choice.value === sort) ??
+								sortChoices[0]!
 							}
-							value={sort}
-						>
-							<SelectTrigger className="md:w-48">
-								<SelectValue>{t(`classes:workspaceSort.${sort}`)}</SelectValue>
-							</SelectTrigger>
-							<SelectContent>
-								<SelectGroup>
-									{(
-										[
-											"createdAt-desc",
-											"name-asc",
-											"totalHours-desc",
-										] as SortValue[]
-									).map((value) => (
-										<SelectItem key={value} value={value}>
-											{t(`classes:workspaceSort.${value}`)}
-										</SelectItem>
-									))}
-								</SelectGroup>
-							</SelectContent>
-						</Select>
-					</WorkspaceToolbar>
+							sortChoices={sortChoices}
+							sortLabel={t("classes:sortLabel")}
+						/>
+					</div>
 					<WorkspaceList className="pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">{content}</WorkspaceList>
 			</WorkspaceMain>
 			<WorkspaceFab

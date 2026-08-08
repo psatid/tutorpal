@@ -184,7 +184,7 @@ export function StudentList({
 
 	return (
 		<>
-			<div>
+			<ul className="space-y-3">
 				{students.map((student) => (
 					<StudentRow
 						key={student.getId()}
@@ -196,7 +196,7 @@ export function StudentList({
 						student={student}
 					/>
 				))}
-			</div>
+			</ul>
 
 			{/* Load More Indicator */}
 			<div ref={loadMoreRef}>

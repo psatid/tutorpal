@@ -9,6 +9,11 @@ export default {
 	createDescription:
 		"Choose a course or create a custom class. The association is fixed after creation.",
 	searchLabel: "Search classes",
+	clearSearch: "Clear search",
+	reset: "Reset",
+	sortLabel: "Sort",
+	filterLabel: "Filter",
+	loadingFilters: "Loading filters…",
 	searchWorkspacePlaceholder: "Search classes, courses, or students",
 	allClasses: "All classes",
 	customClasses: "Custom classes",

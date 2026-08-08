@@ -17,7 +17,7 @@ export function CourseList({
 	onViewClasses,
 }: CourseListProps) {
 	return (
-		<div>
+		<ul className="space-y-3">
 			{courses.map((course, index) => (
 				<CourseRow
 					actionTriggerRef={(node) => actionTriggerRef(course.getId(), node)}
@@ -28,6 +28,6 @@ export function CourseList({
 					key={course.getId()}
 				/>
 			))}
-		</div>
+		</ul>
 	);
 }

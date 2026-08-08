@@ -74,9 +74,9 @@ export const AppSidebar = () => {
           <TriggerMobileSidebar />
           <TriggerLeftSidebarCollapse />
           {pageTitle && (
-            <h1 className="min-w-0 flex-1 truncate font-headline text-base font-bold text-on-surface md:text-lg">
+            <div className="min-w-0 flex-1 truncate font-headline text-base font-bold text-on-surface md:text-lg">
               {pageTitle}
-            </h1>
+            </div>
           )}
         </div>
       </div>
