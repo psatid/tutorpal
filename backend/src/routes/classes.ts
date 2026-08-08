@@ -6,6 +6,7 @@ import {
 	ClassListQuerySchema,
 	ClassSchemaResolver,
 	CreateClassSchema,
+	ErrorResponseSchemaResolver,
 	PaginatedClassListSchemaResolver,
 	UpdateClassSchema,
 } from "../schemas";
@@ -216,9 +217,15 @@ const classRoutes = new Hono<AppEnv>()
 				},
 				401: {
 					description: "Unauthorized - Authentication required",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
 				},
 				404: {
 					description: "Class not found",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
 				},
 			},
 		}),

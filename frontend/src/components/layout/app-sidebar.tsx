@@ -100,7 +100,7 @@ export const AppSidebar = () => {
               <img
                 src="/app-icon.png"
                 alt=""
-                className="jun-sidebarIcon size-10"
+                className="jun-sidebarIcon size-8"
               />
               <div className="jun-sidebarText text-left text-sm leading-tight flex items-center">
                 <div className="flex-1">

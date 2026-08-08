@@ -43,6 +43,8 @@ export interface UpdateClassDTO {
 	studentIds?: string[];
 }
 
+export type ClassDeleteOutcome = "deleted" | "not_found";
+
 export interface ClassListParams extends PaginationParams {
 	courseId?: string;
 	classType?: "custom" | "course-linked";
@@ -60,5 +62,5 @@ export interface IClassRepository {
 		tutorId: string,
 		data: UpdateClassDTO,
 	): Promise<ClassModel>;
-	delete(id: string, tutorId: string): Promise<void>;
+	delete(id: string, tutorId: string): Promise<ClassDeleteOutcome>;
 }

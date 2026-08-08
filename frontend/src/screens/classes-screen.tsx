@@ -1,13 +1,24 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { BookOpen, Plus, Search } from "lucide-react";
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { ClassRow } from "@/components/classes/class-row";
 import {
 	CreateClassForm,
 	CUSTOM_CLASS_VALUE,
 } from "@/components/classes/create-class-form";
 import { Button } from "@/components/ui/button";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -33,6 +44,11 @@ import {
 } from "@/components/workspaces/workspace-state";
 import { useCourses } from "@/hooks/queries/use-courses";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
+import {
+	type ClassDeleteErrorKind,
+	useDeleteClass,
+} from "@/hooks/mutations/use-delete-class";
+import { Class } from "@/models/class";
 import type { ClassListFilters } from "@/types/class-query";
 
 type ClassesSearch = {
@@ -58,9 +74,20 @@ export function ClassesScreen() {
 	const fabRef = useRef<HTMLButtonElement>(null);
 	const activeTriggerRef = useRef<HTMLButtonElement>(null);
 	const emptyActionRef = useRef<HTMLButtonElement>(null);
+	const searchFallbackRef = useRef<HTMLDivElement>(null);
+	const classActionTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
+	const deleteOriginRef = useRef<HTMLButtonElement>(null);
+	const deleteOriginIndexRef = useRef(-1);
 	const [search, setSearch] = useState("");
 	const [sort, setSort] = useState<SortValue>("createdAt-desc");
 	const [formOpen, setFormOpen] = useState(false);
+	const [deletingClass, setDeletingClass] = useState<Class | null>(null);
+	const [deleteError, setDeleteError] = useState<ClassDeleteErrorKind | null>(
+		null,
+	);
+	const [focusAfterDeleteIndex, setFocusAfterDeleteIndex] = useState<
+		number | null
+	>(null);
 	const coursesQuery = useCourses({
 		limit: 100,
 		sortBy: "name",
@@ -101,6 +128,25 @@ export function ClassesScreen() {
 			: routeSearch.classType === "course-linked"
 				? t("classes:noCourseLinkedClasses")
 				: t("classes:noClasses");
+	const deleteClass = useDeleteClass({
+		onSuccess: () => {
+			setDeletingClass(null);
+			setDeleteError(null);
+			setFocusAfterDeleteIndex(deleteOriginIndexRef.current);
+			toast.success(t("classes:delete.success"));
+		},
+		onError: (error) => {
+			if (error.kind === "not-found") {
+				setDeletingClass(null);
+				setDeleteError(null);
+				setFocusAfterDeleteIndex(deleteOriginIndexRef.current);
+				toast.info(t("classes:delete.alreadyRemoved"));
+				return;
+			}
+
+			setDeleteError(error.kind);
+		},
+	});
 
 	function changeFilter(value: string | null) {
 		const next = value ?? "all";
@@ -144,6 +190,64 @@ export function ClassesScreen() {
 		setFormOpen(false);
 		focusTrigger();
 	};
+	function isVisibleButton(
+		candidate: HTMLButtonElement | null | undefined,
+	): candidate is HTMLButtonElement {
+		return Boolean(
+			candidate?.isConnected &&
+				!candidate.disabled &&
+				candidate.getClientRects().length > 0,
+		);
+	}
+	function focusDeleteOrigin() {
+		const trigger = [
+			deleteOriginRef.current,
+			triggerRef.current,
+			fabRef.current,
+			emptyActionRef.current,
+		].find(isVisibleButton);
+		trigger?.focus();
+	}
+	function requestDelete(item: Class, index: number) {
+		deleteOriginRef.current =
+			classActionTriggerRefs.current.get(item.getId()) ?? null;
+		deleteOriginIndexRef.current = index;
+		setDeleteError(null);
+		setDeletingClass(item);
+	}
+	function closeDeleteDialog() {
+		if (deleteClass.isPending) return;
+		setDeletingClass(null);
+		setDeleteError(null);
+		requestAnimationFrame(focusDeleteOrigin);
+	}
+
+	useEffect(() => {
+		if (focusAfterDeleteIndex === null) return;
+
+		const nextClass = [
+			...classes.slice(focusAfterDeleteIndex),
+			...classes.slice(0, focusAfterDeleteIndex).reverse(),
+		]
+			.map((item) => classActionTriggerRefs.current.get(item.getId()))
+			.find(isVisibleButton);
+		const searchInput = searchFallbackRef.current?.querySelector<HTMLInputElement>(
+			"input",
+		);
+		const fallback = [
+			nextClass,
+			triggerRef.current,
+			fabRef.current,
+			emptyActionRef.current,
+			searchInput,
+		].find(
+			(candidate) =>
+				candidate?.isConnected && candidate.getClientRects().length > 0,
+		);
+
+		requestAnimationFrame(() => fallback?.focus());
+		setFocusAfterDeleteIndex(null);
+	}, [classes, focusAfterDeleteIndex]);
 	const form = (
 		<CreateClassForm
 			courses={courses}
@@ -195,10 +299,15 @@ export function ClassesScreen() {
 	else
 		content = (
 			<div>
-				{classes.map((item) => (
+				{classes.map((item, index) => (
 					<ClassRow
+						actionTriggerRef={(node) => {
+							if (node) classActionTriggerRefs.current.set(item.getId(), node);
+							else classActionTriggerRefs.current.delete(item.getId());
+						}}
 						item={item}
 						key={item.getId()}
+						onDelete={() => requestDelete(item, index)}
 						onOpen={() =>
 							navigate({
 								to: "/classes/$classId",
@@ -248,14 +357,15 @@ export function ClassesScreen() {
 						</h2>
 					</div>
 					<WorkspaceToolbar>
-						<Input
-							aria-label={t("classes:searchLabel")}
-							className="md:flex-1"
-							leftIcon={Search}
-							onChange={(event) => setSearch(event.target.value)}
-							placeholder={t("classes:searchWorkspacePlaceholder")}
-							value={search}
-						/>
+						<div className="md:flex-1" ref={searchFallbackRef}>
+							<Input
+								aria-label={t("classes:searchLabel")}
+								leftIcon={Search}
+								onChange={(event) => setSearch(event.target.value)}
+								placeholder={t("classes:searchWorkspacePlaceholder")}
+								value={search}
+							/>
+						</div>
 						<Select onValueChange={changeFilter} value={filterValue}>
 							<SelectTrigger className="md:w-60">
 								<SelectValue>{filterLabel}</SelectValue>
@@ -320,6 +430,91 @@ export function ClassesScreen() {
 			>
 				{form}
 			</ResponsiveDrawer>
+			<AlertDialog
+				onOpenChange={(open, eventDetails) => {
+					if (!open && deleteClass.isPending) {
+						eventDetails.preventUnmountOnClose();
+						return;
+					}
+					if (!open) closeDeleteDialog();
+				}}
+				open={Boolean(deletingClass)}
+			>
+				<AlertDialogContent aria-busy={deleteClass.isPending}>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{t("classes:delete.title", {
+								name: deletingClass?.getDisplayName(),
+							})}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							{t("classes:delete.description")}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					{deleteError === "unknown" ? (
+						<p
+							className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+							role="alert"
+						>
+							{t("classes:delete.error")}
+						</p>
+					) : null}
+					{deleteClass.isPending ? (
+						<p className="text-sm text-muted-foreground" role="status">
+							{t("classes:delete.deleting")}
+						</p>
+					) : null}
+					<AlertDialogFooter>
+						<AlertDialogCancel
+							disabled={deleteClass.isPending}
+							onClick={closeDeleteDialog}
+							onKeyDown={(event) => {
+								if (
+									!event.defaultPrevented &&
+									(event.key === "Enter" || event.key === " ")
+								) {
+									event.preventDefault();
+									event.currentTarget.click();
+								}
+							}}
+						>
+							{t("classes:delete.cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							aria-label={
+								deleteClass.isPending
+									? t("classes:delete.deleting")
+									: deleteError === "unknown"
+										? t("classes:delete.tryAgain")
+										: t("classes:delete.deleteClass")
+							}
+							loading={deleteClass.isPending}
+							onClick={() => {
+								if (deletingClass && !deleteClass.isPending) {
+									setDeleteError(null);
+									deleteClass.mutate(deletingClass.getId());
+								}
+							}}
+							onKeyDown={(event) => {
+								if (
+									!event.defaultPrevented &&
+									(event.key === "Enter" || event.key === " ")
+								) {
+									event.preventDefault();
+									event.currentTarget.click();
+								}
+							}}
+							variant="destructive"
+						>
+							{deleteClass.isPending
+								? t("classes:delete.deleting")
+								: deleteError === "unknown"
+									? t("classes:delete.tryAgain")
+									: t("classes:delete.deleteClass")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</WorkspaceShell>
 	);
 }

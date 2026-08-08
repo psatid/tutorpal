@@ -22,6 +22,8 @@ export interface UpdateCourseDTO {
 	defaultTotalHours?: number;
 }
 
+export type CourseDeleteOutcome = "deleted" | "not_found" | "in_use";
+
 export interface ICourseRepository {
 	create(data: CreateCourseDTO): Promise<CourseModel>;
 	findAll(
@@ -34,5 +36,5 @@ export interface ICourseRepository {
 		tutorId: string,
 		data: UpdateCourseDTO,
 	): Promise<CourseModel>;
-	delete(id: string, tutorId: string): Promise<void>;
+	delete(id: string, tutorId: string): Promise<CourseDeleteOutcome>;
 }

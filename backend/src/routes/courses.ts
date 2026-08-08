@@ -6,6 +6,7 @@ import {
 	CourseListQuerySchema,
 	CourseSchemaResolver,
 	CreateCourseSchema,
+	ErrorResponseSchemaResolver,
 	PaginatedCourseListSchemaResolver,
 	UpdateCourseSchema,
 } from "../schemas/course.schema";
@@ -113,7 +114,24 @@ const courseRoutes = new Hono<AppEnv>()
 			description: "Delete an unused course",
 			responses: {
 				204: { description: "Course deleted" },
-				409: { description: "Course still has classes" },
+				401: {
+					description: "Unauthorized - Authentication required",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
+				404: {
+					description: "Course not found",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
+				409: {
+					description: "Course still has classes",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
 			},
 		}),
 		async (c) => {

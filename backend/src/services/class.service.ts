@@ -45,12 +45,9 @@ export class ClassService {
 	}
 
 	async deleteClass(id: string, tutorId: string): Promise<void> {
-		// Check if class exists first
-		const existingClass = await this.repository.findById(id, tutorId);
-		if (!existingClass) {
+		const outcome = await this.repository.delete(id, tutorId);
+		if (outcome === "not_found") {
 			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
 		}
-
-		await this.repository.delete(id, tutorId);
 	}
 }

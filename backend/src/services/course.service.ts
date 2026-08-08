@@ -41,13 +41,15 @@ export class CourseService {
 	}
 
 	async deleteCourse(id: string, tutorId: string): Promise<void> {
-		const course = await this.getCourseById(id, tutorId);
-		if (course.classCount > 0) {
+		const outcome = await this.repository.delete(id, tutorId);
+		if (outcome === "not_found") {
+			throw AppError.notFound("COURSE_NOT_FOUND", "Course not found");
+		}
+		if (outcome === "in_use") {
 			throw AppError.conflict(
 				"COURSE_IN_USE",
-				"Delete or move this course's classes before deleting the course",
+				"This course still has classes and cannot be deleted.",
 			);
 		}
-		await this.repository.delete(id, tutorId);
 	}
 }

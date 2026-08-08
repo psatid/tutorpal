@@ -28,6 +28,8 @@ export default {
 	enrolledStudents: "Enrolled Students",
 	addButton: "Add Class",
 	view: "View Details",
+	viewDetailsFor: "View details for {{name}}",
+	actionsFor: "Actions for {{name}}",
 	noClasses: "No classes yet",
 	noClassesDescription: "Create your first class to get started.",
 	noResults: "No classes found",
@@ -85,9 +87,19 @@ export default {
 		active: "Active",
 	},
 	delete: {
+		deleteClass: "Delete class",
+		title: "Delete {{name}}?",
+		description:
+			"This permanently removes its enrollments, scheduled and past sessions, recurring schedule and items, hour deductions, and reminder deliveries. Students and the linked course remain. This cannot be undone.",
+		cancel: "Cancel",
 		confirm: "Are you sure you want to delete this class?",
 		confirmButton: "Delete",
 		cancelButton: "Cancel",
+		deleting: "Deleting class…",
+		error: "We couldn’t delete this class. Try again.",
+		tryAgain: "Try again",
+		success: "Class deleted successfully.",
+		alreadyRemoved: "This class is no longer available.",
 	},
 	drawer: {
 		createTitle: "Add New Class",

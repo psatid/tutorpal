@@ -39,7 +39,13 @@ export const PaginatedCourseListSchema = z.object({
 	}),
 });
 
+export const ErrorResponseSchema = z.object({
+	errorCode: z.string(),
+	message: z.string(),
+});
+
 export const CourseSchemaResolver = resolver(CourseSchema);
 export const PaginatedCourseListSchemaResolver = resolver(
 	PaginatedCourseListSchema,
 );
+export const ErrorResponseSchemaResolver = resolver(ErrorResponseSchema);

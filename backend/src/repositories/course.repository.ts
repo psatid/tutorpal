@@ -1,7 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db";
 import { CourseModel } from "../models/course.model";
 import type {
+	CourseDeleteOutcome,
 	CreateCourseDTO,
 	ICourseRepository,
 	UpdateCourseDTO,
@@ -91,8 +92,17 @@ export class CourseRepository implements ICourseRepository {
 		return CourseModel.fromPrisma(course);
 	}
 
-	async delete(id: string, tutorId: string): Promise<void> {
-		await prisma.course.delete({ where: { id, tutorId } });
+	async delete(id: string, tutorId: string): Promise<CourseDeleteOutcome> {
+		try {
+			await prisma.course.delete({ where: { id, tutorId } });
+			return "deleted";
+		} catch (error) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === "P2025") return "not_found";
+				if (error.code === "P2003") return "in_use";
+			}
+			throw error;
+		}
 	}
 }
 

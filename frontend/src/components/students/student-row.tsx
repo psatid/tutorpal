@@ -1,15 +1,3 @@
-import {
-  CheckCircle2,
-  ChevronRight,
-  Eye,
-  Link2,
-  MessageSquare,
-  MoreVertical,
-  Phone,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +10,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Student } from "@/models/student";
+import {
+  CheckCircle2,
+  Eye,
+  Link2,
+  MessageSquare,
+  MoreVertical,
+  Phone,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface StudentRowProps {
   student: Student;
@@ -89,7 +88,6 @@ export function StudentRow({
             {data.phoneNumber ?? t("students:noPhone")}
           </p>
         </div>
-        <ChevronRight className="hidden size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none sm:block" />
       </button>
       <DropdownMenu>
         <DropdownMenuTrigger
