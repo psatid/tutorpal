@@ -15,10 +15,10 @@ function EmptyClassList({ onAddClass }: { onAddClass?: () => void }) {
 	const { t } = useTranslation(["students"]);
 	return (
 		<div className="flex flex-col items-center justify-center py-12 text-center">
-			<div className="w-20 h-20 rounded-2xl bg-primary/5 flex items-center justify-center mb-4">
+			<div className="mb-4 flex size-20 items-center justify-center rounded-xl bg-primary/5">
 				<BookOpen className="w-10 h-10 text-primary/40" />
 			</div>
-			<h3 className="font-headline font-bold text-lg text-on-surface mb-1">
+			<h3 className="mb-1 font-headline text-lg font-medium tracking-[-0.01em] text-on-surface">
 				{t("students:studentDetail.noClasses")}
 			</h3>
 			<p className="font-body text-on-surface-variant text-sm max-w-xs mb-4">
@@ -65,7 +65,7 @@ export function StudentClassList({
 							ease: [0.25, 0.1, 0.25, 1],
 						}}
 						onClick={() => onViewClass(classItem.getId())}
-						className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-outline-variant hover:border-primary transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+						className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
 					>
 						<div className="flex-1 min-w-0">
 							<p className="font-medium text-on-surface truncate">

@@ -19,7 +19,7 @@ export const RailCollapse = () => (
 
 export const TriggerLeftSidebarCollapse = () => (
   <button
-    className="jun-edgeCollapseTrigger"
+    className="jun-edgeCollapseTrigger cursor-pointer"
     aria-label="Toggle Sidebar"
     onClick={(event) => triggerEdgeCollapse({ event })}
     title="Toggle Sidebar"

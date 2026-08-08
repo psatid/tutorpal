@@ -181,7 +181,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   if (isLoadingClass) {
     return (
       <div className="flex flex-col h-full py-4 space-y-4">
-        <div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="w-9 h-9 rounded-full" />
             <Skeleton className="flex-1 h-6 rounded" />
@@ -200,7 +200,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
               {Array.from({ length: 2 }).map((_, cardIdx) => (
                 <div
                   key={cardIdx}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-outline-variant"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                 >
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-32" />

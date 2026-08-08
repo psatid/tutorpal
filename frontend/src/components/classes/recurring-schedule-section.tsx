@@ -67,7 +67,7 @@ export function RecurringScheduleSection({
 
 	if (!recurringSchedule) {
 		return (
-			<div className="rounded-xl border border-outline-variant bg-card p-4">
+			<div className="rounded-lg border border-border bg-card p-4">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex min-w-0 items-start gap-3">
 						<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
@@ -98,11 +98,11 @@ export function RecurringScheduleSection({
 	return (
 		<Accordion
 			defaultValue={[]}
-			className="rounded-xl border-outline-variant bg-card"
+			className="rounded-lg border-border bg-card"
 		>
 			<AccordionItem
 				value="recurring-schedule"
-				className="border-outline-variant data-open:bg-transparent"
+				className="border-border data-open:bg-transparent"
 			>
 				<AccordionTrigger className="gap-3 p-4 text-left hover:no-underline">
 					<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
@@ -150,7 +150,7 @@ export function RecurringScheduleSection({
 					</div>
 				</AccordionTrigger>
 
-				<AccordionContent className="space-y-4 border-t border-outline-variant pl-[2.75rem] sm:pl-[3.75rem]">
+				<AccordionContent className="space-y-4 border-t border-border pl-[2.75rem] sm:pl-[3.75rem]">
 					<ul className="space-y-2">
 						{recurringItems.map((item) => (
 							<li

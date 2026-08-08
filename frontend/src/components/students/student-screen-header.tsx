@@ -14,7 +14,7 @@ export function StudentScreenHeader({
   return (
     <div className="mb-6">
       <div className="flex items-start justify-between">
-        <h2 className="font-headline font-extrabold text-3xl text-on-surface tracking-tight leading-tight">
+        <h2 className="font-headline text-3xl font-normal tracking-[-0.02em] text-on-surface leading-tight">
           {t("students:title")}
         </h2>
         <Button

@@ -58,7 +58,7 @@ function DrawerBackdrop({
 }: React.ComponentProps<typeof Drawer.Backdrop> & { layer?: DrawerLayer }) {
   const { style, ...backdropProps } = props;
   const backdropClassName = cn(
-    "fixed inset-0 bg-black/40 backdrop-blur-xs transition-all duration-300 ease-out data-starting-style:opacity-0 data-ending-style:opacity-0",
+    "fixed inset-0 bg-overlay-navy/45 transition-all duration-300 ease-out data-starting-style:opacity-0 data-ending-style:opacity-0",
     drawerLayerClasses[layer].backdrop,
     className,
   );
@@ -115,7 +115,7 @@ const DrawerPopup = React.forwardRef<
       ref={ref}
       data-slot="drawer-popup"
       className={cn(
-        `fixed inset-x-0 bottom-0 flex max-h-[min(85dvh,44rem)] flex-col rounded-t-2xl border border-border bg-popover text-popover-foreground outline-none transition-transform duration-250 ease-out
+        `fixed inset-x-0 bottom-0 flex max-h-[min(85dvh,44rem)] flex-col rounded-t-xl border border-border bg-popover text-popover-foreground shadow-transient-dialog outline-none transition-transform duration-250 ease-out
         data-[swipe-direction=down]:data-starting-style:translate-y-full data-[swipe-direction=down]:data-ending-style:translate-y-full 
         data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full 
         md:inset-y-0 md:right-0 md:left-auto md:w-[min(26rem,100vw)] md:max-h-none md:rounded-none md:border-y-0 md:border-r-0`,
@@ -172,7 +172,7 @@ function DrawerTitle({
     <Drawer.Title
       data-slot="drawer-title"
       className={cn(
-        "font-headline font-bold text-lg text-foreground",
+        "font-headline text-lg font-normal tracking-[-0.01em] text-foreground",
         className,
       )}
       {...props}

@@ -128,9 +128,9 @@ export const AppSidebar = () => {
                         aria-current={active ? "page" : undefined}
                         aria-label={label}
                         className={cn(
-                          "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-foreground",
+                          "jun-sidebarMenuButton",
                           active &&
-                            "jun-sidebarMenuButton jun-sidebarMenuButton-h-11 bg-sidebar-primary/10 text-primary hover:bg-primary/10 hover:text-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary dark:focus-visible:ring-primary-foreground",
+                            "text-primary hover:text-primary font-semibold",
                         )}
                         preload="intent"
                         to={item.href}

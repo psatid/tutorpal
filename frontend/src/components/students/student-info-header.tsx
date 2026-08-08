@@ -20,12 +20,12 @@ export function StudentInfoHeader({
   const data = studentData.getDetailsHeaderData();
 
   return (
-    <div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
+    <div className="space-y-4 rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="-ml-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
           aria-label={t("students:studentDetail.back")}
         >
           <ArrowLeft className="w-5 h-5 text-on-surface" />
@@ -38,7 +38,7 @@ export function StudentInfoHeader({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <h1 className="font-headline font-bold text-xl text-on-surface truncate">
+          <h1 className="truncate font-headline text-xl font-medium tracking-[-0.01em] text-on-surface">
             {data.name}
           </h1>
         </div>

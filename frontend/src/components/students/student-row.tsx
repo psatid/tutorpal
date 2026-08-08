@@ -46,9 +46,9 @@ export function StudentRow({
 
   return (
     <li className="group scroll-mt-28 md:scroll-mt-32">
-      <div className="flex min-h-20 items-center gap-3 rounded-xl border border-outline-variant bg-card p-4 transition-colors motion-reduce:transition-none hover:border-primary focus-within:border-primary">
+      <div className="flex min-h-20 items-center rounded-xl border border-border gap-3 bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-[#f6f9fc] focus-within:bg-[#f6f9fc]">
         <button
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
           onClick={onView}
           type="button"
         >

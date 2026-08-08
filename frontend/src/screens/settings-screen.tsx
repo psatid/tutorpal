@@ -48,7 +48,7 @@ export function SettingsScreen() {
           <ArrowLeft className="size-5" />
         </Button>
         <div className="min-w-0 pt-1">
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-2xl font-normal tracking-[-0.02em] text-foreground">
             {t("settings:title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("settings:subtitle")}</p>
@@ -58,12 +58,12 @@ export function SettingsScreen() {
       <div className="flex items-center gap-4 border-b border-border pb-6">
         <Avatar size="lg" className="size-14">
           <AvatarImage src={user?.image ?? undefined} alt="" />
-          <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+          <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
             {initials(user?.name)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <h3 className="truncate font-bold text-foreground">{user?.name}</h3>
+          <h3 className="truncate font-medium text-foreground">{user?.name}</h3>
           <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
         </div>
       </div>
@@ -75,7 +75,7 @@ export function SettingsScreen() {
         <Link
           to="/settings/line"
           search={{ returnTo: returnTo ?? undefined }}
-          className="group flex min-h-20 items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
+          className="group flex min-h-20 items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <MessageCircle className="size-5" />

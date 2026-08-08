@@ -140,7 +140,7 @@ function RouteFallbackLayout({
 					ref={headingRef}
 					tabIndex={-1}
 					id={fallbackTitleId}
-					className="mt-6 text-balance text-3xl font-extrabold tracking-tight text-foreground focus:outline-none sm:text-4xl"
+					className="mt-6 text-balance text-3xl font-normal tracking-[-0.02em] text-foreground focus:outline-none sm:text-4xl"
 				>
 					{title}
 				</h1>

@@ -1,298 +1,316 @@
 ---
 name: TutorPal
-description: Warm, approachable tutoring management for private tutors
+version: alpha
+description: Stripe-inspired product design for calm, precise tutoring operations
 colors:
-  primary: "#6C63FF"
-  primary-container: "#675DF9"
-  primary-foreground: "#FFFFFF"
-  secondary: "#59579A"
-  secondary-container: "#B7B4FF"
-  tertiary: "#914800"
-  tertiary-container: "#B65C00"
-  surface: "#FCF8FF"
-  surface-container-low: "#F6F2FF"
-  surface-container-lowest: "#FFFFFF"
-  surface-container-highest: "#E4E1EE"
-  outline: "#777587"
-  outline-variant: "#C7C4D8"
-  on-surface: "#1B1B24"
-  on-surface-variant: "#464555"
-  destructive: "#D4423D"
-  destructive-foreground: "#FFFFFF"
-  background: "#FCF8FF"
-  foreground: "#1B1B24"
-  card: "#FFFFFF"
-  card-foreground: "#1B1B24"
-  muted: "#F6F2FF"
-  muted-foreground: "#777587"
-  input: "#C7C4D8"
-  ring: "#6C63FF"
-  border: "#C7C4D8"
-  accent: "#F6F2FF"
-  accent-foreground: "#1B1B24"
-  popover: "#FFFFFF"
-  popover-foreground: "#1B1B24"
-  sidebar: "#F6F2FF"
-  sidebar-foreground: "#1B1B24"
-  sidebar-primary: "#6C63FF"
-  sidebar-primary-foreground: "#FFFFFF"
+  primary: "#533AFD"
+  primary-hover: "#4434D4"
+  primary-press: "#2E2B8C"
+  primary-soft: "#B9B9F9"
+  brand-dark: "#0D253D"
+  brand-dark-900: "#1C1E54"
+  ink: "#0D253D"
+  ink-secondary: "#273951"
+  ink-muted: "#61718A"
+  on-primary: "#FFFFFF"
+  canvas: "#FFFFFF"
+  canvas-soft: "#F6F9FC"
+  canvas-cream: "#F5E9D4"
+  hairline: "#E3E8EE"
+  hairline-input: "#E3EBF4"
+  ruby: "#EA2261"
+  success: "#16835B"
+  success-soft: "#E7F6EF"
+  warning: "#9B6829"
+  warning-soft: "#FFF2D9"
+  destructive: "#C93755"
+  destructive-soft: "#FCE8EE"
 typography:
   display:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "1.875rem"
-    fontWeight: 800
-    lineHeight: 1.1
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "3.5rem"
+    fontWeight: 300
+    lineHeight: 1.03
+    letterSpacing: "-0.025em"
+  heading:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 400
+    lineHeight: 1.15
     letterSpacing: "-0.02em"
-  headline:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "-0.01em"
-  title:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "1.125rem"
+  body:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 400
+    lineHeight: 1.4
+  label:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "0.75rem"
     fontWeight: 600
     lineHeight: 1.3
-  body:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  label:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 700
-    lineHeight: 1.4
-    letterSpacing: "0.05em"
+    letterSpacing: "0.04em"
+  numeric:
+    fontFeature: "tnum"
 rounded:
-  sm: "4px"
-  md: "6px"
-  lg: "8px"
+  xs: "4px"
+  sm: "6px"
+  md: "8px"
+  lg: "12px"
   xl: "16px"
-  full: "9999px"
+  pill: "9999px"
 spacing:
-  1: "4px"
-  2: "8px"
-  3: "12px"
-  4: "16px"
-  5: "20px"
-  6: "24px"
-  8: "32px"
-  10: "40px"
-  12: "48px"
+  xxs: "2px"
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "24px"
+  xxl: "32px"
+  huge: "64px"
 components:
-  button-primary:
+  button-primary-pill:
     backgroundColor: "{colors.primary}"
-    textColor: "{colors.primary-foreground}"
-    rounded: "{rounded.full}"
-    padding: "10px 16px"
-  button-outline:
-    backgroundColor: "transparent"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.full}"
-    padding: "10px 16px"
+    textColor: "{colors.on-primary}"
+    rounded: "{rounded.pill}"
+    padding: "8px 16px"
   button-secondary:
-    backgroundColor: "{colors.secondary-container}"
-    textColor: "{colors.secondary}"
-    rounded: "{rounded.full}"
-    padding: "10px 16px"
-  button-ghost:
-    backgroundColor: "transparent"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.full}"
-    padding: "10px 16px"
-  button-destructive:
-    backgroundColor: "rgba(212,66,61,0.1)"
-    textColor: "{colors.destructive}"
-    rounded: "{rounded.full}"
-    padding: "10px 16px"
-  card:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.card-foreground}"
-    rounded: "{rounded.xl}"
-    padding: "16px"
-  input:
-    backgroundColor: "rgba(199,196,216,0.3)"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.full}"
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.primary}"
+    border: "1px solid {colors.primary}"
+    rounded: "{rounded.pill}"
+    padding: "8px 16px"
+  button-on-dark:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.brand-dark}"
+    rounded: "{rounded.pill}"
+    padding: "8px 16px"
+  text-input:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    border: "1px solid {colors.hairline-input}"
+    rounded: "{rounded.sm}"
     padding: "8px 12px"
-  badge-default:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.primary-foreground}"
-    rounded: "{rounded.full}"
-    padding: "2px 8px"
-  badge-outline:
-    backgroundColor: "rgba(199,196,216,0.3)"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.full}"
-    padding: "2px 8px"
-  avatar:
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.on-surface}"
-    rounded: "{rounded.full}"
-    padding: "0"
-  bottom-nav:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.muted-foreground}"
-    rounded: "{rounded.xl}"
-    padding: "12px 16px 24px"
+  card-feature-light:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    border: "1px solid {colors.hairline}"
+    rounded: "{rounded.lg}"
+    padding: "24px"
+  pill-tag-soft:
+    backgroundColor: "{colors.primary-soft}"
+    textColor: "{colors.primary-press}"
+    rounded: "{rounded.pill}"
+    padding: "4px 8px"
 ---
 
-# Design System: TutorPal
+# Design system: TutorPal
 
-## 1. Overview
+## Overview
 
-**Creative North Star: "The Scholar's Desk"**
+TutorPal uses a Stripe-inspired product language: precise editorial typography,
+white navigation chrome, dark-navy product bands, white and cool-soft work surfaces, and one
+indigo action color. The visual system should help a private tutor understand
+today's workload quickly without feeling like a spreadsheet.
 
-TutorPal is a tutoring management tool for private tutors who juggle students, classes, and schedules. The design system embraces **Modern Functionalism** — a high-contrast, mathematically precise aesthetic stripped of visual noise. No gradients, no transparency, no decorative depth. Sophistication comes from masterful control of white space, bold Manrope typography, and a "Border-First" architectural logic.
+The system is adapted for an operational product rather than a marketing site.
+The authenticated app stays light and task-oriented. The dark product track is
+reserved for top product chrome and meaningful summary bands. A restrained organic
+mesh is allowed only on public authentication surfaces.
 
-This system explicitly rejects the corporate spreadsheet look (dense data tables, monochrome grids, overwhelming numbers) and the SaaS-cream AI default (warm beige backgrounds, soft shadows, gradient accents). TutorPal feels like a well-organized desk — warm, precise, calm — not accounting software or a generic dashboard.
+## Principles
 
-**Key Characteristics:**
-- Border-first architecture: solid 1px outlines create hierarchy, not shadows or gradients
-- Surface color shifts for depth: layering solid blocks of color, not elevation
-- Bold Manrope typography: high-contrast headlines, scannable body text
-- Warm violet identity: `#6C63FF` as the singular accent, used with restraint
-- Semantic green and amber are reserved for status and attention states, never decoration
-- Clean & restrained components: content does the talking, surfaces stay quiet
+### One action color
 
-## 2. Colors
+Indigo is used for primary actions, current navigation, focus, and meaningful
+selection. It should remain rare enough to communicate importance. Ruby,
+success, warning, and LINE green are semantic only.
 
-The palette is a restrained system built around a single saturated violet accent against warm-tinted neutrals. One accent carries the brand; semantic colors communicate status without becoming decoration.
+### Surface before shadow
 
-### Primary
-- **Scholar's Ink** (#6C63FF): The brand anchor. Used on primary actions (FAB, active nav, submit buttons), form focus rings, and brand markers. Its rarity on screen is the point — it signals "this matters."
-- **Ink Deep** (#675DF9): Hover state for primary elements. Slightly deeper for interactive feedback.
-- **Ink Light** (#B7B4FF): Secondary container backgrounds (chips, badges). Rarely used as a surface.
+White on cool-soft creates the default hierarchy. Hairlines establish
+boundaries. Shadows are reserved for transient overlays and stay blue-tinted
+and light; cards do not need broad soft shadows.
 
-### Tertiary
-- **Amber Warning** (#914800): Urgent notifications, destructive-adjacent states. A sophisticated warm tone that reads as "pay attention" without the harshness of pure red.
-- **Amber Container** (#B65C00): Backgrounds for urgent highlights and warning badges.
+### Product clarity
 
-### Semantic status
-- **Success:** Green container and foreground tokens are used for confirmed states such as a linked LINE account.
-- **Warning:** Amber container and foreground tokens are used for attention states such as a LINE relink requirement or exhausted class hours.
-- Status color is always paired with visible text or an icon; it is never the only indicator.
+List workspaces use divider-led rows and restrained grouping. Details use
+progressive disclosure instead of a grid of boxed cards. Every screen has a
+clear title, one primary next action, and an honest loading, empty, or error
+state.
 
-### Neutral
-- **Page** (#FCF8FF): The base layer. A barely-there violet tint — warm but not cream.
-- **Section** (#F6F2FF): Section backgrounds, sidebar, muted areas. One step deeper than page.
-- **Card** (#FFFFFF): Elevated surfaces. Cards, modals, popovers. The lightest neutral.
-- **Float** (#E4E1EE): Floating elements, tooltips, highest-elevation surfaces.
-- **Ink** (#1B1B24): Primary text. Never pure black.
-- **Slate** (#464555): Secondary text, metadata, descriptions.
-- **Mist** (#777587): Borders, icons, disabled text. The workhorse divider.
-- **Frost** (#C7C4D8): Subtle dividers, input borders, card outlines.
+### Shared controls
 
-### Named Rules
-**The Solid Boundary Rule.** No gradients, no transparency (except disabled states), no standard box-shadows. Depth is communicated through surface color layering and solid 1px borders. The system is unapologetically flat.
+Search, filter, sort, reset, form, drawer, and destructive actions reuse the
+shared Button, Input, Select, Badge, Drawer, and Dialog vocabulary. Screens
+control layout; primitives control visual language.
 
-**The One Accent Rule.** The primary violet is used on ≤10% of any given screen. Its rarity creates hierarchy. Semantic success and warning colors appear only where the data has that meaning. When in doubt, use a neutral surface shift instead of adding more color.
+## Colors
 
-**The Shared Control Rule.** Search, filter, sort, reset, and clear actions reuse the existing Input, Button, and Select component styles. Workspace-specific classes may control layout and responsive behavior, but do not redefine their visual vocabulary.
+### Brand
 
-## 3. Typography
+- **Indigo** (#533AFD): primary actions, links, focus, current selection.
+- **Indigo hover** (#4434D4): hover and active navigation feedback.
+- **Indigo press** (#2E2B8C): pressed state.
+- **Indigo soft** (#B9B9F9): selected filters and subdued tags.
+- **Brand dark** (#0D253D): top product chrome and dark summary bands.
+- **Brand dark 900** (#1C1E54): deep app chrome and dark summary surfaces.
 
-**Display Font:** Manrope (sans-serif)
-**Body Font:** Manrope (sans-serif)
+### Surfaces and text
 
-**Character:** A single geometric sans-serif in multiple weights. Manrope balances modern tech with high readability — not cold or corporate, not soft or rounded. It carries the "warm, approachable, professional" personality through weight contrast alone.
+- **Canvas** (#FFFFFF): primary work surface and form surface.
+- **Canvas soft** (#F6F9FC): app background and grouped panel surface.
+- **Canvas cream** (#F5E9D4): rare warm product interlude.
+- **Hairline** (#E3E8EE): dividers and card outlines.
+- **Input hairline** (#E3EBF4): quiet form and outline-control boundary.
+- **Ink** (#0D253D): primary text.
+- **Ink secondary** (#273951): supporting text.
+- **Ink muted** (#61718A): metadata, helper text, and disabled text.
+- **On primary** (#FFFFFF): text on indigo and dark surfaces.
+
+### Semantic
+
+- **Success** uses a readable green foreground with a soft green container.
+- **Warning** uses a warm brown foreground with a soft amber container.
+- **Destructive** uses ruby/red foreground with a soft ruby container.
+- **LINE** green appears only when communicating the external LINE connection.
+
+Semantic color is always paired with visible text or an icon. It is never the
+only indicator.
+
+## Typography
+
+### Font family
+
+Inter is the open-source runtime substitute for the proprietary Sohne family
+described in the Stripe reference. Load the required weights locally and use
+system-ui only as fallback. Apply the ss01 feature globally where supported.
 
 ### Hierarchy
-- **Display** (800 weight, 1.875rem, line-height 1.1): Hero moments, dashboard greetings, high-impact numbers. Tight letter-spacing (-0.02em) for gravitas without cramming.
-- **Headline** (700 weight, 1.25rem, line-height 1.2): Primary section headers. The workhorse heading.
-- **Title** (600 weight, 1.125rem, line-height 1.3): Card titles, drawer headings. Clear but not shouting.
-- **Body** (400 weight, 0.875rem, line-height 1.5): Primary reading text. Comfortable at this size for daily use.
-- **Label** (700 weight, 0.75rem, letter-spacing 0.05em, ALL CAPS): Form labels, metadata, chips. The archival kicker — used sparingly, not on every section.
 
-### Named Rules
-**The Label Restraint Rule.** The uppercase label style is used for functional metadata (form labels, chip text, nav labels), not as a decorative kicker above every section heading. One label per context, not a uniform scaffold.
+| Token | Size | Weight | Line height | Tracking | Use |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Display | 56px | 300 | 1.03 | -0.025em | Auth and high-impact overview |
+| Heading | 24px | 400 | 1.15 | -0.02em | Page titles and major sections |
+| Title | 18px | 500 | 1.3 | -0.01em | Entity and drawer titles |
+| Body | 15px | 400 | 1.4 | 0 | Default reading text |
+| Caption | 13px | 400 | 1.4 | 0 | Helper and metadata |
+| Label | 12px | 600 | 1.3 | 0.04em | Functional labels only |
+| Numeric | 14–32px | 400–500 | 1.2–1.4 | 0 | Hours, dates, and counts |
 
-## 4. Elevation
+Numeric roles use tabular figures. Display headings use negative tracking but
+never tighter than -0.04em. Labels are sentence-case or functional small
+caps, not decorative eyebrows above every section.
 
-Flat by default. Depth is conveyed entirely through surface color layering — objects appear closer when lighter (white card on tinted section on page background). No shadows, no blur, no gradient depth cues.
+## Layout
 
-### Depth Vocabulary
-- **Page** (#FCF8FF): The deepest layer. Everything sits on top.
-- **Section** (#F6F2FF): Mid-depth. Sidebar, section backgrounds, grouping containers.
-- **Card** (#FFFFFF): Surface level. Cards, inputs, interactive elements.
-- **Float** (#E4E1EE): Topmost. Tooltips, dropdowns, floating elements.
+- Use a centered content container with a maximum width around 1200–1440px.
+- Keep existing ScreenLayout padding and jun-layout geometry unchanged.
+- Use 32–48px section spacing in authenticated product surfaces and 64px or
+  more only for quiet public/auth composition.
+- Use a single-column mobile flow. Horizontal overflow is limited to date and
+  refinement rails.
+- Preserve the desktop side rail, mobile edge drawer, safe-area spacing, and
+  drawer footer reachability.
 
-### Named Rules
-**The No-Shadow Rule.** Standard `box-shadow` is prohibited. If an element needs to feel elevated, make it lighter (shift toward white) or add a 2px border in the primary color for active states. Depth through color, not lighting effects.
+## Elevation and shapes
 
-## 5. Components
+### Radius scale
 
-Components are clean, restrained, and functional. Content is the focus; surfaces stay quiet. Every component follows the Border-First architecture with solid outlines instead of shadows.
+- 4px: hairline tags and compact table chrome.
+- 6px: inputs and compact controls.
+- 8px: alerts and small grouped surfaces.
+- 12px: feature cards, drawers, and product panels.
+- 16px: major app surfaces and auth form container.
+- Full pill: buttons, tags, and compact status chips only.
+
+### Depth
+
+White on cool-soft is the primary depth cue. Use a subtle blue-tinted shadow
+only for dropdowns, dialogs, drawers, and other transient overlays. Do not add
+generic black card shadows or blur-heavy glass effects.
+
+## Components
 
 ### Buttons
-- **Shape:** Full pill (rounded-full). Confident and approachable, never boxy.
-- **Primary:** Violet background (#6C63FF), white text. Used sparingly — one primary action per view.
-- **Outline:** Transparent background, 1px border input, foreground text. The default for most actions.
-- **Secondary:** Secondary-container background (#B7B4FF), secondary text (#59579A). For supporting actions.
-- **Ghost:** No background, no border. Appears on hover only. For in-context actions.
-- **Destructive:** Tinted red background (rgba(212,66,61,0.1)), red text. Never a solid red block.
-- **Focus:** 3px ring in primary color with 50% opacity. Clear without being garish.
 
-### Cards
-- **Corner Style:** 16px radius (rounded-xl). Gentle curve, not a pill.
-- **Background:** White (#FFFFFF). The lightest surface.
-- **Border:** 1px solid outline-variant (#C7C4D8). The primary hierarchy signal.
-- **Hover:** Border shifts to primary (#6C63FF). The card "activates."
-- **Internal Padding:** 16px. Consistent rhythm across all card types.
-- **Shadow Strategy:** None. Depth comes from being white on a tinted section background.
+- Primary: indigo fill, white label, full pill, 8px × 16px padding.
+- Secondary: white surface, indigo label, 1px indigo border, full pill.
+- Ghost: transparent until hover, used for in-context actions.
+- Destructive: soft ruby container and readable ruby label.
+- On dark: white surface or light label treatment with a visible focus ring.
+- Hover shifts color; press uses the deeper indigo and a 1px downward movement.
+- All interactive buttons expose a visible 3px indigo focus ring and a minimum
+  44px hit target where the action is mobile-facing.
 
 ### Inputs
-- **Style:** Full pill (rounded-full). Tinted background (rgba(199,196,216,0.3)), 1px input border.
-- **Focus:** Border becomes 2px solid primary, 3px ring with 40% opacity.
-- **Placeholder:** Muted foreground color. Never gray on white — always the tinted muted tone.
-- **Error:** Border shifts to destructive, ring in destructive/20.
 
-### Chips / Badges
-- **Default:** Primary background, white text. For counts and active states.
-- **Outline:** Tinted background, foreground text with border. For metadata and labels.
-- **Success / Warning:** Semantic tinted backgrounds with matching readable foregrounds for confirmed and attention states.
-- **Shape:** Full pill. Small, scannable, never dominant.
+Inputs use a white surface, 1px input hairline, 6–8px radius, and 8px × 12px
+padding. Focus changes the boundary to indigo and adds a 3px indigo ring.
+Invalid fields use destructive boundary and ring tokens. Placeholder text uses
+muted ink and remains readable.
+
+### Cards, rows, and badges
+
+Cards are white with a hairline and 12px radius when elevation communicates
+hierarchy. Routine list content uses divider-led rows instead of repeating
+outlined cards. Badges and compact status tags are pills with subdued
+semantic or indigo-soft containers.
 
 ### Navigation
-- **Bottom Nav:** White card background with rounded top corners (16px). Active tab gets a primary-colored icon with a subtle spring animation. Inactive tabs are muted.
-- **Top App Bar:** Clean, minimal. Title left-aligned, actions right-aligned.
-- **Mobile-first:** Fixed bottom nav, scrolling content above. Thumb-friendly zones.
 
-### Avatar
-- **Shape:** Full circle. Accent background with on-surface text.
-- **Sizes:** Small (24px), Large (40px). Used in cards, lists, and groups.
-- **Fallback:** Initials extracted from name. Always readable.
+The authenticated desktop rail is white with a cool hairline divider, dark-navy
+inactive navigation, and an indigo active treatment. Hover uses a cool-soft
+surface instead of a saturated fill. The compact mobile header and edge-sidebar
+drawer remain. Current routes use aria-current="page" and a visible visual state.
 
-### Drawer / Modal
-- **Background:** White card surface.
-- **Overlay:** Semi-transparent dark backdrop.
-- **Responsive behavior:** Below `md`, a bottom sheet with 16px top corners and a drag handle slides up. At `md` and above, the same surface slides in from the right as a fixed-width panel.
-- **Structure:** A fixed header and optional action footer frame one scrollable body. Form footers use one primary action (full width on mobile, compact and right-aligned at `md` and above); the close button always has a 44px target. Nested pickers use the same shell and a higher overlay layer.
-- **Overlay portals:** Floating controls opened inside a drawer, including Selects and calendar Popovers, portal into the active drawer surface rather than the document body.
+### Drawers and dialogs
 
-## 6. Do's and Don'ts
+Small screens use a bottom sheet with a 16px top radius and a 44px close
+target. At md and above, the same surface enters from the right. Headers stay
+fixed, the body scrolls, and optional action footers remain reachable. Nested
+Select and calendar surfaces portal into the active drawer surface.
 
-### Do:
-- **Do** use solid 1px borders for all card and input outlines. The border IS the design.
-- **Do** use surface color shifts (page → section → card → float) for depth hierarchy.
-- **Do** use the primary violet sparingly — one accent per view, rare enough to create hierarchy.
-- **Do** use Manrope weight contrast (400/600/700/800) for typographic hierarchy instead of size alone.
-- **Do** use full pill shapes for buttons, badges, and inputs. Confident and approachable.
-- **Do** use ALL CAPS labels (0.05em tracking) for functional metadata only — form labels, chip text, nav labels.
-- **Do** use `tertiary` (#914800) for urgent notifications — sophisticated warmth vs harsh red.
-- **Do** use 16px border-radius on cards and modals. Gentle curve, never boxy.
+## Authentication mesh
 
-### Don't:
-- **Don't** use gradients of any kind — even subtle ones. The system is unapologetically flat.
-- **Don't** use standard `box-shadow` for elevation. Use surface color shifts instead.
-- **Don't** use pure black (#000000) for text — always use on-surface (#1B1B24).
-- **Don't** use transparency (alpha < 100%) except for disabled states and tinted backgrounds.
-- **Don't** use border-left or border-right greater than 1px as a colored stripe. Never intentional.
-- **Don't** use glassmorphism, backdrop-blur, or decorative transparency. Purposeful only.
-- **Don't** use corporate spreadsheet layouts — dense data tables, monochrome grids, overwhelming numbers.
-- **Don't** use the SaaS-cream AI default — warm beige backgrounds, soft shadows, gradient accents.
-- **Don't** put uppercase label kicker text above every section heading. One label per context, not a uniform scaffold.
-- **Don't** use 32px+ border-radius on cards. Cards top out at 16px; full pill is for buttons and badges.
-- **Don't** pair 1px border + box-shadow with blur ≥ 16px on the same element. Pick one, never both.
+Authentication surfaces may use a local SVG organic mesh with low-contrast
+indigo, lavender, ruby, and peach shapes. The mesh is an intentional exception
+to the flat product surfaces, must remain behind an opaque white form surface,
+and must not be used in authenticated workspaces or as gradient text. Do not
+use remote image URLs or flat CSS gradient bands.
+
+## States and accessibility
+
+- Loading uses skeletons that mirror the eventual content; standalone spinners
+  are limited to brief button or redirect states.
+- Empty states explain the next useful action and offer one relevant CTA.
+- Errors state the problem directly, preserve input where possible, and offer
+  retry or correction.
+- Success and warning states pair color with text or an icon.
+- Keyboard users receive visible focus, logical focus trapping, Escape
+  dismissal, and focus return to the invoking control.
+- Test 320px, 768px, 1024px, and wide desktop layouts with no clipped content,
+  page overflow, or unreachable drawer actions.
+- Respect prefers-reduced-motion; use short transform/opacity transitions and
+  disable choreography when reduction is requested.
+
+## Do and don't
+
+### Do
+
+- Do use Inter weight and tracking contrast instead of heavy all-bold headings.
+- Do keep the app rail white with navy text, indigo current navigation, and
+  product content light.
+- Do use tabular figures for class hours, dates, and counts.
+- Do use local mesh artwork only on auth backgrounds.
+- Do keep semantic states readable and redundant with text or icons.
+- Do prefer rows, dividers, and grouping over card grids.
+
+### Don't
+
+- Don't use Manrope, default browser typography, or pure black.
+- Don't use pill-shaped inputs or oversized rounded controls.
+- Don't use generic gradients, external image services, or gradient text.
+- Don't use broad black shadows, backdrop blur, or card-per-row repetition.
+- Don't add new accent colors or invent dashboard data.
+- Don't change routes, API contracts, data models, or the existing drawer
+  geometry for visual work.

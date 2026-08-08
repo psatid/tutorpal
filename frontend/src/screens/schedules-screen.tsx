@@ -241,10 +241,10 @@ export function SchedulesScreen() {
           />
         ) : !schedules || schedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-6">
-              <CalendarDays className="w-10 h-10 text-primary-foreground" />
+            <div className="mb-6 flex size-20 items-center justify-center rounded-xl bg-primary-container">
+              <CalendarDays className="size-10 text-primary" />
             </div>
-            <h2 className="font-headline font-bold text-xl text-foreground mb-2">
+            <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
               {t("schedules:noSchedules")}
             </h2>
             <p className="font-body text-muted-foreground max-w-xs mb-6">

@@ -32,7 +32,7 @@ export function CourseRow({
 
   return (
     <li className="scroll-mt-28 md:scroll-mt-32">
-      <div className="flex min-h-20 items-center gap-3 rounded-xl border border-outline-variant bg-card p-4 transition-colors motion-reduce:transition-none hover:border-primary focus-within:border-primary">
+      <div className="flex min-h-20 items-center gap-3 border-border bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-[#f6f9fc] focus-within:bg-[#f6f9fc]">
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-foreground">{data.name}</p>
           <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">

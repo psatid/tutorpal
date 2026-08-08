@@ -1,0 +1,11 @@
+<svg width="1600" height="1200" viewBox="0 0 1600 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <filter id="blur-xl" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+    <feGaussianBlur stdDeviation="82" />
+  </filter>
+  <g filter="url(#blur-xl)">
+    <path d="M-156 178C58 4 320 88 397 231C474 374 326 544 126 510C-74 477-297 352-156 178Z" fill="#A69CF7"/>
+    <path d="M1089 -98C1326 -27 1569 65 1582 275C1594 485 1392 570 1215 465C1037 361 852 92 1089 -98Z" fill="#A5D9F1"/>
+    <path d="M107 849C302 695 581 753 607 943C633 1134 396 1278 191 1196C-15 1114-88 1004 107 849Z" fill="#F1C6C2"/>
+    <path d="M946 751C1135 605 1390 719 1428 913C1465 1108 1251 1216 1054 1150C857 1083 757 897 946 751Z" fill="#C7B8F7"/>
+  </g>
+</svg>

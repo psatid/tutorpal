@@ -57,7 +57,7 @@ function ScheduleLogSkeleton() {
           {Array.from({ length: 2 }).map((_, cardIdx) => (
             <div
               key={cardIdx}
-              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-outline-variant"
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
             >
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-32" />
@@ -76,10 +76,10 @@ function EmptyScheduleLog({ onAddSchedule }: { onAddSchedule: () => void }) {
   const { t } = useTranslation(["classes"]);
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-20 h-20 rounded-2xl bg-surface-container-low flex items-center justify-center mb-4">
+      <div className="mb-4 flex size-20 items-center justify-center rounded-xl bg-surface-container-low">
         <CalendarDays className="w-10 h-10 text-on-surface-variant" />
       </div>
-      <h3 className="font-headline font-bold text-lg text-on-surface mb-1">
+      <h3 className="mb-1 font-headline text-lg font-medium tracking-[-0.01em] text-on-surface">
         {t("classDetail.noSchedules")}
       </h3>
       <p className="font-body text-on-surface-variant text-sm max-w-xs mb-4">
@@ -159,7 +159,7 @@ export function ScheduleLog({
                     delay: index * 0.04,
                     ease: [0.25, 0.1, 0.25, 1],
                   }}
-                  className="flex items-center gap-2 p-3 rounded-xl bg-card border border-outline-variant hover:bg-surface-container transition-colors"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-surface"
                 >
                   <button
                     type="button"

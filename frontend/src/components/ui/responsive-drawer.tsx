@@ -83,7 +83,7 @@ export function ResponsiveDrawer({
               <DrawerHeader className="px-5 pt-5 pb-4 md:px-6 md:pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <DrawerTitle className="text-balance text-xl font-extrabold tracking-tight md:text-2xl">
+                    <DrawerTitle className="text-balance text-xl font-normal tracking-[-0.02em] md:text-2xl">
                       {title}
                     </DrawerTitle>
                     {description ? (
@@ -94,7 +94,7 @@ export function ResponsiveDrawer({
                   </div>
                   <DrawerClose
                     aria-label={`Close ${title.toLowerCase()}`}
-                    className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   >
                     <X className="size-5" />
                   </DrawerClose>

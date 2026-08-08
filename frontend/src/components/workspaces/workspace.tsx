@@ -25,10 +25,10 @@ export function WorkspaceHeader({
   action?: ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4 py-5">
+    <header className="flex items-center justify-between gap-4 pb-5">
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-balance text-2xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-balance text-2xl font-normal tracking-[-0.02em] text-foreground">
             {title}
           </h1>
           {countLabel ? (
@@ -49,7 +49,7 @@ export function WorkspaceMain({ children }: { children: ReactNode }) {
 
 export function WorkspaceToolbar({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
+    <div className="mb-5 flex flex-col gap-3 border-b border-border py-4 md:flex-row md:items-center">
       {children}
     </div>
   );

@@ -46,7 +46,7 @@ export function StudentDetailScreen({ studentId }: StudentDetailScreenProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col h-full py-4 space-y-4">
-        <div className="bg-card border border-outline-variant rounded-xl p-4 space-y-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="w-9 h-9 rounded-full" />
             <Skeleton className="w-10 h-10 rounded-full shrink-0" />
@@ -63,7 +63,7 @@ export function StudentDetailScreen({ studentId }: StudentDetailScreenProps) {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-outline-variant"
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
             >
               <div className="flex-1">
                 <Skeleton className="h-4 w-32" />

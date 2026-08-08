@@ -13,7 +13,7 @@ export function ScreenLayout({
   return (
     <div
       className={cn(
-        padding === "default" && "p-3 sm:p-4 lg:p-6",
+        padding === "default" && "bg-background p-3 sm:p-4 lg:p-6",
         className,
       )}
       {...props}

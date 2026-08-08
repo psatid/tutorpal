@@ -426,7 +426,7 @@ export function WeekdayView({
                 </span>
                 <span
                   className={cn(
-                    "text-lg font-extrabold leading-none",
+                    "text-lg font-medium tracking-[-0.01em] leading-none",
                     isSelected ? "text-primary-foreground" : "text-foreground",
                   )}
                 >

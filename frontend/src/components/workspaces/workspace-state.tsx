@@ -36,7 +36,7 @@ export function WorkspaceErrorState({
 }) {
 	return (
 		<div className="flex min-h-64 flex-col items-center justify-center px-4 text-center">
-			<h2 className="text-lg font-bold text-foreground">{title}</h2>
+			<h2 className="text-lg font-medium tracking-[-0.01em] text-foreground">{title}</h2>
 			<p className="mt-1 max-w-sm text-pretty text-sm text-muted-foreground">
 				{description}
 			</p>
@@ -63,7 +63,7 @@ export function WorkspaceEmptyState({
 			<div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
 				{icon}
 			</div>
-			<h2 className="mt-4 text-lg font-bold text-foreground">{title}</h2>
+			<h2 className="mt-4 text-lg font-medium tracking-[-0.01em] text-foreground">{title}</h2>
 			<p className="mt-1 max-w-sm text-pretty text-sm text-muted-foreground">
 				{description}
 			</p>

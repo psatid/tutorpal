@@ -116,7 +116,7 @@ export function LineSettingsScreen() {
           <ArrowLeft className="size-5" />
         </Button>
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-2xl font-normal tracking-[-0.02em] text-foreground">
             {t("settings:line.title")}
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">{t("settings:line.description")}</p>
@@ -129,14 +129,14 @@ export function LineSettingsScreen() {
         </div>
       ) : configuredConnection && !editing ? (
         <div className="space-y-5">
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-lg border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="flex items-center gap-2 text-sm font-semibold text-green-700">
                   <span className="size-2.5 rounded-full bg-green-600" aria-hidden="true" />
                   {t("settings:line.connected")}
                 </p>
-                <h3 className="mt-3 text-xl font-bold text-foreground">
+                <h3 className="mt-3 text-xl font-medium tracking-[-0.01em] text-foreground">
                   {configuredConnection.accountName}
                 </h3>
                 {configuredConnection.accountBasicId ? (
@@ -154,13 +154,13 @@ export function LineSettingsScreen() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-lg border border-border bg-card p-5">
             <div className="flex gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <MessageCircle className="size-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-foreground">{t("settings:line.testTitle")}</h3>
+                <h3 className="font-medium text-foreground">{t("settings:line.testTitle")}</h3>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   {testRecipientConnected
                     ? t("settings:line.testReady")
@@ -189,13 +189,13 @@ export function LineSettingsScreen() {
             )}
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-lg border border-border bg-card p-5">
             <div className="flex items-start gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                 <KeyRound className="size-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-foreground">{t("settings:line.credentials")}</h3>
+                <h3 className="font-medium text-foreground">{t("settings:line.credentials")}</h3>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("settings:line.credentialsDescription")}</p>
               </div>
             </div>
@@ -211,13 +211,13 @@ export function LineSettingsScreen() {
           </div>
         </div>
       ) : (
-        <form onSubmit={submit} className="rounded-xl border border-border bg-card p-5">
+        <form onSubmit={submit} className="rounded-lg border border-border bg-card p-5">
           <div className="mb-6 flex gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               <KeyRound className="size-5" />
             </span>
             <div>
-              <h3 className="font-bold text-foreground">
+              <h3 className="font-medium text-foreground">
                 {editing ? t("settings:line.updateTitle") : t("settings:line.connectTitle")}
               </h3>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("settings:line.setupHelp")}</p>

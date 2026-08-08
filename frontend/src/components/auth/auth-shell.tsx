@@ -19,10 +19,16 @@ export function AuthShell({
   ctaArea,
 }: AuthShellProps) {
   return (
-    <div className="min-h-dvh bg-accent px-4 py-4 sm:px-6 sm:py-6 flex justify-center">
+    <div className="relative isolate flex min-h-dvh justify-center overflow-hidden bg-[#eaf1f8] px-4 py-4 sm:px-6 sm:py-6">
+      <img
+        aria-hidden="true"
+        alt=""
+        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
+        src="/stripe-auth-mesh.svg"
+      />
       <div
         className={cn(
-          "flex w-full flex-col px-5 py-6 sm:max-w-xl sm:px-0 sm:py-0 justify-center",
+          "flex w-full flex-col justify-center rounded-xl border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(31,71,112,0.12)] sm:max-w-xl sm:px-10 sm:py-10",
         )}
       >
         <div className="space-y-8 sm:space-y-10">
@@ -37,7 +43,7 @@ export function AuthShell({
                 {eyebrow}
               </p>
             ) : null}
-            <h1 className="max-w-[12ch] text-4xl font-extrabold tracking-[-0.02em] text-foreground text-balance sm:text-5xl">
+            <h1 className="max-w-[12ch] text-4xl font-light tracking-[-0.02em] text-foreground text-balance sm:text-5xl">
               {title}
             </h1>
             {subtitle ? (

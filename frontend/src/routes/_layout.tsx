@@ -37,7 +37,7 @@ function LayoutRoute() {
   return (
     <div className="jun-layout jun-layout-safeArea min-h-dvh">
       <AppSidebar />
-      <main className="jun-content min-w-0 bg-accent">
+      <main className="jun-content min-w-0 bg-background">
         <Outlet />
       </main>
     </div>

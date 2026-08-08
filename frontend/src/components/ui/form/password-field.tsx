@@ -26,7 +26,7 @@ function PasswordField({ disabled, ...props }: PasswordFieldProps) {
           aria-label={toggleLabel}
           title={toggleLabel}
           disabled={disabled}
-          className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50"
         >
           <ToggleIcon className="size-4" />
         </button>

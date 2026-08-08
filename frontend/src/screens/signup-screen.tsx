@@ -80,11 +80,6 @@ export function SignupScreen() {
     [t],
   );
 
-  if (session) {
-    return <Navigate to={APP_ROUTES.HOME} />;
-  }
-
-  const currentStep = stepConfig[step]!;
   const stepFields = [
     "name",
     "email",
@@ -94,6 +89,12 @@ export function SignupScreen() {
   useEffect(() => {
     setFocus(stepFields[step]!);
   }, [setFocus, step]);
+
+  if (session) {
+    return <Navigate to={APP_ROUTES.HOME} />;
+  }
+
+  const currentStep = stepConfig[step]!;
 
   const handleNext = async () => {
     const isValid = await trigger(stepFields[step]!);
@@ -143,7 +144,7 @@ export function SignupScreen() {
         title={t("auth:signup.successTitle")}
         subtitle={t("auth:signup.successBody", { email: submittedEmail })}
         form={
-          <div className="rounded-2xl border border-border bg-accent px-5 py-4 text-sm leading-6 text-muted-foreground">
+          <div className="rounded-lg border border-border bg-primary-container px-5 py-4 text-sm leading-6 text-muted-foreground">
             {t("auth:legal")}
           </div>
         }

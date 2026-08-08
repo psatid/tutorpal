@@ -2,11 +2,11 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const infoCardVariants = cva(
-  "w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-outline-variant text-left",
+  "w-full flex items-center gap-4 border-b border-border bg-card px-4 py-4 text-left",
   {
     variants: {
       interactive: {
-        true: "cursor-pointer group hover:border-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        true: "cursor-pointer group hover:bg-[#f6f9fc] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35",
       },
     },
   }

@@ -73,15 +73,21 @@ export function LineLinkScreen() {
   const canRetry = linkError === "network";
 
   return (
-    <div className="min-h-dvh bg-surface flex items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-6 text-center">
+    <div className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden bg-[#eaf1f8] p-6">
+      <img
+        aria-hidden="true"
+        alt=""
+        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
+        src="/stripe-auth-mesh.svg"
+      />
+      <div className="relative z-10 w-full max-w-sm space-y-6 rounded-xl border border-white/80 bg-white p-6 text-center shadow-transient-card sm:p-8">
         <div className="space-y-2">
           <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-2xl bg-primary-container flex items-center justify-center">
-              <span className="text-3xl font-bold text-primary">TP</span>
+            <div className="flex size-20 items-center justify-center rounded-xl bg-primary-container">
+              <span className="text-3xl font-semibold text-primary">TP</span>
             </div>
           </div>
-          <h1 className="font-headline font-extrabold text-2xl text-on-surface tracking-tight">
+          <h1 className="font-headline text-2xl font-light tracking-[-0.02em] text-on-surface">
             TutorPal
           </h1>
         </div>
@@ -115,7 +121,7 @@ export function LineLinkScreen() {
           <div className="space-y-4">
             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
             <div className="space-y-1">
-              <h2 className="font-headline font-bold text-xl text-on-surface">
+              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-on-surface">
                 {t("students:line.successTitle")}
               </h2>
               {linkedName && (
@@ -134,7 +140,7 @@ export function LineLinkScreen() {
           <div className="space-y-4">
             <XCircle className="w-16 h-16 text-destructive mx-auto" />
             <div className="space-y-1">
-              <h2 className="font-headline font-bold text-xl text-on-surface">
+              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-on-surface">
                 {t("students:line.errorTitle")}
               </h2>
               <p className="text-on-surface-variant">{errorMessage}</p>

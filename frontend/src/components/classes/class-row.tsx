@@ -42,7 +42,7 @@ export function ClassRow({
 
   return (
     <li className="scroll-mt-28 md:scroll-mt-32">
-      <div className="flex min-h-20 items-center gap-3 rounded-xl border border-outline-variant bg-card p-4 transition-colors motion-reduce:transition-none hover:border-primary focus-within:border-primary">
+      <div className="flex min-h-20 items-center border border-border gap-3 bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-[#f6f9fc] focus-within:bg-[#f6f9fc]">
         <Button
           aria-label={t("classes:viewDetailsFor", { name: data.displayName })}
           className="group h-auto min-h-11 min-w-0 flex-1 justify-start gap-3 rounded-lg px-0 py-0 text-left hover:bg-transparent focus-visible:ring-offset-2"
