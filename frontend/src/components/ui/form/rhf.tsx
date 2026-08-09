@@ -17,6 +17,8 @@ interface RHFInputFieldProps<T extends FieldValues> {
   name: FieldPath<T>;
   label?: string;
   caption?: string;
+  captionId?: string;
+  errorId?: string;
   required?: boolean;
   disabled?: boolean;
   inputProps?: Omit<React.ComponentProps<"input">, "name"> & {
@@ -29,6 +31,8 @@ function RHFInputField<T extends FieldValues>({
   name,
   label,
   caption,
+  captionId,
+  errorId,
   required,
   disabled,
   inputProps,
@@ -45,10 +49,13 @@ function RHFInputField<T extends FieldValues>({
             {...inputProps}
             label={label}
             caption={caption}
+            captionId={captionId}
             error={fieldState.error?.message}
+            errorId={errorId}
             required={required}
             disabled={disabled}
             aria-invalid={!!fieldState.error}
+            aria-errormessage={fieldState.error ? errorId : undefined}
             onChange={(e) => {
               const isNumber = inputProps?.type === "number";
               if (isNumber) {

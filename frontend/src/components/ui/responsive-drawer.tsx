@@ -18,10 +18,16 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type DrawerMode = "create" | "view" | "edit";
 type DrawerLayer = "base" | "nested";
+type DrawerOpenChangeEventDetails = Parameters<
+  NonNullable<React.ComponentProps<typeof Drawer>["onOpenChange"]>
+>[1];
 
 interface ResponsiveDrawerProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (
+    open: boolean,
+    eventDetails?: DrawerOpenChangeEventDetails,
+  ) => void;
   title: string;
   description?: string;
   children: ReactNode;
@@ -50,7 +56,9 @@ export function ResponsiveDrawer({
     // focus management. The desktop panel does not need that second trap.
     modal: !isDesktop,
   };
-  const handleOpenChange = (nextOpen: boolean) => onOpenChange(nextOpen);
+  const handleOpenChange: NonNullable<
+    React.ComponentProps<typeof Drawer>["onOpenChange"]
+  > = (nextOpen, eventDetails) => onOpenChange(nextOpen, eventDetails);
   const dismissNestedDrawer = () => {
     if (layer === "nested") onOpenChange(false);
   };

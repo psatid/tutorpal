@@ -10,18 +10,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Class } from "@/models/class";
-import { ChevronRight, MoreVertical, Trash2 } from "lucide-react";
+import { ChevronRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 export function ClassRow({
   item,
   onDelete,
+  onEdit,
   onOpen,
   actionTriggerRef,
 }: {
   item: Class;
   onDelete: () => void;
+  onEdit: () => void;
   onOpen: () => void;
   actionTriggerRef: (node: HTMLButtonElement | null) => void;
 }) {
@@ -42,7 +44,7 @@ export function ClassRow({
 
   return (
     <li className="scroll-mt-28 md:scroll-mt-32">
-      <div className="flex min-h-20 items-center border border-border gap-3 bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-[#f6f9fc] focus-within:bg-[#f6f9fc]">
+      <div className="flex min-h-20 items-center rounded-lg border border-border gap-3 bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-surface focus-within:bg-surface">
         <Button
           aria-label={t("classes:viewDetailsFor", { name: data.displayName })}
           className="group h-auto min-h-11 min-w-0 flex-1 justify-start gap-3 rounded-lg px-0 py-0 text-left hover:bg-transparent focus-visible:ring-offset-2"
@@ -119,6 +121,13 @@ export function ClassRow({
               <DropdownMenuItem onClick={onOpen}>
                 <ChevronRight />
                 {t("classes:view")}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil />
+                {t("classes:editClass")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

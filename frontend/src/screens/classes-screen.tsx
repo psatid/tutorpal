@@ -12,9 +12,10 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ClassRow } from "@/components/classes/class-row";
 import {
-  CreateClassForm,
+  ClassForm,
   CUSTOM_CLASS_VALUE,
 } from "@/components/classes/create-class-form";
+import { ClassDrawer } from "@/components/classes/class-drawer";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -78,9 +79,12 @@ export function ClassesScreen() {
   const emptyActionRef = useRef<HTMLButtonElement>(null);
   const searchFallbackRef = useRef<HTMLDivElement>(null);
   const classActionTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
+  const editOriginRef = useRef<HTMLButtonElement>(null);
   const deleteOriginRef = useRef<HTMLButtonElement>(null);
   const deleteOriginIndexRef = useRef(-1);
   const [formOpen, setFormOpen] = useState(false);
+  const [isCreatePending, setIsCreatePending] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [deletingClass, setDeletingClass] = useState<Class | null>(null);
   const [deleteError, setDeleteError] = useState<ClassDeleteErrorKind | null>(
     null,
@@ -204,8 +208,23 @@ export function ClassesScreen() {
     trigger?.focus();
   };
   const closeForm = () => {
+    setIsCreatePending(false);
     setFormOpen(false);
     focusTrigger();
+  };
+  const focusEditOrigin = () => {
+    if (isVisibleButton(editOriginRef.current)) {
+      editOriginRef.current.focus();
+      return;
+    }
+    focusTrigger();
+  };
+  const openEdit = (item: Class) => {
+    editOriginRef.current = classActionTriggerRefs.current.get(item.getId()) ?? null;
+    setEditingClass(item);
+  };
+  const closeEdit = () => {
+    setEditingClass(null);
   };
   function isVisibleButton(
     candidate: HTMLButtonElement | null | undefined,
@@ -265,15 +284,23 @@ export function ClassesScreen() {
     setFocusAfterDeleteIndex(null);
   }, [classes, focusAfterDeleteIndex]);
   const form = (
-    <CreateClassForm
+    <ClassForm
       courses={courses}
+      formId="class-form"
+      isOpen={formOpen}
       key={`${routeSearch.courseId ?? routeSearch.classType ?? "all"}-${formOpen}`}
-      onCreated={closeForm}
+      onPendingChange={setIsCreatePending}
+      onSuccess={closeForm}
       preferredCourseId={routeSearch.courseId ?? null}
     />
   );
   const submitButton = (
-    <Button className="w-full md:w-fit" form="class-form" type="submit">
+    <Button
+      className="w-full md:w-fit"
+      form="class-form"
+      loading={isCreatePending}
+      type="submit"
+    >
       <Plus data-icon="inline-start" />
       {t("classes:createClass")}
     </Button>
@@ -328,6 +355,7 @@ export function ClassesScreen() {
             item={item}
             key={item.getId()}
             onDelete={() => requestDelete(item, index)}
+            onEdit={() => openEdit(item)}
             onOpen={() =>
               navigate({
                 to: "/classes/$classId",
@@ -417,12 +445,28 @@ export function ClassesScreen() {
         description={t("classes:createDescription")}
         footer={submitButton}
         onCloseAutoFocus={focusTrigger}
-        onOpenChange={setFormOpen}
+        onOpenChange={(open, eventDetails) => {
+          if (!open && isCreatePending) {
+            eventDetails?.preventUnmountOnClose();
+            return;
+          }
+          setFormOpen(open);
+        }}
         open={formOpen}
         title={t("classes:createTitle")}
       >
         {form}
       </ResponsiveDrawer>
+      <ClassDrawer
+        classData={editingClass}
+        courses={courses}
+        isOpen={Boolean(editingClass)}
+        mode="edit"
+        onCloseAutoFocus={focusEditOrigin}
+        onOpenChange={(open) => {
+          if (!open) closeEdit();
+        }}
+      />
       <AlertDialog
         onOpenChange={(open, eventDetails) => {
           if (!open && deleteClass.isPending) {

@@ -36,9 +36,9 @@ function getDateByDayOffset(date: Date, dayOffset: number): Date {
   const targetWeekdayIndex =
     ((targetDayIndex % WEEK_DAYS) + WEEK_DAYS) % WEEK_DAYS;
 
-  return DateTime.getWeekDates(
-    dateTime.startOfWeek().addWeeks(weekOffset),
-  )[targetWeekdayIndex]!.toDate();
+  return DateTime.getWeekDates(dateTime.startOfWeek().addWeeks(weekOffset))[
+    targetWeekdayIndex
+  ]!.toDate();
 }
 
 export function WeekdayView({
@@ -154,7 +154,9 @@ export function WeekdayView({
           clearSmoothCentering();
         };
 
-        container.addEventListener("scrollend", handleScrollEnd, { once: true });
+        container.addEventListener("scrollend", handleScrollEnd, {
+          once: true,
+        });
         smoothCenterScrollEndCleanupRef.current = () => {
           container.removeEventListener("scrollend", handleScrollEnd);
         };
@@ -166,11 +168,7 @@ export function WeekdayView({
         behavior: shouldSmoothlyCenter ? "smooth" : "auto",
       });
     },
-    [
-      clearSmoothCentering,
-      prefersReducedMotion,
-      scheduleSmoothCenterFallback,
-    ],
+    [clearSmoothCentering, prefersReducedMotion, scheduleSmoothCenterFallback],
   );
 
   useLayoutEffect(() => {
@@ -306,7 +304,8 @@ export function WeekdayView({
     (event: FocusEvent<HTMLDivElement>) => {
       if (event.target !== event.currentTarget || !selectedDate) return;
 
-      pendingFocusDateRef.current = DateTime.from(selectedDate).toDateOnlyString();
+      pendingFocusDateRef.current =
+        DateTime.from(selectedDate).toDateOnlyString();
       onRestoreSelectedDate();
     },
     [onRestoreSelectedDate, selectedDate],
@@ -402,7 +401,7 @@ export function WeekdayView({
                 onKeyDown={(event) => handleKeyDown(event, date)}
                 data-date-key={dateTime.toDateOnlyString()}
                 className={cn(
-                  "relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none",
+                  "relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected
                     ? "border-primary bg-primary text-primary-foreground"
                     : isDateToday

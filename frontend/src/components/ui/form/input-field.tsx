@@ -4,7 +4,9 @@ import { FormField } from "./form-field";
 export interface InputFieldProps extends InputProps {
   label?: string;
   caption?: string;
+  captionId?: string;
   error?: string | string[];
+  errorId?: string;
   required?: boolean;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
@@ -13,7 +15,9 @@ export interface InputFieldProps extends InputProps {
 function InputField({
   label,
   caption,
+  captionId,
   error,
+  errorId,
   required,
   disabled,
   orientation,
@@ -24,7 +28,10 @@ function InputField({
     <FormField
       label={label}
       caption={caption}
+      captionId={captionId}
       error={error}
+      errorId={errorId}
+      htmlFor={inputProps.id}
       required={required}
       disabled={disabled}
       orientation={orientation}

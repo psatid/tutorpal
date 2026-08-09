@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -44,6 +44,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
 
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
   const [classDrawerMode, setClassDrawerMode] = useState<DrawerMode>("edit");
+  const classEditOriginRef = useRef<HTMLButtonElement | null>(null);
 
   const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
   const [scheduleDrawerMode, setScheduleDrawerMode] =
@@ -58,8 +59,15 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   }, [navigate]);
 
   const handleEditClass = useCallback(() => {
+    const activeElement = document.activeElement;
+    classEditOriginRef.current =
+      activeElement instanceof HTMLButtonElement ? activeElement : null;
     setClassDrawerMode("edit");
     setIsClassDrawerOpen(true);
+  }, []);
+
+  const focusClassEditOrigin = useCallback(() => {
+    classEditOriginRef.current?.focus();
   }, []);
 
   const handleViewSchedule = useCallback((schedule: GetV1Schedules200Item) => {
@@ -259,6 +267,7 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
       <ClassDrawer
         isOpen={isClassDrawerOpen}
         onOpenChange={handleClassDrawerOpenChange}
+        onCloseAutoFocus={focusClassEditOrigin}
         mode={classDrawerMode}
         classData={classData}
         onModeChange={setClassDrawerMode}

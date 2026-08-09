@@ -79,6 +79,10 @@ export class Class {
 		return this.data.course?.name ?? null;
 	}
 
+	getCourseId() {
+		return this.data.course?.id ?? null;
+	}
+
 	getStudents() {
 		return this.data.students;
 	}

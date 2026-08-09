@@ -43,7 +43,7 @@ Courses and classes are separate top-level workspaces. `/courses` manages reusab
 - On desktop these destinations appear in a collapsible side rail that retains an icon-only navigation state; mobile and tablet use the five-item bottom navigation.
 - Courses presents a searchable, sortable catalog with default hours, class counts, editing, deletion, and links to filtered class results.
 - Course deletion revalidates the current class count before showing confirmation. In-use, stale, or unavailable states remain non-destructive and offer either retry or a link to the filtered classes; a concurrent server conflict returns to the same blocked state.
-- Classes presents a searchable mixed list with All, Custom, Course-linked, and individual-course filters. Each row offers View details and Delete class actions; deletion uses an explicit cascade warning, pending lock, retryable error state, neutral missing-class reconciliation, and focus restoration.
+- Classes presents a searchable mixed list with All, Custom, Course-linked, and individual-course filters. Each row offers View details, Edit class, and Delete class actions; deletion uses an explicit cascade warning, pending lock, retryable error state, neutral missing-class reconciliation, and focus restoration.
 - Students, Classes, and Courses share the same header, toolbar, divider-list, state, and form-surface patterns.
 - Course and class forms use the shared responsive drawer: an accessible bottom sheet below `md` and a right-side panel at `md` and above.
 - Custom rows show “Custom class” as their secondary context.
