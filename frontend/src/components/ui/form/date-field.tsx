@@ -28,6 +28,7 @@ type DateFieldTriggerElement = ReactElement<ComponentProps<"button">>;
 interface DateFieldProps {
   value?: string;
   onChange?: (value: string) => void;
+  selectionMode?: "single" | "week";
   label?: string;
   caption?: string;
   error?: string | string[];
@@ -42,6 +43,7 @@ interface DateFieldProps {
 function DateField({
   value,
   onChange,
+  selectionMode = "single",
   label,
   caption,
   error,
@@ -58,6 +60,13 @@ function DateField({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const date = DateTime.tryFromDateOnlyString(value)?.toDate();
+  const weekRange =
+    selectionMode === "week" && date
+      ? {
+          from: DateTime.from(date).startOfWeek().toDate(),
+          to: DateTime.getWeekDates(date).at(-1)!.toDate(),
+        }
+      : undefined;
   const hasError = Array.isArray(error) ? error.length > 0 : Boolean(error);
   const captionId = caption ? `${fieldId}-description` : undefined;
   const errorId = hasError ? `${fieldId}-error` : undefined;
@@ -70,6 +79,25 @@ function DateField({
       setIsOpen(false);
     }
   };
+
+  const calendar =
+    selectionMode === "week" ? (
+      <Calendar
+        mode="range"
+        selected={weekRange}
+        onSelect={(_range, triggerDate) => handleSelect(triggerDate)}
+        disabled={disabled}
+        defaultMonth={date}
+        weekStartsOn={1}
+      />
+    ) : (
+      <Calendar
+        mode="single"
+        selected={date}
+        onSelect={handleSelect}
+        disabled={disabled}
+      />
+    );
 
   return (
     <FormField
@@ -99,12 +127,7 @@ function DateField({
             />
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={handleSelect}
-              disabled={disabled}
-            />
+            {calendar}
           </PopoverContent>
         </Popover>
       ) : (
@@ -129,16 +152,32 @@ function DateField({
             open={isOpen}
             onOpenChange={setIsOpen}
             onCloseAutoFocus={() => triggerRef.current?.focus()}
-            title={t("form.chooseDate")}
+            title={
+              selectionMode === "week"
+                ? t("form.chooseWeek")
+                : t("form.chooseDate")
+            }
             layer="nested"
           >
-            <Calendar
-              fullWidth
-              mode="single"
-              selected={date}
-              onSelect={handleSelect}
-              disabled={disabled}
-            />
+            {selectionMode === "week" ? (
+              <Calendar
+                fullWidth
+                mode="range"
+                selected={weekRange}
+                onSelect={(_range, triggerDate) => handleSelect(triggerDate)}
+                disabled={disabled}
+                defaultMonth={date}
+                weekStartsOn={1}
+              />
+            ) : (
+              <Calendar
+                fullWidth
+                mode="single"
+                selected={date}
+                onSelect={handleSelect}
+                disabled={disabled}
+              />
+            )}
           </ResponsiveDrawer>
         </>
       )}

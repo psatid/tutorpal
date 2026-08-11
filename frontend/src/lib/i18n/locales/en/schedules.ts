@@ -188,10 +188,17 @@ export default {
 	weekSelector: {
 		today: "Today",
 		selected: "Selected",
+		selectedWeek: "Selected week",
+		containsToday: "Contains today",
 		openCalendar: "Open calendar for {{month}}",
+		openWeekCalendar: "Open calendar for {{week}}",
 		dateRailLabel: "Schedule date selector",
 		dateRailInstruction:
 			"Scroll horizontally to browse dates. Use the Left and Right Arrow keys to select a day. Use Page Up and Page Down to move by a week.",
+		weekRailLabel: "Schedule week selector",
+		weekRailInstruction:
+			"Scroll horizontally to browse weeks. Use the Left and Right Arrow keys to select a week. Use Page Up and Page Down to move by four weeks.",
+		weekLabel: "Week of {{start}} through {{end}}",
 	},
 	viewMode: {
 		label: "Schedule view",

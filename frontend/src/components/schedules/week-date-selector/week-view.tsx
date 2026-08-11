@@ -10,13 +10,23 @@ import { motion, useReducedMotion, type Transition } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
+import {
+  formatWeekRange,
+  getDateInWeek,
+  getWeekStart,
+  getWeekdayOffset,
+  isSameWeek,
+} from "./week-utils";
 
-export interface WeekdayViewProps {
-  dates: Date[];
+export interface WeekViewProps {
+  weekStarts: Date[];
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
-  onExtendDateBuffer: (direction: "previous" | "next") => void;
-  onRestoreSelectedDate: () => void;
+  onExtendWeekBuffer: (
+    direction: "previous" | "next",
+    count?: number,
+  ) => void;
+  onRestoreSelectedWeek: () => void;
   centerRequest: {
     id: number;
     behavior: ScrollBehavior;
@@ -28,60 +38,57 @@ const EDGE_THRESHOLD = 128;
 const SMOOTH_SCROLL_SETTLE_DELAY = 150;
 const WEEK_DAYS = 7;
 
-function getDateByDayOffset(date: Date, dayOffset: number): Date {
-  const dateTime = DateTime.from(date);
-  const weekdayIndex = (dateTime.getWeekdayIndex() + 6) % WEEK_DAYS;
-  const targetDayIndex = weekdayIndex + dayOffset;
-  const weekOffset = Math.floor(targetDayIndex / WEEK_DAYS);
-  const targetWeekdayIndex =
-    ((targetDayIndex % WEEK_DAYS) + WEEK_DAYS) % WEEK_DAYS;
-
-  return DateTime.getWeekDates(dateTime.startOfWeek().addWeeks(weekOffset))[
-    targetWeekdayIndex
-  ]!.toDate();
+function getWeekEnd(weekStart: Date): Date {
+  return getDateInWeek(weekStart, WEEK_DAYS - 1);
 }
 
-export function WeekdayView({
-  dates,
+export function WeekView({
+  weekStarts,
   selectedDate,
   onDateSelect,
-  onExtendDateBuffer,
-  onRestoreSelectedDate,
+  onExtendWeekBuffer,
+  onRestoreSelectedWeek,
   centerRequest,
   className,
-}: WeekdayViewProps) {
+}: WeekViewProps) {
   const { t } = useTranslation(["schedules"]);
   const prefersReducedMotion = useReducedMotion();
   const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingPrependTrackWidthRef = useRef<number | null>(null);
-  const pendingAppendStartDateRef = useRef<number | null>(null);
+  const pendingAppendStartWeekRef = useRef<number | null>(null);
   const pendingAppendTrackWidthRef = useRef<number | null>(null);
   const pendingExtensionRef = useRef<"previous" | "next" | null>(null);
-  const pendingFocusDateRef = useRef<string | null>(null);
-  const lastCenteredDateRef = useRef<string | null>(null);
+  const pendingFocusWeekRef = useRef<string | null>(null);
+  const lastCenteredWeekRef = useRef<string | null>(null);
   const lastCenterRequestRef = useRef<number | null>(null);
   const smoothCenteringRef = useRef(false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
+  const selectedWeekStart = selectedDate ? getWeekStart(selectedDate) : undefined;
+  const selectedWeekKey = selectedWeekStart
+    ? DateTime.from(selectedWeekStart).toDateOnlyString()
+    : undefined;
+  const isSelectedWeekInBuffer = selectedWeekStart
+    ? weekStarts.some((weekStart) => isSameWeek(weekStart, selectedWeekStart))
+    : false;
+  const offscreenSelectedAriaLabel =
+    selectedWeekStart && !isSelectedWeekInBuffer
+      ? [
+          t("schedules:weekSelector.weekLabel", {
+            start: DateTime.from(selectedWeekStart).format(
+              "EEEE, MMMM d, yyyy",
+            ),
+            end: DateTime.from(getWeekEnd(selectedWeekStart)).format(
+              "EEEE, MMMM d, yyyy",
+            ),
+          }),
+          t("schedules:weekSelector.selectedWeek"),
+        ].join(", ")
+      : undefined;
   const motionTransition: Transition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
-  const isSelectedDateInBuffer = selectedDate
-    ? dates.some((date) => DateTime.from(date).isSameDay(selectedDate))
-    : false;
-  const offscreenSelectedAriaLabel =
-    selectedDate && !isSelectedDateInBuffer
-      ? [
-          DateTime.from(selectedDate).format("EEEE, MMMM d, yyyy"),
-          DateTime.from(selectedDate).isToday()
-            ? t("schedules:weekSelector.today")
-            : undefined,
-          t("schedules:weekSelector.selected"),
-        ]
-          .filter(Boolean)
-          .join(", ")
-      : undefined;
 
   const clearSmoothCentering = useCallback(() => {
     smoothCenteringRef.current = false;
@@ -122,7 +129,7 @@ export function WeekdayView({
 
   useLayoutEffect(() => clearSmoothCentering, [clearSmoothCentering]);
 
-  const centerSelectedDate = useCallback(
+  const centerSelectedWeek = useCallback(
     (behavior: ScrollBehavior = "auto") => {
       const container = containerRef.current;
       const selectedButton = container?.querySelector<HTMLButtonElement>(
@@ -175,11 +182,10 @@ export function WeekdayView({
   );
 
   useLayoutEffect(() => {
-    if (!selectedDate) return;
+    if (!selectedWeekKey) return;
 
-    const selectedDateKey = DateTime.from(selectedDate).toDateOnlyString();
     const shouldCenter =
-      lastCenteredDateRef.current !== selectedDateKey ||
+      lastCenteredWeekRef.current !== selectedWeekKey ||
       lastCenterRequestRef.current !== centerRequest.id;
 
     if (!shouldCenter) return;
@@ -196,10 +202,10 @@ export function WeekdayView({
         ? centerRequest.behavior
         : "auto";
 
-    centerSelectedDate(behavior);
-    lastCenteredDateRef.current = selectedDateKey;
+    centerSelectedWeek(behavior);
+    lastCenteredWeekRef.current = selectedWeekKey;
     lastCenterRequestRef.current = centerRequest.id;
-  }, [centerRequest, centerSelectedDate, dates, selectedDate]);
+  }, [centerRequest, centerSelectedWeek, selectedWeekKey, weekStarts]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -212,31 +218,30 @@ export function WeekdayView({
     }
 
     if (
-      pendingAppendStartDateRef.current !== null &&
+      pendingAppendStartWeekRef.current !== null &&
       pendingAppendTrackWidthRef.current !== null &&
-      dates[0]?.getTime() !== pendingAppendStartDateRef.current
+      weekStarts[0]?.getTime() !== pendingAppendStartWeekRef.current
     ) {
       container.scrollLeft -= pendingAppendTrackWidthRef.current;
     }
 
-    pendingAppendStartDateRef.current = null;
+    pendingAppendStartWeekRef.current = null;
     pendingAppendTrackWidthRef.current = null;
-
     pendingExtensionRef.current = null;
 
-    const pendingFocusDate = pendingFocusDateRef.current;
+    const pendingFocusWeek = pendingFocusWeekRef.current;
 
-    if (!pendingFocusDate) return;
+    if (!pendingFocusWeek) return;
 
     const nextFocusedButton = container.querySelector<HTMLButtonElement>(
-      `[data-date-key="${pendingFocusDate}"]`,
+      `[data-week-key="${pendingFocusWeek}"]`,
     );
 
     if (nextFocusedButton) {
       nextFocusedButton.focus({ preventScroll: true });
-      pendingFocusDateRef.current = null;
+      pendingFocusWeekRef.current = null;
     }
-  }, [dates, selectedDate]);
+  }, [selectedWeekKey, weekStarts]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -244,7 +249,7 @@ export function WeekdayView({
     if (!container || typeof ResizeObserver === "undefined") return;
 
     const resizeObserver = new ResizeObserver(() => {
-      centerSelectedDate();
+      centerSelectedWeek();
     });
 
     resizeObserver.observe(container);
@@ -252,7 +257,19 @@ export function WeekdayView({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [centerSelectedDate]);
+  }, [centerSelectedWeek]);
+
+  const getTrackItemWidth = useCallback(() => {
+    const firstButton = containerRef.current?.querySelector<HTMLButtonElement>(
+      "button[data-week-key]",
+    );
+    const track = firstButton?.parentElement;
+    const gap = track
+      ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
+      : 0;
+
+    return firstButton ? firstButton.getBoundingClientRect().width + gap : null;
+  }, []);
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
@@ -272,93 +289,96 @@ export function WeekdayView({
       container.scrollWidth - EDGE_THRESHOLD;
 
     if (isNearStart) {
-      const firstDateButton = container.querySelector<HTMLButtonElement>(
-        "button[data-date-key]",
-      );
-      const track = firstDateButton?.parentElement;
-      const gap = track
-        ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
-        : 0;
-
       pendingExtensionRef.current = "previous";
-      pendingPrependTrackWidthRef.current = firstDateButton
-        ? (firstDateButton.getBoundingClientRect().width + gap) * 7
-        : null;
-      onExtendDateBuffer("previous");
+      pendingPrependTrackWidthRef.current = getTrackItemWidth();
+      onExtendWeekBuffer("previous");
     } else if (isNearEnd) {
-      const firstDateButton = container.querySelector<HTMLButtonElement>(
-        "button[data-date-key]",
-      );
-      const track = firstDateButton?.parentElement;
-      const gap = track
-        ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
-        : 0;
-
       pendingExtensionRef.current = "next";
-      pendingAppendStartDateRef.current = dates[0]?.getTime() ?? null;
-      pendingAppendTrackWidthRef.current = firstDateButton
-        ? (firstDateButton.getBoundingClientRect().width + gap) * 7
-        : null;
-      onExtendDateBuffer("next");
+      pendingAppendStartWeekRef.current = weekStarts[0]?.getTime() ?? null;
+      pendingAppendTrackWidthRef.current = getTrackItemWidth();
+      onExtendWeekBuffer("next");
     }
-  }, [dates, onExtendDateBuffer, scheduleSmoothCenterFallback]);
+  }, [
+    getTrackItemWidth,
+    onExtendWeekBuffer,
+    scheduleSmoothCenterFallback,
+    weekStarts,
+  ]);
 
   const handleRailFocus = useCallback(
     (event: FocusEvent<HTMLDivElement>) => {
-      if (event.target !== event.currentTarget || !selectedDate) return;
+      if (event.target !== event.currentTarget || !selectedWeekStart) return;
 
-      pendingFocusDateRef.current =
-        DateTime.from(selectedDate).toDateOnlyString();
-      onRestoreSelectedDate();
+      pendingFocusWeekRef.current = DateTime.from(
+        selectedWeekStart,
+      ).toDateOnlyString();
+      onRestoreSelectedWeek();
     },
-    [onRestoreSelectedDate, selectedDate],
+    [onRestoreSelectedWeek, selectedWeekStart],
+  );
+
+  const selectWeek = useCallback(
+    (weekStart: Date) => {
+      const weekdayOffset = getWeekdayOffset(selectedDate ?? weekStart);
+      onDateSelect(getDateInWeek(weekStart, weekdayOffset));
+    },
+    [onDateSelect, selectedDate],
   );
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLButtonElement>, date: Date) => {
-      const dayOffset =
+    (event: KeyboardEvent<HTMLButtonElement>, weekStart: Date) => {
+      const weekOffset =
         event.key === "ArrowLeft"
           ? -1
           : event.key === "ArrowRight"
             ? 1
             : event.key === "PageUp"
-              ? -7
+              ? -4
               : event.key === "PageDown"
-                ? 7
+                ? 4
                 : 0;
 
-      if (dayOffset === 0) return;
+      if (weekOffset === 0) return;
 
       event.preventDefault();
       cancelSmoothCentering();
 
-      const nextDate = getDateByDayOffset(date, dayOffset);
-      const firstDate = dates[0];
-      const lastDate = dates.at(-1);
+      const nextWeekStart = DateTime.from(weekStart)
+        .addWeeks(weekOffset)
+        .toDate();
+      const firstWeekStart = weekStarts[0];
+      const lastWeekStart = weekStarts.at(-1);
 
-      if (firstDate && nextDate < firstDate) {
-        onExtendDateBuffer("previous");
-      } else if (lastDate && nextDate > lastDate) {
-        onExtendDateBuffer("next");
+      if (firstWeekStart && nextWeekStart < firstWeekStart) {
+        onExtendWeekBuffer("previous", Math.abs(weekOffset));
+      } else if (lastWeekStart && nextWeekStart > lastWeekStart) {
+        onExtendWeekBuffer("next", Math.abs(weekOffset));
       }
 
-      pendingFocusDateRef.current = DateTime.from(nextDate).toDateOnlyString();
-      onDateSelect(nextDate);
+      pendingFocusWeekRef.current = DateTime.from(
+        nextWeekStart,
+      ).toDateOnlyString();
+      selectWeek(nextWeekStart);
     },
-    [cancelSmoothCentering, dates, onDateSelect, onExtendDateBuffer],
+    [
+      cancelSmoothCentering,
+      onExtendWeekBuffer,
+      selectWeek,
+      weekStarts,
+    ],
   );
 
   return (
     <div className={cn("min-w-0 max-w-full pb-3 pt-2 md:pb-4", className)}>
       <p id={instructionsId} className="sr-only">
-        {t("schedules:weekSelector.dateRailInstruction")}
+        {t("schedules:weekSelector.weekRailInstruction")}
       </p>
       <div
         ref={containerRef}
         role="radiogroup"
-        aria-label={t("schedules:weekSelector.dateRailLabel")}
+        aria-label={t("schedules:weekSelector.weekRailLabel")}
         aria-describedby={instructionsId}
-        tabIndex={isSelectedDateInBuffer ? -1 : 0}
+        tabIndex={isSelectedWeekInBuffer ? -1 : 0}
         onFocus={handleRailFocus}
         onScroll={handleScroll}
         onWheel={cancelSmoothCentering}
@@ -374,40 +394,44 @@ export function WeekdayView({
             className="sr-only"
           />
         )}
-        <div className="flex w-max min-w-[calc(100%+4rem)] gap-2 px-3 sm:px-4 lg:px-6">
-          {dates.map((date, index) => {
-            const dateTime = DateTime.from(date);
-            const isSelected = selectedDate
-              ? dateTime.isSameDay(selectedDate)
+        <div className="flex w-max min-w-[calc(100%+8rem)] gap-2 px-3 sm:px-4 lg:px-6">
+          {weekStarts.map((weekStart) => {
+            const weekEnd = getWeekEnd(weekStart);
+            const isSelected = selectedWeekStart
+              ? isSameWeek(weekStart, selectedWeekStart)
               : false;
-            const isDateToday = dateTime.isToday();
-            const dayName = dateTime.format("EEE");
-            const dayNumber = dateTime.format("d");
-            const monthName = dateTime.format("MMM");
-            const previousDate = dates[index - 1];
-            const showsMonthMarker =
-              !previousDate ||
-              dateTime.format("M") !== DateTime.from(previousDate).format("M");
+            const isCurrentWeek = isSameWeek(
+              weekStart,
+              DateTime.today().toDate(),
+            );
+            const rangeLabel = formatWeekRange(weekStart, weekEnd);
             const ariaLabel = [
-              dateTime.format("EEEE, MMMM d, yyyy"),
-              isDateToday ? t("schedules:weekSelector.today") : undefined,
-              isSelected ? t("schedules:weekSelector.selected") : undefined,
+              t("schedules:weekSelector.weekLabel", {
+                start: DateTime.from(weekStart).format(
+                  "EEEE, MMMM d, yyyy",
+                ),
+                end: DateTime.from(weekEnd).format("EEEE, MMMM d, yyyy"),
+              }),
+              isCurrentWeek
+                ? t("schedules:weekSelector.containsToday")
+                : undefined,
+              isSelected ? t("schedules:weekSelector.selectedWeek") : undefined,
             ]
               .filter(Boolean)
               .join(", ");
 
             return (
               <button
-                key={date.getTime()}
+                key={weekStart.getTime()}
                 type="button"
-                onClick={() => onDateSelect(date)}
-                onKeyDown={(event) => handleKeyDown(event, date)}
-                data-date-key={dateTime.toDateOnlyString()}
+                onClick={() => selectWeek(weekStart)}
+                onKeyDown={(event) => handleKeyDown(event, weekStart)}
+                data-week-key={DateTime.from(weekStart).toDateOnlyString()}
                 className={cn(
-                  "relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
+                  "relative flex h-14 w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-3 py-1.5 text-center text-sm font-medium tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected
                     ? "border-primary text-primary-foreground"
-                    : isDateToday
+                    : isCurrentWeek
                       ? "border-primary bg-card text-foreground hover:bg-muted"
                       : "border-border bg-card text-foreground hover:border-primary hover:bg-muted",
                 )}
@@ -424,40 +448,14 @@ export function WeekdayView({
                     transition={motionTransition}
                   />
                 )}
-                <span
-                  className={cn(
-                    "relative z-10 text-[9px] font-bold leading-none uppercase tracking-[0.08em]",
-                    isSelected
-                      ? "text-primary-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {dayName}
-                </span>
-                <span
-                  className={cn(
-                    "relative z-10 text-lg font-medium tracking-[-0.01em] leading-none",
-                    isSelected ? "text-primary-foreground" : "text-foreground",
-                  )}
-                >
-                  {dayNumber}
-                </span>
-                {showsMonthMarker && (
-                  <span
-                    className={cn(
-                      "absolute bottom-1 right-1 z-10 text-[8px] font-bold uppercase tracking-[0.08em]",
-                      isSelected
-                        ? "text-primary-foreground"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {monthName}
-                  </span>
-                )}
-                {!isSelected && isDateToday && (
+                <span className="relative z-10 truncate">{rangeLabel}</span>
+                {isCurrentWeek && (
                   <span
                     aria-hidden="true"
-                    className="absolute bottom-1 left-1 size-1 rounded-full bg-primary"
+                    className={cn(
+                      "absolute bottom-1 left-1 size-1 rounded-full",
+                      isSelected ? "bg-primary-foreground" : "bg-primary",
+                    )}
                   />
                 )}
               </button>

@@ -26,6 +26,7 @@ export default {
     required: "This field is required",
     invalidEmail: "Please enter a valid email address",
     chooseDate: "Choose date",
+    chooseWeek: "Choose week",
   },
   loading: "Loading...",
   error: "An error occurred",

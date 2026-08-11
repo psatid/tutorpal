@@ -1,17 +1,11 @@
 import {
   CalendarCheck2,
-  CalendarDays,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   MapPin,
   Monitor,
 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
-import { Button } from "@/components/ui/button";
-import { DateField } from "@/components/ui/form/date-field";
 import { DateTime } from "@/lib/date-time";
 import { formatTime24Hour, statusColors } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
@@ -78,15 +72,6 @@ interface WeeklyScheduleTimelineProps {
   onViewSchedule: (schedule: GetV1Schedules200Item) => void;
 }
 
-export interface WeeklyScheduleToolbarProps {
-  selectedDate: Date;
-  onDateSelect: (date: Date) => void;
-  onNextWeek: () => void;
-  onPreviousWeek: () => void;
-  onToday: () => void;
-  className?: string;
-}
-
 interface TimelineBounds {
   startMinutes: number;
   endMinutes: number;
@@ -124,21 +109,6 @@ function getTimelineBounds(
 
 function getDateKey(date: Date): string {
   return DateTime.from(date).toDateOnlyString();
-}
-
-function getWeekRangeLabel(startDate: Date, endDate: Date): string {
-  const start = DateTime.from(startDate);
-  const end = DateTime.from(endDate);
-
-  if (start.format("yyyy") === end.format("yyyy")) {
-    if (start.format("MM") === end.format("MM")) {
-      return `${start.format("MMM d")}–${end.format("d, yyyy")}`;
-    }
-
-    return `${start.format("MMM d")} – ${end.format("MMM d, yyyy")}`;
-  }
-
-  return `${start.format("MMM d, yyyy")} – ${end.format("MMM d, yyyy")}`;
 }
 
 function getScheduleEnd(schedule: GetV1Schedules200Item): number {
@@ -261,87 +231,6 @@ function ScheduleBlock({
         {startTime}–{endTime}
       </span>
     </button>
-  );
-}
-
-export function WeeklyScheduleToolbar({
-  selectedDate,
-  onDateSelect,
-  onNextWeek,
-  onPreviousWeek,
-  onToday,
-  className,
-}: WeeklyScheduleToolbarProps) {
-  const { t } = useTranslation(["schedules"]);
-  const weekDates = useMemo(
-    () => DateTime.getWeekDates(selectedDate).map((date) => date.toDate()),
-    [selectedDate],
-  );
-  const weekStart = weekDates[0] ?? selectedDate;
-  const weekEnd = weekDates.at(-1) ?? selectedDate;
-
-  return (
-    <header
-      className={cn(
-        "flex shrink-0 flex-wrap items-center justify-between gap-3 px-3 pb-4 pt-3 sm:px-4 lg:px-6",
-        className,
-      )}
-    >
-      <div className="flex min-w-0 items-center gap-1">
-        <Button
-          aria-label={t("schedules:timeline.previousWeek")}
-          onClick={onPreviousWeek}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <ChevronLeft aria-hidden="true" />
-        </Button>
-        <DateField
-          ariaLabel={t("schedules:timeline.openCalendar", {
-            week: getWeekRangeLabel(weekStart, weekEnd),
-          })}
-          onChange={(value) => {
-            const date = DateTime.tryFromDateOnlyString(value)?.toDate();
-            if (date) onDateSelect(date);
-          }}
-          value={getDateKey(selectedDate)}
-          trigger={
-            <button
-              className="group flex min-h-11 min-w-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-left font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card sm:px-3"
-              type="button"
-            >
-              <span className="truncate">
-                {getWeekRangeLabel(weekStart, weekEnd)}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className="size-4 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-              />
-            </button>
-          }
-        />
-        <Button
-          aria-label={t("schedules:timeline.nextWeek")}
-          onClick={onNextWeek}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <ChevronRight aria-hidden="true" />
-        </Button>
-      </div>
-
-      <Button
-        leftIcon={CalendarDays}
-        onClick={onToday}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        {t("schedules:weekSelector.today")}
-      </Button>
-    </header>
   );
 }
 
