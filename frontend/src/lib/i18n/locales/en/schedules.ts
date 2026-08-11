@@ -12,6 +12,10 @@ export default {
 	duration: "{{minutes}} min",
 	noSchedules: "No schedules yet",
 	noSchedulesDescription: "Create your first schedule to get started.",
+	weekNoSchedules: "No schedules this week",
+	weekNoSchedulesDescription:
+		"Create a schedule to see your week take shape here.",
+	weekNoResults: "No matching schedules this week",
 	noResults: "No schedules found",
 	status: {
 		SCHEDULED: "Scheduled",
@@ -175,5 +179,18 @@ export default {
 		dateRailLabel: "Schedule date selector",
 		dateRailInstruction:
 			"Scroll horizontally to browse dates. Use the Left and Right Arrow keys to select a day. Use Page Up and Page Down to move by a week.",
+	},
+	viewMode: {
+		label: "Schedule view",
+		day: "Day",
+		week: "Week",
+	},
+	timeline: {
+		label: "Weekly schedule timeline",
+		previousWeek: "Previous week",
+		nextWeek: "Next week",
+		openCalendar: "Choose a date in {{week}}",
+		eventLabel:
+			"{{className}} on {{date}}, {{startTime}} to {{endTime}}, {{status}}, {{type}}",
 	},
 } as const;

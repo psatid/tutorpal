@@ -111,4 +111,38 @@ describe("schedule request contracts", () => {
 			}).success,
 		).toBe(false);
 	});
+
+	test("accepts an inclusive date range up to 31 calendar days", () => {
+		expect(
+			ScheduleListQuerySchema.safeParse({
+				startDate: "2026-07-01",
+				endDate: "2026-07-31",
+			}).success,
+		).toBe(true);
+	});
+
+	test("rejects incomplete, mixed, reversed, and oversized date ranges", () => {
+		expect(
+			ScheduleListQuerySchema.safeParse({ startDate: "2026-07-01" }).success,
+		).toBe(false);
+		expect(
+			ScheduleListQuerySchema.safeParse({
+				date: "2026-07-01",
+				startDate: "2026-07-01",
+				endDate: "2026-07-07",
+			}).success,
+		).toBe(false);
+		expect(
+			ScheduleListQuerySchema.safeParse({
+				startDate: "2026-07-08",
+				endDate: "2026-07-01",
+			}).success,
+		).toBe(false);
+		expect(
+			ScheduleListQuerySchema.safeParse({
+				startDate: "2026-07-01",
+				endDate: "2026-08-01",
+			}).success,
+		).toBe(false);
+	});
 });

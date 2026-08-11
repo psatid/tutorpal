@@ -132,4 +132,63 @@ describe("ScheduleRepository recurring schedule types", () => {
 			prismaClient.$transaction = originalTransaction;
 		}
 	});
+
+	test("uses inclusive date bounds when listing a date range", async () => {
+		const schedule = {
+			id: "schedule-1",
+			classId: "class-1",
+			date: new Date("2026-08-16T00:00:00.000Z"),
+			time: 600,
+			durationMinutes: 60,
+			notes: null,
+			status: "SCHEDULED" as const,
+			type: "ON_SITE" as const,
+			createdAt,
+			updatedAt,
+			class: classContext,
+		};
+		let listQuery: unknown;
+
+		const scheduleDelegate = prisma.schedule as unknown as {
+			findMany: (args: unknown) => Promise<unknown[]>;
+			groupBy: (...args: never[]) => Promise<unknown[]>;
+		};
+		const classDelegate = prisma.class as unknown as {
+			findMany: (...args: never[]) => Promise<unknown[]>;
+		};
+		const originalFindMany = scheduleDelegate.findMany;
+		const originalGroupBy = scheduleDelegate.groupBy;
+		const originalClassFindMany = classDelegate.findMany;
+
+		scheduleDelegate.findMany = async (args) => {
+			listQuery = args;
+			return [schedule];
+		};
+		scheduleDelegate.groupBy = async () => [
+			{ classId: "class-1", _sum: { durationMinutes: 60 } },
+		];
+		classDelegate.findMany = async () => [{ id: "class-1", totalHours: 10 }];
+
+		try {
+			const schedules = await new ScheduleRepository().findAll("tutor-1", {
+				startDate: "2026-08-10",
+				endDate: "2026-08-16",
+			});
+
+			expect(listQuery).toMatchObject({
+				where: {
+					date: {
+						gte: new Date("2026-08-10T00:00:00.000Z"),
+						lte: new Date("2026-08-16T00:00:00.000Z"),
+					},
+				},
+				orderBy: [{ date: "asc" }, { time: "asc" }],
+			});
+			expect(schedules).toHaveLength(1);
+		} finally {
+			scheduleDelegate.findMany = originalFindMany;
+			scheduleDelegate.groupBy = originalGroupBy;
+			classDelegate.findMany = originalClassFindMany;
+		}
+	});
 });

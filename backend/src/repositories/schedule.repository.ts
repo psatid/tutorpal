@@ -171,6 +171,11 @@ export class ScheduleRepository implements IScheduleRepository {
 
 		if (query?.date) {
 			where.date = DateTime.fromDateOnlyString(query.date).toDate();
+		} else if (query?.startDate && query.endDate) {
+			where.date = {
+				gte: DateTime.fromDateOnlyString(query.startDate).toDate(),
+				lte: DateTime.fromDateOnlyString(query.endDate).toDate(),
+			};
 		}
 
 		if (query?.classId) {

@@ -54,6 +54,8 @@ export interface UpdateScheduleDTO {
 
 export interface ScheduleListQueryDTO {
 	date?: string; // ISO date string (YYYY-MM-DD)
+	startDate?: string; // Inclusive range start (YYYY-MM-DD)
+	endDate?: string; // Inclusive range end (YYYY-MM-DD)
 	search?: string; // Search by class name
 	classId?: string; // Filter by class ID
 }

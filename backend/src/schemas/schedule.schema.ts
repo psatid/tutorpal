@@ -1,5 +1,6 @@
 import { resolver } from "hono-openapi";
 import { z } from "zod";
+import { DateTime } from "../lib/date-time";
 
 // Schedule status enum
 export const ScheduleStatusSchema = z.enum([
@@ -145,14 +146,75 @@ export const UpdateScheduleSchema = z.object({
 });
 
 // Query schema for listing schedules
-export const ScheduleListQuerySchema = z.object({
-	date: z
-		.string()
-		.regex(DATE_REGEX, "Date must be in YYYY-MM-DD format")
-		.optional(),
-	search: z.string().optional(),
-	classId: z.string().optional(),
-});
+export const ScheduleListQuerySchema = z
+	.object({
+		date: z
+			.string()
+			.regex(DATE_REGEX, "Date must be in YYYY-MM-DD format")
+			.optional(),
+		startDate: z
+			.string()
+			.regex(DATE_REGEX, "Start date must be in YYYY-MM-DD format")
+			.optional(),
+		endDate: z
+			.string()
+			.regex(DATE_REGEX, "End date must be in YYYY-MM-DD format")
+			.optional(),
+		search: z.string().optional(),
+		classId: z.string().optional(),
+	})
+	.superRefine((data, ctx) => {
+		const hasStartDate = data.startDate !== undefined;
+		const hasEndDate = data.endDate !== undefined;
+		const hasRange = hasStartDate || hasEndDate;
+
+		if (hasStartDate !== hasEndDate) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: [hasStartDate ? "endDate" : "startDate"],
+				message: "startDate and endDate must be provided together",
+			});
+		}
+
+		if (data.date && hasRange) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["date"],
+				message: "date cannot be combined with startDate or endDate",
+			});
+		}
+
+		if (!data.startDate || !data.endDate) return;
+
+		const startDate = DateTime.fromDateOnlyString(data.startDate);
+		const endDate = DateTime.fromDateOnlyString(data.endDate);
+		const comparison = startDate.compareAsc(endDate);
+
+		if (Number.isNaN(comparison)) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["startDate"],
+				message: "startDate and endDate must be valid calendar dates",
+			});
+			return;
+		}
+
+		if (comparison > 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["endDate"],
+				message: "endDate must be on or after startDate",
+			});
+		}
+
+		if (startDate.addDays(31).compareAsc(endDate) <= 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["endDate"],
+				message: "Schedule ranges cannot exceed 31 calendar days",
+			});
+		}
+	});
 
 export const UpdateRecurringScheduleSchema = z.object({
 	effectiveDate: z

@@ -22,14 +22,16 @@ const onlineSchedule = ScheduleModel.fromSchedulePrisma({
 });
 
 let listTutorId: string | undefined;
+let listQuery: unknown;
 let detailTutorId: string | undefined;
 let detailScheduleId: string | undefined;
 
 mock.module("../repositories", () => ({
 	classRepository: {},
 	scheduleRepository: {
-		findAll: async (tutorId: string) => {
+		findAll: async (tutorId: string, query?: unknown) => {
 			listTutorId = tutorId;
+			listQuery = query;
 			return [onlineSchedule];
 		},
 		findById: async (id: string, tutorId?: string) => {
@@ -79,6 +81,33 @@ describe("schedule routes", () => {
 			expect.objectContaining({ type: "ONLINE" }),
 		]);
 		expect(listTutorId).toBe("tutor-1");
+	});
+
+	test("passes an authenticated inclusive date range to the repository", async () => {
+		const response = await app.request(
+			"http://api.test/v1/schedules?startDate=2026-08-10&endDate=2026-08-16&search=Algebra",
+			{
+				headers: { Authorization: "Bearer test-session" },
+			},
+		);
+
+		expect(response.status).toBe(200);
+		expect(listQuery).toEqual({
+			startDate: "2026-08-10",
+			endDate: "2026-08-16",
+			search: "Algebra",
+		});
+	});
+
+	test("rejects a partial date range", async () => {
+		const response = await app.request(
+			"http://api.test/v1/schedules?startDate=2026-08-10",
+			{
+				headers: { Authorization: "Bearer test-session" },
+			},
+		);
+
+		expect(response.status).toBe(400);
 	});
 
 	test("serializes ONLINE type in an authenticated detail response", async () => {

@@ -1,61 +1,25 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { APP_ROUTES } from "@/constants/routes";
+import { useSession } from "@/hooks/use-session";
+import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
-import {
-  ChevronsUpDown,
-  HomeIcon,
-  CalendarCheck2Icon,
-  BookOpenIcon,
-  UsersIcon,
-  SchoolIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { triggerEdgeDrawer } from "tailwindcss-jun-layout";
+import { isNavigationItemActive } from "./navigation-items";
+import { SIDE_BAR_CONFIG } from "./sidebar-config";
 import {
   RailCollapse,
   TriggerLeftSidebarCollapse,
   TriggerMobileSidebar,
 } from "./triggers";
 import UserSetting from "./user-settings";
-import { useTranslation } from "react-i18next";
-import { useSession } from "@/hooks/use-session";
-import { isNavigationItemActive } from "./navigation-items";
-import { cn } from "@/lib/utils";
-import { triggerEdgeDrawer } from "tailwindcss-jun-layout";
-
-const navigationItems = [
-  { labelKey: "navigation:home", href: APP_ROUTES.HOME, icon: HomeIcon },
-  {
-    labelKey: "navigation:students",
-    href: APP_ROUTES.STUDENTS,
-    icon: UsersIcon,
-  },
-  {
-    labelKey: "navigation:courses",
-    href: APP_ROUTES.COURSES,
-    icon: BookOpenIcon,
-  },
-  {
-    labelKey: "navigation:classes",
-    href: APP_ROUTES.CLASSES,
-    icon: SchoolIcon,
-  },
-  {
-    labelKey: "navigation:schedules",
-    href: APP_ROUTES.SCHEDULES,
-    icon: CalendarCheck2Icon,
-  },
-  {
-    labelKey: "navigation:settings",
-    href: APP_ROUTES.SETTINGS,
-    icon: SettingsIcon,
-  },
-] as const;
 
 export const AppSidebar = () => {
   const { t } = useTranslation(["navigation", "settings"]);
   const { session } = useSession();
   const location = useLocation();
-  const currentNavigationItem = navigationItems.find((item) =>
+  const currentNavigationItem = SIDE_BAR_CONFIG.find((item) =>
     isNavigationItemActive(location.pathname, item.href),
   );
   const isSettingsRoute =
@@ -115,7 +79,7 @@ export const AppSidebar = () => {
           <div className="flex-1 min-h-0 overflow-auto">
             <nav className="jun-sidebarGroup" aria-label="Primary navigation">
               <ul className="jun-sidebarMenu">
-                {navigationItems.map((item) => {
+                {SIDE_BAR_CONFIG.map((item) => {
                   const active = isNavigationItemActive(
                     location.pathname,
                     item.href,

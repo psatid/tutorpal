@@ -70,6 +70,28 @@ const scheduleRoutes = new Hono<AppEnv>()
 					description: "Filter by date (YYYY-MM-DD format)",
 				},
 				{
+					name: "startDate",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+					},
+					description:
+						"Inclusive range start (YYYY-MM-DD format); provide with endDate",
+				},
+				{
+					name: "endDate",
+					in: "query",
+					required: false,
+					schema: {
+						type: "string",
+						pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+					},
+					description:
+						"Inclusive range end (YYYY-MM-DD format); provide with startDate",
+				},
+				{
 					name: "search",
 					in: "query",
 					required: false,

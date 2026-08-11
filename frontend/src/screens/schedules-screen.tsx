@@ -1,20 +1,22 @@
+import { CalendarDays, Plus, Search } from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  type Transition,
+} from "framer-motion";
 import { useMemo, useRef, useState } from "react";
-import { Plus, Search, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { DateTime } from "@/lib/date-time";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
-import { useSchedules } from "@/hooks/queries/use-schedules";
-import { useDebounce } from "@/hooks/use-debounce";
+import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import {
   useDeleteSchedule,
   useCompleteSchedule,
   useRestoreHours,
   useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
+import { useSchedules } from "@/hooks/queries/use-schedules";
+import { useDebounce } from "@/hooks/use-debounce";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
 import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import {
@@ -22,10 +24,21 @@ import {
   type DrawerMode,
 } from "@/components/schedules/schedule-drawer";
 import { WeekDateSelector } from "@/components/schedules/week-date-selector";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
+import {
+  ScheduleViewSwitch,
+  type ScheduleViewMode,
+  WeeklyScheduleToolbar,
+  WeeklyScheduleTimeline,
+} from "@/components/schedules/weekly-schedule-timeline";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
+import { DateTime } from "@/lib/date-time";
+import { cn } from "@/lib/utils";
 
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
+  const prefersReducedMotion = useReducedMotion();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
   const activeTriggerRef = useRef<HTMLButtonElement>(null);
@@ -41,17 +54,35 @@ export function SchedulesScreen() {
     null,
   );
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
 
   const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
+  const weekDates = useMemo(
+    () => DateTime.getWeekDates(selectedDate),
+    [selectedDate],
+  );
+  const weekStart = weekDates[0] ?? DateTime.from(selectedDate);
+  const weekEnd = weekDates.at(-1) ?? weekStart;
+  const scheduleQuery = useMemo(
+    () =>
+      viewMode === "week"
+        ? {
+            startDate: weekStart.toDateOnlyString(),
+            endDate: weekEnd.toDateOnlyString(),
+            search: debouncedSearchQuery || undefined,
+          }
+        : {
+            date: formattedDate,
+            search: debouncedSearchQuery || undefined,
+          },
+    [debouncedSearchQuery, formattedDate, viewMode, weekEnd, weekStart],
+  );
   const {
     data: schedules,
     isLoading,
     isError,
     refetch,
-  } = useSchedules({
-    date: formattedDate,
-    search: debouncedSearchQuery || undefined,
-  });
+  } = useSchedules(scheduleQuery);
 
   const deleteMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
@@ -152,6 +183,18 @@ export function SchedulesScreen() {
     setDrawerMode(mode);
   };
 
+  const handlePreviousWeek = () => {
+    setSelectedDate(DateTime.from(selectedDate).subWeeks(1).toDate());
+  };
+
+  const handleNextWeek = () => {
+    setSelectedDate(DateTime.from(selectedDate).addWeeks(1).toDate());
+  };
+
+  const handleToday = () => {
+    setSelectedDate(DateTime.today().toDate());
+  };
+
   const handleDrawerOpenChange = (open: boolean) => {
     setIsDrawerOpen(open);
     if (!open) {
@@ -160,16 +203,90 @@ export function SchedulesScreen() {
     }
   };
 
+  const hasActiveFilters =
+    statusFilter !== "ALL" || Boolean(searchQuery.trim());
+
+  const motionTransition: Transition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.2, ease: "easeOut" };
+  const shouldAnimateLayout = !prefersReducedMotion;
+
   return (
-    <div className="flex flex-col min-h-[calc(100vh-200px)]">
-      {/* Week Date Selector */}
-      <WeekDateSelector
-        selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
-      />
+    <motion.div
+      className={cn(
+        "flex flex-col",
+        viewMode === "week"
+          ? "h-[calc(100dvh-3rem)] min-h-0 overflow-hidden"
+          : "min-h-[calc(100vh-200px)]",
+      )}
+      layout={shouldAnimateLayout}
+      transition={motionTransition}
+    >
+      <motion.div
+        className="flex shrink-0 justify-end px-3 pt-3 sm:px-4 lg:px-6"
+        layout={shouldAnimateLayout}
+        transition={motionTransition}
+      >
+        <ScheduleViewSwitch value={viewMode} onChange={setViewMode} />
+      </motion.div>
+
+      <motion.div
+        className="shrink-0"
+        layout={shouldAnimateLayout}
+        transition={motionTransition}
+      >
+        <AnimatePresence initial={false} mode="sync">
+          {viewMode === "day" ? (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              exit={{
+                opacity: prefersReducedMotion ? 1 : 0,
+                y: prefersReducedMotion ? 0 : -4,
+              }}
+              initial={
+                prefersReducedMotion ? false : { opacity: 0, y: 4 }
+              }
+              key="day-controls"
+              layout={shouldAnimateLayout}
+              transition={motionTransition}
+            >
+              <WeekDateSelector
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              exit={{
+                opacity: prefersReducedMotion ? 1 : 0,
+                y: prefersReducedMotion ? 0 : -4,
+              }}
+              initial={
+                prefersReducedMotion ? false : { opacity: 0, y: 4 }
+              }
+              key="week-controls"
+              layout={shouldAnimateLayout}
+              transition={motionTransition}
+            >
+              <WeeklyScheduleToolbar
+                onDateSelect={setSelectedDate}
+                onNextWeek={handleNextWeek}
+                onPreviousWeek={handlePreviousWeek}
+                onToday={handleToday}
+                selectedDate={selectedDate}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Search */}
-      <div className="mb-4 px-3 sm:px-4 lg:px-6">
+      <motion.div
+        className="mb-4 shrink-0 px-3 sm:px-4 lg:px-6"
+        layout={shouldAnimateLayout}
+        transition={motionTransition}
+      >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <Input
@@ -188,11 +305,15 @@ export function SchedulesScreen() {
             {t("schedules:addSchedule")}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Status Filter */}
       {schedules && schedules.length > 0 && (
-        <div className="mb-4 px-3 sm:px-4 lg:px-6">
+        <motion.div
+          className="mb-4 shrink-0 px-3 sm:px-4 lg:px-6"
+          layout={shouldAnimateLayout}
+          transition={motionTransition}
+        >
           <div className="flex gap-2 overflow-x-auto">
             {(
               ["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const
@@ -219,11 +340,20 @@ export function SchedulesScreen() {
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Content */}
-      <div className="px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
+      <motion.div
+        className={cn(
+          "px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6",
+          viewMode === "week"
+            ? "flex min-h-0 flex-1 flex-col"
+            : "",
+        )}
+        layout={shouldAnimateLayout}
+        transition={motionTransition}
+      >
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 space-y-4">
             <div className="animate-pulse w-16 h-16 rounded-full bg-muted" />
@@ -245,23 +375,45 @@ export function SchedulesScreen() {
               <CalendarDays className="size-10 text-primary" />
             </div>
             <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
-              {t("schedules:noSchedules")}
+              {hasActiveFilters
+                ? viewMode === "week"
+                  ? t("schedules:weekNoResults")
+                  : t("schedules:noResults")
+                : viewMode === "week"
+                  ? t("schedules:weekNoSchedules")
+                  : t("schedules:noSchedules")}
             </h2>
-            <p className="font-body text-muted-foreground max-w-xs mb-6">
-              {t("schedules:noSchedulesDescription")}
-            </p>
-            <Button
-              onClick={() => handleAddSchedule(emptyActionRef.current)}
-              ref={emptyActionRef}
-              leftIcon={Plus}
-            >
-              {t("schedules:addSchedule")}
-            </Button>
+            {!hasActiveFilters ? (
+              <>
+                <p className="font-body text-muted-foreground max-w-xs mb-6">
+                  {viewMode === "week"
+                    ? t("schedules:weekNoSchedulesDescription")
+                    : t("schedules:noSchedulesDescription")}
+                </p>
+                <Button
+                  onClick={() => handleAddSchedule(emptyActionRef.current)}
+                  ref={emptyActionRef}
+                  leftIcon={Plus}
+                >
+                  {t("schedules:addSchedule")}
+                </Button>
+              </>
+            ) : null}
           </div>
         ) : filteredSchedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">{t("schedules:noResults")}</p>
+            <p className="text-muted-foreground">
+              {viewMode === "week"
+                ? t("schedules:weekNoResults")
+                : t("schedules:noResults")}
+            </p>
           </div>
+        ) : viewMode === "week" ? (
+          <WeeklyScheduleTimeline
+            onViewSchedule={handleViewSchedule}
+            schedules={filteredSchedules}
+            selectedDate={selectedDate}
+          />
         ) : (
           <div className="space-y-2">
             {filteredSchedules.map((schedule) => (
@@ -277,7 +429,7 @@ export function SchedulesScreen() {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
       <WorkspaceFab
         label={t("schedules:addSchedule")}
@@ -295,6 +447,6 @@ export function SchedulesScreen() {
         onCloseAutoFocus={focusTrigger}
         selectedDate={selectedDate}
       />
-    </div>
+    </motion.div>
   );
 }
