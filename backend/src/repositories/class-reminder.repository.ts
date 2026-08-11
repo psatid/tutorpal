@@ -1,6 +1,5 @@
 import { DateTime } from "../lib/date-time";
 import { prisma } from "../lib/db";
-import { getClassDisplayName } from "../models/class-display-name";
 
 export type ClaimedReminder = {
 	id: string;
@@ -33,7 +32,6 @@ export class ClassReminderRepository {
 				class: {
 					include: {
 						tutor: { include: { lineConnection: true } },
-						course: true,
 						students: { include: { student: true } },
 					},
 				},
@@ -55,12 +53,7 @@ export class ClassReminderRepository {
 				const end = new Date(
 					startsAt.getTime() + schedule.durationMinutes * 60_000,
 				);
-				const classDisplayName = getClassDisplayName(
-					schedule.class.name,
-					schedule.class.students.map((item) => item.student),
-					schedule.class.course?.name,
-				);
-				const message = `Class reminder\n\nHi ${student.name}, your ${classDisplayName} class starts in 1 hour.\n\nDate: ${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", dateStyle: "medium" }).format(startsAt)}\nTime: ${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(startsAt)}–${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(end)}\nTime zone: Asia/Bangkok`;
+				const message = `Class reminder\n\nHi ${student.name}, your ${schedule.class.name} class starts in 1 hour.\n\nDate: ${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", dateStyle: "medium" }).format(startsAt)}\nTime: ${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(startsAt)}–${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(end)}\nTime zone: Asia/Bangkok`;
 				await prisma.classReminderDelivery.upsert({
 					where: {
 						scheduleId_studentId_scheduledStartAt: {

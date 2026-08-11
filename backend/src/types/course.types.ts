@@ -6,7 +6,6 @@ export interface CourseDTO {
 	tutorId: string;
 	name: string;
 	defaultTotalHours: number;
-	classCount: number;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -22,7 +21,7 @@ export interface UpdateCourseDTO {
 	defaultTotalHours?: number;
 }
 
-export type CourseDeleteOutcome = "deleted" | "not_found" | "in_use";
+export type CourseDeleteOutcome = "deleted" | "not_found";
 
 export interface ICourseRepository {
 	create(data: CreateCourseDTO): Promise<CourseModel>;

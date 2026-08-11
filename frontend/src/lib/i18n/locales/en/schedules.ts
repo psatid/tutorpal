@@ -54,6 +54,9 @@ export default {
 		sectionTitle: "Recurring schedule",
 		emptyDescription:
 			"Set the weekly pattern for this class so future sessions stay in sync.",
+		noAvailabilityDescription:
+			"Add hours before creating a recurring schedule.",
+		addHoursAction: "Add hours",
 		createAction: "Create recurring schedule",
 		editAction: "Edit recurring schedule",
 		saveAction: "Save changes",
@@ -171,6 +174,16 @@ export default {
 		noResults: "No classes found",
 		selectButton: "Select",
 		remainingHours: "{{hours}}h left",
+	},
+	classNoAvailability: {
+		description:
+			"This class has no hours available. Add hours before scheduling a session.",
+		addHours: "Add hours",
+	},
+	classAvailability: {
+		loading: "Checking this class’s available hours…",
+		loadError:
+			"This class’s available hours couldn’t load. Try again before scheduling.",
 	},
 	weekSelector: {
 		today: "Today",

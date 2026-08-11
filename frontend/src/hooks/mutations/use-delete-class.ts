@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
-import { coursesQueryKeys } from "@/constants/query-keys/courses-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import { schedulesKeys } from "@/hooks/queries/query-keys";
 import { apiClient } from "@/lib/api-client";
@@ -35,7 +34,6 @@ export function useDeleteClass(options?: {
 		await Promise.all([
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.lists() }),
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.infinites() }),
-			queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all }),
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.all }),
 		]);

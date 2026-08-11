@@ -3,10 +3,14 @@ import { describeRoute, validator } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { classRepository } from "../repositories";
 import {
+	ClassHourAdditionListQuerySchema,
+	ClassHourAdditionResultSchemaResolver,
 	ClassListQuerySchema,
 	ClassSchemaResolver,
+	CreateClassHourAdditionSchema,
 	CreateClassSchema,
 	ErrorResponseSchemaResolver,
+	PaginatedClassHourAdditionListSchemaResolver,
 	PaginatedClassListSchemaResolver,
 	UpdateClassSchema,
 } from "../schemas";
@@ -134,6 +138,113 @@ const classRoutes = new Hono<AppEnv>()
 			return c.json({
 				...classes,
 				data: classes.data.map((classData) => classData.toClassDTO()),
+			});
+		},
+	)
+
+	// Add hours to a standalone class
+	.post(
+		"/:id/hour-additions",
+		describeRoute({
+			tags: ["classes"],
+			description:
+				"Add course-preset or custom hours to a class. Request IDs are idempotent per class.",
+			responses: {
+				200: {
+					description: "Hours added or an existing matching request returned",
+					content: {
+						"application/json": {
+							schema: ClassHourAdditionResultSchemaResolver,
+						},
+					},
+				},
+				400: {
+					description:
+						"Validation error, unavailable course, or hour limit exceeded",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
+				401: { description: "Unauthorized - Authentication required" },
+				404: {
+					description: "Class not found",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
+				409: {
+					description: "Request ID conflicts with a different hour addition",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
+			},
+		}),
+		validator("json", CreateClassHourAdditionSchema),
+		async (c) => {
+			const result = await classService.addHourAddition(
+				c.req.param("id"),
+				c.get("tutorId"),
+				c.req.valid("json"),
+			);
+			return c.json({
+				addition: result.addition.toClassHourAdditionDTO(),
+				totalHours: result.totalHours,
+				remainingHours: result.remainingHours,
+			});
+		},
+	)
+
+	// List immutable hour additions, newest first
+	.get(
+		"/:id/hour-additions",
+		describeRoute({
+			tags: ["classes"],
+			description: "Get immutable hour additions for a class, newest first",
+			parameters: [
+				{
+					name: "page",
+					in: "query",
+					required: false,
+					schema: { type: "integer", default: 1, minimum: 1 },
+				},
+				{
+					name: "limit",
+					in: "query",
+					required: false,
+					schema: { type: "integer", default: 20, minimum: 1, maximum: 100 },
+				},
+			],
+			responses: {
+				200: {
+					description: "Paginated class hour additions",
+					content: {
+						"application/json": {
+							schema: PaginatedClassHourAdditionListSchemaResolver,
+						},
+					},
+				},
+				401: { description: "Unauthorized - Authentication required" },
+				404: {
+					description: "Class not found",
+					content: {
+						"application/json": { schema: ErrorResponseSchemaResolver },
+					},
+				},
+			},
+		}),
+		validator("query", ClassHourAdditionListQuerySchema),
+		async (c) => {
+			const additions = await classService.getHourAdditions(
+				c.req.param("id"),
+				c.get("tutorId"),
+				c.req.valid("query"),
+			);
+			return c.json({
+				...additions,
+				data: additions.data.map((addition) =>
+					addition.toClassHourAdditionDTO(),
+				),
 			});
 		},
 	)

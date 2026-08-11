@@ -36,9 +36,6 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 					<p className="font-medium text-on-surface truncate">
 						{data.displayName}
 					</p>
-					<Badge variant="outline" className="shrink-0">
-						{data.courseName ?? "Custom class"}
-					</Badge>
 					<Badge variant="outline" className="shrink-0 gap-1">
 						<Clock className="w-3 h-3" />
 						{data.remainingHours !== undefined

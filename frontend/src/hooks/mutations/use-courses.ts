@@ -6,7 +6,7 @@ import type { PutV1CoursesByIdBody } from "@/api/generated/models/putV1CoursesBy
 import { apiClient } from "@/lib/api-client";
 import { coursesQueryKeys } from "@/constants/query-keys/courses-query-keys";
 
-export type CourseDeleteErrorKind = "in-use" | "not-found" | "unknown";
+export type CourseDeleteErrorKind = "not-found" | "unknown";
 
 export class CourseDeleteError extends Error {
 	constructor(readonly kind: CourseDeleteErrorKind) {
@@ -19,9 +19,6 @@ function classifyCourseDeleteError(error: unknown): CourseDeleteError {
 	if (!isAxiosError(error)) return new CourseDeleteError("unknown");
 
 	const payload = error.response?.data as { errorCode?: string } | undefined;
-	if (payload?.errorCode === "COURSE_IN_USE") {
-		return new CourseDeleteError("in-use");
-	}
 	if (
 		payload?.errorCode === "COURSE_NOT_FOUND" ||
 		error.response?.status === 404
@@ -76,7 +73,7 @@ export function useDeleteCourse(options?: {
 			options?.onSuccess?.(id);
 		},
 		onError: async (error, id) => {
-			if (error.kind === "in-use" || error.kind === "not-found") {
+			if (error.kind === "not-found") {
 				await queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			}
 			await options?.onError?.(error, id);

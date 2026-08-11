@@ -6,7 +6,6 @@ type CourseDetails = {
 	id: string;
 	name: string;
 	defaultTotalHours: number;
-	classCount: number;
 	createdAt: string;
 	updatedAt: string;
 };
@@ -34,19 +33,10 @@ export class Course {
 		return this.data.defaultTotalHours;
 	}
 
-	getClassCount() {
-		return this.data.classCount;
-	}
-
-	hasClasses() {
-		return this.data.classCount > 0;
-	}
-
 	getListItemData() {
 		return {
 			id: this.getId(),
 			name: this.getName(),
-			classCount: this.getClassCount(),
 			formattedDefaultTotalHours: DateTime.formatDurationHours(
 				this.getDefaultTotalHours(),
 			),
@@ -69,7 +59,6 @@ function toCourseDetails(
 		id: response.id,
 		name: response.name,
 		defaultTotalHours: response.defaultTotalHours,
-		classCount: response.classCount,
 		createdAt: response.createdAt,
 		updatedAt: response.updatedAt,
 	};

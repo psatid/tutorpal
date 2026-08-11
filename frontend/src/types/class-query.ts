@@ -2,7 +2,6 @@ import type { Class } from "@/models/class";
 
 export type ClassSortBy = "name" | "totalHours" | "createdAt";
 export type ClassSortOrder = "asc" | "desc";
-export type ClassType = "custom" | "course-linked";
 
 export type ClassListFilters = {
 	page?: number;
@@ -10,8 +9,6 @@ export type ClassListFilters = {
 	search?: string;
 	sortBy?: ClassSortBy;
 	sortOrder?: ClassSortOrder;
-	courseId?: string;
-	classType?: ClassType;
 };
 
 export type InfiniteClassListFilters = Omit<ClassListFilters, "page">;

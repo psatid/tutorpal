@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,8 @@ import {
   useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { ClassInfoHeader } from "@/components/classes/class-info-header";
+import { ClassHourAdditionsDrawer } from "@/components/classes/class-hour-additions-drawer";
+import { ClassHourAdditionsSection } from "@/components/classes/class-hour-additions-section";
 import { RecurringScheduleDrawer } from "@/components/classes/recurring-schedule-drawer";
 import { RecurringScheduleSection } from "@/components/classes/recurring-schedule-section";
 import { ScheduleLog } from "@/components/classes/schedule-log";
@@ -27,9 +29,13 @@ import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedule
 
 interface ClassDetailScreenProps {
   classId: string;
+  openHourAdditionsOnMount?: boolean;
 }
 
-export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
+export function ClassDetailScreen({
+  classId,
+  openHourAdditionsOnMount = false,
+}: ClassDetailScreenProps) {
   const { t } = useTranslation(["classes", "schedules"]);
   const navigate = useNavigate();
 
@@ -45,6 +51,9 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
   const [classDrawerMode, setClassDrawerMode] = useState<DrawerMode>("edit");
   const classEditOriginRef = useRef<HTMLButtonElement | null>(null);
+  const classHoursOriginRef = useRef<HTMLButtonElement | null>(null);
+  const addHoursIntentHandledRef = useRef(false);
+  const [isClassHoursDrawerOpen, setIsClassHoursDrawerOpen] = useState(false);
 
   const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
   const [scheduleDrawerMode, setScheduleDrawerMode] =
@@ -70,6 +79,44 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
     classEditOriginRef.current?.focus();
   }, []);
 
+  const handleAddHours = useCallback(() => {
+    const activeElement = document.activeElement;
+    classHoursOriginRef.current =
+      activeElement instanceof HTMLButtonElement ? activeElement : null;
+    setIsClassHoursDrawerOpen(true);
+  }, []);
+
+  const focusClassHoursOrigin = useCallback(() => {
+    classHoursOriginRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (
+      !openHourAdditionsOnMount ||
+      isLoadingClass ||
+      addHoursIntentHandledRef.current
+    ) {
+      return;
+    }
+
+    addHoursIntentHandledRef.current = true;
+    if (classData) {
+      setIsClassHoursDrawerOpen(true);
+    }
+    void navigate({
+      to: "/classes/$classId",
+      params: { classId },
+      search: {},
+      replace: true,
+    });
+  }, [classData, classId, isLoadingClass, navigate, openHourAdditionsOnMount]);
+
+  useEffect(() => {
+    if (!openHourAdditionsOnMount) {
+      addHoursIntentHandledRef.current = false;
+    }
+  }, [openHourAdditionsOnMount]);
+
   const handleViewSchedule = useCallback((schedule: GetV1Schedules200Item) => {
     setSelectedScheduleId(schedule.id);
     setScheduleDrawerMode("view");
@@ -85,6 +132,11 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
   const handleOpenRecurringDrawer = useCallback(() => {
     setIsRecurringDrawerOpen(true);
   }, []);
+
+  const handleAddHoursFromRecurring = useCallback(() => {
+    setIsRecurringDrawerOpen(false);
+    handleAddHours();
+  }, [handleAddHours]);
 
   const handleDeleteSchedule = useCallback(
     (schedule: GetV1Schedules200Item) => {
@@ -243,11 +295,16 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
     <div className="flex flex-col h-full py-4 space-y-4">
       <ClassInfoHeader
         classData={classData}
+        onAddHours={handleAddHours}
         onBack={handleBack}
         onEdit={handleEditClass}
       />
 
+      <ClassHourAdditionsSection classId={classId} />
+
       <RecurringScheduleSection
+        hasNoAvailableHours={classData.hasNoAvailableHours()}
+        onAddHours={handleAddHours}
         recurringSchedule={classData.getRecurringSchedule()}
         onEdit={handleOpenRecurringDrawer}
         onCreate={handleOpenRecurringDrawer}
@@ -273,6 +330,13 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
         onModeChange={setClassDrawerMode}
       />
 
+      <ClassHourAdditionsDrawer
+        classData={classData}
+        onCloseAutoFocus={focusClassHoursOrigin}
+        onOpenChange={setIsClassHoursDrawerOpen}
+        open={isClassHoursDrawerOpen}
+      />
+
       <ScheduleDrawer
         isOpen={isScheduleDrawerOpen}
         onOpenChange={handleScheduleDrawerOpenChange}
@@ -282,7 +346,9 @@ export function ClassDetailScreen({ classId }: ClassDetailScreenProps) {
       />
 
       <RecurringScheduleDrawer
+        hasNoAvailableHours={classData.hasNoAvailableHours()}
         isOpen={isRecurringDrawerOpen}
+        onAddHours={handleAddHoursFromRecurring}
         onOpenChange={setIsRecurringDrawerOpen}
         classId={classId}
         recurringSchedule={classData.getRecurringSchedule()}

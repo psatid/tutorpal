@@ -1,11 +1,6 @@
 import { DateTime } from "../lib/date-time";
-import type {
-	ClassDTO,
-	CourseInClassDTO,
-	StudentInClassDTO,
-} from "../types/class.types";
+import type { ClassDTO, StudentInClassDTO } from "../types/class.types";
 import type { RecurringScheduleDTO } from "../types/schedule.types";
-import { getClassDisplayName } from "./class-display-name";
 
 type DecimalLike = { toNumber(): number };
 type HoursValue = DecimalLike | number;
@@ -13,11 +8,10 @@ type HoursValue = DecimalLike | number;
 type ClassPrismaRecord = {
 	id: string;
 	tutorId: string;
-	name: string | null;
+	name: string;
 	totalHours: HoursValue;
 	createdAt: Date;
 	updatedAt: Date;
-	course: { id: string; name: string; defaultTotalHours: HoursValue } | null;
 	students: Array<{ student: StudentInClassDTO }>;
 	recurringSchedules?: Array<{
 		id: string;
@@ -39,40 +33,33 @@ type ClassPrismaRecord = {
 type ClassModelProps = {
 	id: string;
 	tutorId: string;
-	course: CourseInClassDTO | null;
-	name: string | null;
+	name: string;
 	totalHours: number;
 	students: StudentInClassDTO[];
 	createdAt: Date;
 	updatedAt: Date;
-	remainingHours?: number;
+	remainingHours: number;
 	recurringSchedule?: RecurringScheduleDTO | null;
 };
 
 export class ClassModel {
 	readonly id: string;
 	readonly tutorId: string;
-	readonly course: CourseInClassDTO | null;
-	readonly name: string | null;
+	readonly name: string;
 	readonly displayName: string;
 	readonly totalHours: number;
 	readonly students: StudentInClassDTO[];
 	readonly createdAt: Date;
 	readonly updatedAt: Date;
-	readonly remainingHours?: number;
+	readonly remainingHours: number;
 	readonly recurringSchedule?: RecurringScheduleDTO | null;
 
 	constructor(props: ClassModelProps) {
 		this.id = props.id;
 		this.tutorId = props.tutorId;
-		this.course = props.course;
 		this.name = props.name;
 		this.students = props.students;
-		this.displayName = getClassDisplayName(
-			props.name,
-			props.students,
-			props.course?.name,
-		);
+		this.displayName = props.name;
 		this.totalHours = props.totalHours;
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
@@ -82,20 +69,12 @@ export class ClassModel {
 
 	static fromClassPrisma(
 		classData: ClassPrismaRecord,
-		remainingHours?: number,
+		remainingHours = toHoursNumber(classData.totalHours),
 	): ClassModel {
 		const students = classData.students.map((enrollment) => enrollment.student);
-		const course = classData.course
-			? {
-					id: classData.course.id,
-					name: classData.course.name,
-					defaultTotalHours: toHoursNumber(classData.course.defaultTotalHours),
-				}
-			: null;
 		return new ClassModel({
 			id: classData.id,
 			tutorId: classData.tutorId,
-			course,
 			name: classData.name,
 			totalHours: toHoursNumber(classData.totalHours),
 			students,
@@ -104,7 +83,7 @@ export class ClassModel {
 			remainingHours,
 			recurringSchedule: toLatestRecurringScheduleDTO(
 				classData,
-				getClassDisplayName(classData.name, students, course?.name),
+				classData.name,
 			),
 		});
 	}
@@ -113,7 +92,6 @@ export class ClassModel {
 		return {
 			id: this.id,
 			tutorId: this.tutorId,
-			course: this.course,
 			name: this.name,
 			displayName: this.displayName,
 			totalHours: this.totalHours,
@@ -141,7 +119,6 @@ function toLatestRecurringScheduleDTO(
 		id: recurring.id,
 		classId: recurring.classId,
 		className: displayName,
-		courseName: classData.course?.name ?? null,
 		startDate: DateTime.from(recurring.startDate).toDateOnlyString(),
 		notes: recurring.notes,
 		type: recurring.type,

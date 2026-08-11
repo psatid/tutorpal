@@ -55,7 +55,6 @@ export const RecurringScheduleSchema = z.object({
 	id: z.string(),
 	classId: z.string(),
 	className: z.string(),
-	courseName: z.string().nullable(),
 	startDate: z.string(),
 	notes: z.string().nullable(),
 	type: ScheduleTypeSchema,
@@ -69,7 +68,6 @@ export const ScheduleSchema = z.object({
 	id: z.string(),
 	classId: z.string(),
 	className: z.string(),
-	courseName: z.string().nullable(),
 	recurringScheduleId: z.string().nullable().optional(),
 	date: z.string(), // ISO date string (YYYY-MM-DD)
 	time: z.number().int().min(0).max(1439), // Minutes since midnight (0-1439)

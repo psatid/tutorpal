@@ -18,20 +18,7 @@ function repositoryForDelete(outcome: CourseDeleteOutcome) {
 }
 
 describe("CourseService", () => {
-	test("reports a conflict when the course still has classes", async () => {
-		const { repository, getDeleteCalls } = repositoryForDelete("in_use");
-		const service = new CourseService(repository);
-
-		await expect(
-			service.deleteCourse("course-1", "tutor-1"),
-		).rejects.toMatchObject({
-			errorCode: "COURSE_IN_USE",
-			status: 409,
-		});
-		expect(getDeleteCalls()).toBe(1);
-	});
-
-	test("deletes an unused tutor-owned course", async () => {
+	test("deletes a tutor-owned course even after it has been used as an hour preset", async () => {
 		const { repository, getDeleteCalls } = repositoryForDelete("deleted");
 		const service = new CourseService(repository);
 

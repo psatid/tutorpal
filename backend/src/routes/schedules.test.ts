@@ -16,8 +16,6 @@ const onlineSchedule = ScheduleModel.fromSchedulePrisma({
 	updatedAt: new Date("2026-08-01T00:00:00.000Z"),
 	class: {
 		name: "Algebra",
-		course: null,
-		students: [],
 	},
 });
 

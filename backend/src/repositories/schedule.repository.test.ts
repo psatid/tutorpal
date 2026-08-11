@@ -6,8 +6,6 @@ const createdAt = new Date("2026-08-01T00:00:00.000Z");
 const updatedAt = new Date("2026-08-01T00:30:00.000Z");
 const classContext = {
 	name: "Algebra",
-	course: null,
-	students: [],
 };
 
 describe("ScheduleRepository recurring schedule types", () => {

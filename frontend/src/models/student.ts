@@ -20,7 +20,6 @@ type StudentDetails = {
 type StudentEnrollmentClassDetails = {
 	id: string;
 	displayName: string;
-	courseName: string | null;
 	totalHours: number;
 	remainingHours?: number;
 };
@@ -34,7 +33,6 @@ export class StudentEnrollmentClass {
 		return new StudentEnrollmentClass({
 			id: response.id,
 			displayName: response.displayName,
-			courseName: response.course?.name ?? null,
 			totalHours: response.totalHours,
 			remainingHours: response.remainingHours,
 		});
@@ -46,10 +44,6 @@ export class StudentEnrollmentClass {
 
 	getDisplayName() {
 		return this.data.displayName;
-	}
-
-	getCourseName() {
-		return this.data.courseName;
 	}
 
 	getHoursData() {

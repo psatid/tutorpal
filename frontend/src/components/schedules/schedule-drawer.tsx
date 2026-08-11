@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Plus, Save } from "lucide-react";
+import { CircleAlert, Loader2, Pencil, Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "@tanstack/react-router";
 import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
@@ -73,6 +74,7 @@ export function ScheduleDrawer({
 	selectedDate,
 }: ScheduleDrawerProps) {
 	const { t } = useTranslation(["schedules"]);
+	const navigate = useNavigate();
 	const statusOptions = [
 		{ value: "SCHEDULED", label: t("schedules:status.SCHEDULED") },
 		{ value: "COMPLETED", label: t("schedules:status.COMPLETED") },
@@ -96,12 +98,27 @@ export function ScheduleDrawer({
 	const classIdValue = useWatch({ control, name: "classId" });
 	const recurring = useWatch({ control, name: "recurring" });
 	const isRecurring = recurring !== undefined;
-	const { data: selectedClass } = useClassDetails(classIdValue || null);
+	const selectedClassQuery = useClassDetails(classIdValue || null);
+	const { data: selectedClass } = selectedClassQuery;
 	const { data: scheduleData } = useGetSchedule(
 		mode !== "create" ? scheduleId : null,
 	);
 
 	const selectedClassName = selectedClass?.getDisplayName() || "";
+	const selectedClassHasNoAvailability =
+		selectedClass?.hasNoAvailableHours() ?? false;
+	const selectedClassIsExhausted =
+		selectedClass?.getBalanceState() === "exhausted";
+	const isSelectedClassAvailabilityUnresolved =
+		Boolean(classIdValue) && !selectedClass;
+	const isSelectedClassAvailabilityLoading =
+		isSelectedClassAvailabilityUnresolved &&
+		(selectedClassQuery.isLoading || selectedClassQuery.isFetching);
+	const hasSelectedClassAvailabilityError =
+		isSelectedClassAvailabilityUnresolved && selectedClassQuery.isError;
+	const isCreateSubmissionBlocked =
+		mode === "create" &&
+		(isSelectedClassAvailabilityUnresolved || selectedClassHasNoAvailability);
 
 	useEffect(() => {
 		if (!isOpen || mode === "create") {
@@ -139,7 +156,7 @@ export function ScheduleDrawer({
 	});
 
 	const onSubmit = (data: ScheduleFormData) => {
-		if (!data.type) {
+		if (!data.type || isCreateSubmissionBlocked) {
 			return;
 		}
 
@@ -208,6 +225,16 @@ export function ScheduleDrawer({
 		}
 	};
 
+	const handleAddHours = () => {
+		if (!classIdValue) return;
+		onOpenChange(false);
+		void navigate({
+			to: "/classes/$classId",
+			params: { classId: classIdValue },
+			search: { addHours: true },
+		});
+	};
+
 	const footer =
 		mode === "view" ? (
 			<Button
@@ -228,6 +255,7 @@ export function ScheduleDrawer({
 				form={SCHEDULE_DRAWER_FORM_ID}
 				leftIcon={mode === "create" ? Plus : Save}
 				loading={createMutation.isPending || updateMutation.isPending}
+				disabled={isCreateSubmissionBlocked}
 				type="submit"
 			>
 				{getSubmitButtonText()}
@@ -288,6 +316,85 @@ export function ScheduleDrawer({
 						}
 						selectedClassId={classIdValue || null}
 					/>
+
+					{mode === "create" && isSelectedClassAvailabilityUnresolved ? (
+						<div
+							className={cn(
+								"flex items-start gap-3 rounded-lg border p-3",
+								hasSelectedClassAvailabilityError
+									? "border-destructive/30 bg-destructive/10"
+									: "border-border bg-muted/50",
+							)}
+							role={hasSelectedClassAvailabilityError ? "alert" : "status"}
+						>
+							{isSelectedClassAvailabilityLoading ? (
+								<Loader2
+									aria-hidden="true"
+									className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground"
+								/>
+							) : (
+								<CircleAlert
+									aria-hidden="true"
+									className={cn(
+										"mt-0.5 size-4 shrink-0",
+										hasSelectedClassAvailabilityError
+											? "text-destructive"
+											: "text-muted-foreground",
+									)}
+								/>
+							)}
+							<div className="min-w-0 space-y-2">
+								<p className="text-sm text-foreground">
+									{hasSelectedClassAvailabilityError
+										? t("schedules:classAvailability.loadError")
+										: t("schedules:classAvailability.loading")}
+								</p>
+								{hasSelectedClassAvailabilityError ? (
+									<Button
+										loading={selectedClassQuery.isFetching}
+										onClick={() => void selectedClassQuery.refetch()}
+										size="sm"
+										type="button"
+										variant="outline"
+									>
+										{t("schedules:error.retry")}
+									</Button>
+								) : null}
+							</div>
+						</div>
+					) : mode === "create" && selectedClassHasNoAvailability ? (
+						<div
+							className={cn(
+								"flex items-start gap-3 rounded-lg border p-3",
+								selectedClassIsExhausted
+									? "border-warning/30 bg-warning/10"
+									: "border-border bg-muted/50",
+							)}
+						>
+							<CircleAlert
+								aria-hidden="true"
+								className={cn(
+									"mt-0.5 size-4 shrink-0",
+									selectedClassIsExhausted
+										? "text-warning"
+										: "text-muted-foreground",
+								)}
+							/>
+							<div className="min-w-0 space-y-2">
+								<p className="text-sm text-foreground">
+									{t("schedules:classNoAvailability.description")}
+								</p>
+								<Button
+									onClick={handleAddHours}
+									size="sm"
+									type="button"
+									variant="outline"
+								>
+									{t("schedules:classNoAvailability.addHours")}
+								</Button>
+							</div>
+						</div>
+					) : null}
 
 					<Controller
 						control={control}

@@ -15,7 +15,7 @@ mock.module("../lib/db", () => ({
 
 const { CourseRepository } = await import("./course.repository");
 
-function knownRequestError(code: "P2003" | "P2022" | "P2025") {
+function knownRequestError(code: "P2022" | "P2025") {
 	return new Prisma.PrismaClientKnownRequestError("Database request failed", {
 		code,
 		clientVersion: Prisma.prismaVersion.client,
@@ -38,17 +38,14 @@ describe("CourseRepository.delete", () => {
 		});
 	});
 
-	test.each([
-		["P2025", "not_found"],
-		["P2003", "in_use"],
-	] as const)("maps %s to %s", async (code, outcome) => {
+	test("maps P2025 to not_found", async () => {
 		deleteCourse = async () => {
-			throw knownRequestError(code);
+			throw knownRequestError("P2025");
 		};
 
 		await expect(
 			new CourseRepository().delete("course-1", "tutor-1"),
-		).resolves.toBe(outcome);
+		).resolves.toBe("not_found");
 	});
 
 	test("rethrows unrelated Prisma errors", async () => {

@@ -57,6 +57,10 @@ They connect a control to React Hook Form and pass validation errors to the
 shared `FormField`. Put native control properties inside `inputProps` or
 `selectProps`.
 
+`RHFInputField` generates a stable input ID and connects its label,
+description, and validation error automatically. Pass an explicit `id` in
+`inputProps` only when another element must reference the control.
+
 ```tsx
 <RHFInputField
   control={form.control}

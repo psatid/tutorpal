@@ -7,36 +7,59 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
+      "url": "http://localhost:5174",
       "description": "Local development server"
     }
   ],
   "tags": [
-    { "name": "system", "description": "System endpoints" },
-    { "name": "students", "description": "Student management endpoints" },
-    { "name": "line", "description": "LINE account linking endpoints" }
+    {
+      "name": "system",
+      "description": "System endpoints"
+    },
+    {
+      "name": "students",
+      "description": "Student management endpoints"
+    },
+    {
+      "name": "line",
+      "description": "LINE account linking endpoints"
+    }
   ],
   "paths": {
     "/v1/health": {
       "get": {
         "operationId": "getV1Health",
-        "tags": ["system"],
+        "tags": [
+          "system"
+        ],
         "description": "Health check endpoint",
-        "responses": { "200": { "description": "Service is healthy" } }
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
       }
     },
     "/v1/docs": {
       "get": {
         "operationId": "getV1Docs",
-        "tags": ["system"],
+        "tags": [
+          "system"
+        ],
         "description": "API documentation UI (Scalar)",
-        "responses": { "200": { "description": "Scalar API documentation UI" } }
+        "responses": {
+          "200": {
+            "description": "Scalar API documentation UI"
+          }
+        }
       }
     },
     "/v1/students": {
       "post": {
         "operationId": "postV1Students",
-        "tags": ["students"],
+        "tags": [
+          "students"
+        ],
         "description": "Create a new student",
         "responses": {
           "201": {
@@ -46,21 +69,50 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "phoneNumber": { "type": ["string", "null"] },
-                    "grade": { "type": "integer" },
-                    "lineUserId": { "type": ["string", "null"] },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "grade": {
+                      "type": "integer"
+                    },
+                    "lineUserId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "lineConnectionId": {
-                      "type": ["string", "null"],
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "format": "uuid"
                     },
                     "lineLinkStatus": {
                       "type": "string",
-                      "enum": ["linked", "needs_relink", "not_linked"]
+                      "enum": [
+                        "linked",
+                        "needs_relink",
+                        "not_linked"
+                      ]
                     },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" }
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   },
                   "required": [
                     "id",
@@ -77,8 +129,12 @@
               }
             }
           },
-          "400": { "description": "Validation error" },
-          "401": { "description": "Unauthorized - Authentication required" }
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
         },
         "requestBody": {
           "required": true,
@@ -87,11 +143,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string", "minLength": 1 },
-                  "phoneNumber": { "type": "string" },
-                  "grade": { "type": "integer" }
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "grade": {
+                    "type": "integer"
+                  }
                 },
-                "required": ["name", "grade"]
+                "required": [
+                  "name",
+                  "grade"
+                ]
               }
             }
           }
@@ -99,13 +165,19 @@
       },
       "get": {
         "operationId": "getV1Students",
-        "tags": ["students"],
+        "tags": [
+          "students"
+        ],
         "description": "Get all students with pagination and search",
         "parameters": [
           {
             "in": "query",
             "name": "page",
-            "schema": { "type": "integer", "exclusiveMinimum": 0, "default": 1 }
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 1
+            }
           },
           {
             "in": "query",
@@ -117,13 +189,24 @@
               "default": 10
             }
           },
-          { "in": "query", "name": "search", "schema": { "type": "string" } },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "query",
             "name": "sortBy",
             "schema": {
               "type": "string",
-              "enum": ["name", "phoneNumber", "grade", "createdAt"],
+              "enum": [
+                "name",
+                "phoneNumber",
+                "grade",
+                "createdAt"
+              ],
               "default": "createdAt"
             }
           },
@@ -132,7 +215,10 @@
             "name": "sortOrder",
             "schema": {
               "type": "string",
-              "enum": ["asc", "desc"],
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "default": "desc"
             }
           }
@@ -150,18 +236,41 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "name": { "type": "string" },
-                          "phoneNumber": { "type": ["string", "null"] },
-                          "grade": { "type": "integer" },
-                          "lineUserId": { "type": ["string", "null"] },
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "phoneNumber": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "grade": {
+                            "type": "integer"
+                          },
+                          "lineUserId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "lineConnectionId": {
-                            "type": ["string", "null"],
+                            "type": [
+                              "string",
+                              "null"
+                            ],
                             "format": "uuid"
                           },
                           "lineLinkStatus": {
                             "type": "string",
-                            "enum": ["linked", "needs_relink", "not_linked"]
+                            "enum": [
+                              "linked",
+                              "needs_relink",
+                              "not_linked"
+                            ]
                           },
                           "createdAt": {
                             "type": "string",
@@ -188,12 +297,24 @@
                     "pagination": {
                       "type": "object",
                       "properties": {
-                        "total": { "type": "number" },
-                        "page": { "type": "number" },
-                        "limit": { "type": "number" },
-                        "totalPages": { "type": "number" },
-                        "hasNext": { "type": "boolean" },
-                        "hasPrev": { "type": "boolean" }
+                        "total": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "hasNext": {
+                          "type": "boolean"
+                        },
+                        "hasPrev": {
+                          "type": "boolean"
+                        }
                       },
                       "required": [
                         "total",
@@ -205,19 +326,26 @@
                       ]
                     }
                   },
-                  "required": ["data", "pagination"]
+                  "required": [
+                    "data",
+                    "pagination"
+                  ]
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
         }
       }
     },
     "/v1/students/{id}": {
       "get": {
         "operationId": "getV1StudentsById",
-        "tags": ["students"],
+        "tags": [
+          "students"
+        ],
         "description": "Get a student by ID with enrolled classes",
         "responses": {
           "200": {
@@ -227,45 +355,75 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "phoneNumber": { "type": ["string", "null"] },
-                    "grade": { "type": "integer" },
-                    "lineUserId": { "type": ["string", "null"] },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "grade": {
+                      "type": "integer"
+                    },
+                    "lineUserId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "lineConnectionId": {
-                      "type": ["string", "null"],
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "format": "uuid"
                     },
                     "lineLinkStatus": {
                       "type": "string",
-                      "enum": ["linked", "needs_relink", "not_linked"]
+                      "enum": [
+                        "linked",
+                        "needs_relink",
+                        "not_linked"
+                      ]
                     },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
                     "classes": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "name": { "type": ["string", "null"] },
-                          "displayName": { "type": "string" },
-                          "course": {
-                            "type": ["object", "null"],
-                            "properties": {
-                              "id": { "type": "string" },
-                              "name": { "type": "string" }
-                            },
-                            "required": ["id", "name"]
+                          "id": {
+                            "type": "string"
                           },
-                          "totalHours": { "type": "number" },
-                          "remainingHours": { "type": "number" }
+                          "name": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "totalHours": {
+                            "type": "number"
+                          },
+                          "remainingHours": {
+                            "type": "number"
+                          }
                         },
                         "required": [
                           "id",
                           "name",
                           "displayName",
-                          "course",
                           "totalHours"
                         ]
                       }
@@ -287,12 +445,18 @@
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Student not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Student not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -301,7 +465,9 @@
       },
       "put": {
         "operationId": "putV1StudentsById",
-        "tags": ["students"],
+        "tags": [
+          "students"
+        ],
         "description": "Update a student by ID",
         "responses": {
           "200": {
@@ -311,21 +477,50 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "phoneNumber": { "type": ["string", "null"] },
-                    "grade": { "type": "integer" },
-                    "lineUserId": { "type": ["string", "null"] },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "grade": {
+                      "type": "integer"
+                    },
+                    "lineUserId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "lineConnectionId": {
-                      "type": ["string", "null"],
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "format": "uuid"
                     },
                     "lineLinkStatus": {
                       "type": "string",
-                      "enum": ["linked", "needs_relink", "not_linked"]
+                      "enum": [
+                        "linked",
+                        "needs_relink",
+                        "not_linked"
+                      ]
                     },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" }
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   },
                   "required": [
                     "id",
@@ -342,9 +537,15 @@
               }
             }
           },
-          "400": { "description": "Validation error" },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Student not found" }
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Student not found"
+          }
         },
         "requestBody": {
           "required": true,
@@ -353,9 +554,16 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string", "minLength": 1 },
-                  "phoneNumber": { "type": "string" },
-                  "grade": { "type": "integer" }
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "grade": {
+                    "type": "integer"
+                  }
                 }
               }
             }
@@ -363,7 +571,9 @@
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -372,16 +582,26 @@
       },
       "delete": {
         "operationId": "deleteV1StudentsById",
-        "tags": ["students"],
+        "tags": [
+          "students"
+        ],
         "description": "Delete a student by ID",
         "responses": {
-          "204": { "description": "Student deleted successfully" },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Student not found" }
+          "204": {
+            "description": "Student deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Student not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -392,7 +612,9 @@
     "/v1/classes": {
       "post": {
         "operationId": "postV1Classes",
-        "tags": ["classes"],
+        "tags": [
+          "classes"
+        ],
         "description": "Create a new class",
         "responses": {
           "201": {
@@ -402,47 +624,89 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "course": {
-                      "type": ["object", "null"],
-                      "properties": {
-                        "id": { "type": "string" },
-                        "name": { "type": "string" },
-                        "defaultTotalHours": { "type": "number" }
-                      },
-                      "required": ["id", "name", "defaultTotalHours"]
+                    "id": {
+                      "type": "string"
                     },
-                    "name": { "type": ["string", "null"] },
-                    "displayName": { "type": "string" },
-                    "totalHours": { "type": "number" },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "totalHours": {
+                      "type": "number"
+                    },
                     "students": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "name": { "type": "string" },
-                          "phoneNumber": { "type": ["string", "null"] },
-                          "grade": { "type": "integer" }
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "phoneNumber": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "grade": {
+                            "type": "integer"
+                          }
                         },
-                        "required": ["id", "name", "phoneNumber", "grade"]
+                        "required": [
+                          "id",
+                          "name",
+                          "phoneNumber",
+                          "grade"
+                        ]
                       }
                     },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    },
                     "recurringSchedule": {
-                      "type": ["object", "null"],
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "properties": {
-                        "id": { "type": "string" },
-                        "classId": { "type": "string" },
-                        "className": { "type": "string" },
-                        "courseName": { "type": ["string", "null"] },
-                        "startDate": { "type": "string" },
-                        "notes": { "type": ["string", "null"] },
+                        "id": {
+                          "type": "string"
+                        },
+                        "classId": {
+                          "type": "string"
+                        },
+                        "className": {
+                          "type": "string"
+                        },
+                        "startDate": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "type": {
                           "type": "string",
-                          "enum": ["ON_SITE", "ONLINE"]
+                          "enum": [
+                            "ON_SITE",
+                            "ONLINE"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",
@@ -457,7 +721,9 @@
                           "items": {
                             "type": "object",
                             "properties": {
-                              "id": { "type": "string" },
+                              "id": {
+                                "type": "string"
+                              },
                               "weekday": {
                                 "type": "string",
                                 "enum": [
@@ -493,7 +759,6 @@
                         "id",
                         "classId",
                         "className",
-                        "courseName",
                         "startDate",
                         "notes",
                         "type",
@@ -505,20 +770,24 @@
                   },
                   "required": [
                     "id",
-                    "course",
                     "name",
                     "displayName",
                     "totalHours",
                     "students",
                     "createdAt",
-                    "updatedAt"
+                    "updatedAt",
+                    "remainingHours"
                   ]
                 }
               }
             }
           },
-          "400": { "description": "Validation error" },
-          "401": { "description": "Unauthorized - Authentication required" }
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
         },
         "requestBody": {
           "required": true,
@@ -527,16 +796,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "courseId": { "type": ["string", "null"] },
-                  "name": { "type": ["string", "null"] },
-                  "totalHours": { "type": "number", "exclusiveMinimum": 0 },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "studentIds": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "minItems": 1
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 },
-                "required": ["courseId", "studentIds"]
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -544,13 +818,19 @@
       },
       "get": {
         "operationId": "getV1Classes",
-        "tags": ["classes"],
+        "tags": [
+          "classes"
+        ],
         "description": "Get all classes with pagination and search",
         "parameters": [
           {
             "in": "query",
             "name": "page",
-            "schema": { "type": "integer", "exclusiveMinimum": 0, "default": 1 }
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 1
+            }
           },
           {
             "in": "query",
@@ -562,13 +842,23 @@
               "default": 10
             }
           },
-          { "in": "query", "name": "search", "schema": { "type": "string" } },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "query",
             "name": "sortBy",
             "schema": {
               "type": "string",
-              "enum": ["name", "totalHours", "createdAt"],
+              "enum": [
+                "name",
+                "totalHours",
+                "createdAt"
+              ],
               "default": "createdAt"
             }
           },
@@ -577,15 +867,12 @@
             "name": "sortOrder",
             "schema": {
               "type": "string",
-              "enum": ["asc", "desc"],
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "default": "desc"
             }
-          },
-          { "in": "query", "name": "courseId", "schema": { "type": "string" } },
-          {
-            "in": "query",
-            "name": "classType",
-            "schema": { "type": "string", "enum": ["custom", "course-linked"] }
           }
         ],
         "responses": {
@@ -601,30 +888,46 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "course": {
-                            "type": ["object", "null"],
-                            "properties": {
-                              "id": { "type": "string" },
-                              "name": { "type": "string" },
-                              "defaultTotalHours": { "type": "number" }
-                            },
-                            "required": ["id", "name", "defaultTotalHours"]
+                          "id": {
+                            "type": "string"
                           },
-                          "name": { "type": ["string", "null"] },
-                          "displayName": { "type": "string" },
-                          "totalHours": { "type": "number" },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "totalHours": {
+                            "type": "number"
+                          },
                           "students": {
                             "type": "array",
                             "items": {
                               "type": "object",
                               "properties": {
-                                "id": { "type": "string" },
-                                "name": { "type": "string" },
-                                "phoneNumber": { "type": ["string", "null"] },
-                                "grade": { "type": "integer" }
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "phoneNumber": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "grade": {
+                                  "type": "integer"
+                                }
                               },
-                              "required": ["id", "name", "phoneNumber", "grade"]
+                              "required": [
+                                "id",
+                                "name",
+                                "phoneNumber",
+                                "grade"
+                              ]
                             }
                           },
                           "createdAt": {
@@ -635,19 +938,39 @@
                             "type": "string",
                             "format": "date-time"
                           },
-                          "remainingHours": { "type": "number" },
+                          "remainingHours": {
+                            "type": "number"
+                          },
                           "recurringSchedule": {
-                            "type": ["object", "null"],
+                            "type": [
+                              "object",
+                              "null"
+                            ],
                             "properties": {
-                              "id": { "type": "string" },
-                              "classId": { "type": "string" },
-                              "className": { "type": "string" },
-                              "courseName": { "type": ["string", "null"] },
-                              "startDate": { "type": "string" },
-                              "notes": { "type": ["string", "null"] },
+                              "id": {
+                                "type": "string"
+                              },
+                              "classId": {
+                                "type": "string"
+                              },
+                              "className": {
+                                "type": "string"
+                              },
+                              "startDate": {
+                                "type": "string"
+                              },
+                              "notes": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "type": {
                                 "type": "string",
-                                "enum": ["ON_SITE", "ONLINE"]
+                                "enum": [
+                                  "ON_SITE",
+                                  "ONLINE"
+                                ]
                               },
                               "createdAt": {
                                 "type": "string",
@@ -662,7 +985,9 @@
                                 "items": {
                                   "type": "object",
                                   "properties": {
-                                    "id": { "type": "string" },
+                                    "id": {
+                                      "type": "string"
+                                    },
                                     "weekday": {
                                       "type": "string",
                                       "enum": [
@@ -698,7 +1023,6 @@
                               "id",
                               "classId",
                               "className",
-                              "courseName",
                               "startDate",
                               "notes",
                               "type",
@@ -710,25 +1034,37 @@
                         },
                         "required": [
                           "id",
-                          "course",
                           "name",
                           "displayName",
                           "totalHours",
                           "students",
                           "createdAt",
-                          "updatedAt"
+                          "updatedAt",
+                          "remainingHours"
                         ]
                       }
                     },
                     "pagination": {
                       "type": "object",
                       "properties": {
-                        "total": { "type": "number" },
-                        "page": { "type": "number" },
-                        "limit": { "type": "number" },
-                        "totalPages": { "type": "number" },
-                        "hasNext": { "type": "boolean" },
-                        "hasPrev": { "type": "boolean" }
+                        "total": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "hasNext": {
+                          "type": "boolean"
+                        },
+                        "hasPrev": {
+                          "type": "boolean"
+                        }
                       },
                       "required": [
                         "total",
@@ -740,19 +1076,412 @@
                       ]
                     }
                   },
-                  "required": ["data", "pagination"]
+                  "required": [
+                    "data",
+                    "pagination"
+                  ]
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
+        }
+      }
+    },
+    "/v1/classes/{id}/hour-additions": {
+      "post": {
+        "operationId": "postV1ClassesByIdHourAdditions",
+        "tags": [
+          "classes"
+        ],
+        "description": "Add course-preset or custom hours to a class. Request IDs are idempotent per class.",
+        "responses": {
+          "200": {
+            "description": "Hours added or an existing matching request returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "addition": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "classId": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "course",
+                            "custom"
+                          ]
+                        },
+                        "hours": {
+                          "type": "number"
+                        },
+                        "sourceCourseId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "sourceCourseName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "classId",
+                        "source",
+                        "hours",
+                        "sourceCourseId",
+                        "sourceCourseName",
+                        "requestId",
+                        "createdAt"
+                      ]
+                    },
+                    "totalHours": {
+                      "type": "number"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "addition",
+                    "totalHours",
+                    "remainingHours"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error, unavailable course, or hour limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Class not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Request ID conflicts with a different hour addition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "const": "course"
+                      },
+                      "courseId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "requestId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "courseId",
+                      "requestId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "const": "custom"
+                      },
+                      "hours": {
+                        "type": "number",
+                        "minimum": 0.01,
+                        "maximum": 99999999.99
+                      },
+                      "requestId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "hours",
+                      "requestId"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getV1ClassesByIdHourAdditions",
+        "tags": [
+          "classes"
+        ],
+        "description": "Get immutable hour additions for a class, newest first",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated class hour additions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "classId": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "course",
+                              "custom"
+                            ]
+                          },
+                          "hours": {
+                            "type": "number"
+                          },
+                          "sourceCourseId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "sourceCourseName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "requestId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "classId",
+                          "source",
+                          "hours",
+                          "sourceCourseId",
+                          "sourceCourseName",
+                          "requestId",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "hasNext": {
+                          "type": "boolean"
+                        },
+                        "hasPrev": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "page",
+                        "limit",
+                        "totalPages",
+                        "hasNext",
+                        "hasPrev"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Class not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/v1/classes/{id}": {
       "get": {
         "operationId": "getV1ClassesById",
-        "tags": ["classes"],
+        "tags": [
+          "classes"
+        ],
         "description": "Get a class by ID",
         "responses": {
           "200": {
@@ -762,47 +1491,89 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "course": {
-                      "type": ["object", "null"],
-                      "properties": {
-                        "id": { "type": "string" },
-                        "name": { "type": "string" },
-                        "defaultTotalHours": { "type": "number" }
-                      },
-                      "required": ["id", "name", "defaultTotalHours"]
+                    "id": {
+                      "type": "string"
                     },
-                    "name": { "type": ["string", "null"] },
-                    "displayName": { "type": "string" },
-                    "totalHours": { "type": "number" },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "totalHours": {
+                      "type": "number"
+                    },
                     "students": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "name": { "type": "string" },
-                          "phoneNumber": { "type": ["string", "null"] },
-                          "grade": { "type": "integer" }
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "phoneNumber": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "grade": {
+                            "type": "integer"
+                          }
                         },
-                        "required": ["id", "name", "phoneNumber", "grade"]
+                        "required": [
+                          "id",
+                          "name",
+                          "phoneNumber",
+                          "grade"
+                        ]
                       }
                     },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    },
                     "recurringSchedule": {
-                      "type": ["object", "null"],
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "properties": {
-                        "id": { "type": "string" },
-                        "classId": { "type": "string" },
-                        "className": { "type": "string" },
-                        "courseName": { "type": ["string", "null"] },
-                        "startDate": { "type": "string" },
-                        "notes": { "type": ["string", "null"] },
+                        "id": {
+                          "type": "string"
+                        },
+                        "classId": {
+                          "type": "string"
+                        },
+                        "className": {
+                          "type": "string"
+                        },
+                        "startDate": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "type": {
                           "type": "string",
-                          "enum": ["ON_SITE", "ONLINE"]
+                          "enum": [
+                            "ON_SITE",
+                            "ONLINE"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",
@@ -817,7 +1588,9 @@
                           "items": {
                             "type": "object",
                             "properties": {
-                              "id": { "type": "string" },
+                              "id": {
+                                "type": "string"
+                              },
                               "weekday": {
                                 "type": "string",
                                 "enum": [
@@ -853,7 +1626,6 @@
                         "id",
                         "classId",
                         "className",
-                        "courseName",
                         "startDate",
                         "notes",
                         "type",
@@ -865,24 +1637,30 @@
                   },
                   "required": [
                     "id",
-                    "course",
                     "name",
                     "displayName",
                     "totalHours",
                     "students",
                     "createdAt",
-                    "updatedAt"
+                    "updatedAt",
+                    "remainingHours"
                   ]
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Class not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Class not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -891,7 +1669,9 @@
       },
       "put": {
         "operationId": "putV1ClassesById",
-        "tags": ["classes"],
+        "tags": [
+          "classes"
+        ],
         "description": "Update a class by ID",
         "responses": {
           "200": {
@@ -901,47 +1681,89 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "course": {
-                      "type": ["object", "null"],
-                      "properties": {
-                        "id": { "type": "string" },
-                        "name": { "type": "string" },
-                        "defaultTotalHours": { "type": "number" }
-                      },
-                      "required": ["id", "name", "defaultTotalHours"]
+                    "id": {
+                      "type": "string"
                     },
-                    "name": { "type": ["string", "null"] },
-                    "displayName": { "type": "string" },
-                    "totalHours": { "type": "number" },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "totalHours": {
+                      "type": "number"
+                    },
                     "students": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "name": { "type": "string" },
-                          "phoneNumber": { "type": ["string", "null"] },
-                          "grade": { "type": "integer" }
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "phoneNumber": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "grade": {
+                            "type": "integer"
+                          }
                         },
-                        "required": ["id", "name", "phoneNumber", "grade"]
+                        "required": [
+                          "id",
+                          "name",
+                          "phoneNumber",
+                          "grade"
+                        ]
                       }
                     },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    },
                     "recurringSchedule": {
-                      "type": ["object", "null"],
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "properties": {
-                        "id": { "type": "string" },
-                        "classId": { "type": "string" },
-                        "className": { "type": "string" },
-                        "courseName": { "type": ["string", "null"] },
-                        "startDate": { "type": "string" },
-                        "notes": { "type": ["string", "null"] },
+                        "id": {
+                          "type": "string"
+                        },
+                        "classId": {
+                          "type": "string"
+                        },
+                        "className": {
+                          "type": "string"
+                        },
+                        "startDate": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "type": {
                           "type": "string",
-                          "enum": ["ON_SITE", "ONLINE"]
+                          "enum": [
+                            "ON_SITE",
+                            "ONLINE"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",
@@ -956,7 +1778,9 @@
                           "items": {
                             "type": "object",
                             "properties": {
-                              "id": { "type": "string" },
+                              "id": {
+                                "type": "string"
+                              },
                               "weekday": {
                                 "type": "string",
                                 "enum": [
@@ -992,7 +1816,6 @@
                         "id",
                         "classId",
                         "className",
-                        "courseName",
                         "startDate",
                         "notes",
                         "type",
@@ -1004,21 +1827,27 @@
                   },
                   "required": [
                     "id",
-                    "course",
                     "name",
                     "displayName",
                     "totalHours",
                     "students",
                     "createdAt",
-                    "updatedAt"
+                    "updatedAt",
+                    "remainingHours"
                   ]
                 }
               }
             }
           },
-          "400": { "description": "Validation error" },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Class not found" }
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Class not found"
+          }
         },
         "requestBody": {
           "required": true,
@@ -1027,21 +1856,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": ["string", "null"] },
-                  "totalHours": { "type": "number", "exclusiveMinimum": 0 },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "studentIds": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "minItems": 1
+                    "items": {
+                      "type": "string"
+                    }
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1050,10 +1885,14 @@
       },
       "delete": {
         "operationId": "deleteV1ClassesById",
-        "tags": ["classes"],
+        "tags": [
+          "classes"
+        ],
         "description": "Delete a class by ID",
         "responses": {
-          "204": { "description": "Class deleted successfully" },
+          "204": {
+            "description": "Class deleted successfully"
+          },
           "401": {
             "description": "Unauthorized - Authentication required",
             "content": {
@@ -1061,10 +1900,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "errorCode": { "type": "string" },
-                    "message": { "type": "string" }
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["errorCode", "message"]
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
                 }
               }
             }
@@ -1076,10 +1922,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "errorCode": { "type": "string" },
-                    "message": { "type": "string" }
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["errorCode", "message"]
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
                 }
               }
             }
@@ -1087,7 +1940,9 @@
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1098,7 +1953,9 @@
     "/v1/courses": {
       "post": {
         "operationId": "postV1Courses",
-        "tags": ["courses"],
+        "tags": [
+          "courses"
+        ],
         "description": "Create a course",
         "responses": {
           "201": {
@@ -1108,18 +1965,29 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string", "format": "uuid" },
-                    "name": { "type": "string" },
-                    "defaultTotalHours": { "type": "number" },
-                    "classCount": { "type": "integer", "minimum": 0 },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" }
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "defaultTotalHours": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   },
                   "required": [
                     "id",
                     "name",
                     "defaultTotalHours",
-                    "classCount",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -1135,13 +2003,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string", "minLength": 1 },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "defaultTotalHours": {
                     "type": "number",
                     "exclusiveMinimum": 0
                   }
                 },
-                "required": ["name", "defaultTotalHours"]
+                "required": [
+                  "name",
+                  "defaultTotalHours"
+                ]
               }
             }
           }
@@ -1149,7 +2023,9 @@
       },
       "get": {
         "operationId": "getV1Courses",
-        "tags": ["courses"],
+        "tags": [
+          "courses"
+        ],
         "description": "List courses",
         "responses": {
           "200": {
@@ -1164,10 +2040,16 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string", "format": "uuid" },
-                          "name": { "type": "string" },
-                          "defaultTotalHours": { "type": "number" },
-                          "classCount": { "type": "integer", "minimum": 0 },
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "defaultTotalHours": {
+                            "type": "number"
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time"
@@ -1181,7 +2063,6 @@
                           "id",
                           "name",
                           "defaultTotalHours",
-                          "classCount",
                           "createdAt",
                           "updatedAt"
                         ]
@@ -1190,12 +2071,24 @@
                     "pagination": {
                       "type": "object",
                       "properties": {
-                        "total": { "type": "number" },
-                        "page": { "type": "number" },
-                        "limit": { "type": "number" },
-                        "totalPages": { "type": "number" },
-                        "hasNext": { "type": "boolean" },
-                        "hasPrev": { "type": "boolean" }
+                        "total": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "hasNext": {
+                          "type": "boolean"
+                        },
+                        "hasPrev": {
+                          "type": "boolean"
+                        }
                       },
                       "required": [
                         "total",
@@ -1207,7 +2100,10 @@
                       ]
                     }
                   },
-                  "required": ["data", "pagination"]
+                  "required": [
+                    "data",
+                    "pagination"
+                  ]
                 }
               }
             }
@@ -1217,7 +2113,11 @@
           {
             "in": "query",
             "name": "page",
-            "schema": { "type": "integer", "exclusiveMinimum": 0, "default": 1 }
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 1
+            }
           },
           {
             "in": "query",
@@ -1229,13 +2129,23 @@
               "default": 100
             }
           },
-          { "in": "query", "name": "search", "schema": { "type": "string" } },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "query",
             "name": "sortBy",
             "schema": {
               "type": "string",
-              "enum": ["name", "defaultTotalHours", "createdAt"],
+              "enum": [
+                "name",
+                "defaultTotalHours",
+                "createdAt"
+              ],
               "default": "name"
             }
           },
@@ -1244,7 +2154,10 @@
             "name": "sortOrder",
             "schema": {
               "type": "string",
-              "enum": ["asc", "desc"],
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "default": "asc"
             }
           }
@@ -1254,7 +2167,9 @@
     "/v1/courses/{id}": {
       "get": {
         "operationId": "getV1CoursesById",
-        "tags": ["courses"],
+        "tags": [
+          "courses"
+        ],
         "description": "Get a course",
         "responses": {
           "200": {
@@ -1264,18 +2179,29 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string", "format": "uuid" },
-                    "name": { "type": "string" },
-                    "defaultTotalHours": { "type": "number" },
-                    "classCount": { "type": "integer", "minimum": 0 },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" }
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "defaultTotalHours": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   },
                   "required": [
                     "id",
                     "name",
                     "defaultTotalHours",
-                    "classCount",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -1283,11 +2209,15 @@
               }
             }
           },
-          "404": { "description": "Course not found" }
+          "404": {
+            "description": "Course not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1296,7 +2226,9 @@
       },
       "put": {
         "operationId": "putV1CoursesById",
-        "tags": ["courses"],
+        "tags": [
+          "courses"
+        ],
         "description": "Update a course",
         "responses": {
           "200": {
@@ -1306,18 +2238,29 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string", "format": "uuid" },
-                    "name": { "type": "string" },
-                    "defaultTotalHours": { "type": "number" },
-                    "classCount": { "type": "integer", "minimum": 0 },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" }
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "defaultTotalHours": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   },
                   "required": [
                     "id",
                     "name",
                     "defaultTotalHours",
-                    "classCount",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -1333,7 +2276,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string", "minLength": 1 },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "defaultTotalHours": {
                     "type": "number",
                     "exclusiveMinimum": 0
@@ -1345,7 +2291,9 @@
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1354,10 +2302,14 @@
       },
       "delete": {
         "operationId": "deleteV1CoursesById",
-        "tags": ["courses"],
-        "description": "Delete an unused course",
+        "tags": [
+          "courses"
+        ],
+        "description": "Delete a course",
         "responses": {
-          "204": { "description": "Course deleted" },
+          "204": {
+            "description": "Course deleted"
+          },
           "401": {
             "description": "Unauthorized - Authentication required",
             "content": {
@@ -1365,10 +2317,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "errorCode": { "type": "string" },
-                    "message": { "type": "string" }
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["errorCode", "message"]
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
                 }
               }
             }
@@ -1380,25 +2339,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "errorCode": { "type": "string" },
-                    "message": { "type": "string" }
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["errorCode", "message"]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Course still has classes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errorCode": { "type": "string" },
-                    "message": { "type": "string" }
-                  },
-                  "required": ["errorCode", "message"]
+                  "required": [
+                    "errorCode",
+                    "message"
+                  ]
                 }
               }
             }
@@ -1406,7 +2357,9 @@
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1417,7 +2370,9 @@
     "/v1/schedules": {
       "post": {
         "operationId": "postV1Schedules",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Create a new schedule (one-time or recurring)",
         "responses": {
           "201": {
@@ -1427,33 +2382,71 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "classId": { "type": "string" },
-                    "className": { "type": "string" },
-                    "courseName": { "type": ["string", "null"] },
-                    "recurringScheduleId": { "type": ["string", "null"] },
-                    "date": { "type": "string" },
+                    "id": {
+                      "type": "string"
+                    },
+                    "classId": {
+                      "type": "string"
+                    },
+                    "className": {
+                      "type": "string"
+                    },
+                    "recurringScheduleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
                     "time": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 1439
                     },
-                    "durationMinutes": { "type": "integer", "minimum": 1 },
-                    "notes": { "type": ["string", "null"] },
+                    "durationMinutes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
-                      "enum": ["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+                      "enum": [
+                        "SCHEDULED",
+                        "COMPLETED",
+                        "NO_SHOW",
+                        "CANCELLED"
+                      ]
                     },
-                    "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" }
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "ON_SITE",
+                        "ONLINE"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
                   },
                   "required": [
                     "id",
                     "classId",
                     "className",
-                    "courseName",
                     "date",
                     "time",
                     "durationMinutes",
@@ -1467,8 +2460,12 @@
               }
             }
           },
-          "400": { "description": "Validation error or class not found" },
-          "401": { "description": "Unauthorized - Authentication required" }
+          "400": {
+            "description": "Validation error or class not found"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
         },
         "requestBody": {
           "required": true,
@@ -1477,15 +2474,33 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "classId": { "type": "string", "minLength": 1 },
+                  "classId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "date": {
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
-                  "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                  "time": { "type": "integer", "minimum": 0, "maximum": 1439 },
-                  "durationMinutes": { "type": "number", "minimum": 1 },
-                  "notes": { "type": "string" },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ON_SITE",
+                      "ONLINE"
+                    ]
+                  },
+                  "time": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "durationMinutes": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
                   "recurring": {
                     "type": "object",
                     "properties": {
@@ -1520,15 +2535,26 @@
                               "minimum": 1
                             }
                           },
-                          "required": ["weekday", "time", "durationMinutes"]
+                          "required": [
+                            "weekday",
+                            "time",
+                            "durationMinutes"
+                          ]
                         },
                         "minItems": 1
                       }
                     },
-                    "required": ["startDate", "scheduleItems"]
+                    "required": [
+                      "startDate",
+                      "scheduleItems"
+                    ]
                   }
                 },
-                "required": ["classId", "date", "type"]
+                "required": [
+                  "classId",
+                  "date",
+                  "type"
+                ]
               }
             }
           }
@@ -1536,26 +2562,49 @@
       },
       "get": {
         "operationId": "getV1Schedules",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Get all schedules with optional filtering",
         "parameters": [
           {
             "in": "query",
             "name": "date",
-            "schema": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
           },
           {
             "in": "query",
             "name": "startDate",
-            "schema": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
           },
           {
             "in": "query",
             "name": "endDate",
-            "schema": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
           },
-          { "in": "query", "name": "search", "schema": { "type": "string" } },
-          { "in": "query", "name": "classId", "schema": { "type": "string" } }
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "classId",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1567,19 +2616,39 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "id": { "type": "string" },
-                      "classId": { "type": "string" },
-                      "className": { "type": "string" },
-                      "courseName": { "type": ["string", "null"] },
-                      "recurringScheduleId": { "type": ["string", "null"] },
-                      "date": { "type": "string" },
+                      "id": {
+                        "type": "string"
+                      },
+                      "classId": {
+                        "type": "string"
+                      },
+                      "className": {
+                        "type": "string"
+                      },
+                      "recurringScheduleId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "date": {
+                        "type": "string"
+                      },
                       "time": {
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 1439
                       },
-                      "durationMinutes": { "type": "integer", "minimum": 1 },
-                      "notes": { "type": ["string", "null"] },
+                      "durationMinutes": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "notes": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
                       "status": {
                         "type": "string",
                         "enum": [
@@ -1591,17 +2660,27 @@
                       },
                       "type": {
                         "type": "string",
-                        "enum": ["ON_SITE", "ONLINE"]
+                        "enum": [
+                          "ON_SITE",
+                          "ONLINE"
+                        ]
                       },
-                      "createdAt": { "type": "string", "format": "date-time" },
-                      "updatedAt": { "type": "string", "format": "date-time" },
-                      "remainingHours": { "type": "number" }
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "remainingHours": {
+                        "type": "number"
+                      }
                     },
                     "required": [
                       "id",
                       "classId",
                       "className",
-                      "courseName",
                       "date",
                       "time",
                       "durationMinutes",
@@ -1616,14 +2695,18 @@
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
         }
       }
     },
     "/v1/schedules/recurring/{id}": {
       "patch": {
         "operationId": "patchV1SchedulesRecurringById",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Update a recurring schedule from an effective date by recreating future generated schedules",
         "responses": {
           "200": {
@@ -1636,15 +2719,30 @@
                     "recurringSchedule": {
                       "type": "object",
                       "properties": {
-                        "id": { "type": "string" },
-                        "classId": { "type": "string" },
-                        "className": { "type": "string" },
-                        "courseName": { "type": ["string", "null"] },
-                        "startDate": { "type": "string" },
-                        "notes": { "type": ["string", "null"] },
+                        "id": {
+                          "type": "string"
+                        },
+                        "classId": {
+                          "type": "string"
+                        },
+                        "className": {
+                          "type": "string"
+                        },
+                        "startDate": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "type": {
                           "type": "string",
-                          "enum": ["ON_SITE", "ONLINE"]
+                          "enum": [
+                            "ON_SITE",
+                            "ONLINE"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",
@@ -1659,7 +2757,9 @@
                           "items": {
                             "type": "object",
                             "properties": {
-                              "id": { "type": "string" },
+                              "id": {
+                                "type": "string"
+                              },
                               "weekday": {
                                 "type": "string",
                                 "enum": [
@@ -1695,7 +2795,6 @@
                         "id",
                         "classId",
                         "className",
-                        "courseName",
                         "startDate",
                         "notes",
                         "type",
@@ -1704,12 +2803,17 @@
                         "scheduleItems"
                       ]
                     },
-                    "effectiveDate": { "type": "string" },
+                    "effectiveDate": {
+                      "type": "string"
+                    },
                     "deletedSchedulesCount": {
                       "type": "integer",
                       "minimum": 0
                     },
-                    "createdSchedulesCount": { "type": "integer", "minimum": 0 }
+                    "createdSchedulesCount": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
                   },
                   "required": [
                     "recurringSchedule",
@@ -1724,8 +2828,12 @@
           "400": {
             "description": "Validation error, conflicting future schedules, or insufficient hours"
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Recurring schedule not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Recurring schedule not found"
+          }
         },
         "requestBody": {
           "required": true,
@@ -1738,8 +2846,16 @@
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
-                  "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                  "notes": { "type": "string" },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ON_SITE",
+                      "ONLINE"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
                   "scheduleItems": {
                     "type": "array",
                     "items": {
@@ -1762,21 +2878,33 @@
                           "minimum": 0,
                           "maximum": 1439
                         },
-                        "durationMinutes": { "type": "integer", "minimum": 1 }
+                        "durationMinutes": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
                       },
-                      "required": ["weekday", "time", "durationMinutes"]
+                      "required": [
+                        "weekday",
+                        "time",
+                        "durationMinutes"
+                      ]
                     },
                     "minItems": 1
                   }
                 },
-                "required": ["effectiveDate", "scheduleItems"]
+                "required": [
+                  "effectiveDate",
+                  "scheduleItems"
+                ]
               }
             }
           }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1787,7 +2915,9 @@
     "/v1/schedules/{id}": {
       "get": {
         "operationId": "getV1SchedulesById",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Get a schedule by ID",
         "responses": {
           "200": {
@@ -1797,33 +2927,71 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "classId": { "type": "string" },
-                    "className": { "type": "string" },
-                    "courseName": { "type": ["string", "null"] },
-                    "recurringScheduleId": { "type": ["string", "null"] },
-                    "date": { "type": "string" },
+                    "id": {
+                      "type": "string"
+                    },
+                    "classId": {
+                      "type": "string"
+                    },
+                    "className": {
+                      "type": "string"
+                    },
+                    "recurringScheduleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
                     "time": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 1439
                     },
-                    "durationMinutes": { "type": "integer", "minimum": 1 },
-                    "notes": { "type": ["string", "null"] },
+                    "durationMinutes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
-                      "enum": ["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+                      "enum": [
+                        "SCHEDULED",
+                        "COMPLETED",
+                        "NO_SHOW",
+                        "CANCELLED"
+                      ]
                     },
-                    "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" }
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "ON_SITE",
+                        "ONLINE"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
                   },
                   "required": [
                     "id",
                     "classId",
                     "className",
-                    "courseName",
                     "date",
                     "time",
                     "durationMinutes",
@@ -1837,12 +3005,18 @@
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Schedule not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1851,7 +3025,9 @@
       },
       "put": {
         "operationId": "putV1SchedulesById",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Update a schedule by ID",
         "responses": {
           "200": {
@@ -1861,33 +3037,71 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "classId": { "type": "string" },
-                    "className": { "type": "string" },
-                    "courseName": { "type": ["string", "null"] },
-                    "recurringScheduleId": { "type": ["string", "null"] },
-                    "date": { "type": "string" },
+                    "id": {
+                      "type": "string"
+                    },
+                    "classId": {
+                      "type": "string"
+                    },
+                    "className": {
+                      "type": "string"
+                    },
+                    "recurringScheduleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
                     "time": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 1439
                     },
-                    "durationMinutes": { "type": "integer", "minimum": 1 },
-                    "notes": { "type": ["string", "null"] },
+                    "durationMinutes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
-                      "enum": ["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+                      "enum": [
+                        "SCHEDULED",
+                        "COMPLETED",
+                        "NO_SHOW",
+                        "CANCELLED"
+                      ]
                     },
-                    "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" }
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "ON_SITE",
+                        "ONLINE"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
                   },
                   "required": [
                     "id",
                     "classId",
                     "className",
-                    "courseName",
                     "date",
                     "time",
                     "durationMinutes",
@@ -1901,9 +3115,15 @@
               }
             }
           },
-          "400": { "description": "Validation error or class not found" },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Schedule not found" }
+          "400": {
+            "description": "Validation error or class not found"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
         },
         "requestBody": {
           "required": true,
@@ -1912,18 +3132,41 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "classId": { "type": "string", "minLength": 1 },
+                  "classId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "date": {
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
-                  "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                  "time": { "type": "integer", "minimum": 0, "maximum": 1439 },
-                  "durationMinutes": { "type": "integer", "minimum": 1 },
-                  "notes": { "type": "string" },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ON_SITE",
+                      "ONLINE"
+                    ]
+                  },
+                  "time": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "durationMinutes": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
                   "status": {
                     "type": "string",
-                    "enum": ["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+                    "enum": [
+                      "SCHEDULED",
+                      "COMPLETED",
+                      "NO_SHOW",
+                      "CANCELLED"
+                    ]
                   }
                 }
               }
@@ -1932,7 +3175,9 @@
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1941,16 +3186,26 @@
       },
       "delete": {
         "operationId": "deleteV1SchedulesById",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Delete a schedule by ID",
         "responses": {
-          "204": { "description": "Schedule deleted successfully" },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Schedule not found" }
+          "204": {
+            "description": "Schedule deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -1961,7 +3216,9 @@
     "/v1/schedules/{id}/complete": {
       "patch": {
         "operationId": "patchV1SchedulesByIdComplete",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Complete a schedule (marks as COMPLETED and deducts hours from class)",
         "responses": {
           "200": {
@@ -1971,33 +3228,71 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "classId": { "type": "string" },
-                    "className": { "type": "string" },
-                    "courseName": { "type": ["string", "null"] },
-                    "recurringScheduleId": { "type": ["string", "null"] },
-                    "date": { "type": "string" },
+                    "id": {
+                      "type": "string"
+                    },
+                    "classId": {
+                      "type": "string"
+                    },
+                    "className": {
+                      "type": "string"
+                    },
+                    "recurringScheduleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
                     "time": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 1439
                     },
-                    "durationMinutes": { "type": "integer", "minimum": 1 },
-                    "notes": { "type": ["string", "null"] },
+                    "durationMinutes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
-                      "enum": ["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+                      "enum": [
+                        "SCHEDULED",
+                        "COMPLETED",
+                        "NO_SHOW",
+                        "CANCELLED"
+                      ]
                     },
-                    "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" }
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "ON_SITE",
+                        "ONLINE"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
                   },
                   "required": [
                     "id",
                     "classId",
                     "className",
-                    "courseName",
                     "date",
                     "time",
                     "durationMinutes",
@@ -2014,12 +3309,18 @@
           "400": {
             "description": "Invalid status transition or insufficient hours"
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Schedule not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -2030,7 +3331,9 @@
     "/v1/schedules/{id}/restore": {
       "patch": {
         "operationId": "patchV1SchedulesByIdRestore",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Restore hours for a completed or no-show schedule (marks as CANCELLED)",
         "responses": {
           "200": {
@@ -2040,33 +3343,71 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "classId": { "type": "string" },
-                    "className": { "type": "string" },
-                    "courseName": { "type": ["string", "null"] },
-                    "recurringScheduleId": { "type": ["string", "null"] },
-                    "date": { "type": "string" },
+                    "id": {
+                      "type": "string"
+                    },
+                    "classId": {
+                      "type": "string"
+                    },
+                    "className": {
+                      "type": "string"
+                    },
+                    "recurringScheduleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
                     "time": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 1439
                     },
-                    "durationMinutes": { "type": "integer", "minimum": 1 },
-                    "notes": { "type": ["string", "null"] },
+                    "durationMinutes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
-                      "enum": ["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+                      "enum": [
+                        "SCHEDULED",
+                        "COMPLETED",
+                        "NO_SHOW",
+                        "CANCELLED"
+                      ]
                     },
-                    "type": { "type": "string", "enum": ["ON_SITE", "ONLINE"] },
-                    "createdAt": { "type": "string", "format": "date-time" },
-                    "updatedAt": { "type": "string", "format": "date-time" },
-                    "remainingHours": { "type": "number" }
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "ON_SITE",
+                        "ONLINE"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
                   },
                   "required": [
                     "id",
                     "classId",
                     "className",
-                    "courseName",
                     "date",
                     "time",
                     "durationMinutes",
@@ -2083,12 +3424,18 @@
           "400": {
             "description": "Invalid operation - schedule not completed/no-show or hours already restored"
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Schedule not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "id",
             "required": true
@@ -2099,7 +3446,9 @@
     "/v1/schedules/class/{classId}/remaining-hours": {
       "get": {
         "operationId": "getV1SchedulesClassByClassIdRemainingHours",
-        "tags": ["schedules"],
+        "tags": [
+          "schedules"
+        ],
         "description": "Get remaining hours for a class",
         "responses": {
           "200": {
@@ -2108,18 +3457,30 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "remainingHours": { "type": "number" } },
-                  "required": ["remainingHours"]
+                  "properties": {
+                    "remainingHours": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "remainingHours"
+                  ]
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized - Authentication required" },
-          "404": { "description": "Class not found" }
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Class not found"
+          }
         },
         "parameters": [
           {
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
             "name": "classId",
             "required": true
@@ -2130,14 +3491,18 @@
     "/v1/line/auth-url": {
       "get": {
         "operationId": "getV1LineAuthUrl",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Get LINE Login authorization URL for a given link token",
         "parameters": [
           {
             "name": "token",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Link token from /link-token endpoint"
           }
         ],
@@ -2148,44 +3513,62 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "authUrl": { "type": "string" } },
-                  "required": ["authUrl"]
+                  "properties": {
+                    "authUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "authUrl"
+                  ]
                 }
               }
             }
           },
-          "400": { "description": "Invalid or expired token" }
+          "400": {
+            "description": "Invalid or expired token"
+          }
         }
       }
     },
     "/v1/line/callback": {
       "get": {
         "operationId": "getV1LineCallback",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "LINE OAuth callback — exchanges code and links student",
         "parameters": [
           {
             "name": "code",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "state",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "302": { "description": "Redirects to frontend success/error page" }
+          "302": {
+            "description": "Redirects to frontend success/error page"
+          }
         }
       }
     },
     "/v1/line/connection": {
       "get": {
         "operationId": "getV1LineConnection",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Get the current tutor's safe LINE connection status",
         "responses": {
           "200": {
@@ -2195,16 +3578,30 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "configured": { "type": "boolean" },
-                    "accountName": { "type": "string" },
-                    "accountBasicId": { "type": ["string", "null"] },
+                    "configured": {
+                      "type": "boolean"
+                    },
+                    "accountName": {
+                      "type": "string"
+                    },
+                    "accountBasicId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "lastVerifiedAt": {
                       "type": "string",
                       "format": "date-time"
                     },
-                    "testRecipientConnected": { "type": "boolean" }
+                    "testRecipientConnected": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["configured", "testRecipientConnected"]
+                  "required": [
+                    "configured",
+                    "testRecipientConnected"
+                  ]
                 }
               }
             }
@@ -2213,7 +3610,9 @@
       },
       "put": {
         "operationId": "putV1LineConnection",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Save and verify the current tutor's LINE credentials",
         "responses": {
           "200": {
@@ -2223,21 +3622,37 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "configured": { "type": "boolean" },
-                    "accountName": { "type": "string" },
-                    "accountBasicId": { "type": ["string", "null"] },
+                    "configured": {
+                      "type": "boolean"
+                    },
+                    "accountName": {
+                      "type": "string"
+                    },
+                    "accountBasicId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "lastVerifiedAt": {
                       "type": "string",
                       "format": "date-time"
                     },
-                    "testRecipientConnected": { "type": "boolean" }
+                    "testRecipientConnected": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["configured", "testRecipientConnected"]
+                  "required": [
+                    "configured",
+                    "testRecipientConnected"
+                  ]
                 }
               }
             }
           },
-          "400": { "description": "Invalid credentials" }
+          "400": {
+            "description": "Invalid credentials"
+          }
         },
         "requestBody": {
           "required": true,
@@ -2246,9 +3661,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "messagingAccessToken": { "type": "string", "minLength": 20 },
-                  "loginChannelId": { "type": "string", "minLength": 1 },
-                  "loginChannelSecret": { "type": "string", "minLength": 1 }
+                  "messagingAccessToken": {
+                    "type": "string",
+                    "minLength": 20
+                  },
+                  "loginChannelId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "loginChannelSecret": {
+                    "type": "string",
+                    "minLength": 1
+                  }
                 },
                 "required": [
                   "messagingAccessToken",
@@ -2264,7 +3688,9 @@
     "/v1/line/connection/test-recipient/authorize": {
       "post": {
         "operationId": "postV1LineConnectionTestRecipientAuthorize",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Begin LINE Login to connect the tutor's test recipient account",
         "responses": {
           "200": {
@@ -2274,9 +3700,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "authUrl": { "type": "string", "format": "uri" }
+                    "authUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    }
                   },
-                  "required": ["authUrl"]
+                  "required": [
+                    "authUrl"
+                  ]
                 }
               }
             }
@@ -2287,7 +3718,9 @@
     "/v1/line/connection/test-message": {
       "post": {
         "operationId": "postV1LineConnectionTestMessage",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Send a test message to the tutor's connected personal LINE account",
         "responses": {
           "200": {
@@ -2296,8 +3729,14 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "sent": { "type": "boolean" } },
-                  "required": ["sent"]
+                  "properties": {
+                    "sent": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "sent"
+                  ]
                 }
               }
             }
@@ -2308,7 +3747,9 @@
     "/v1/line/link-token": {
       "post": {
         "operationId": "postV1LineLinkToken",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Generate a magic link token for LINE account linking",
         "responses": {
           "200": {
@@ -2318,18 +3759,35 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "token": { "type": "string" },
-                    "linkUrl": { "type": "string" },
-                    "expiresAt": { "type": "string", "format": "date-time" }
+                    "token": {
+                      "type": "string"
+                    },
+                    "linkUrl": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   },
-                  "required": ["token", "linkUrl", "expiresAt"]
+                  "required": [
+                    "token",
+                    "linkUrl",
+                    "expiresAt"
+                  ]
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized" },
-          "404": { "description": "Student not found" },
-          "409": { "description": "Student already linked" }
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Student not found"
+          },
+          "409": {
+            "description": "Student already linked"
+          }
         },
         "requestBody": {
           "required": true,
@@ -2338,9 +3796,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "studentId": { "type": "string", "format": "uuid" }
+                  "studentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
                 },
-                "required": ["studentId"]
+                "required": [
+                  "studentId"
+                ]
               }
             }
           }
@@ -2350,7 +3813,9 @@
     "/v1/line/test-message": {
       "post": {
         "operationId": "postV1LineTestMessage",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Send a test message to a linked student via LINE",
         "responses": {
           "200": {
@@ -2359,14 +3824,24 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "sent": { "type": "boolean" } },
-                  "required": ["sent"]
+                  "properties": {
+                    "sent": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "sent"
+                  ]
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized" },
-          "404": { "description": "Student not found" }
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Student not found"
+          }
         },
         "requestBody": {
           "required": true,
@@ -2375,9 +3850,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "studentId": { "type": "string", "format": "uuid" }
+                  "studentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
                 },
-                "required": ["studentId"]
+                "required": [
+                  "studentId"
+                ]
               }
             }
           }
@@ -2387,7 +3867,9 @@
     "/v1/line/unlink": {
       "post": {
         "operationId": "postV1LineUnlink",
-        "tags": ["line"],
+        "tags": [
+          "line"
+        ],
         "description": "Unlink a LINE account from a student",
         "responses": {
           "200": {
@@ -2396,15 +3878,27 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "unlinked": { "type": "boolean" } },
-                  "required": ["unlinked"]
+                  "properties": {
+                    "unlinked": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "unlinked"
+                  ]
                 }
               }
             }
           },
-          "400": { "description": "LINE account not linked" },
-          "401": { "description": "Unauthorized" },
-          "404": { "description": "Student not found" }
+          "400": {
+            "description": "LINE account not linked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Student not found"
+          }
         },
         "requestBody": {
           "required": true,
@@ -2413,9 +3907,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "studentId": { "type": "string", "format": "uuid" }
+                  "studentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
                 },
-                "required": ["studentId"]
+                "required": [
+                  "studentId"
+                ]
               }
             }
           }

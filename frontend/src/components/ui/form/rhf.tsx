@@ -5,6 +5,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
+import { useId } from "react";
 
 import { InputField } from "./input-field";
 import { PasswordField } from "./password-field";
@@ -37,25 +38,47 @@ function RHFInputField<T extends FieldValues>({
   disabled,
   inputProps,
 }: RHFInputFieldProps<T>) {
+  const generatedId = useId();
+  const fieldId =
+    inputProps?.id ?? `field-${generatedId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const resolvedCaptionId = caption
+    ? (captionId ?? `${fieldId}-description`)
+    : undefined;
+  const resolvedErrorId = errorId ?? `${fieldId}-error`;
+
   return (
     <Controller
       control={control}
       name={name}
       render={({ field, fieldState }) => {
         const { onChange, ...rest } = field;
+        const describedBy = [
+          inputProps?.["aria-describedby"],
+          resolvedCaptionId,
+          fieldState.error ? resolvedErrorId : undefined,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined;
+
         return (
           <InputField
             {...rest}
             {...inputProps}
+            id={fieldId}
             label={label}
             caption={caption}
-            captionId={captionId}
+            captionId={resolvedCaptionId}
             error={fieldState.error?.message}
-            errorId={errorId}
+            errorId={resolvedErrorId}
             required={required}
             disabled={disabled}
+            aria-describedby={describedBy}
             aria-invalid={!!fieldState.error}
-            aria-errormessage={fieldState.error ? errorId : undefined}
+            aria-errormessage={
+              fieldState.error
+                ? resolvedErrorId
+                : inputProps?.["aria-errormessage"]
+            }
             onChange={(e) => {
               const isNumber = inputProps?.type === "number";
               if (isNumber) {

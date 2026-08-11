@@ -35,13 +35,7 @@ const RECURRING_REPLACEABLE_STATUSES: ScheduleStatus[] = [
 	"CANCELLED",
 ];
 
-const classContextInclude = {
-	course: true,
-	students: {
-		orderBy: { createdAt: "asc" as const },
-		include: { student: true },
-	},
-} as const;
+const classContextInclude = {} as const;
 
 type GeneratedScheduleData = {
 	classId: string;
@@ -187,7 +181,6 @@ export class ScheduleRepository implements IScheduleRepository {
 				tutorId,
 				OR: [
 					{ name: { contains: query.search, mode: "insensitive" } },
-					{ course: { name: { contains: query.search, mode: "insensitive" } } },
 					{
 						students: {
 							some: {

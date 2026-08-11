@@ -12,7 +12,6 @@ export const useUpdateClass = (options?: { onSuccess?: () => void }) => {
     mutationFn: async ({ id, data }: { id: string; data: ClassFormData }) => {
       const response = await apiClient.putV1ClassesById(id, {
         name: data.name,
-        totalHours: data.totalHours,
         studentIds: data.studentIds,
       });
       return response.data;

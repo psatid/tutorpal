@@ -14,11 +14,10 @@ type ClassStudentDetails = {
 
 type ClassDetails = {
 	id: string;
-	name: string | null;
+	name: string;
 	displayName: string;
-	course: { id: string; name: string } | null;
 	totalHours: number;
-	remainingHours?: number;
+	remainingHours: number;
 	students: ClassStudent[];
 	recurringSchedule?: RecurringScheduleSummary | null;
 };
@@ -75,12 +74,8 @@ export class Class {
 		return this.data.displayName;
 	}
 
-	getCourseName() {
-		return this.data.course?.name ?? null;
-	}
-
-	getCourseId() {
-		return this.data.course?.id ?? null;
+	getName() {
+		return this.data.name;
 	}
 
 	getStudents() {
@@ -92,11 +87,20 @@ export class Class {
 			totalHours: this.data.totalHours,
 			remainingHours: this.data.remainingHours,
 			formattedTotalHours: DateTime.formatDurationHours(this.data.totalHours),
-			formattedRemainingHours:
-				this.data.remainingHours === undefined
-					? undefined
-					: DateTime.formatDurationHours(this.data.remainingHours),
+			formattedRemainingHours: DateTime.formatDurationHours(
+				this.data.remainingHours,
+			),
 		};
+	}
+
+	getBalanceState() {
+		if (this.data.totalHours <= 0) return "no-hours" as const;
+		if (this.data.remainingHours <= 0) return "exhausted" as const;
+		return "available" as const;
+	}
+
+	hasNoAvailableHours() {
+		return this.data.remainingHours <= 0;
 	}
 
 	getListItemData() {
@@ -104,8 +108,8 @@ export class Class {
 		return {
 			id: this.getId(),
 			displayName: this.getDisplayName(),
-			courseName: this.getCourseName(),
 			studentNames: this.getStudents().map((student) => student.getName()),
+			balanceState: this.getBalanceState(),
 			...hours,
 		};
 	}
@@ -113,8 +117,8 @@ export class Class {
 	getDetailsHeaderData() {
 		return {
 			displayName: this.getDisplayName(),
-			courseName: this.getCourseName(),
 			students: this.getStudents(),
+			balanceState: this.getBalanceState(),
 			...this.getHoursData(),
 		};
 	}
@@ -122,8 +126,7 @@ export class Class {
 	getFormData() {
 		return {
 			id: this.getId(),
-			name: this.data.name ?? "",
-			totalHours: this.data.totalHours,
+			name: this.data.name,
 			studentIds: this.getStudents().map((student) => student.getId()),
 		};
 	}
@@ -140,9 +143,6 @@ function toClassDetails(
 		id: response.id,
 		name: response.name,
 		displayName: response.displayName,
-		course: response.course
-			? { id: response.course.id, name: response.course.name }
-			: null,
 		totalHours: response.totalHours,
 		remainingHours: response.remainingHours,
 		students: response.students.map(ClassStudent.fromResponse),

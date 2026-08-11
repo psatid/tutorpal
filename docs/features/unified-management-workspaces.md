@@ -4,24 +4,27 @@
 
 Students, Classes, and Courses now use one responsive management pattern. The shared structure keeps repeated actions predictable while preserving the information tutors need for each entity.
 
+The standalone class and hour-addition flow is described in
+[Standalone Classes and Hour Additions](standalone-classes-and-hour-additions.md).
+
 ## Navigation
 
-- Jun Layout provides one responsive side rail for Home, Students, Courses, Classes, Schedule, and Settings. Below `md` it is an overlay drawer; from `md` through below `lg` it becomes a 48px icon rail; at `lg` and above it expands to 15rem and can be manually collapsed or expanded. Courses precede Classes to follow the setup workflow.
+- Jun Layout provides one responsive side rail for Home, Classes, Schedule, Courses, Settings, and Students. Below `md` it is an overlay drawer; from `md` through below `lg` it becomes a 48px icon rail; at `lg` and above it expands to 15rem and can be manually collapsed or expanded. Students is the final item because enrollment is optional when starting a class.
 - The mobile bottom navigation has been removed so navigation has a single, consistent home across screen sizes.
 - List and detail routes activate the same parent navigation item.
 - The shared top bar shows the active screen name from the existing navigation labels, with Settings used for settings routes and their nested pages.
 
 ## Workspace pattern
 
-Each workspace uses the same page header, count, primary action, search and refinement controls, spaced card rows, loading skeletons, errors, and empty states. Students show learner and LINE context, Classes show course/custom and hour context, and Courses show reusable hour defaults and linked class counts.
+Each workspace uses the same page header, count, primary action, search and refinement controls, spaced card rows, loading skeletons, errors, and empty states. Students show learner and LINE context, Classes show optional students and their hour balance, and Courses show reusable hour presets.
 
 Students, Courses, and Classes share `useWorkspaceSearchControls` for search state, 300ms debouncing, sort defaults, dirty-state detection, and reset behavior. Classes supplies its route-backed filter reset through the hook's optional callback.
 
-Search refinement uses a shared two-level control pattern: a prominent search field followed by a horizontally scrolling rail of outlined controls. Students and Courses expose sorting; Classes exposes route-backed class/course filtering followed by sorting. Search can be cleared without changing other controls, and Reset appears whenever a workspace differs from its default state. The document/content pane owns vertical scrolling; the workspace list has no nested vertical scroll region. At below `md`, controls remain in normal flow and sort/filter choices open in the shared bottom-sheet drawer. At `md` and above, the complete control band stays sticky beneath the app header and choices use anchored Select menus.
+Search refinement uses a shared two-level control pattern: a prominent search field followed by a horizontally scrolling rail of outlined controls. Students, Courses, and Classes expose sorting; Classes searches its name and optional student names without course filters. Search can be cleared without changing other controls, and Reset appears whenever a workspace differs from its default state. The document/content pane owns vertical scrolling; the workspace list has no nested vertical scroll region. At below `md`, controls remain in normal flow and sort/filter choices open in the shared bottom-sheet drawer. At `md` and above, the complete control band stays sticky beneath the app header and choices use anchored Select menus.
 
 Regular authenticated screens provide the page-level gutters through `ScreenLayout`; these workspaces do not add a second horizontal content gutter. Cards retain their own internal padding so row content remains readable inside the card boundary.
 
-Create and edit forms use the shared responsive drawer: an accessible bottom sheet below `md` and a right-side panel at `md` and above. Course association, enrollment, hour, deletion, and API behavior are unchanged.
+Create and edit forms use the shared responsive drawer: an accessible bottom sheet below `md` and a right-side panel at `md` and above. A class requires only a name; student enrollment is optional and hours are added separately through the class hour-addition drawer.
 
 ## Visual and interaction rules
 

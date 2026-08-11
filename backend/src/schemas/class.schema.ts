@@ -1,5 +1,6 @@
 import { resolver } from "hono-openapi";
 import { z } from "zod";
+import { MAX_CLASS_HOURS } from "../lib/class-hour-addition";
 import { RecurringScheduleSchema } from "./schedule.schema";
 
 export const StudentInClassSchema = z.object({
@@ -8,83 +9,43 @@ export const StudentInClassSchema = z.object({
 	phoneNumber: z.string().nullable(),
 	grade: z.number().int(),
 });
-export const CourseInClassSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	defaultTotalHours: z.number(),
-});
-
 export const ClassSchema = z.object({
 	id: z.string(),
-	course: CourseInClassSchema.nullable(),
-	name: z.string().nullable(),
+	name: z.string().min(1),
 	displayName: z.string(),
 	totalHours: z.number(),
 	students: z.array(StudentInClassSchema),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
-	remainingHours: z.number().optional(),
+	remainingHours: z.number(),
 	recurringSchedule: RecurringScheduleSchema.nullable().optional(),
 });
 
 const studentIdsSchema = z
 	.array(z.string())
-	.min(1, "Select at least one student")
 	.refine((ids) => new Set(ids).size === ids.length, "Students must be unique");
 
 export const CreateClassSchema = z
 	.object({
-		courseId: z.string().nullable(),
-		name: z.string().trim().nullable().optional(),
-		totalHours: z
-			.number()
-			.positive("Total hours must be greater than 0")
-			.optional(),
-		studentIds: studentIdsSchema,
+		name: z.string().trim().min(1, "Class name is required"),
+		studentIds: studentIdsSchema.optional(),
 	})
-	.superRefine((value, ctx) => {
-		if (value.courseId === null && !value.name?.trim())
-			ctx.addIssue({
-				code: "custom",
-				path: ["name"],
-				message: "Class name is required for a custom class",
-			});
-		if (value.courseId === null && value.totalHours === undefined)
-			ctx.addIssue({
-				code: "custom",
-				path: ["totalHours"],
-				message: "Total hours are required for a custom class",
-			});
-	});
+	.strict();
 
-export const UpdateClassSchema = z.object({
-	name: z.string().trim().nullable().optional(),
-	totalHours: z
-		.number()
-		.positive("Total hours must be greater than 0")
-		.optional(),
-	studentIds: studentIdsSchema.optional(),
-});
-
-export const ClassListQuerySchema = z
+export const UpdateClassSchema = z
 	.object({
-		page: z.coerce.number().int().positive().default(1),
-		limit: z.coerce.number().int().positive().max(100).default(10),
-		search: z.string().optional(),
-		courseId: z.string().optional(),
-		classType: z.enum(["custom", "course-linked"]).optional(),
-		sortBy: z.enum(["name", "totalHours", "createdAt"]).default("createdAt"),
-		sortOrder: z.enum(["asc", "desc"]).default("desc"),
+		name: z.string().trim().min(1, "Class name is required").optional(),
+		studentIds: studentIdsSchema.optional(),
 	})
-	.superRefine((value, ctx) => {
-		if (value.courseId && value.classType) {
-			ctx.addIssue({
-				code: "custom",
-				path: ["classType"],
-				message: "courseId and classType cannot be combined",
-			});
-		}
-	});
+	.strict();
+
+export const ClassListQuerySchema = z.object({
+	page: z.coerce.number().int().positive().default(1),
+	limit: z.coerce.number().int().positive().max(100).default(10),
+	search: z.string().optional(),
+	sortBy: z.enum(["name", "totalHours", "createdAt"]).default("createdAt"),
+	sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
 
 export const PaginatedClassListSchema = z.object({
 	data: z.array(ClassSchema),
@@ -98,7 +59,86 @@ export const PaginatedClassListSchema = z.object({
 	}),
 });
 
+const positiveHoursSchema = z
+	.number()
+	.finite()
+	.positive("Hours must be greater than 0")
+	.min(0.01, "Hours must be at least 0.01")
+	.max(MAX_CLASS_HOURS, `Hours must not exceed ${MAX_CLASS_HOURS.toFixed(2)}`)
+	.refine(
+		(hours) => hasAtMostTwoDecimalPlaces(hours),
+		"Hours may have at most two decimal places",
+	);
+
+function hasAtMostTwoDecimalPlaces(hours: number) {
+	const scaledHours = hours * 100;
+	return (
+		Math.abs(scaledHours - Math.round(scaledHours)) <=
+		Number.EPSILON * Math.max(1, Math.abs(scaledHours)) * 4
+	);
+}
+
+export const CreateClassHourAdditionSchema = z.discriminatedUnion("source", [
+	z
+		.object({
+			source: z.literal("course"),
+			courseId: z.string().min(1, "Course is required"),
+			requestId: z.string().uuid(),
+		})
+		.strict(),
+	z
+		.object({
+			source: z.literal("custom"),
+			hours: positiveHoursSchema,
+			requestId: z.string().uuid(),
+		})
+		.strict(),
+]);
+
+export const ClassHourAdditionSchema = z.object({
+	id: z.string(),
+	classId: z.string(),
+	source: z.enum(["course", "custom"]),
+	hours: z.number(),
+	sourceCourseId: z.string().nullable(),
+	sourceCourseName: z.string().nullable(),
+	requestId: z.string().uuid(),
+	createdAt: z.string().datetime(),
+});
+
+export const ClassHourAdditionResultSchema = z.object({
+	addition: ClassHourAdditionSchema,
+	totalHours: z.number(),
+	remainingHours: z.number(),
+});
+
+export const ClassHourAdditionListQuerySchema = z.object({
+	page: z.coerce.number().int().positive().default(1),
+	limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export const PaginatedClassHourAdditionListSchema = z.object({
+	data: z.array(ClassHourAdditionSchema),
+	pagination: z.object({
+		total: z.number(),
+		page: z.number(),
+		limit: z.number(),
+		totalPages: z.number(),
+		hasNext: z.boolean(),
+		hasPrev: z.boolean(),
+	}),
+});
+
 export const ClassSchemaResolver = resolver(ClassSchema);
 export const PaginatedClassListSchemaResolver = resolver(
 	PaginatedClassListSchema,
+);
+export const ClassHourAdditionSchemaResolver = resolver(
+	ClassHourAdditionSchema,
+);
+export const ClassHourAdditionResultSchemaResolver = resolver(
+	ClassHourAdditionResultSchema,
+);
+export const PaginatedClassHourAdditionListSchemaResolver = resolver(
+	PaginatedClassHourAdditionListSchema,
 );

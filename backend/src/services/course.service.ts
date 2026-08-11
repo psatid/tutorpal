@@ -45,11 +45,5 @@ export class CourseService {
 		if (outcome === "not_found") {
 			throw AppError.notFound("COURSE_NOT_FOUND", "Course not found");
 		}
-		if (outcome === "in_use") {
-			throw AppError.conflict(
-				"COURSE_IN_USE",
-				"This course still has classes and cannot be deleted.",
-			);
-		}
 	}
 }

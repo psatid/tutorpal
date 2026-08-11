@@ -97,4 +97,36 @@ describe("ScheduleService ownership", () => {
 			classRepository.findById = originalFindById;
 		}
 	});
+
+	test("continues to block scheduling until a standalone class has added hours", async () => {
+		const originalFindById = classRepository.findById;
+		let createCalls = 0;
+		classRepository.findById = async () => ({}) as never;
+
+		try {
+			const repository = {
+				getRemainingHours: async () => 0,
+				create: async () => {
+					createCalls += 1;
+					return {} as ScheduleModel;
+				},
+			} as unknown as IScheduleRepository;
+
+			await expect(
+				new ScheduleService(repository).createSchedule(
+					{
+						classId: "class-1",
+						date: "2026-08-10",
+						type: "ON_SITE",
+						time: 600,
+						durationMinutes: 60,
+					},
+					"tutor-1",
+				),
+			).rejects.toMatchObject({ errorCode: "INSUFFICIENT_HOURS", status: 400 });
+			expect(createCalls).toBe(0);
+		} finally {
+			classRepository.findById = originalFindById;
+		}
+	});
 });

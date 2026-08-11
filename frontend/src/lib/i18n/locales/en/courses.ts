@@ -1,7 +1,7 @@
 export default {
 	title: "Courses",
 	subtitle:
-		"Reusable teaching templates that set the starting hours for new classes.",
+		"Reusable hour presets you can apply whenever a class needs more time.",
 	count_one: "{{count}} course",
 	count_other: "{{count}} courses",
 	newCourse: "New course",
@@ -11,17 +11,7 @@ export default {
 	deleteCourse: "Delete course",
 	deleteTitle: "Delete {{name}}?",
 	deleteDescription:
-		"This permanently deletes this reusable course. Classes are never deleted.",
-	deleteBlockedTitle: "Can’t delete {{name}}",
-	deleteBlockedDescription_one:
-		"This reusable course currently has {{count}} class, so it can’t be deleted. Classes are never deleted.",
-	deleteBlockedDescription_other:
-		"This reusable course currently has {{count}} classes, so it can’t be deleted. Classes are never deleted.",
-	checkingCourseTitle: "Checking {{name}}",
-	checkingCourseClasses: "Checking the current classes for this course…",
-	revalidationErrorTitle: "Couldn’t check {{name}}",
-	revalidationErrorDescription:
-		"We couldn’t confirm the current classes for this course. Try again before deleting it.",
+		"This permanently deletes this reusable course. Hours already added from it stay recorded on their classes.",
 	deleteSuccess: "Course deleted.",
 	deleteAlreadyRemoved: "This course was already removed. The course list has been refreshed.",
 	deletingCourse: "Deleting course…",
@@ -31,23 +21,18 @@ export default {
 	cancel: "Cancel",
 	close: "Close",
 	tryAgain: "Try again",
-	formDescription: "Set reusable defaults for future classes.",
+	formDescription: "Set reusable hours for future additions.",
 	searchLabel: "Search courses",
 	clearSearch: "Clear search",
 	reset: "Reset",
 	sortLabel: "Sort",
-	filterLabel: "Filter",
 	actionsFor: "Actions for {{name}}",
-	classCount_one: "{{count}} class",
-	classCount_other: "{{count}} classes",
-	viewClasses: "View classes ({{count}})",
-	viewClassesAction: "View classes",
 	searchCourses: "Search courses",
 	noCourses: "No courses yet",
 	noMatches: "No matching courses",
 	noMatchesDescription: "Try a different course name.",
 	noCoursesDescription:
-		"Create a reusable course to speed up class setup and keep default hours consistent.",
+		"Create a reusable course to add its configured hours to classes later.",
 	defaultHours: "{{hours}} default hours",
 	loadError: {
 		title: "Courses couldn’t load",
@@ -65,8 +50,8 @@ export default {
 	form: {
 		nameLabel: "Course name",
 		namePlaceholder: "e.g. Mathematics",
-		hoursLabel: "Default total hours",
+		hoursLabel: "Preset hours",
 		hoursDescription:
-			"New classes start with this amount. Existing classes never change automatically.",
+			"This amount is added when you choose this course for a class. Changes affect future additions only.",
 	},
 } as const;

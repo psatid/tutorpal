@@ -1,5 +1,8 @@
 # Courses and Flexible Classes (July 19, 2026)
 
+> Superseded by [Standalone Classes and Hour Additions](standalone-classes-and-hour-additions.md).
+> This document records the July behavior and is not the current contract.
+
 ## Overview
 
 TutorPal now separates reusable course defaults from the classes tutors actually teach. A tutor can create a course once, then create multiple classes from it, or create a standalone custom class when no reusable course applies.

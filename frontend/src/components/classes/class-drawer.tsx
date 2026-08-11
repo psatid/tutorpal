@@ -8,13 +8,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-drawer";
 import type { Class } from "@/models/class";
-import type { Course } from "@/models/course";
 
 export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
 interface ClassDrawerProps {
   classData: Class | null;
-  courses?: Course[];
   isOpen: boolean;
   mode: DrawerMode;
   onCloseAutoFocus?: () => void;
@@ -24,7 +22,6 @@ interface ClassDrawerProps {
 
 export function ClassDrawer({
   classData,
-  courses = [],
   isOpen,
   mode,
   onCloseAutoFocus,
@@ -108,7 +105,6 @@ export function ClassDrawer({
     >
       <ClassForm
         classData={classData}
-        courses={courses}
         formId={formId}
         isOpen={isOpen}
         mode={mode as ClassFormMode}

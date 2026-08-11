@@ -1,24 +1,18 @@
 import type { ClassModel } from "../models/class.model";
+import type { ClassHourAdditionModel } from "../models/class-hour-addition.model";
 import type { PaginatedResponse, PaginationParams } from "./pagination.types";
 import type { RecurringScheduleDTO } from "./schedule.types";
-
-export interface CourseInClassDTO {
-	id: string;
-	name: string;
-	defaultTotalHours: number;
-}
 
 export interface ClassDTO {
 	id: string;
 	tutorId: string;
-	course: CourseInClassDTO | null;
-	name: string | null;
+	name: string;
 	displayName: string;
 	totalHours: number;
 	students: StudentInClassDTO[];
 	createdAt: string;
 	updatedAt: string;
-	remainingHours?: number;
+	remainingHours: number;
 	recurringSchedule?: RecurringScheduleDTO | null;
 }
 
@@ -31,23 +25,54 @@ export interface StudentInClassDTO {
 
 export interface CreateClassDTO {
 	tutorId: string;
-	courseId: string | null;
-	name?: string | null;
-	totalHours?: number;
-	studentIds: string[];
+	name: string;
+	studentIds?: string[];
 }
 
 export interface UpdateClassDTO {
-	name?: string | null;
-	totalHours?: number;
+	name?: string;
 	studentIds?: string[];
 }
 
 export type ClassDeleteOutcome = "deleted" | "not_found";
 
-export interface ClassListParams extends PaginationParams {
-	courseId?: string;
-	classType?: "custom" | "course-linked";
+export type ClassListParams = PaginationParams;
+
+export type ClassHourAdditionSource = "course" | "custom";
+
+export interface ClassHourAdditionDTO {
+	id: string;
+	classId: string;
+	source: ClassHourAdditionSource;
+	hours: number;
+	sourceCourseId: string | null;
+	sourceCourseName: string | null;
+	requestId: string;
+	createdAt: string;
+}
+
+export type CreateClassHourAdditionDTO =
+	| {
+			source: "course";
+			courseId: string;
+			requestId: string;
+	  }
+	| {
+			source: "custom";
+			hours: number;
+			requestId: string;
+	  };
+
+export interface ClassHourAdditionResult {
+	addition: ClassHourAdditionModel;
+	totalHours: number;
+	remainingHours: number;
+}
+
+export interface ClassHourAdditionResultDTO {
+	addition: ClassHourAdditionDTO;
+	totalHours: number;
+	remainingHours: number;
 }
 
 export interface IClassRepository {
@@ -62,5 +87,15 @@ export interface IClassRepository {
 		tutorId: string,
 		data: UpdateClassDTO,
 	): Promise<ClassModel>;
+	addHourAddition(
+		id: string,
+		tutorId: string,
+		data: CreateClassHourAdditionDTO,
+	): Promise<ClassHourAdditionResult>;
+	findHourAdditions(
+		id: string,
+		tutorId: string,
+		params?: PaginationParams,
+	): Promise<PaginatedResponse<ClassHourAdditionModel>>;
 	delete(id: string, tutorId: string): Promise<ClassDeleteOutcome>;
 }

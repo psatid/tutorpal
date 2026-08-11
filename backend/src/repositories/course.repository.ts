@@ -12,8 +12,6 @@ import type {
 	PaginationParams,
 } from "../types/pagination.types";
 
-const courseInclude = { _count: { select: { classes: true } } } as const;
-
 export class CourseRepository implements ICourseRepository {
 	async create(data: CreateCourseDTO): Promise<CourseModel> {
 		const course = await prisma.course.create({
@@ -22,7 +20,6 @@ export class CourseRepository implements ICourseRepository {
 				name: data.name.trim(),
 				defaultTotalHours: data.defaultTotalHours,
 			},
-			include: courseInclude,
 		});
 		return CourseModel.fromPrisma(course);
 	}
@@ -49,7 +46,6 @@ export class CourseRepository implements ICourseRepository {
 				skip,
 				take: limit,
 				orderBy: { [sortBy]: sortOrder },
-				include: courseInclude,
 			}),
 		]);
 		const totalPages = Math.ceil(total / limit);
@@ -69,7 +65,6 @@ export class CourseRepository implements ICourseRepository {
 	async findById(id: string, tutorId: string): Promise<CourseModel | null> {
 		const course = await prisma.course.findFirst({
 			where: { id, tutorId },
-			include: courseInclude,
 		});
 		return course ? CourseModel.fromPrisma(course) : null;
 	}
@@ -87,7 +82,6 @@ export class CourseRepository implements ICourseRepository {
 					? { defaultTotalHours: data.defaultTotalHours }
 					: {}),
 			},
-			include: courseInclude,
 		});
 		return CourseModel.fromPrisma(course);
 	}
@@ -99,7 +93,6 @@ export class CourseRepository implements ICourseRepository {
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === "P2025") return "not_found";
-				if (error.code === "P2003") return "in_use";
 			}
 			throw error;
 		}

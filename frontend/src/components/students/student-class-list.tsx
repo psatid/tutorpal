@@ -71,9 +71,6 @@ export function StudentClassList({
 							<p className="font-medium text-on-surface truncate">
 								{classItem.getDisplayName()}
 							</p>
-							<p className="text-xs text-on-surface-variant truncate">
-								{classItem.getCourseName() ?? "Custom class"}
-							</p>
 						</div>
 
 						<Badge

@@ -5,7 +5,6 @@ export const CourseSchema = z.object({
 	id: z.string().uuid(),
 	name: z.string(),
 	defaultTotalHours: z.number(),
-	classCount: z.number().int().nonnegative(),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
 });

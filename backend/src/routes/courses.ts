@@ -111,7 +111,7 @@ const courseRoutes = new Hono<AppEnv>()
 		"/:id",
 		describeRoute({
 			tags: ["courses"],
-			description: "Delete an unused course",
+			description: "Delete a course",
 			responses: {
 				204: { description: "Course deleted" },
 				401: {
@@ -122,12 +122,6 @@ const courseRoutes = new Hono<AppEnv>()
 				},
 				404: {
 					description: "Course not found",
-					content: {
-						"application/json": { schema: ErrorResponseSchemaResolver },
-					},
-				},
-				409: {
-					description: "Course still has classes",
 					content: {
 						"application/json": { schema: ErrorResponseSchemaResolver },
 					},

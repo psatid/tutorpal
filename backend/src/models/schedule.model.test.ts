@@ -22,8 +22,6 @@ const prismaSchedule = {
 	updatedAt,
 	class: {
 		name: "Algebra",
-		course: { name: "Mathematics" },
-		students: [],
 	},
 };
 
@@ -37,8 +35,6 @@ const prismaRecurringSchedule = {
 	updatedAt,
 	class: {
 		name: "Algebra",
-		course: { name: "Mathematics" },
-		students: [],
 	},
 	scheduleItems: [
 		{
@@ -69,7 +65,6 @@ describe("ScheduleModel", () => {
 			id: "schedule-1",
 			classId: "class-1",
 			className: "Algebra",
-			courseName: "Mathematics",
 			recurringScheduleId: "recurring-1",
 			date: "2026-07-01",
 			time: 540,
@@ -95,7 +90,6 @@ describe("RecurringScheduleModel", () => {
 			id: "recurring-1",
 			classId: "class-1",
 			className: "Algebra",
-			courseName: "Mathematics",
 			startDate: "2026-07-01",
 			notes: "Weekly practice",
 			type: "ON_SITE",

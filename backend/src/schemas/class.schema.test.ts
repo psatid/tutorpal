@@ -1,62 +1,124 @@
 import { describe, expect, test } from "bun:test";
 import {
+	ClassHourAdditionListQuerySchema,
 	ClassListQuerySchema,
+	CreateClassHourAdditionSchema,
 	CreateClassSchema,
 	UpdateClassSchema,
 } from "./class.schema";
 
 describe("class request contracts", () => {
-	test("accepts a course-linked class with course defaults", () => {
-		const result = CreateClassSchema.safeParse({
-			courseId: "course-1",
-			studentIds: ["student-1"],
-		});
-		expect(result.success).toBe(true);
+	test("creates a standalone class with no students and a trimmed name", () => {
+		const result = CreateClassSchema.parse({ name: "  Jane  " });
+		expect(result).toEqual({ name: "Jane" });
 	});
 
-	test("requires name and hours for a custom class", () => {
-		const result = CreateClassSchema.safeParse({
-			courseId: null,
-			studentIds: ["student-1"],
-		});
-		expect(result.success).toBe(false);
-	});
-
-	test("rejects empty and duplicate enrollments", () => {
+	test("rejects blank names, duplicate students, and removed course fields", () => {
+		expect(CreateClassSchema.safeParse({ name: "  " }).success).toBe(false);
 		expect(
 			CreateClassSchema.safeParse({
-				courseId: "course-1",
-				studentIds: [],
-			}).success,
-		).toBe(false);
-		expect(
-			CreateClassSchema.safeParse({
-				courseId: "course-1",
+				name: "Algebra",
 				studentIds: ["student-1", "student-1"],
 			}).success,
 		).toBe(false);
-	});
-
-	test("does not expose course association in class updates", () => {
-		const result = UpdateClassSchema.parse({
-			courseId: "another-course",
-			name: "Updated name",
-		});
-		expect(result).toEqual({ name: "Updated name" });
-	});
-
-	test("accepts class type filters and rejects ambiguous course filters", () => {
 		expect(
-			ClassListQuerySchema.safeParse({ classType: "custom" }).success,
-		).toBe(true);
-		expect(
-			ClassListQuerySchema.safeParse({ classType: "course-linked" }).success,
-		).toBe(true);
-		expect(
-			ClassListQuerySchema.safeParse({
+			CreateClassSchema.safeParse({
+				name: "Algebra",
 				courseId: "course-1",
-				classType: "custom",
 			}).success,
 		).toBe(false);
+	});
+
+	test("allows an explicit empty enrollment list when editing a class", () => {
+		expect(UpdateClassSchema.parse({ studentIds: [] })).toEqual({
+			studentIds: [],
+		});
+		expect(UpdateClassSchema.safeParse({ totalHours: 10 }).success).toBe(false);
+	});
+
+	test("accepts exactly one hour-addition source with a UUID request ID", () => {
+		const requestId = "0cfd69ef-6b4b-4a57-9f4a-c5ac83c2494c";
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "course",
+				courseId: "course-1",
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 2.25,
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 1.1,
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 2,
+				courseId: "course-1",
+				requestId,
+			}).success,
+		).toBe(false);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 1.234,
+				requestId,
+			}).success,
+		).toBe(false);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 0,
+				requestId,
+			}).success,
+		).toBe(false);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 1e-18,
+				requestId,
+			}).success,
+		).toBe(false);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 0.01,
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 99_999_999.99,
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 100_000_000,
+				requestId,
+			}).success,
+		).toBe(false);
+	});
+
+	test("uses the agreed class and hour-history pagination defaults", () => {
+		expect(ClassListQuerySchema.parse({})).toMatchObject({
+			page: 1,
+			limit: 10,
+		});
+		expect(ClassHourAdditionListQuerySchema.parse({})).toEqual({
+			page: 1,
+			limit: 20,
+		});
 	});
 });

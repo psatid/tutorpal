@@ -63,7 +63,9 @@ const recurringScheduleFormSchema = z.object({
 type RecurringScheduleFormData = z.infer<typeof recurringScheduleFormSchema>;
 
 interface RecurringScheduleDrawerProps {
+	hasNoAvailableHours: boolean;
 	isOpen: boolean;
+	onAddHours: () => void;
 	onOpenChange: (open: boolean) => void;
 	classId: string;
 	recurringSchedule?: RecurringScheduleSummary | null;
@@ -256,7 +258,9 @@ function RecurringWeekdayTimeSelector({
 }
 
 export function RecurringScheduleDrawer({
+	hasNoAvailableHours,
 	isOpen,
+	onAddHours,
 	onOpenChange,
 	classId,
 	recurringSchedule,
@@ -268,6 +272,7 @@ export function RecurringScheduleDrawer({
 		null,
 	);
 	const mode = recurringSchedule ? "edit" : "create";
+	const isCreateUnavailable = mode === "create" && hasNoAvailableHours;
 	const createMutation = useCreateSchedule({
 		onSuccess: () => {
 			onOpenChange(false);
@@ -323,7 +328,7 @@ export function RecurringScheduleDrawer({
 	}, [effectiveDate, recurringSchedule, schedules]);
 
 	const submitValues = (values: RecurringScheduleFormData) => {
-		if (!values.type) {
+		if (isCreateUnavailable || !values.type) {
 			return;
 		}
 
@@ -371,6 +376,7 @@ export function RecurringScheduleDrawer({
 	const footer = (
 		<Button
 			className="w-full md:w-fit"
+			disabled={isCreateUnavailable}
 			form={RECURRING_SCHEDULE_DRAWER_FORM_ID}
 			loading={createMutation.isPending || updateRecurringMutation.isPending}
 			type="submit"
@@ -400,6 +406,22 @@ export function RecurringScheduleDrawer({
 					id={RECURRING_SCHEDULE_DRAWER_FORM_ID}
 					onSubmit={handleSubmit(submitValues)}
 				>
+				{isCreateUnavailable ? (
+					<div className="rounded-lg border border-border bg-muted/50 p-4">
+						<p className="text-sm text-foreground">
+							{t("schedules:recurring.noAvailabilityDescription")}
+						</p>
+						<Button
+							className="mt-3"
+							onClick={onAddHours}
+							size="sm"
+							type="button"
+							variant="outline"
+						>
+							{t("schedules:recurring.addHoursAction")}
+						</Button>
+					</div>
+				) : null}
 				<div className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3">
 					<p className="text-sm font-medium text-on-surface">
 						{t("schedules:recurring.untouchedTitle")}

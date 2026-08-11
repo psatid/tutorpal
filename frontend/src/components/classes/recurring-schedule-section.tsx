@@ -11,6 +11,8 @@ import {
 import { minutesToTimeString, type RecurringScheduleSummary, type Weekday } from "@/types/schedule";
 
 interface RecurringScheduleSectionProps {
+	hasNoAvailableHours: boolean;
+	onAddHours: () => void;
 	recurringSchedule?: RecurringScheduleSummary | null;
 	onEdit: () => void;
 	onCreate: () => void;
@@ -56,6 +58,8 @@ function formatRecurringItems(
 }
 
 export function RecurringScheduleSection({
+	hasNoAvailableHours,
+	onAddHours,
 	recurringSchedule,
 	onEdit,
 	onCreate,
@@ -78,17 +82,21 @@ export function RecurringScheduleSection({
 								{t("schedules:recurring.sectionTitle")}
 							</p>
 							<p className="max-w-[34ch] text-sm leading-6 text-on-surface-variant">
-								{t("schedules:recurring.emptyDescription")}
+								{hasNoAvailableHours
+									? t("schedules:recurring.noAvailabilityDescription")
+									: t("schedules:recurring.emptyDescription")}
 							</p>
 						</div>
 					</div>
 					<Button
-						variant="outline"
-						size="sm"
-						onClick={onCreate}
 						className="w-full sm:w-auto"
+						onClick={hasNoAvailableHours ? onAddHours : onCreate}
+						size="sm"
+						variant="outline"
 					>
-						{t("schedules:recurring.createAction")}
+						{hasNoAvailableHours
+							? t("schedules:recurring.addHoursAction")
+							: t("schedules:recurring.createAction")}
 					</Button>
 				</div>
 			</div>

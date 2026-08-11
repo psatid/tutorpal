@@ -21,11 +21,6 @@ export const SIDE_BAR_CONFIG = [
     icon: CalendarCheck2Icon,
   },
   {
-    labelKey: "navigation:students",
-    href: APP_ROUTES.STUDENTS,
-    icon: UsersIcon,
-  },
-  {
     labelKey: "navigation:courses",
     href: APP_ROUTES.COURSES,
     icon: BookOpenIcon,
@@ -34,5 +29,10 @@ export const SIDE_BAR_CONFIG = [
     labelKey: "navigation:settings",
     href: APP_ROUTES.SETTINGS,
     icon: SettingsIcon,
+  },
+  {
+    labelKey: "navigation:students",
+    href: APP_ROUTES.STUDENTS,
+    icon: UsersIcon,
   },
 ] as const;

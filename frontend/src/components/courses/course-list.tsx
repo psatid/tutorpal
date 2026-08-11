@@ -6,7 +6,6 @@ interface CourseListProps {
 	courses: Course[];
 	onDelete: (course: Course, index: number) => void;
 	onEdit: (course: Course) => void;
-	onViewClasses: (course: Course) => void;
 }
 
 export function CourseList({
@@ -14,7 +13,6 @@ export function CourseList({
 	courses,
 	onDelete,
 	onEdit,
-	onViewClasses,
 }: CourseListProps) {
 	return (
 		<ul className="overflow-hidden rounded-lg border border-border bg-card">
@@ -24,7 +22,6 @@ export function CourseList({
 					course={course}
 					onDelete={() => onDelete(course, index)}
 					onEdit={() => onEdit(course)}
-					onViewClasses={() => onViewClasses(course)}
 					key={course.getId()}
 				/>
 			))}

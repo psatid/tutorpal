@@ -8,11 +8,6 @@ const prismaClass = {
 	id: "class-1",
 	tutorId: "tutor-1",
 	name: "Algebra",
-	course: {
-		id: "course-1",
-		name: "Mathematics",
-		defaultTotalHours: { toNumber: () => 20 },
-	},
 	totalHours: {
 		toNumber: () => 12.5,
 	},
@@ -31,7 +26,7 @@ const prismaClass = {
 };
 
 describe("ClassModel", () => {
-	test("converts a Prisma class record into a model", () => {
+	test("converts a standalone Prisma class record into a model", () => {
 		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
 
 		expect(classModel.id).toBe("class-1");
@@ -44,26 +39,22 @@ describe("ClassModel", () => {
 		expect(classModel.updatedAt).toBe(updatedAt);
 	});
 
-	test("converts enrolled students into the existing DTO shape", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
+	test("keeps student enrollment optional in the class DTO", () => {
+		const classModel = ClassModel.fromClassPrisma({
+			...prismaClass,
+			students: [],
+		});
 
-		expect(classModel.toClassDTO().students).toEqual([
-			{
-				id: "student-1",
-				name: "Jane Student",
-				phoneNumber: "0812345678",
-				grade: 9,
-			},
-		]);
+		expect(classModel.toClassDTO().students).toEqual([]);
+		expect(classModel.toClassDTO().remainingHours).toBe(12.5);
 	});
 
-	test("preserves remaining hours and serializes the existing class DTO shape", () => {
+	test("serializes a standalone class without course context", () => {
 		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
 
 		expect(classModel.toClassDTO()).toEqual({
 			id: "class-1",
 			tutorId: "tutor-1",
-			course: { id: "course-1", name: "Mathematics", defaultTotalHours: 20 },
 			name: "Algebra",
 			displayName: "Algebra",
 			totalHours: 12.5,
@@ -82,7 +73,7 @@ describe("ClassModel", () => {
 		});
 	});
 
-	test("serializes latest recurring schedule summaries", () => {
+	test("serializes latest recurring schedule summaries without course context", () => {
 		const classModel = ClassModel.fromClassPrisma(
 			{
 				...prismaClass,
@@ -113,7 +104,6 @@ describe("ClassModel", () => {
 			id: "recurring-1",
 			classId: "class-1",
 			className: "Algebra",
-			courseName: "Mathematics",
 			startDate: "2026-07-01",
 			notes: "Weekly practice",
 			type: "ONLINE",
@@ -128,31 +118,5 @@ describe("ClassModel", () => {
 				},
 			],
 		});
-	});
-
-	test("derives a class name from students when a linked class has no custom name", () => {
-		const classModel = ClassModel.fromClassPrisma({
-			...prismaClass,
-			name: null,
-			students: [
-				prismaClass.students[0] ?? {
-					student: {
-						id: "student-1",
-						name: "Aom",
-						phoneNumber: null,
-						grade: 9,
-					},
-				},
-				{
-					student: {
-						id: "student-2",
-						name: "Beam",
-						phoneNumber: null,
-						grade: 9,
-					},
-				},
-			],
-		});
-		expect(classModel.displayName).toBe("Jane Student & Beam");
 	});
 });

@@ -5,12 +5,9 @@ import type {
 	RecurringScheduleUpdateResultDTO,
 	ScheduleDTO,
 } from "../types/schedule.types";
-import { getClassDisplayName } from "./class-display-name";
 
 type ClassContext = {
-	name: string | null;
-	course?: { name: string } | null;
-	students?: Array<{ student: { name: string } }>;
+	name: string;
 };
 
 type SchedulePrismaRecord = {
@@ -47,12 +44,7 @@ type RecurringSchedulePrismaRecord = {
 
 function classContext(item: ClassContext) {
 	return {
-		className: getClassDisplayName(
-			item.name,
-			(item.students ?? []).map((enrollment) => enrollment.student),
-			item.course?.name,
-		),
-		courseName: item.course?.name ?? null,
+		className: item.name,
 	};
 }
 
@@ -60,7 +52,6 @@ export class ScheduleModel {
 	readonly id!: string;
 	readonly classId!: string;
 	readonly className!: string;
-	readonly courseName!: string | null;
 	readonly recurringScheduleId?: string | null;
 	readonly date!: Date;
 	readonly time!: number;
@@ -102,7 +93,6 @@ export class ScheduleModel {
 			id: this.id,
 			classId: this.classId,
 			className: this.className,
-			courseName: this.courseName,
 			recurringScheduleId: this.recurringScheduleId ?? null,
 			date: DateTime.from(this.date).toDateOnlyString(),
 			time: this.time,
@@ -121,7 +111,6 @@ export class RecurringScheduleModel {
 	readonly id!: string;
 	readonly classId!: string;
 	readonly className!: string;
-	readonly courseName!: string | null;
 	readonly startDate!: Date;
 	readonly notes!: string | null;
 	readonly type!: ScheduleType;
@@ -154,7 +143,6 @@ export class RecurringScheduleModel {
 			id: this.id,
 			classId: this.classId,
 			className: this.className,
-			courseName: this.courseName,
 			startDate: DateTime.from(this.startDate).toDateOnlyString(),
 			notes: this.notes,
 			type: this.type,

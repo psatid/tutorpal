@@ -10,7 +10,6 @@ export interface ScheduleDTO {
 	id: string;
 	classId: string;
 	className: string;
-	courseName: string | null;
 	recurringScheduleId?: string | null;
 	date: string; // ISO date string (YYYY-MM-DD)
 	time: number; // Minutes since midnight
@@ -65,7 +64,6 @@ export interface RecurringScheduleDTO {
 	id: string;
 	classId: string;
 	className: string;
-	courseName: string | null;
 	startDate: string;
 	notes: string | null;
 	type: ScheduleType;

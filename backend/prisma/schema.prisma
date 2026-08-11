@@ -37,8 +37,7 @@ model Course {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  tutor   Tutor   @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  classes Class[]
+  tutor Tutor @relation(fields: [tutorId], references: [id], onDelete: Cascade)
 
   @@index([tutorId])
   @@index([tutorId, name])
@@ -48,21 +47,43 @@ model Course {
 model Class {
   id         String   @id @default(uuid())
   tutorId    String
-  courseId   String?
-  name       String?
-  totalHours Decimal  @db.Decimal(10, 2)
+  name       String
+  totalHours Decimal  @default(0) @db.Decimal(10, 2)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   tutor              Tutor              @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  course             Course?            @relation(fields: [courseId], references: [id], onDelete: Restrict)
   students           ClassEnrollment[]
   schedules          Schedule[]
   recurringSchedules RecurringSchedule[]
+  hourAdditions      ClassHourAddition[]
 
   @@index([tutorId])
-  @@index([courseId])
   @@map("classes")
+}
+
+enum ClassHourAdditionSource {
+  COURSE
+  CUSTOM
+
+  @@map("class_hour_addition_source")
+}
+
+model ClassHourAddition {
+  id               String                  @id @default(uuid())
+  classId          String
+  source           ClassHourAdditionSource
+  hours            Decimal                 @db.Decimal(10, 2)
+  sourceCourseId   String?
+  sourceCourseName String?
+  requestId        String                  @db.Uuid
+  createdAt        DateTime                @default(now())
+
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, requestId])
+  @@index([classId, createdAt, id])
+  @@map("class_hour_additions")
 }
 
 // Join table for many-to-many relationship

@@ -1,190 +1,190 @@
-import { useState, useMemo } from "react";
 import { Check, Search, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useStudents } from "@/hooks/queries/use-students";
+import { cn } from "@/lib/utils";
 
 interface StudentSelectorDrawerProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedIds: string[];
-  onChange: (selectedIds: string[]) => void;
+	isOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+	selectedIds: string[];
+	onChange: (selectedIds: string[]) => void;
 }
 
 export function StudentSelectorDrawer({
-  isOpen,
-  onOpenChange,
-  selectedIds,
-  onChange,
+	isOpen,
+	onOpenChange,
+	selectedIds,
+	onChange,
 }: StudentSelectorDrawerProps) {
-  const { t } = useTranslation(["classes", "students"]);
-  const { data: studentsData, isLoading } = useStudents();
-  const students = studentsData?.students ?? [];
-  const [searchQuery, setSearchQuery] = useState("");
-  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedIds);
+	const { t } = useTranslation(["classes", "students", "common"]);
+	const { data: studentsData, isLoading } = useStudents({
+		limit: 100,
+		sortBy: "name",
+		sortOrder: "asc",
+	});
+	const students = studentsData?.students ?? [];
+	const [searchQuery, setSearchQuery] = useState("");
+	const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([]);
 
-  // Filter students based on search query
-  const filteredStudents = useMemo(() => {
-    if (!students) return [];
-    if (!searchQuery.trim()) return students;
+	useEffect(() => {
+		if (!isOpen) return;
+		setLocalSelectedIds(selectedIds);
+		setSearchQuery("");
+	}, [isOpen, selectedIds]);
 
-    const query = searchQuery.toLowerCase();
-    return students.filter(
-      (student) =>
-        student.getName().toLowerCase().includes(query) ||
-        student.getGrade().toString().includes(query)
-    );
-  }, [students, searchQuery]);
+	const filteredStudents = useMemo(() => {
+		const query = searchQuery.trim().toLocaleLowerCase();
+		if (!query) return students;
 
-  const handleToggleStudent = (studentId: string) => {
-    setLocalSelectedIds((prev) =>
-      prev.includes(studentId)
-        ? prev.filter((id) => id !== studentId)
-        : [...prev, studentId]
-    );
-  };
+		return students.filter(
+			(student) =>
+				student.getName().toLocaleLowerCase().includes(query) ||
+				student.getGrade().toString().includes(query),
+		);
+	}, [searchQuery, students]);
 
-  const handleSelectAll = () => {
-    if (filteredStudents.length === 0) return;
-    const allIds = filteredStudents.map((student) => student.getId());
-    const allSelected = allIds.every((id) => localSelectedIds.includes(id));
+	function toggleStudent(studentId: string) {
+		setLocalSelectedIds((currentIds) =>
+			currentIds.includes(studentId)
+				? currentIds.filter((id) => id !== studentId)
+				: [...currentIds, studentId],
+		);
+	}
 
-    if (allSelected) {
-      // Deselect all visible
-      setLocalSelectedIds((prev) =>
-        prev.filter((id) => !allIds.includes(id))
-      );
-    } else {
-      // Select all visible
-      setLocalSelectedIds((prev) => {
-        const newIds = allIds.filter((id) => !prev.includes(id));
-        return [...prev, ...newIds];
-      });
-    }
-  };
+	function toggleVisibleStudents() {
+		const visibleIds = filteredStudents.map((student) => student.getId());
+		if (visibleIds.length === 0) return;
 
-  const handleDone = () => {
-    onChange(localSelectedIds);
-    onOpenChange(false);
-  };
+		const allVisibleSelected = visibleIds.every((id) =>
+			localSelectedIds.includes(id),
+		);
+		setLocalSelectedIds((currentIds) =>
+			allVisibleSelected
+				? currentIds.filter((id) => !visibleIds.includes(id))
+				: [...currentIds, ...visibleIds.filter((id) => !currentIds.includes(id))],
+		);
+	}
 
-  const handleClose = () => {
-    // Reset local state to original when closing without saving
-    setLocalSelectedIds(selectedIds);
-    setSearchQuery("");
-    onOpenChange(false);
-  };
+	function close() {
+		setSearchQuery("");
+		onOpenChange(false);
+	}
 
-  const selectedCount = localSelectedIds.length;
-  const allVisibleSelected =
-    filteredStudents.length > 0 &&
-    filteredStudents.every((student) => localSelectedIds.includes(student.getId()));
+	const allVisibleSelected =
+		filteredStudents.length > 0 &&
+		filteredStudents.every((student) =>
+			localSelectedIds.includes(student.getId()),
+		);
 
-  return (
-    <ResponsiveDrawer
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) handleClose();
-      }}
-      title={t("classes:selector.title")}
-      layer="nested"
-      headerContent={
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm text-muted-foreground">
-              {t("classes:selector.selectedCount", { count: selectedCount })}
-            </span>
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              disabled={filteredStudents.length === 0}
-              className="min-h-11 rounded-full px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {allVisibleSelected
-                ? t("classes:selector.deselectAll")
-                : t("classes:selector.selectAll")}
-            </button>
-          </div>
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t("classes:selector.searchPlaceholder")}
-            leftIcon={Search}
-          />
-        </div>
-      }
-      footer={
-        <Button onClick={handleDone} className="w-full" leftIcon={Check}>
-          {t("classes:selector.done", { count: selectedCount })}
-        </Button>
-      }
-    >
-      <div className="min-h-0">
-                {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                    <div className="animate-pulse w-12 h-12 rounded-full bg-surface-variant" />
-                    <div className="animate-pulse h-4 w-32 bg-surface-variant rounded" />
-                  </div>
-                ) : filteredStudents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Users className="w-12 h-12 text-surface-variant mb-3" />
-                    <p className="text-on-surface-variant">
-                      {searchQuery
-                        ? t("classes:selector.noResults")
-                        : t("classes:selector.noStudents")}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredStudents.map((student) => {
-                      const isSelected = localSelectedIds.includes(student.getId());
-                      return (
-                        <button
-						  key={student.getId()}
-						  type="button"
-                          onClick={() => handleToggleStudent(student.getId())}
-                          className={`
-                            w-full flex items-center gap-3 p-3 rounded-xl transition-all
-                            ${
-                              isSelected
-                                ? "bg-primary-container"
-                                : "bg-surface-container-low hover:bg-surface-container"
-                            }
-                          `}
-                        >
-                          {/* Checkbox */}
-                          <div
-                            className={`
-                              w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors
-                              ${
-                                isSelected
-                                  ? "bg-primary border-primary"
-                                  : "border-outline bg-surface"
-                              }
-                            `}
-                          >
-                            {isSelected && (
-                              <Check className="w-4 h-4 text-on-primary" />
-                            )}
-                          </div>
+	return (
+		<ResponsiveDrawer
+			footer={
+				<Button
+					className="w-full md:w-fit"
+					leftIcon={Check}
+					onClick={() => {
+						onChange(localSelectedIds);
+						close();
+					}}
+					type="button"
+				>
+					{t("classes:selector.done", { count: localSelectedIds.length })}
+				</Button>
+			}
+			headerContent={
+				<div className="space-y-3">
+					<div className="flex items-center justify-between gap-3">
+						<span className="text-sm text-muted-foreground">
+							{t("classes:selector.selectedCount", {
+								count: localSelectedIds.length,
+							})}
+						</span>
+						<Button
+							disabled={filteredStudents.length === 0}
+							onClick={toggleVisibleStudents}
+							size="sm"
+							type="button"
+							variant="ghost"
+						>
+							{allVisibleSelected
+								? t("classes:selector.deselectAll")
+								: t("classes:selector.selectAll")}
+						</Button>
+					</div>
+					<Input
+						leftIcon={Search}
+						onChange={(event) => setSearchQuery(event.target.value)}
+						placeholder={t("classes:selector.searchPlaceholder")}
+						value={searchQuery}
+					/>
+				</div>
+			}
+			layer="nested"
+			onOpenChange={(open) => {
+				if (!open) close();
+			}}
+			open={isOpen}
+			title={t("classes:selector.title")}
+		>
+			{isLoading ? (
+				<div aria-label={t("common:loading")} className="space-y-3" role="status">
+					<Skeleton className="h-14 w-full" />
+					<Skeleton className="h-14 w-full" />
+					<Skeleton className="h-14 w-full" />
+				</div>
+			) : filteredStudents.length === 0 ? (
+				<div className="flex min-h-48 flex-col items-center justify-center px-4 text-center">
+					<Users aria-hidden="true" className="mb-3 size-10 text-muted-foreground" />
+					<p className="text-sm text-muted-foreground">
+						{searchQuery
+							? t("classes:selector.noResults")
+							: t("classes:selector.noStudents")}
+					</p>
+				</div>
+			) : (
+				<ul className="divide-y divide-border rounded-lg border border-border">
+					{filteredStudents.map((student) => {
+						const isSelected = localSelectedIds.includes(student.getId());
 
-                          {/* Student Info */}
-                          <div className="flex-1 text-left">
-                            <p className="font-medium text-on-surface">
-                              {student.getName()}
-                            </p>
-                            <p className="text-sm text-on-surface-variant">
-                              {t("students:grade", { grade: student.getGrade() })}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-      </div>
-    </ResponsiveDrawer>
-  );
+						return (
+							<li key={student.getId()}>
+								<button
+									aria-pressed={isSelected}
+									className={cn(
+										"flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+										isSelected && "bg-primary/5",
+									)}
+									onClick={() => toggleStudent(student.getId())}
+									type="button"
+								>
+									<span
+										aria-hidden="true"
+										className={cn(
+											"flex size-5 shrink-0 items-center justify-center rounded border border-input",
+											isSelected && "border-primary bg-primary text-primary-foreground",
+										)}
+									>
+										{isSelected ? <Check className="size-3.5" /> : null}
+									</span>
+									<span className="min-w-0">
+										<span className="block truncate text-sm font-medium text-foreground">
+											{student.getName()}
+										</span>
+										<span className="block text-sm text-muted-foreground">
+											{t("students:grade", { grade: student.getGrade() })}
+										</span>
+									</span>
+								</button>
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</ResponsiveDrawer>
+	);
 }
