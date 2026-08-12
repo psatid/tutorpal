@@ -1,5 +1,6 @@
 # Feature Implementation History
 
+- [Home Today Hub — August 12, 2026](home-today-hub.md)
 - [Standalone Classes and Hour Additions — August 11, 2026](standalone-classes-and-hour-additions.md)
 - [Weekly Schedule Timeline — August 9, 2026](weekly-schedule-timeline.md)
 - [Schedule Completion and Class-Hour Tracking — April 23, 2026](schedule-class-hours.md)

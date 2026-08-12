@@ -89,6 +89,7 @@ export default {
 		},
 	},
 	view: "View",
+	actionsFor: "Actions for {{name}}",
 	remainingHours: "{{hours}}h remaining",
 	drawer: {
 		createTitle: "Add New Schedule",

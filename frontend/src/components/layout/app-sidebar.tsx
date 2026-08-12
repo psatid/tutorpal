@@ -3,11 +3,15 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { triggerEdgeDrawer } from "tailwindcss-jun-layout";
-import { isNavigationItemActive } from "./navigation-items";
-import { SIDE_BAR_CONFIG } from "./sidebar-config";
+import {
+  GroupedNavigationItem,
+  isNavigationItemActive,
+  SIDE_BAR_CONFIG,
+  SingleNavigationItem,
+} from "./sidebar-config";
 import {
   RailCollapse,
   TriggerLeftSidebarCollapse,
@@ -20,7 +24,9 @@ export const AppSidebar = () => {
   const { session } = useSession();
   const location = useLocation();
   const currentNavigationItem = SIDE_BAR_CONFIG.find((item) =>
-    isNavigationItemActive(location.pathname, item.href),
+    "href" in item
+      ? isNavigationItemActive(location.pathname, item)
+      : undefined,
   );
   const isSettingsRoute =
     location.pathname === APP_ROUTES.SETTINGS ||
@@ -80,31 +86,17 @@ export const AppSidebar = () => {
             <nav className="jun-sidebarGroup" aria-label="Primary navigation">
               <ul className="jun-sidebarMenu">
                 {SIDE_BAR_CONFIG.map((item) => {
-                  const active = isNavigationItemActive(
-                    location.pathname,
-                    item.href,
-                  );
-                  const label = t(item.labelKey);
+                  if ("href" in item) {
+                    return (
+                      <NavigationLink key={item.href} navigationItem={item} />
+                    );
+                  }
 
-                  return (
-                    <li className="jun-sidebarMenuItem" key={item.href}>
-                      <Link
-                        aria-current={active ? "page" : undefined}
-                        aria-label={label}
-                        className={cn(
-                          "jun-sidebarMenuButton",
-                          active &&
-                            "text-primary hover:text-primary font-semibold",
-                        )}
-                        preload="intent"
-                        to={item.href}
-                        onClick={() => triggerEdgeDrawer()}
-                      >
-                        <item.icon className="jun-sidebarIcon size-4" />
-                        <span className="jun-sidebarText">{label}</span>
-                      </Link>
-                    </li>
-                  );
+                  if ("items" in item) {
+                    return <CollapsibleMenu key={item.labelKey} menu={item} />;
+                  }
+
+                  return null;
                 })}
               </ul>
             </nav>
@@ -144,5 +136,79 @@ export const AppSidebar = () => {
         <RailCollapse />
       </aside>
     </>
+  );
+};
+
+const NavigationLink = ({
+  navigationItem,
+  variant = "default",
+}: {
+  navigationItem: SingleNavigationItem;
+  variant?: "default" | "nested";
+}) => {
+  const { t } = useTranslation(["navigation", "settings"]);
+  const location = useLocation();
+  const active = isNavigationItemActive(location.pathname, navigationItem);
+  const label = t(navigationItem.labelKey);
+  return (
+    <li className="jun-sidebarMenuItem" key={navigationItem.href}>
+      <Link
+        aria-current={active ? "page" : undefined}
+        aria-label={label}
+        className={cn(
+          "jun-sidebarMenuButton",
+          active && "text-primary hover:text-primary font-semibold",
+        )}
+        preload="intent"
+        to={navigationItem.href}
+        onClick={() => triggerEdgeDrawer()}
+      >
+        {variant !== "nested" && (
+          <navigationItem.icon className="jun-sidebarIcon size-4" />
+        )}
+        <span className="jun-sidebarText">{label}</span>
+      </Link>
+    </li>
+  );
+};
+
+const CollapsibleMenu = ({ menu }: { menu: GroupedNavigationItem }) => {
+  const { t } = useTranslation(["navigation", "settings"]);
+
+  return (
+    <ul className="jun-sidebarMenu">
+      <li className="jun-sidebarMenuItem">
+        <label
+          className="jun-sidebarMenuButton peer has-focus-visible:outline has-focus-visible:outline-blue-600"
+          htmlFor="collapsible-menu-1"
+        >
+          <menu.icon className="jun-sidebarIcon" />
+          <div className="jun-sidebarText flex items-center">
+            <span className="min-w-0 flex-1">{t(menu.labelKey)}</span>
+          </div>
+          <ChevronUp className="size-4 has-[+_:checked]:rotate-180 absolute right-2 transition-transform" />
+          <input
+            type="checkbox"
+            className="sr-only"
+            id="collapsible-menu-1"
+            defaultChecked={false}
+          />
+        </label>
+
+        <div className="jun-sidebarGroupText peer-has-checked:jun-sidebarGroupText-hidden peer-has-checked:invisible peer-has-checked:opacity-0">
+          <div>
+            <ul className="jun-sidebarMenu jun-sidebarMenu-nested">
+              {menu.items.map((item) => (
+                <NavigationLink
+                  key={item.href}
+                  navigationItem={item}
+                  variant="nested"
+                />
+              ))}
+            </ul>
+          </div>
+        </div>
+      </li>
+    </ul>
   );
 };
