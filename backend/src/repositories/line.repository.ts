@@ -1,9 +1,12 @@
+import type { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { DateTime } from "../lib/date-time";
-import { prisma } from "../lib/db";
+import { prisma as defaultPrisma } from "../lib/db";
 import type { ILineRepository, StoredLineConnection } from "../types";
 
 export class LineRepository implements ILineRepository {
+	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
+
 	async createToken(
 		studentId: string,
 		connectionId: string,
@@ -11,7 +14,7 @@ export class LineRepository implements ILineRepository {
 		const token = uuidv4();
 		const expiresAt = DateTime.now().addHours(24).toDate();
 
-		await prisma.lineLinkToken.create({
+		await this.prisma.lineLinkToken.create({
 			data: { studentId, connectionId, token, expiresAt },
 		});
 
@@ -19,7 +22,7 @@ export class LineRepository implements ILineRepository {
 	}
 
 	async findValidToken(token: string) {
-		const record = await prisma.lineLinkToken.findUnique({
+		const record = await this.prisma.lineLinkToken.findUnique({
 			where: { token },
 		});
 		if (!record) return null;
@@ -29,7 +32,7 @@ export class LineRepository implements ILineRepository {
 	}
 
 	async markTokenUsed(tokenId: string): Promise<void> {
-		await prisma.lineLinkToken.update({
+		await this.prisma.lineLinkToken.update({
 			where: { id: tokenId },
 			data: { usedAt: DateTime.now().toDate() },
 		});
@@ -38,17 +41,17 @@ export class LineRepository implements ILineRepository {
 	async findConnectionByTutorId(
 		tutorId: string,
 	): Promise<StoredLineConnection | null> {
-		return prisma.tutorLineConnection.findUnique({ where: { tutorId } });
+		return this.prisma.tutorLineConnection.findUnique({ where: { tutorId } });
 	}
 
 	async findConnectionById(id: string): Promise<StoredLineConnection | null> {
-		return prisma.tutorLineConnection.findUnique({ where: { id } });
+		return this.prisma.tutorLineConnection.findUnique({ where: { id } });
 	}
 
 	async upsertConnection(
 		data: Omit<StoredLineConnection, "id" | "lastVerifiedAt">,
 	): Promise<StoredLineConnection> {
-		return prisma.tutorLineConnection.upsert({
+		return this.prisma.tutorLineConnection.upsert({
 			where: { tutorId: data.tutorId },
 			create: data,
 			update: {
@@ -69,14 +72,14 @@ export class LineRepository implements ILineRepository {
 	): Promise<{ token: string; expiresAt: Date }> {
 		const token = uuidv4();
 		const expiresAt = DateTime.now().addHours(1).toDate();
-		await prisma.lineTestRecipientToken.create({
+		await this.prisma.lineTestRecipientToken.create({
 			data: { connectionId, token, expiresAt },
 		});
 		return { token, expiresAt };
 	}
 
 	async findValidTestRecipientToken(token: string) {
-		const record = await prisma.lineTestRecipientToken.findUnique({
+		const record = await this.prisma.lineTestRecipientToken.findUnique({
 			where: { token },
 		});
 		if (
@@ -90,7 +93,7 @@ export class LineRepository implements ILineRepository {
 	}
 
 	async markTestRecipientTokenUsed(tokenId: string): Promise<void> {
-		await prisma.lineTestRecipientToken.update({
+		await this.prisma.lineTestRecipientToken.update({
 			where: { id: tokenId },
 			data: { usedAt: DateTime.now().toDate() },
 		});
@@ -100,7 +103,7 @@ export class LineRepository implements ILineRepository {
 		connectionId: string,
 		lineUserId: string,
 	): Promise<void> {
-		await prisma.tutorLineConnection.update({
+		await this.prisma.tutorLineConnection.update({
 			where: { id: connectionId },
 			data: { testRecipientLineUserId: lineUserId },
 		});

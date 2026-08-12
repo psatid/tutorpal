@@ -1,19 +1,15 @@
 import { DateTime } from "../lib/date-time";
-import { ENV } from "../lib/env";
 import { AppError } from "../lib/error";
-import type { LineBotInfo } from "../lib/line";
 import {
-	buildLineAuthUrl,
-	exchangeCodeForToken,
-	getLineBotInfo,
-	getLineProfile,
-	sendLinePushMessage,
-	validateLineRecipient,
+	createLineClient,
+	type LineBotInfo,
+	type LineClient,
 } from "../lib/line";
 import {
-	decryptLineCredential,
-	encryptLineCredential,
+	createLineCredentialCipher,
+	type LineCredentialCipher,
 } from "../lib/line-credentials";
+import { getLocalAppConfig } from "../lib/local-config";
 import type {
 	ILineRepository,
 	IStudentRepository,
@@ -21,20 +17,50 @@ import type {
 	StoredLineConnection,
 } from "../types";
 
+export type LineServiceRuntimeDependencies = {
+	frontendUrl: string;
+	lineClient: LineClient;
+	credentialCipher: LineCredentialCipher;
+};
+
+function createLocalLineServiceRuntimeDependencies(): LineServiceRuntimeDependencies {
+	const config = getLocalAppConfig();
+
+	return {
+		frontendUrl: config.FRONTEND_URL,
+		lineClient: createLineClient(config),
+		credentialCipher: createLineCredentialCipher(
+			config.LINE_CREDENTIALS_ENCRYPTION_KEY,
+		),
+	};
+}
+
 export class LineService {
+	private runtimeDependencies: LineServiceRuntimeDependencies | undefined;
+
 	constructor(
 		private readonly repository: ILineRepository,
 		private readonly studentRepository: IStudentRepository,
-	) {}
+		runtimeDependencies?: LineServiceRuntimeDependencies,
+	) {
+		this.runtimeDependencies = runtimeDependencies;
+	}
+
+	private getRuntimeDependencies() {
+		this.runtimeDependencies ??= createLocalLineServiceRuntimeDependencies();
+		return this.runtimeDependencies;
+	}
 
 	private credentials(connection: StoredLineConnection) {
+		const { credentialCipher } = this.getRuntimeDependencies();
+
 		return {
-			messagingAccessToken: decryptLineCredential(
+			messagingAccessToken: credentialCipher.decrypt(
 				connection.messagingAccessTokenEncrypted,
 			),
 			login: {
 				channelId: connection.loginChannelId,
-				channelSecret: decryptLineCredential(
+				channelSecret: credentialCipher.decrypt(
 					connection.loginChannelSecretEncrypted,
 				),
 			},
@@ -58,7 +84,9 @@ export class LineService {
 	async saveConnection(tutorId: string, input: SaveLineConnectionDTO) {
 		let bot: LineBotInfo;
 		try {
-			bot = await getLineBotInfo(input.messagingAccessToken);
+			bot = await this.getRuntimeDependencies().lineClient.getLineBotInfo(
+				input.messagingAccessToken,
+			);
 		} catch {
 			throw AppError.badRequest(
 				"LINE_CREDENTIALS_INVALID",
@@ -71,13 +99,14 @@ export class LineService {
 			await this.studentRepository.invalidateLineLinks(tutorId, existing.id);
 		}
 
+		const { credentialCipher } = this.getRuntimeDependencies();
 		const connection = await this.repository.upsertConnection({
 			tutorId,
-			messagingAccessTokenEncrypted: encryptLineCredential(
+			messagingAccessTokenEncrypted: credentialCipher.encrypt(
 				input.messagingAccessToken,
 			),
 			loginChannelId: input.loginChannelId,
-			loginChannelSecretEncrypted: encryptLineCredential(
+			loginChannelSecretEncrypted: credentialCipher.encrypt(
 				input.loginChannelSecret,
 			),
 			accountName: bot.displayName,
@@ -121,7 +150,7 @@ export class LineService {
 			studentId,
 			connection.id,
 		);
-		const linkUrl = `${ENV.FRONTEND_URL}/line-link?token=${token}`;
+		const linkUrl = `${this.getRuntimeDependencies().frontendUrl}/line-link?token=${token}`;
 
 		return {
 			token,
@@ -148,7 +177,10 @@ export class LineService {
 				"This LINE connection is no longer available.",
 			);
 		}
-		const authUrl = buildLineAuthUrl(token, connection.loginChannelId);
+		const authUrl = this.getRuntimeDependencies().lineClient.buildLineAuthUrl(
+			token,
+			connection.loginChannelId,
+		);
 		return { authUrl };
 	}
 
@@ -169,8 +201,12 @@ export class LineService {
 			);
 		}
 		const credentials = this.credentials(connection);
-		const tokenResponse = await exchangeCodeForToken(code, credentials.login);
-		const profile = await getLineProfile(tokenResponse.access_token);
+		const { lineClient } = this.getRuntimeDependencies();
+		const tokenResponse = await lineClient.exchangeCodeForToken(
+			code,
+			credentials.login,
+		);
+		const profile = await lineClient.getLineProfile(tokenResponse.access_token);
 
 		await this.studentRepository.linkLineUser(
 			record.studentId,
@@ -185,7 +221,7 @@ export class LineService {
 
 		if (student && profile.userId) {
 			try {
-				await sendLinePushMessage(
+				await lineClient.sendLinePushMessage(
 					profile.userId,
 					[
 						{
@@ -240,7 +276,7 @@ export class LineService {
 		}
 
 		const credentials = this.credentials(connection);
-		await sendLinePushMessage(
+		await this.getRuntimeDependencies().lineClient.sendLinePushMessage(
 			lineUserId,
 			[
 				{
@@ -282,7 +318,12 @@ export class LineService {
 		const { token } = await this.repository.createTestRecipientToken(
 			connection.id,
 		);
-		return { authUrl: buildLineAuthUrl(token, connection.loginChannelId) };
+		return {
+			authUrl: this.getRuntimeDependencies().lineClient.buildLineAuthUrl(
+				token,
+				connection.loginChannelId,
+			),
+		};
 	}
 
 	async handleTestRecipientCallback(code: string, state: string) {
@@ -303,10 +344,14 @@ export class LineService {
 			);
 		}
 		const credentials = this.credentials(connection);
-		const tokenResponse = await exchangeCodeForToken(code, credentials.login);
-		const profile = await getLineProfile(tokenResponse.access_token);
+		const { lineClient } = this.getRuntimeDependencies();
+		const tokenResponse = await lineClient.exchangeCodeForToken(
+			code,
+			credentials.login,
+		);
+		const profile = await lineClient.getLineProfile(tokenResponse.access_token);
 		try {
-			await validateLineRecipient(
+			await lineClient.validateLineRecipient(
 				profile.userId,
 				credentials.messagingAccessToken,
 			);
@@ -330,7 +375,7 @@ export class LineService {
 			);
 		}
 		const credentials = this.credentials(connection);
-		await sendLinePushMessage(
+		await this.getRuntimeDependencies().lineClient.sendLinePushMessage(
 			connection.testRecipientLineUserId,
 			[
 				{

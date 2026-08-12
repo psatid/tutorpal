@@ -1,4 +1,5 @@
-import { ENV } from "./env";
+import type { AppConfig } from "./app-config";
+import { getLocalAppConfig } from "./local-config";
 
 export interface LineLoginCredentials {
 	channelId: string;
@@ -38,7 +39,30 @@ interface LineProfileResponse {
 	statusMessage?: string;
 }
 
-export async function exchangeCodeForToken(
+export type LinePushMessage = { type: string; text: string };
+
+export type LineClient = {
+	exchangeCodeForToken(
+		code: string,
+		credentials: LineLoginCredentials,
+	): Promise<LineTokenResponse>;
+	getLineProfile(accessToken: string): Promise<LineProfileResponse>;
+	buildLineAuthUrl(state: string, channelId: string): string;
+	sendLinePushMessage(
+		lineUserId: string,
+		messages: LinePushMessage[],
+		channelAccessToken: string,
+		retryKey?: string,
+	): Promise<string | undefined>;
+	getLineBotInfo(channelAccessToken: string): Promise<LineBotInfo>;
+	validateLineRecipient(
+		lineUserId: string,
+		channelAccessToken: string,
+	): Promise<void>;
+};
+
+async function exchangeCodeForTokenWithRedirectUrl(
+	redirectUrl: string,
 	code: string,
 	credentials: LineLoginCredentials,
 ): Promise<LineTokenResponse> {
@@ -48,7 +72,7 @@ export async function exchangeCodeForToken(
 		body: new URLSearchParams({
 			grant_type: "authorization_code",
 			code,
-			redirect_uri: ENV.LINE_LINK_REDIRECT_URL,
+			redirect_uri: redirectUrl,
 			client_id: credentials.channelId,
 			client_secret: credentials.channelSecret,
 		}),
@@ -63,7 +87,7 @@ export async function exchangeCodeForToken(
 	return response.json() as Promise<LineTokenResponse>;
 }
 
-export async function getLineProfile(
+async function getLineProfile(
 	accessToken: string,
 ): Promise<LineProfileResponse> {
 	const response = await fetch("https://api.line.me/v2/profile", {
@@ -79,11 +103,15 @@ export async function getLineProfile(
 	return response.json() as Promise<LineProfileResponse>;
 }
 
-export function buildLineAuthUrl(state: string, channelId: string): string {
+function buildLineAuthUrlWithRedirectUrl(
+	redirectUrl: string,
+	state: string,
+	channelId: string,
+): string {
 	const params = new URLSearchParams({
 		response_type: "code",
 		client_id: channelId,
-		redirect_uri: ENV.LINE_LINK_REDIRECT_URL,
+		redirect_uri: redirectUrl,
 		state,
 		scope: "profile",
 		bot_prompt: "aggressive",
@@ -92,9 +120,9 @@ export function buildLineAuthUrl(state: string, channelId: string): string {
 	return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
 }
 
-export async function sendLinePushMessage(
+async function sendLinePushMessage(
 	lineUserId: string,
-	messages: Array<{ type: string; text: string }>,
+	messages: LinePushMessage[],
 	channelAccessToken: string,
 	retryKey?: string,
 ): Promise<string | undefined> {
@@ -133,7 +161,7 @@ export async function sendLinePushMessage(
 	return response.headers.get("x-line-request-id") ?? undefined;
 }
 
-export async function getLineBotInfo(
+async function getLineBotInfo(
 	channelAccessToken: string,
 ): Promise<LineBotInfo> {
 	const response = await fetch("https://api.line.me/v2/bot/info", {
@@ -145,7 +173,7 @@ export async function getLineBotInfo(
 	return response.json() as Promise<LineBotInfo>;
 }
 
-export async function validateLineRecipient(
+async function validateLineRecipient(
 	lineUserId: string,
 	channelAccessToken: string,
 ): Promise<void> {
@@ -158,4 +186,49 @@ export async function validateLineRecipient(
 			"The LINE account has not added this Official Account as a friend",
 		);
 	}
+}
+
+export function createLineClient(
+	config: Pick<AppConfig, "LINE_LINK_REDIRECT_URL">,
+): LineClient {
+	return {
+		exchangeCodeForToken: (code, credentials) =>
+			exchangeCodeForTokenWithRedirectUrl(
+				config.LINE_LINK_REDIRECT_URL,
+				code,
+				credentials,
+			),
+		getLineProfile,
+		buildLineAuthUrl: (state, channelId) =>
+			buildLineAuthUrlWithRedirectUrl(
+				config.LINE_LINK_REDIRECT_URL,
+				state,
+				channelId,
+			),
+		sendLinePushMessage,
+		getLineBotInfo,
+		validateLineRecipient,
+	};
+}
+
+function getLocalLineClient() {
+	return createLineClient(getLocalAppConfig());
+}
+
+export async function exchangeCodeForToken(
+	code: string,
+	credentials: LineLoginCredentials,
+): Promise<LineTokenResponse> {
+	return getLocalLineClient().exchangeCodeForToken(code, credentials);
+}
+
+export {
+	getLineProfile,
+	sendLinePushMessage,
+	getLineBotInfo,
+	validateLineRecipient,
+};
+
+export function buildLineAuthUrl(state: string, channelId: string): string {
+	return getLocalLineClient().buildLineAuthUrl(state, channelId);
 }

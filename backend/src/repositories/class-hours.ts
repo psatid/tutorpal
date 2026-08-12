@@ -1,5 +1,4 @@
-import type { Prisma, ScheduleStatus } from "@prisma/client";
-import { prisma } from "../lib/db";
+import type { Prisma, PrismaClient, ScheduleStatus } from "@prisma/client";
 
 function toHoursNumber(value: Prisma.Decimal | number): number {
 	return typeof value === "number" ? value : value.toNumber();
@@ -12,6 +11,7 @@ export const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
 ];
 
 export async function getRemainingHoursMap(
+	client: PrismaClient,
 	classIds: string[],
 ): Promise<Map<string, number>> {
 	if (classIds.length === 0) {
@@ -21,7 +21,7 @@ export async function getRemainingHoursMap(
 	const uniqueClassIds = [...new Set(classIds)];
 
 	const [classes, reservedMinutesByClass] = await Promise.all([
-		prisma.class.findMany({
+		client.class.findMany({
 			where: {
 				id: { in: uniqueClassIds },
 			},
@@ -30,7 +30,7 @@ export async function getRemainingHoursMap(
 				totalHours: true,
 			},
 		}),
-		prisma.schedule.groupBy({
+		client.schedule.groupBy({
 			by: ["classId"],
 			where: {
 				classId: { in: uniqueClassIds },
@@ -59,9 +59,10 @@ export async function getRemainingHoursMap(
 }
 
 export async function getRemainingHoursForClass(
+	client: PrismaClient,
 	classId: string,
 ): Promise<number> {
-	const remainingHoursMap = await getRemainingHoursMap([classId]);
+	const remainingHoursMap = await getRemainingHoursMap(client, [classId]);
 	const remainingHours = remainingHoursMap.get(classId);
 
 	if (remainingHours === undefined) {

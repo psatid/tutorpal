@@ -1,63 +1,22 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { admin } from "better-auth/plugins";
-import { sendResetPasswordEmail, sendVerificationEmail } from "./auth-email";
-import { prisma } from "./db";
-import { ENV } from "./env";
+import { type Auth, createAuth } from "./auth-factory";
+import { getLocalPrisma } from "./db";
+import { getLocalAppConfig } from "./local-config";
 
-export const auth = betterAuth({
-	baseURL: ENV.BETTER_AUTH_URL,
-	secret: ENV.BETTER_AUTH_SECRET,
-	database: prismaAdapter(prisma, {
-		provider: "postgresql",
-	}),
-	emailAndPassword: {
-		enabled: true,
-		requireEmailVerification: true,
-		disableSignUp: false,
-		revokeSessionsOnPasswordReset: true,
-		sendResetPassword: async ({ user, url }) => {
-			await sendResetPasswordEmail({
-				email: user.email,
-				name: user.name,
-				resetUrl: url,
-			});
-		},
+export type { Auth } from "./auth-factory";
+export { createAuth } from "./auth-factory";
+
+let localAuth: Auth | undefined;
+
+export function getLocalAuth() {
+	localAuth ??= createAuth(getLocalAppConfig(), getLocalPrisma());
+	return localAuth;
+}
+
+export const auth = new Proxy({} as Auth, {
+	get(_target, property) {
+		const instance = getLocalAuth();
+		const value = Reflect.get(instance, property);
+
+		return typeof value === "function" ? value.bind(instance) : value;
 	},
-	emailVerification: {
-		sendOnSignUp: true,
-		sendOnSignIn: true,
-		autoSignInAfterVerification: false,
-		sendVerificationEmail: async ({ user, url }) => {
-			await sendVerificationEmail({
-				email: user.email,
-				name: user.name,
-				verificationUrl: url,
-			});
-		},
-	},
-	session: {
-		expiresIn: 60 * 60 * 24 * 7, // 7 days
-		updateAge: 60 * 60 * 24, // 1 day
-	},
-	trustedOrigins: [
-		ENV.CORS_ORIGIN,
-		ENV.FRONTEND_URL,
-		ENV.BETTER_AUTH_URL,
-		ENV.EMAIL_VERIFICATION_CALLBACK_URL,
-	],
-	databaseHooks: {
-		user: {
-			create: {
-				after: async (user) => {
-					await prisma.tutor.upsert({
-						where: { userId: user.id },
-						update: {},
-						create: { userId: user.id },
-					});
-				},
-			},
-		},
-	},
-	plugins: [admin()],
 });

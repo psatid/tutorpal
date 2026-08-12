@@ -1,5 +1,9 @@
-import { LinePushError, sendLinePushMessage } from "../lib/line";
-import { decryptLineCredential } from "../lib/line-credentials";
+import { createLineClient, type LineClient, LinePushError } from "../lib/line";
+import {
+	createLineCredentialCipher,
+	type LineCredentialCipher,
+} from "../lib/line-credentials";
+import { getLocalAppConfig } from "../lib/local-config";
 import {
 	type ClassReminderRepository,
 	classReminderRepository,
@@ -7,11 +11,40 @@ import {
 
 const RETRY_MINUTES = [1, 2, 4, 8];
 
+export type ClassReminderServiceRuntimeDependencies = {
+	lineClient: Pick<LineClient, "sendLinePushMessage">;
+	credentialCipher: Pick<LineCredentialCipher, "decrypt">;
+};
+
+function createLocalClassReminderServiceRuntimeDependencies(): ClassReminderServiceRuntimeDependencies {
+	const config = getLocalAppConfig();
+
+	return {
+		lineClient: createLineClient(config),
+		credentialCipher: createLineCredentialCipher(
+			config.LINE_CREDENTIALS_ENCRYPTION_KEY,
+		),
+	};
+}
+
 export class ClassReminderService {
+	private runtimeDependencies:
+		| ClassReminderServiceRuntimeDependencies
+		| undefined;
+
 	constructor(
 		private readonly repository: ClassReminderRepository = classReminderRepository,
 		private readonly clock: () => Date = () => new Date(),
-	) {}
+		runtimeDependencies?: ClassReminderServiceRuntimeDependencies,
+	) {
+		this.runtimeDependencies = runtimeDependencies;
+	}
+
+	private getRuntimeDependencies() {
+		this.runtimeDependencies ??=
+			createLocalClassReminderServiceRuntimeDependencies();
+		return this.runtimeDependencies;
+	}
 
 	async poll(now = new Date()) {
 		await this.repository.discover(now);
@@ -40,10 +73,11 @@ export class ClassReminderService {
 			return;
 		}
 		try {
-			const providerRequestId = await sendLinePushMessage(
+			const { credentialCipher, lineClient } = this.getRuntimeDependencies();
+			const providerRequestId = await lineClient.sendLinePushMessage(
 				delivery.recipientLineUserId,
 				[{ type: "text", text: delivery.message }],
-				decryptLineCredential(
+				credentialCipher.decrypt(
 					current.schedule.class.tutor.lineConnection
 						.messagingAccessTokenEncrypted,
 				),

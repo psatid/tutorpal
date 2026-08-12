@@ -1,4 +1,4 @@
-import { sendEmailWithResend } from "./resend";
+import { type EmailSender, sendEmailWithResend } from "./resend";
 
 function escapeHtml(value: string) {
 	return value
@@ -9,15 +9,18 @@ function escapeHtml(value: string) {
 		.replaceAll("'", "&#39;");
 }
 
-export async function sendVerificationEmail({
-	email,
-	name,
-	verificationUrl,
-}: {
-	email: string;
-	name: string;
-	verificationUrl: string;
-}) {
+export async function sendVerificationEmail(
+	{
+		email,
+		name,
+		verificationUrl,
+	}: {
+		email: string;
+		name: string;
+		verificationUrl: string;
+	},
+	sendEmail: EmailSender = sendEmailWithResend,
+) {
 	const safeName = escapeHtml(name || "there");
 	const safeUrl = escapeHtml(verificationUrl);
 	const subject = "Confirm your TutorPal account";
@@ -63,7 +66,7 @@ export async function sendVerificationEmail({
 		</div>
 	`;
 
-	await sendEmailWithResend({
+	await sendEmail({
 		to: email,
 		subject,
 		html,
@@ -71,15 +74,18 @@ export async function sendVerificationEmail({
 	});
 }
 
-export async function sendResetPasswordEmail({
-	email,
-	name,
-	resetUrl,
-}: {
-	email: string;
-	name: string;
-	resetUrl: string;
-}) {
+export async function sendResetPasswordEmail(
+	{
+		email,
+		name,
+		resetUrl,
+	}: {
+		email: string;
+		name: string;
+		resetUrl: string;
+	},
+	sendEmail: EmailSender = sendEmailWithResend,
+) {
 	const safeName = escapeHtml(name || "there");
 	const safeUrl = escapeHtml(resetUrl);
 	const subject = "Reset your TutorPal password";
@@ -129,7 +135,7 @@ export async function sendResetPasswordEmail({
 		</div>
 	`;
 
-	await sendEmailWithResend({
+	await sendEmail({
 		to: email,
 		subject,
 		html,

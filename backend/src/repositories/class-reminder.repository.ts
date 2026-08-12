@@ -1,5 +1,6 @@
+import type { PrismaClient } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
-import { prisma } from "../lib/db";
+import { prisma as defaultPrisma } from "../lib/db";
 
 export type ClaimedReminder = {
 	id: string;
@@ -15,13 +16,15 @@ export type ClaimedReminder = {
 };
 
 export class ClassReminderRepository {
+	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
+
 	async discover(now: Date): Promise<void> {
 		const windowEnd = new Date(now.getTime() + 60 * 60 * 1000);
 		const dates = [
 			DateTime.from(now).toBangkokDateAndMinutes().date,
 			DateTime.from(windowEnd).toBangkokDateAndMinutes().date,
 		];
-		const schedules = await prisma.schedule.findMany({
+		const schedules = await this.prisma.schedule.findMany({
 			where: {
 				status: "SCHEDULED",
 				date: {
@@ -54,7 +57,7 @@ export class ClassReminderRepository {
 					startsAt.getTime() + schedule.durationMinutes * 60_000,
 				);
 				const message = `Class reminder\n\nHi ${student.name}, your ${schedule.class.name} class starts in 1 hour.\n\nDate: ${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", dateStyle: "medium" }).format(startsAt)}\nTime: ${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(startsAt)}–${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(end)}\nTime zone: Asia/Bangkok`;
-				await prisma.classReminderDelivery.upsert({
+				await this.prisma.classReminderDelivery.upsert({
 					where: {
 						scheduleId_studentId_scheduledStartAt: {
 							scheduleId: schedule.id,
@@ -87,7 +90,7 @@ export class ClassReminderRepository {
 
 	async claim(now: Date, limit = 50): Promise<ClaimedReminder[]> {
 		const leaseExpiresAt = new Date(now.getTime() + 120_000);
-		return prisma.$queryRaw<ClaimedReminder[]>`
+		return this.prisma.$queryRaw<ClaimedReminder[]>`
 			WITH candidates AS (
 				SELECT id FROM class_reminder_deliveries
 				WHERE (status = 'PENDING' AND (("dueAt" <= ${now} AND "nextAttemptAt" IS NULL) OR "nextAttemptAt" <= ${now}))
@@ -105,7 +108,7 @@ export class ClassReminderRepository {
 	}
 
 	async revalidate(delivery: ClaimedReminder, now: Date) {
-		const current = await prisma.classReminderDelivery.findFirst({
+		const current = await this.prisma.classReminderDelivery.findFirst({
 			where: {
 				id: delivery.id,
 				status: "PROCESSING",
@@ -144,7 +147,7 @@ export class ClassReminderRepository {
 	}
 
 	async markSent(id: string, leaseExpiresAt: Date, providerRequestId?: string) {
-		return prisma.classReminderDelivery.updateMany({
+		return this.prisma.classReminderDelivery.updateMany({
 			where: { id, status: "PROCESSING", leaseExpiresAt },
 			data: {
 				status: "SENT",
@@ -155,7 +158,7 @@ export class ClassReminderRepository {
 		});
 	}
 	async markCancelled(id: string, leaseExpiresAt: Date) {
-		return prisma.classReminderDelivery.updateMany({
+		return this.prisma.classReminderDelivery.updateMany({
 			where: { id, status: "PROCESSING", leaseExpiresAt },
 			data: { status: "CANCELLED", leaseExpiresAt: null },
 		});
@@ -168,7 +171,7 @@ export class ClassReminderRepository {
 		code: string,
 		providerRequestId?: string,
 	) {
-		return prisma.classReminderDelivery.updateMany({
+		return this.prisma.classReminderDelivery.updateMany({
 			where: { id, status: "PROCESSING", leaseExpiresAt },
 			data: {
 				status: retry ? "PENDING" : "FAILED",

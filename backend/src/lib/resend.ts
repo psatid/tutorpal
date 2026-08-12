@@ -1,34 +1,40 @@
 import { Resend } from "resend";
-import { ENV } from "./env";
+import type { AppConfig } from "./app-config";
+import { getLocalAppConfig } from "./local-config";
 
-interface SendEmailOptions {
+export interface SendEmailOptions {
 	to: string;
 	subject: string;
 	html: string;
 	text: string;
 }
 
-const resend = new Resend(ENV.RESEND_API_KEY);
+export type EmailSender = (options: SendEmailOptions) => Promise<void>;
 
-export async function sendEmailWithResend({
-	to,
-	subject,
-	html,
-	text,
-}: SendEmailOptions) {
-	if (!ENV.RESEND_API_KEY) {
-		throw new Error("RESEND_API_KEY is not configured");
-	}
+export function createResendEmailSender(
+	config: Pick<AppConfig, "RESEND_API_KEY" | "RESEND_FROM_EMAIL">,
+): EmailSender {
+	const resend = new Resend(config.RESEND_API_KEY);
 
-	const { error } = await resend.emails.send({
-		from: ENV.RESEND_FROM_EMAIL,
-		to: [to],
-		subject,
-		html,
-		text,
-	});
+	return async ({ to, subject, html, text }) => {
+		if (!config.RESEND_API_KEY) {
+			throw new Error("RESEND_API_KEY is not configured");
+		}
 
-	if (error) {
-		throw new Error(`Failed to send email with Resend: ${error.message}`);
-	}
+		const { error } = await resend.emails.send({
+			from: config.RESEND_FROM_EMAIL,
+			to: [to],
+			subject,
+			html,
+			text,
+		});
+
+		if (error) {
+			throw new Error(`Failed to send email with Resend: ${error.message}`);
+		}
+	};
+}
+
+export async function sendEmailWithResend(options: SendEmailOptions) {
+	return createResendEmailSender(getLocalAppConfig())(options);
 }

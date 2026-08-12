@@ -1,11 +1,12 @@
 import type {
 	Prisma,
+	PrismaClient,
 	ScheduleStatus,
 	ScheduleType,
 	Weekday,
 } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
-import { prisma } from "../lib/db";
+import { prisma as defaultPrisma } from "../lib/db";
 import { AppError } from "../lib/error";
 import {
 	RecurringScheduleModel,
@@ -50,6 +51,8 @@ function toHoursNumber(value: Prisma.Decimal | number): number {
 }
 
 export class ScheduleRepository implements IScheduleRepository {
+	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
+
 	async create(data: CreateScheduleDTO): Promise<ScheduleModel> {
 		if (data.time === undefined || data.durationMinutes === undefined) {
 			throw new Error("Time and duration are required");
@@ -58,7 +61,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		const time = data.time;
 		const durationMinutes = data.durationMinutes;
 
-		const scheduleId = await prisma.$transaction(async (tx) => {
+		const scheduleId = await this.prisma.$transaction(async (tx) => {
 			const createdSchedule = await tx.schedule.create({
 				data: {
 					classId: data.classId,
@@ -87,7 +90,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			return createdSchedule.id;
 		});
 
-		const schedule = await prisma.schedule.findUnique({
+		const schedule = await this.prisma.schedule.findUnique({
 			where: { id: scheduleId },
 			include: {
 				class: { include: classContextInclude },
@@ -115,7 +118,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			return [];
 		}
 
-		await prisma.schedule.createMany({
+		await this.prisma.schedule.createMany({
 			data: data.map((item) => ({
 				classId: item.classId,
 				date: DateTime.fromDateOnlyString(item.date).toDate(),
@@ -133,7 +136,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			return [];
 		}
 
-		const createdSchedules = await prisma.schedule.findMany({
+		const createdSchedules = await this.prisma.schedule.findMany({
 			where: {
 				classId: firstClassId,
 				date: {
@@ -194,7 +197,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			};
 		}
 
-		const schedules = await prisma.schedule.findMany({
+		const schedules = await this.prisma.schedule.findMany({
 			where,
 			orderBy: [{ date: "asc" }, { time: "asc" }],
 			include: {
@@ -203,6 +206,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 
 		const remainingHoursMap = await getRemainingHoursMap(
+			this.prisma,
 			schedules.map((schedule) => schedule.classId),
 		);
 
@@ -215,7 +219,7 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async findById(id: string, tutorId?: string): Promise<ScheduleModel | null> {
-		const schedule = await prisma.schedule.findFirst({
+		const schedule = await this.prisma.schedule.findFirst({
 			where: { id, ...(tutorId && { class: { tutorId } }) },
 			include: {
 				class: { include: classContextInclude },
@@ -231,7 +235,7 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel> {
-		const schedule = await prisma.$transaction(async (tx) => {
+		const schedule = await this.prisma.$transaction(async (tx) => {
 			const updatedSchedule = await tx.schedule.update({
 				where: { id },
 				data: {
@@ -276,13 +280,13 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async delete(id: string): Promise<void> {
-		await prisma.schedule.delete({
+		await this.prisma.schedule.delete({
 			where: { id },
 		});
 	}
 
 	async completeSchedule(id: string): Promise<ScheduleModel> {
-		const schedule = await prisma.schedule.findUnique({
+		const schedule = await this.prisma.schedule.findUnique({
 			where: { id },
 			include: { class: { include: classContextInclude } },
 		});
@@ -297,7 +301,7 @@ export class ScheduleRepository implements IScheduleRepository {
 
 		const hoursDeducted = schedule.durationMinutes / 60;
 
-		const updatedSchedule = await prisma.$transaction(async (tx) => {
+		const updatedSchedule = await this.prisma.$transaction(async (tx) => {
 			const completedSchedule = await tx.schedule.update({
 				where: { id },
 				data: { status: "COMPLETED" },
@@ -325,7 +329,7 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async restoreHours(id: string): Promise<ScheduleModel> {
-		const schedule = await prisma.schedule.findUnique({
+		const schedule = await this.prisma.schedule.findUnique({
 			where: { id },
 			include: { class: { include: classContextInclude } },
 		});
@@ -334,7 +338,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			throw new Error("Schedule not found");
 		}
 
-		const hourDeduction = await prisma.classHourDeduction.findUnique({
+		const hourDeduction = await this.prisma.classHourDeduction.findUnique({
 			where: { scheduleId: id },
 		});
 
@@ -346,7 +350,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			throw new Error("Hours have already been restored for this schedule");
 		}
 
-		const updatedSchedule = await prisma.$transaction(async (tx) => {
+		const updatedSchedule = await this.prisma.$transaction(async (tx) => {
 			const cancelledSchedule = await tx.schedule.update({
 				where: { id },
 				data: { status: "CANCELLED" },
@@ -366,7 +370,7 @@ export class ScheduleRepository implements IScheduleRepository {
 	}
 
 	async getRemainingHours(classId: string): Promise<number> {
-		return getRemainingHoursForClass(classId);
+		return getRemainingHoursForClass(this.prisma, classId);
 	}
 
 	async createRecurringSchedule(
@@ -388,7 +392,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			);
 		}
 
-		const result = await prisma.$transaction(async (tx) => {
+		const result = await this.prisma.$transaction(async (tx) => {
 			const recurringSchedule = await tx.recurringSchedule.create({
 				data: {
 					classId: data.classId,
@@ -457,7 +461,7 @@ export class ScheduleRepository implements IScheduleRepository {
 		recurringScheduleId: string,
 		tutorId: string,
 	): Promise<RecurringScheduleModel | null> {
-		const recurringSchedule = await prisma.recurringSchedule.findFirst({
+		const recurringSchedule = await this.prisma.recurringSchedule.findFirst({
 			where: {
 				id: recurringScheduleId,
 				class: {
@@ -484,18 +488,19 @@ export class ScheduleRepository implements IScheduleRepository {
 		data: UpdateRecurringScheduleDTO,
 		tutorId: string,
 	): Promise<RecurringScheduleUpdateResultModel> {
-		const existingRecurringSchedule = await prisma.recurringSchedule.findFirst({
-			where: {
-				id: recurringScheduleId,
-				class: {
-					tutorId,
+		const existingRecurringSchedule =
+			await this.prisma.recurringSchedule.findFirst({
+				where: {
+					id: recurringScheduleId,
+					class: {
+						tutorId,
+					},
 				},
-			},
-			include: {
-				class: { include: classContextInclude },
-				scheduleItems: true,
-			},
-		});
+				include: {
+					class: { include: classContextInclude },
+					scheduleItems: true,
+				},
+			});
 
 		if (!existingRecurringSchedule) {
 			throw AppError.notFound(
@@ -504,7 +509,7 @@ export class ScheduleRepository implements IScheduleRepository {
 			);
 		}
 
-		return prisma.$transaction(async (tx) => {
+		return this.prisma.$transaction(async (tx) => {
 			const candidateSchedules = await tx.schedule.findMany({
 				where: {
 					classId: existingRecurringSchedule.classId,

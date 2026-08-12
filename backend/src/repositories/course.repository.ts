@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "../lib/db";
+import { Prisma, type PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "../lib/db";
 import { CourseModel } from "../models/course.model";
 import type {
 	CourseDeleteOutcome,
@@ -13,8 +13,10 @@ import type {
 } from "../types/pagination.types";
 
 export class CourseRepository implements ICourseRepository {
+	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
+
 	async create(data: CreateCourseDTO): Promise<CourseModel> {
-		const course = await prisma.course.create({
+		const course = await this.prisma.course.create({
 			data: {
 				tutorId: data.tutorId,
 				name: data.name.trim(),
@@ -40,8 +42,8 @@ export class CourseRepository implements ICourseRepository {
 		};
 
 		const [total, courses] = await Promise.all([
-			prisma.course.count({ where }),
-			prisma.course.findMany({
+			this.prisma.course.count({ where }),
+			this.prisma.course.findMany({
 				where,
 				skip,
 				take: limit,
@@ -63,7 +65,7 @@ export class CourseRepository implements ICourseRepository {
 	}
 
 	async findById(id: string, tutorId: string): Promise<CourseModel | null> {
-		const course = await prisma.course.findFirst({
+		const course = await this.prisma.course.findFirst({
 			where: { id, tutorId },
 		});
 		return course ? CourseModel.fromPrisma(course) : null;
@@ -74,7 +76,7 @@ export class CourseRepository implements ICourseRepository {
 		tutorId: string,
 		data: UpdateCourseDTO,
 	): Promise<CourseModel> {
-		const course = await prisma.course.update({
+		const course = await this.prisma.course.update({
 			where: { id, tutorId },
 			data: {
 				...(data.name !== undefined ? { name: data.name.trim() } : {}),
@@ -88,7 +90,7 @@ export class CourseRepository implements ICourseRepository {
 
 	async delete(id: string, tutorId: string): Promise<CourseDeleteOutcome> {
 		try {
-			await prisma.course.delete({ where: { id, tutorId } });
+			await this.prisma.course.delete({ where: { id, tutorId } });
 			return "deleted";
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {

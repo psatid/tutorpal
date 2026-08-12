@@ -1,5 +1,5 @@
-import type { Prisma } from "@prisma/client";
-import { prisma } from "../lib/db";
+import type { Prisma, PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "../lib/db";
 import {
 	type ClassInStudent,
 	Student,
@@ -20,8 +20,10 @@ function toHoursNumber(value: Prisma.Decimal | number): number {
 }
 
 export class StudentRepository implements IStudentRepository {
+	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
+
 	async create(data: CreateStudentDTO): Promise<Student> {
-		const student = await prisma.student.create({
+		const student = await this.prisma.student.create({
 			data: {
 				tutorId: data.tutorId,
 				name: data.name,
@@ -57,10 +59,10 @@ export class StudentRepository implements IStudentRepository {
 		};
 
 		// Get total count matching the search criteria
-		const total = await prisma.student.count({ where });
+		const total = await this.prisma.student.count({ where });
 
 		// Get paginated results
-		const students = await prisma.student.findMany({
+		const students = await this.prisma.student.findMany({
 			where,
 			skip,
 			take: limit,
@@ -83,7 +85,7 @@ export class StudentRepository implements IStudentRepository {
 	}
 
 	async findById(id: string, tutorId: string): Promise<StudentDetail | null> {
-		const student = await prisma.student.findFirst({
+		const student = await this.prisma.student.findFirst({
 			where: { id, tutorId },
 			include: {
 				classes: {
@@ -101,6 +103,7 @@ export class StudentRepository implements IStudentRepository {
 		}
 
 		const remainingHoursMap = await getRemainingHoursMap(
+			this.prisma,
 			student.classes.map((enrollment) => enrollment.classId),
 		);
 
@@ -116,7 +119,7 @@ export class StudentRepository implements IStudentRepository {
 	}
 
 	async findByIdForLineLink(id: string): Promise<Student | null> {
-		const student = await prisma.student.findUnique({
+		const student = await this.prisma.student.findUnique({
 			where: { id },
 		});
 
@@ -132,7 +135,7 @@ export class StudentRepository implements IStudentRepository {
 		tutorId: string,
 		data: UpdateStudentDTO,
 	): Promise<Student> {
-		const student = await prisma.student.update({
+		const student = await this.prisma.student.update({
 			where: { id, tutorId },
 			data: {
 				...(data.name !== undefined && { name: data.name }),
@@ -146,7 +149,7 @@ export class StudentRepository implements IStudentRepository {
 	}
 
 	async delete(id: string, tutorId: string): Promise<void> {
-		await prisma.student.delete({
+		await this.prisma.student.delete({
 			where: { id, tutorId },
 		});
 	}
@@ -156,14 +159,14 @@ export class StudentRepository implements IStudentRepository {
 		lineUserId: string,
 		lineConnectionId: string,
 	): Promise<void> {
-		await prisma.student.update({
+		await this.prisma.student.update({
 			where: { id: studentId },
 			data: { lineUserId, lineConnectionId },
 		});
 	}
 
 	async unlinkLineUser(studentId: string): Promise<void> {
-		await prisma.student.update({
+		await this.prisma.student.update({
 			where: { id: studentId },
 			data: { lineUserId: null, lineConnectionId: null },
 		});
@@ -173,7 +176,7 @@ export class StudentRepository implements IStudentRepository {
 		tutorId: string,
 		connectionId: string,
 	): Promise<void> {
-		await prisma.student.updateMany({
+		await this.prisma.student.updateMany({
 			where: { tutorId, lineConnectionId: connectionId },
 			data: { lineConnectionId: null },
 		});

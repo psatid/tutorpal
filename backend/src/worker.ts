@@ -1,6 +1,9 @@
-import { ClassReminderService } from "./services/class-reminder.service";
+import { createClassReminderService } from "./app-dependencies";
+import { ENV } from "./lib/env";
+import { createPrismaClient } from "./lib/prisma";
 
-const service = new ClassReminderService();
+const prisma = createPrismaClient(ENV.DATABASE_URL);
+const service = createClassReminderService(ENV, prisma);
 let running = false;
 let interval: ReturnType<typeof setInterval> | undefined;
 

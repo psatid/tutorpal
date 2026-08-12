@@ -5,9 +5,10 @@ import type {
 	RecurringScheduleUpdateResultModel,
 	ScheduleModel,
 } from "../models/schedule.model";
-import { classRepository } from "../repositories";
+import { classRepository as defaultClassRepository } from "../repositories";
 import type {
 	CreateScheduleDTO,
+	IClassRepository,
 	IScheduleRepository,
 	UpdateRecurringScheduleDTO,
 	UpdateScheduleDTO,
@@ -20,7 +21,10 @@ const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
 ];
 
 export class ScheduleService {
-	constructor(private readonly repository: IScheduleRepository) {}
+	constructor(
+		private readonly repository: IScheduleRepository,
+		private readonly classRepository: IClassRepository = defaultClassRepository,
+	) {}
 
 	private isActiveStatus(status: ScheduleStatus): boolean {
 		return ACTIVE_SCHEDULE_STATUSES.includes(status);
@@ -57,7 +61,10 @@ export class ScheduleService {
 		tutorId: string,
 	): Promise<ScheduleModel> {
 		// Verify that the class exists and belongs to this tutor
-		const classData = await classRepository.findById(data.classId, tutorId);
+		const classData = await this.classRepository.findById(
+			data.classId,
+			tutorId,
+		);
 		if (!classData) {
 			throw AppError.badRequest(
 				"CLASS_NOT_FOUND",
@@ -104,7 +111,7 @@ export class ScheduleService {
 		}
 
 		// Validate class exists and belongs to this tutor
-		const classData = await classRepository.findById(classId, tutorId);
+		const classData = await this.classRepository.findById(classId, tutorId);
 		if (!classData) {
 			throw AppError.badRequest(
 				"CLASS_NOT_FOUND",
@@ -152,7 +159,10 @@ export class ScheduleService {
 
 		// If classId is being updated, verify the new class exists and belongs to this tutor
 		if (data.classId !== undefined) {
-			const classData = await classRepository.findById(data.classId, tutorId);
+			const classData = await this.classRepository.findById(
+				data.classId,
+				tutorId,
+			);
 			if (!classData) {
 				throw AppError.badRequest(
 					"CLASS_NOT_FOUND",
@@ -288,7 +298,7 @@ export class ScheduleService {
 	}
 
 	async getRemainingHours(classId: string, tutorId: string): Promise<number> {
-		const classData = await classRepository.findById(classId, tutorId);
+		const classData = await this.classRepository.findById(classId, tutorId);
 		if (!classData) {
 			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
 		}

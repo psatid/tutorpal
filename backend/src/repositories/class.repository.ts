@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { MAX_CLASS_HOURS } from "../lib/class-hour-addition";
-import { prisma } from "../lib/db";
+import { prisma as defaultPrisma } from "../lib/db";
 import { AppError } from "../lib/error";
 import { ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
@@ -138,6 +138,8 @@ async function getRemainingHoursInTransaction(
 }
 
 export class ClassRepository implements IClassRepository {
+	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
+
 	async create(data: CreateClassDTO): Promise<ClassModel> {
 		const studentIds = data.studentIds ?? [];
 		const name = data.name.trim();
@@ -148,7 +150,7 @@ export class ClassRepository implements IClassRepository {
 			);
 		}
 
-		const classId = await prisma.$transaction(async (tx) => {
+		const classId = await this.prisma.$transaction(async (tx) => {
 			await assertStudentsBelongToTutor(tx, studentIds, data.tutorId);
 			const created = await tx.class.create({
 				data: {
@@ -202,8 +204,8 @@ export class ClassRepository implements IClassRepository {
 				: {}),
 		};
 		const [total, classes] = await Promise.all([
-			prisma.class.count({ where }),
-			prisma.class.findMany({
+			this.prisma.class.count({ where }),
+			this.prisma.class.findMany({
 				where,
 				skip,
 				take: limit,
@@ -212,6 +214,7 @@ export class ClassRepository implements IClassRepository {
 			}),
 		]);
 		const remaining = await getRemainingHoursMap(
+			this.prisma,
 			classes.map((item) => item.id),
 		);
 		const totalPages = Math.ceil(total / limit);
@@ -231,7 +234,7 @@ export class ClassRepository implements IClassRepository {
 	}
 
 	async findById(id: string, tutorId: string): Promise<ClassModel | null> {
-		const item = await prisma.class.findFirst({
+		const item = await this.prisma.class.findFirst({
 			where: { id, tutorId },
 			include: {
 				...classInclude,
@@ -249,7 +252,7 @@ export class ClassRepository implements IClassRepository {
 		if (!item) return null;
 		return ClassModel.fromClassPrisma(
 			item,
-			await getRemainingHoursForClass(id),
+			await getRemainingHoursForClass(this.prisma, id),
 		);
 	}
 
@@ -265,7 +268,7 @@ export class ClassRepository implements IClassRepository {
 			);
 		}
 
-		await prisma.$transaction(async (tx) => {
+		await this.prisma.$transaction(async (tx) => {
 			const existing = await tx.class.findFirst({
 				where: { id, tutorId },
 				select: { id: true },
@@ -310,7 +313,7 @@ export class ClassRepository implements IClassRepository {
 				: data;
 
 		try {
-			return await prisma.$transaction(async (tx) => {
+			return await this.prisma.$transaction(async (tx) => {
 				const classData = await tx.class.findFirst({
 					where: { id, tutorId },
 					select: { id: true, totalHours: true },
@@ -453,7 +456,7 @@ export class ClassRepository implements IClassRepository {
 		tutorId: string,
 		params?: PaginationParams,
 	): Promise<PaginatedResponse<ClassHourAdditionModel>> {
-		const classData = await prisma.class.findFirst({
+		const classData = await this.prisma.class.findFirst({
 			where: { id, tutorId },
 			select: { id: true },
 		});
@@ -465,8 +468,8 @@ export class ClassRepository implements IClassRepository {
 		const limit = params?.limit ?? 20;
 		const skip = (page - 1) * limit;
 		const [total, additions] = await Promise.all([
-			prisma.classHourAddition.count({ where: { classId: id } }),
-			prisma.classHourAddition.findMany({
+			this.prisma.classHourAddition.count({ where: { classId: id } }),
+			this.prisma.classHourAddition.findMany({
 				where: { classId: id },
 				skip,
 				take: limit,
@@ -489,7 +492,7 @@ export class ClassRepository implements IClassRepository {
 
 	async delete(id: string, tutorId: string): Promise<ClassDeleteOutcome> {
 		try {
-			await prisma.class.delete({ where: { id, tutorId } });
+			await this.prisma.class.delete({ where: { id, tutorId } });
 			return "deleted";
 		} catch (error) {
 			if (
@@ -508,11 +511,11 @@ export class ClassRepository implements IClassRepository {
 		data: CreateClassHourAdditionDTO,
 	): Promise<ClassHourAdditionResult> {
 		const [classData, existing] = await Promise.all([
-			prisma.class.findFirst({
+			this.prisma.class.findFirst({
 				where: { id, tutorId },
 				select: { totalHours: true },
 			}),
-			prisma.classHourAddition.findUnique({
+			this.prisma.classHourAddition.findUnique({
 				where: {
 					classId_requestId: { classId: id, requestId: data.requestId },
 				},
@@ -531,7 +534,7 @@ export class ClassRepository implements IClassRepository {
 		return {
 			addition: ClassHourAdditionModel.fromPrisma(existing),
 			totalHours: toHoursNumber(classData.totalHours),
-			remainingHours: await getRemainingHoursForClass(id),
+			remainingHours: await getRemainingHoursForClass(this.prisma, id),
 		};
 	}
 }
