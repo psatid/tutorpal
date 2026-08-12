@@ -1,5 +1,6 @@
 # Feature Implementation History
 
+- [Class Detail People-First Redesign — August 12, 2026](class-detail-people-first-redesign.md)
 - [Home Today Hub — August 12, 2026](home-today-hub.md)
 - [Standalone Classes and Hour Additions — August 11, 2026](standalone-classes-and-hour-additions.md)
 - [Weekly Schedule Timeline — August 9, 2026](weekly-schedule-timeline.md)

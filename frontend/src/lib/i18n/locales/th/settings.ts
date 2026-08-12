@@ -3,21 +3,19 @@ import type { TranslationShape } from "../types";
 
 const th = {
   title: "การตั้งค่า",
-  subtitle: "จัดการบัญชีและการเชื่อมต่อของคุณ",
-  connections: "การเชื่อมต่อ",
   logout: "ออกจากระบบ",
   cancel: "ยกเลิก",
-  backToApp: "กลับไปที่แอป",
-  backToSettings: "กลับไปที่การตั้งค่า",
   language: "Language / ภาษา",
   logoutSuccess: "คุณออกจากระบบแล้ว",
   logoutError: "ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง",
   line: {
-    title: "การส่งข้อความ LINE",
-    description: "ใช้บัญชี LINE Official Account ของคุณเพื่อส่งข้อความถึงนักเรียน",
+    title: "การเชื่อมต่อ LINE",
+    description: "เชื่อมต่อ LINE Official Account ของคุณเพื่อส่งข้อความถึงนักเรียน",
     connected: "เชื่อมต่อแล้ว",
     notConnected: "ยังไม่ได้เชื่อมต่อ",
     checking: "กำลังตรวจสอบการเชื่อมต่อ…",
+    connectionError: "ไม่สามารถตรวจสอบการเชื่อมต่อ LINE ได้",
+    retry: "ลองอีกครั้ง",
     saved: "บันทึกและยืนยันการเชื่อมต่อ LINE แล้ว",
     saveFailed: "ไม่สามารถบันทึกการเชื่อมต่อ LINE ได้",
     connectTitle: "เชื่อมต่อบัญชีทางการของคุณ",
@@ -31,7 +29,7 @@ const th = {
     loginChannelSecret: "รหัสลับช่อง LINE Login",
     saveAndVerify: "บันทึกและยืนยัน",
     lastVerified: "ยืนยันล่าสุด {{date}}",
-    testTitle: "ส่งข้อความทดสอบ",
+    testTitle: "บัญชีทดสอบ",
     testSetup:
       "เชื่อมต่อบัญชี LINE ส่วนตัวของคุณก่อน เพิ่ม Official Account ของคุณเป็นเพื่อนก่อนดำเนินการต่อ",
     testReady:

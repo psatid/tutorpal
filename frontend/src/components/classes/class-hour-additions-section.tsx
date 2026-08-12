@@ -15,7 +15,10 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 	);
 
 	return (
-		<section aria-labelledby="class-hour-additions-title" className="space-y-3">
+		<section
+			aria-labelledby="class-hour-additions-title"
+			className="space-y-3 rounded-xl border border-border bg-card p-4 sm:p-5"
+		>
 			<div className="flex items-center gap-3">
 				<h2
 					className="shrink-0 text-base font-medium tracking-[-0.01em] text-foreground"
@@ -23,7 +26,7 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 				>
 					{t("classes:hourAdditions.historyTitle")}
 				</h2>
-				<Separator />
+				<Separator className="min-w-0 flex-1 !shrink" />
 			</div>
 			{additionsQuery.isLoading ? (
 				<div className="space-y-3" role="status">
@@ -39,7 +42,7 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 					<Button
 						className="mt-3"
 						onClick={() => additionsQuery.refetch()}
-						size="sm"
+						size="md"
 						type="button"
 						variant="outline"
 					>

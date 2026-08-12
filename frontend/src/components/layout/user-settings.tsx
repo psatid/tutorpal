@@ -1,7 +1,6 @@
 import { useLogout } from "@/hooks/mutations/use-logout";
 import { useSession } from "@/hooks/use-session";
-import { getAppLanguage, setAppLanguage } from "@/lib/i18n/config";
-import { Languages, Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -9,12 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
@@ -26,7 +20,6 @@ export default function UserSetting({
   const { t } = useTranslation(["common", "settings"]);
   const { session } = useSession();
   const logout = useLogout();
-  const currentLanguage = getAppLanguage();
 
   return (
     <DropdownMenu>
@@ -63,28 +56,6 @@ export default function UserSetting({
             </div>
           </div>
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Languages aria-hidden="true" />
-            {t("settings:language")}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup
-              onValueChange={(language) => {
-                void setAppLanguage(language as "en" | "th");
-              }}
-              value={currentLanguage}
-            >
-              <DropdownMenuRadioItem closeOnClick lang="en" value="en">
-                English
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem closeOnClick lang="th" value="th">
-                ไทย
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => logout.mutate()}>
           {logout.isPending ? <Loader2 className="animate-spin" /> : <LogOut />}

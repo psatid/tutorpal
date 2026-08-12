@@ -3,19 +3,23 @@
 ## Overview
 
 Tutors now configure their own LINE Official Account instead of sharing one
-application-wide Messaging API token. The mobile-first Settings hub is opened
-from the settings icon in the app bar and provides a dedicated LINE messaging
-screen.
+application-wide Messaging API token. Settings is a sidebar group with a
+dedicated LINE connection screen as its first item.
 
 ## Settings experience
 
-- `/settings` shows the signed-in tutor's profile, LINE messaging connection
-  status, and a separated log-out action.
+- `/settings` and `/settings/` redirect to `/settings/line` for compatibility
+  with existing links.
+- The Settings sidebar group contains a `LINE connection` child at
+  `/settings/line` and expands automatically while that route is active.
 - `/settings/line` lets a tutor save and verify their Messaging API token and
   LINE Login credentials, connect their own LINE account for test messages,
   and send a private test message.
-- Settings is a focused sub-flow: it has contextual back controls and hides
-  the global app bar and bottom navigation.
+- The LINE connection screen keeps the global authenticated layout and uses a
+  connection summary, a divider-led test/credentials surface, and a focused
+  setup or edit form.
+- Language selection remains in the authenticated top bar and log out remains
+  in the account menu.
 - Credentials are never returned to the browser after saving.
 
 ## LINE provider requirement

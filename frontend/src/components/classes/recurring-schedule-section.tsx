@@ -74,16 +74,16 @@ export function RecurringScheduleSection({
 
 	if (!recurringSchedule) {
 		return (
-			<div className="rounded-lg border border-border bg-card p-4">
+			<section aria-labelledby="recurring-schedule-title" className="rounded-xl border border-border bg-card p-4">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex min-w-0 items-start gap-3">
 						<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
 							<Repeat2 className="h-4 w-4 text-on-surface" />
 						</div>
 						<div className="min-w-0 flex-1 space-y-1">
-							<p className="text-base font-semibold text-on-surface">
+							<h2 id="recurring-schedule-title" className="text-base font-semibold text-on-surface">
 								{t("schedules:recurring.sectionTitle")}
-							</p>
+							</h2>
 							<p className="max-w-[34ch] text-sm leading-6 text-on-surface-variant">
 								{hasNoAvailableHours
 									? t("schedules:recurring.noAvailabilityDescription")
@@ -92,9 +92,9 @@ export function RecurringScheduleSection({
 						</div>
 					</div>
 					<Button
-						className="w-full sm:w-auto"
+						className="w-full lg:w-auto"
 						onClick={hasNoAvailableHours ? onAddHours : onCreate}
-						size="sm"
+						size="md"
 						variant="outline"
 					>
 						{hasNoAvailableHours
@@ -102,15 +102,19 @@ export function RecurringScheduleSection({
 							: t("schedules:recurring.createAction")}
 					</Button>
 				</div>
-			</div>
+			</section>
 		);
 	}
 
 	return (
-		<Accordion
-			defaultValue={[]}
-			className="rounded-lg border-border bg-card"
-		>
+		<section aria-labelledby="recurring-schedule-title">
+			<h2 className="sr-only" id="recurring-schedule-title">
+				{t("schedules:recurring.sectionTitle")}
+			</h2>
+			<Accordion
+				defaultValue={[]}
+				className="rounded-xl border-border bg-card"
+			>
 			<AccordionItem
 				value="recurring-schedule"
 				className="border-border data-open:bg-transparent"
@@ -121,9 +125,9 @@ export function RecurringScheduleSection({
 					</div>
 					<div className="min-w-0 flex-1 space-y-3">
 						<div className="min-w-0 space-y-2">
-							<p className="text-base font-semibold text-on-surface">
+							<span className="text-base font-semibold text-on-surface">
 								{t("schedules:recurring.sectionTitle")}
-							</p>
+							</span>
 							<div className="flex flex-wrap gap-2">
 								<Badge
 									variant="outline"
@@ -191,15 +195,16 @@ export function RecurringScheduleSection({
 					</p>
 					<Button
 						variant="outline"
-						size="sm"
+						size="md"
 						leftIcon={Pencil}
 						onClick={onEdit}
-						className="w-full sm:w-auto"
+						className="w-full lg:w-auto"
 					>
 						{t("schedules:recurring.editAction")}
 					</Button>
 				</AccordionContent>
 			</AccordionItem>
-		</Accordion>
+			</Accordion>
+		</section>
 	);
 }

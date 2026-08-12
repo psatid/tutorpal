@@ -8,6 +8,7 @@ const th = {
   courses: "หลักสูตร",
   schedules: "ตารางเรียน",
   settings: "การตั้งค่า",
+  lineConnection: "การเชื่อมต่อ LINE",
   primaryNavigation: "การนำทางหลัก",
 } as const satisfies TranslationShape<typeof en>;
 

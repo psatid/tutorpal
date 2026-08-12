@@ -1,6 +1,10 @@
-import { Menu, PanelLeftClose, PanelRightClose } from "lucide-react";
-import { triggerEdgeCollapse, triggerEdgeDrawer } from "tailwindcss-jun-layout";
+import {
+  PanelLeftClose,
+  PanelRightClose,
+  SquareChevronRightIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { triggerEdgeCollapse, triggerEdgeDrawer } from "tailwindcss-jun-layout";
 
 export const TriggerMobileSidebar = () => {
   const { t } = useTranslation("common");
@@ -11,7 +15,7 @@ export const TriggerMobileSidebar = () => {
       className="jun-edgeDrawerTrigger"
       onClick={() => triggerEdgeDrawer()}
     >
-      <Menu className="h-5 w-5" />
+      <SquareChevronRightIcon className="h-5 w-5" />
     </button>
   );
 };

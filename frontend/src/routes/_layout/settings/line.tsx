@@ -5,7 +5,6 @@ import { LineSettingsScreen } from "@/screens/line-settings-screen";
 
 const lineSettingsSearch = z.object({
   testRecipient: z.enum(["connected", "error"]).optional(),
-  returnTo: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_layout/settings/line")({

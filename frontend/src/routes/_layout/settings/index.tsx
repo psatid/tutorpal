@@ -1,19 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-import { ScreenLayout } from "@/components/layout/screen-layout";
-import { SettingsScreen } from "@/screens/settings-screen";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { APP_ROUTES } from "@/constants/routes";
 
 export const Route = createFileRoute("/_layout/settings/")({
-  validateSearch: z.object({
-    returnTo: z.string().optional(),
-  }),
-  component: SettingsRoute,
+  beforeLoad: () => {
+    throw redirect({ to: APP_ROUTES.LINE_SETTINGS, replace: true });
+  },
 });
-
-function SettingsRoute() {
-  return (
-    <ScreenLayout>
-      <SettingsScreen />
-    </ScreenLayout>
-  );
-}

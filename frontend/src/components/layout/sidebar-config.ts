@@ -3,6 +3,7 @@ import {
   BookOpenIcon,
   CalendarCheck2Icon,
   HomeIcon,
+  MessageCircleIcon,
   SchoolIcon,
   SettingsIcon,
   UsersIcon,
@@ -50,9 +51,9 @@ export const SIDE_BAR_CONFIG: readonly NavigationItem[] = [
     icon: SettingsIcon,
     items: [
       {
-        labelKey: "navigation:settings",
-        href: APP_ROUTES.SETTINGS,
-        icon: SettingsIcon,
+        labelKey: "navigation:lineConnection",
+        href: APP_ROUTES.LINE_SETTINGS,
+        icon: MessageCircleIcon,
       },
     ],
   },
