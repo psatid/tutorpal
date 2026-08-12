@@ -190,9 +190,11 @@ function ScheduleBlock({
     statusColors[schedule.status]?.className ??
     statusColors.SCHEDULED.className;
   const StatusIcon = statusColors[schedule.status]?.icon ?? CalendarCheck2;
-  const dateLabel = DateTime.fromDateOnlyString(schedule.date).format(
-    "EEEE, MMMM d",
-  );
+  const dateLabel = DateTime.formatDate(schedule.date, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
   const startTime = formatTime24Hour(schedule.time);
   const endTime = formatTime24Hour(getScheduleEnd(schedule));
 
@@ -304,7 +306,7 @@ export function WeeklyScheduleTimeline({
                       isToday && "text-primary",
                     )}
                   >
-                    {dateTime.format("EEE")}
+                    {DateTime.formatDate(date, { weekday: "short" })}
                   </div>
                   <div
                     className={cn(
@@ -312,7 +314,7 @@ export function WeeklyScheduleTimeline({
                       isSelected && "text-primary",
                     )}
                   >
-                    {dateTime.format("d")}
+                    {DateTime.formatDate(date, { day: "numeric" })}
                   </div>
                 </div>
               );

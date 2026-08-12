@@ -1,4 +1,5 @@
 import { AlertCircle, Check, X } from "lucide-react";
+import type { TFunction } from "i18next";
 
 export function formatTime24Hour(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -6,12 +7,12 @@ export function formatTime24Hour(minutes: number): string {
   return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 }
 
-export function formatDuration(totalMinutes: number): string {
+export function formatDuration(totalMinutes: number, t: TFunction): string {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
-  if (hours === 0) return `${mins}m`;
-  if (mins === 0) return `${hours}h`;
-  return `${hours}h ${mins}m`;
+  if (hours === 0) return t("schedules:duration", { minutes: mins });
+  if (mins === 0) return t("schedules:durationHours", { hours });
+  return t("schedules:durationHoursMinutes", { hours, minutes: mins });
 }
 
 type ScheduleStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";

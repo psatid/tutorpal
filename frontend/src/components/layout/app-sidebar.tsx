@@ -20,7 +20,7 @@ import {
 import UserSetting from "./user-settings";
 
 export const AppSidebar = () => {
-  const { t } = useTranslation(["navigation", "settings"]);
+  const { t } = useTranslation(["common", "navigation", "settings"]);
   const { session } = useSession();
   const location = useLocation();
   const currentNavigationItem = SIDE_BAR_CONFIG.find((item) =>
@@ -62,7 +62,7 @@ export const AppSidebar = () => {
         <div className="jun-edgeContent jun-sidebarContainer">
           <div className="flex flex-col p-2">
             <Link
-              aria-label="TutorPal"
+              aria-label={t("common:appName")}
               className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0"
               to={APP_ROUTES.HOME}
               onClick={() => triggerEdgeDrawer()}
@@ -74,16 +74,21 @@ export const AppSidebar = () => {
               />
               <div className="jun-sidebarText text-left text-sm leading-tight flex items-center">
                 <div className="flex-1">
-                  <div className="truncate font-semibold">TutorPal</div>
+                  <div className="truncate font-semibold">{t("common:appName")}</div>
                   <div className="truncate text-xs">
-                    Hello, {session?.user?.name}
+                    {t("common:profile.greeting", {
+                      name: session?.user?.name ?? t("common:profile.unknownName"),
+                    })}
                   </div>
                 </div>
               </div>
             </Link>
           </div>
           <div className="flex-1 min-h-0 overflow-auto">
-            <nav className="jun-sidebarGroup" aria-label="Primary navigation">
+            <nav
+              className="jun-sidebarGroup"
+              aria-label={t("navigation:primaryNavigation")}
+            >
               <ul className="jun-sidebarMenu">
                 {SIDE_BAR_CONFIG.map((item) => {
                   if ("href" in item) {
@@ -107,7 +112,10 @@ export const AppSidebar = () => {
                 <UserSetting>
                   <button className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
                     <Avatar className="jun-sidebarIcon h-8 w-8">
-                      <AvatarImage src="/unknow.png" alt="Unknown" />
+                      <AvatarImage
+                        src="/unknow.png"
+                        alt={t("common:profile.avatarAlt")}
+                      />
                       <AvatarFallback>
                         {session?.user?.name
                           ?.split(" ")
@@ -119,10 +127,10 @@ export const AppSidebar = () => {
                     <div className="jun-sidebarText flex items-center flex-1 text-left text-sm leading-tight">
                       <div className="flex-1">
                         <div className="truncate font-semibold">
-                          {session?.user?.name || "Unknown"}
+                          {session?.user?.name || t("common:profile.unknownName")}
                         </div>
                         <div className="truncate text-xs">
-                          {session?.user?.email || "unknown@test.com"}
+                          {session?.user?.email || t("common:profile.unknownEmail")}
                         </div>
                       </div>
                       <ChevronsUpDown className="ml-auto size-4" />

@@ -1,4 +1,5 @@
 import { CalendarRange, MapPin, Monitor, Pencil, Repeat2 } from "lucide-react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,8 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import { DateTime } from "@/lib/date-time";
+import { formatDuration } from "@/lib/schedule-utils";
 import { minutesToTimeString, type RecurringScheduleSummary, type Weekday } from "@/types/schedule";
 
 interface RecurringScheduleSectionProps {
@@ -40,7 +43,7 @@ const WEEKDAY_ORDER: Record<Weekday, number> = {
 
 function formatRecurringItems(
 	recurringSchedule: RecurringScheduleSummary,
-	t: (key: string) => string,
+	t: TFunction,
 ) {
 	return recurringSchedule.scheduleItems
 		.map((item) => {
@@ -51,7 +54,7 @@ function formatRecurringItems(
 				weekdayKey: item.weekday,
 				weekday,
 				startTime,
-				durationLabel: `${item.durationMinutes}m`,
+				durationLabel: formatDuration(item.durationMinutes, t),
 			};
 		})
 		.sort((left, right) => WEEKDAY_ORDER[left.weekdayKey] - WEEKDAY_ORDER[right.weekdayKey]);
@@ -66,7 +69,7 @@ export function RecurringScheduleSection({
 }: RecurringScheduleSectionProps) {
 	const { t } = useTranslation(["schedules"]);
 	const recurringItems = recurringSchedule
-		? formatRecurringItems(recurringSchedule, (key) => t(key))
+		? formatRecurringItems(recurringSchedule, t)
 		: [];
 
 	if (!recurringSchedule) {
@@ -129,7 +132,11 @@ export function RecurringScheduleSection({
 									<CalendarRange className="mt-0.5 h-3 w-3 shrink-0" />
 									<span>
 										{t("schedules:recurring.startsOn", {
-											date: recurringSchedule.startDate,
+											date: DateTime.formatDate(recurringSchedule.startDate, {
+												day: "numeric",
+												month: "long",
+												year: "numeric",
+											}),
 										})}
 									</span>
 								</Badge>

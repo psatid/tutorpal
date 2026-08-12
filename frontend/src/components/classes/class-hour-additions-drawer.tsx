@@ -33,7 +33,7 @@ import { DateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
 import type { Class } from "@/models/class";
 import {
-	classHourAdditionFormSchema,
+	createClassHourAdditionFormSchema,
 	type ClassHourAdditionFormInput,
 	type ClassHourAdditionFormValues,
 } from "@/types/class-hour-addition";
@@ -111,7 +111,7 @@ export function ClassHourAdditionsDrawer({
 		setValue,
 		formState: { errors },
 	} = useForm<ClassHourAdditionFormInput, unknown, ClassHourAdditionFormValues>({
-		resolver: zodResolver(classHourAdditionFormSchema),
+		resolver: zodResolver(createClassHourAdditionFormSchema(t)),
 		defaultValues: EMPTY_FORM_VALUES,
 	});
 	const source = useWatch({ control, name: "source" }) ?? "custom";

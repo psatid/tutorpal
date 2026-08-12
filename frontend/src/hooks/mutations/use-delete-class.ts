@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import { schedulesKeys } from "@/hooks/queries/query-keys";
@@ -27,6 +28,7 @@ export function useDeleteClass(options?: {
 	onSuccess?: (id: string) => void;
 	onError?: (error: ClassDeleteError, id: string) => void;
 }) {
+	const { t } = useTranslation("classes");
 	const queryClient = useQueryClient();
 
 	const reconcileDeletion = async (id: string) => {
@@ -50,7 +52,7 @@ export function useDeleteClass(options?: {
 		onSuccess: async (_, id) => {
 			await reconcileDeletion(id);
 			if (options?.onSuccess) options.onSuccess(id);
-			else toast.success("Class deleted successfully.");
+			else toast.success(t("delete.success"));
 		},
 		onError: async (error, id) => {
 			if (error.kind === "not-found") await reconcileDeletion(id);
@@ -58,8 +60,8 @@ export function useDeleteClass(options?: {
 			else
 				toast.error(
 					error.kind === "not-found"
-						? "This class is no longer available."
-						: "Failed to delete class. Please try again.",
+						? t("delete.alreadyRemoved")
+						: t("delete.error"),
 				);
 		},
 	});

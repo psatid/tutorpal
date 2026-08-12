@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import type { PostV1CoursesBody } from "@/api/generated/models/postV1CoursesBody";
 import type { PutV1CoursesByIdBody } from "@/api/generated/models/putV1CoursesByIdBody";
 import { apiClient } from "@/lib/api-client";
@@ -30,28 +31,30 @@ function classifyCourseDeleteError(error: unknown): CourseDeleteError {
 }
 
 export function useCreateCourse(onSuccess?: () => void) {
+	const { t } = useTranslation("courses");
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (data: PostV1CoursesBody) => (await apiClient.postV1Courses(data)).data,
 		onSuccess: () => {
-			toast.success("Course created.");
+			toast.success(t("toast.createSuccess"));
 			queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			onSuccess?.();
 		},
-		onError: (error: Error) => toast.error(error.message || "We couldn't create this course."),
+		onError: (error: Error) => toast.error(error.message || t("toast.createError")),
 	});
 }
 
 export function useUpdateCourse(onSuccess?: () => void) {
+	const { t } = useTranslation("courses");
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: PutV1CoursesByIdBody }) => (await apiClient.putV1CoursesById(id, data)).data,
 		onSuccess: () => {
-			toast.success("Course updated.");
+			toast.success(t("toast.updateSuccess"));
 			queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			onSuccess?.();
 		},
-		onError: (error: Error) => toast.error(error.message || "We couldn't update this course."),
+		onError: (error: Error) => toast.error(error.message || t("toast.updateError")),
 	});
 }
 

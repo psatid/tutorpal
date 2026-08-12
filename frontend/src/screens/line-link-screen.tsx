@@ -112,7 +112,7 @@ export function LineLinkScreen() {
               className="w-full"
               style={{ backgroundColor: "#06C755" }}
             >
-              Connect with LINE
+              {t("students:line.connect")}
             </Button>
           </div>
         )}

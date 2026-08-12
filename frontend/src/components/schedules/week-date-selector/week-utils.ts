@@ -23,20 +23,12 @@ export function formatWeekRange(
   endDate: Date,
   includeYear = false,
 ): string {
-  const start = DateTime.from(startDate);
-  const end = DateTime.from(endDate);
-  const isSameYear = start.format("yyyy") === end.format("yyyy");
-  const isSameMonth = isSameYear && start.format("MM") === end.format("MM");
+  const shouldIncludeYear =
+    includeYear || startDate.getFullYear() !== endDate.getFullYear();
 
-  if (!isSameYear) {
-    return `${start.format("MMM d, yyyy")} – ${end.format("MMM d, yyyy")}`;
-  }
-
-  const yearSuffix = includeYear ? `, ${start.format("yyyy")}` : "";
-
-  if (isSameMonth) {
-    return `${start.format("MMM d")}–${end.format("d")}${yearSuffix}`;
-  }
-
-  return `${start.format("MMM d")} – ${end.format("MMM d")}${yearSuffix}`;
+  return DateTime.formatDateRange(startDate, endDate, {
+    month: "short",
+    day: "numeric",
+    ...(shouldIncludeYear ? { year: "numeric" } : {}),
+  });
 }

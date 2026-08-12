@@ -101,7 +101,7 @@ export function ScheduleCard({
             <span>{t(`schedules:type.${schedule.type}`)}</span>
             <span aria-hidden="true">·</span>
             <span className="tabular-nums">
-              {formatDuration(schedule.durationMinutes)}
+              {formatDuration(schedule.durationMinutes, t)}
             </span>
           </span>
 

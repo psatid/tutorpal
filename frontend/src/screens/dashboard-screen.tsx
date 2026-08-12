@@ -258,7 +258,11 @@ export function DashboardScreen() {
       <header className="flex flex-col gap-5 border-b border-border pb-6 sm:pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
-            {todayDate.format("EEEE, MMMM d")}
+            {DateTime.formatDate(todayDate, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
           <h1 className="mt-1 text-4xl font-normal tracking-[-0.025em] text-foreground sm:text-[2.5rem]">
             {t("dashboard:today.title")}
@@ -275,7 +279,7 @@ export function DashboardScreen() {
             >
               {t("dashboard:today.summary", {
                 count: scheduledSummary.count,
-                duration: formatDuration(scheduledSummary.plannedMinutes),
+                duration: formatDuration(scheduledSummary.plannedMinutes, t),
               })}
             </p>
           ) : null}
@@ -412,7 +416,7 @@ function SessionToConfirmTriage({
           </span>
           <span aria-hidden="true">•</span>
           <span className="tabular-nums">
-            {formatDuration(schedule.durationMinutes)}
+            {formatDuration(schedule.durationMinutes, t)}
           </span>
         </p>
       </div>
@@ -548,7 +552,7 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                   </span>
                   <span aria-hidden="true">•</span>
                   <span className="tabular-nums">
-                    {formatDuration(schedule.durationMinutes)}
+                    {formatDuration(schedule.durationMinutes, t)}
                   </span>
                 </p>
               </div>

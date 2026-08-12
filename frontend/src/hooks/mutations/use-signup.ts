@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { authClient, getEmailVerificationCallbackUrl } from "@/lib/auth-client";
 
 export class AuthFlowError extends Error {
@@ -18,6 +19,7 @@ interface SignupPayload {
 }
 
 export const useSignup = () => {
+  const { t } = useTranslation("auth");
   return useMutation({
     mutationFn: async ({ name, email, password }: SignupPayload) => {
       const result = await authClient.signUp.email({
@@ -29,7 +31,7 @@ export const useSignup = () => {
 
       if (result.error) {
         throw new AuthFlowError(
-          result.error.message || "Signup failed",
+          result.error.message || t("errors.signupFailed"),
           (result.error as { code?: string }).code,
         );
       }

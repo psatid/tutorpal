@@ -5,4 +5,5 @@ export default {
   courses: "Courses",
   schedules: "Schedules",
   settings: "Settings",
+  primaryNavigation: "Primary navigation",
 } as const;

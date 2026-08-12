@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 import {
 	minutesToTimeString,
 	type ScheduleFormData,
-	scheduleSchema,
+	createScheduleSchema,
 	timeStringToMinutes,
 } from "@/types/schedule";
 
@@ -92,7 +92,7 @@ export function ScheduleDrawer({
 		reset,
 		setValue,
 	} = useForm<ScheduleFormData>({
-		resolver: zodResolver(scheduleSchema),
+		resolver: zodResolver(createScheduleSchema(t)),
 		defaultValues: getScheduleDefaultValues(selectedDateValue),
 	});
 	const classIdValue = useWatch({ control, name: "classId" });

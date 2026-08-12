@@ -1,4 +1,5 @@
 import { type ReactNode, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import {
   Drawer,
@@ -48,6 +49,7 @@ export function ResponsiveDrawer({
   layer = "base",
   onCloseAutoFocus,
 }: ResponsiveDrawerProps) {
+  const { t } = useTranslation("common");
   const drawerPopupRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 	const overlayPortalContextValue = {
@@ -101,7 +103,7 @@ export function ResponsiveDrawer({
                     ) : null}
                   </div>
                   <DrawerClose
-                    aria-label={`Close ${title.toLowerCase()}`}
+                    aria-label={t("accessibility.closeNamed", { title })}
                     className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   >
                     <X className="size-5" />

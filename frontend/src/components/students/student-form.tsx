@@ -3,17 +3,15 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
-import { type StudentFormData, studentSchema } from "@/types/student";
-
-const gradeOptions = [6, 7, 8, 9, 10, 11, 12].map((grade) => ({
-	value: String(grade),
-	label: `Grade ${grade}`,
-}));
+import { createStudentSchema, type StudentFormData } from "@/types/student";
 
 export function StudentForm({ onCreated }: { onCreated: () => void }) {
 	const { t } = useTranslation(["students"]);
+	const gradeOptions = ["6", "7", "8", "9", "10", "11", "12"].map(
+		(grade) => ({ value: grade, label: t("students:grade", { grade }) }),
+	);
 	const { handleSubmit, control } = useForm<StudentFormData>({
-		resolver: zodResolver(studentSchema),
+		resolver: zodResolver(createStudentSchema(t)),
 		defaultValues: { name: "", phone: "", grade: undefined },
 	});
 	const create = useCreateStudent({ onSuccess: onCreated });

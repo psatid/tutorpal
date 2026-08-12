@@ -45,7 +45,11 @@ function formatDateHeader(dateStr: string, t: (key: string) => string): string {
   const date = DateTime.fromDateOnlyString(dateStr);
   if (date.isToday()) return t("classDetail.dateHeaders.today");
   if (date.isYesterday()) return t("classDetail.dateHeaders.yesterday");
-  return date.format("EEEE, MMMM d");
+  return DateTime.formatDate(date, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function ScheduleLogSkeleton() {
@@ -171,7 +175,7 @@ export function ScheduleLog({
                         {startTime} – {endTime}
                       </span>
                       <span className="text-xs text-on-surface-variant">
-                        {formatDuration(schedule.durationMinutes)}
+                        {formatDuration(schedule.durationMinutes, t)}
                       </span>
                     </div>
                     <div className="mt-1 flex items-center gap-1 text-xs text-on-surface-variant">

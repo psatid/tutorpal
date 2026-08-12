@@ -213,7 +213,10 @@ export function WeekDateSelector({
     requestCenter(INSTANT_CENTER);
   }, [railSelectedWeekKey, railSelectedWeekStart, requestCenter]);
 
-  const monthLabel = DateTime.from(railSelectedDate).format("MMMM yyyy");
+  const monthLabel = DateTime.formatDate(railSelectedDate, {
+    month: "long",
+    year: "numeric",
+  });
   const weekEnd = getDateInWeek(railSelectedWeekStart, WEEK_DAYS - 1);
   const weekLabel = formatWeekRange(railSelectedWeekStart, weekEnd, true);
   const periodLabel = viewMode === "week" ? weekLabel : monthLabel;

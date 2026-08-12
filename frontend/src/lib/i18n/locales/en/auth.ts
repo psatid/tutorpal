@@ -3,6 +3,13 @@ export default {
 		eyebrow: "TutorPal",
 	},
 	legal: "By continuing, you agree to our Terms of Service and Privacy Policy.",
+	errors: {
+		loginFailed: "Login failed.",
+		signupFailed: "Signup failed.",
+		passwordResetRequestFailed: "Failed to request password reset.",
+		passwordResetFailed: "Failed to reset password.",
+		resendVerificationFailed: "Failed to resend verification email.",
+	},
 	login: {
 		title: "Welcome back",
 		subtitle: "Sign in to continue managing your students and classes.",

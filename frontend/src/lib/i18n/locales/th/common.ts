@@ -1,0 +1,86 @@
+import en from "../en/common";
+import type { TranslationShape } from "../types";
+
+const th = {
+  appName: "TutorPal",
+  buttons: {
+    save: "บันทึก",
+    cancel: "ยกเลิก",
+    delete: "ลบ",
+    edit: "แก้ไข",
+    create: "สร้าง",
+    add: "เพิ่ม",
+    close: "ปิด",
+    search: "ค้นหา",
+    signIn: "เข้าสู่ระบบ",
+    continue: "ดำเนินการต่อ",
+    signOut: "ออกจากระบบ",
+    submit: "ส่ง",
+    back: "กลับ",
+    next: "ถัดไป",
+  },
+  form: {
+    email: "อีเมล",
+    password: "รหัสผ่าน",
+    showPassword: "แสดงรหัสผ่าน",
+    hidePassword: "ซ่อนรหัสผ่าน",
+    name: "ชื่อ",
+    description: "รายละเอียด",
+    required: "จำเป็นต้องกรอกข้อมูลนี้",
+    invalidEmail: "กรุณากรอกที่อยู่อีเมลที่ถูกต้อง",
+    chooseDate: "เลือกวันที่",
+    chooseWeek: "เลือกสัปดาห์",
+  },
+  profile: {
+    greeting: "สวัสดี {{name}}",
+    unknownName: "ไม่ทราบชื่อ",
+    unknownEmail: "ไม่มีที่อยู่อีเมล",
+    avatarAlt: "รูปโปรไฟล์",
+  },
+  accessibility: {
+    toggleSidebar: "สลับแถบด้านข้าง",
+    close: "ปิด",
+    closeNamed: "ปิด {{title}}",
+    primaryNavigation: "การนำทางหลัก",
+    pagination: "การแบ่งหน้า",
+    previousPage: "ไปหน้าก่อนหน้า",
+    nextPage: "ไปหน้าถัดไป",
+    morePages: "หน้าเพิ่มเติม",
+  },
+  calendar: {
+    navigation: "การนำทางปฏิทิน",
+    month: "{{month}}",
+    day: "{{date}}",
+    dayToday: "วันนี้ {{date}}",
+    daySelected: "{{date}} (เลือกแล้ว)",
+    dayTodaySelected: "วันนี้ {{date}} (เลือกแล้ว)",
+    weekday: "{{weekday}}",
+    previousMonth: "ไปยังเดือนก่อนหน้า",
+    nextMonth: "ไปยังเดือนถัดไป",
+    chooseMonth: "เลือกเดือน",
+    chooseYear: "เลือกปี",
+    weekNumber: "สัปดาห์ที่ {{weekNumber}}",
+    weekNumberHeader: "หมายเลขสัปดาห์",
+  },
+  loading: "กำลังโหลด...",
+  error: "เกิดข้อผิดพลาด",
+  retry: "ลองอีกครั้ง",
+  empty: "ไม่พบรายการ",
+  today: "วันนี้",
+  routeError: {
+    title: "ไม่สามารถเปิดหน้านี้ได้",
+    description:
+      "เกิดข้อผิดพลาดขณะเปิด TutorPal งานของคุณยังปลอดภัย ลองอีกครั้งหรือกลับไปที่แดชบอร์ด",
+    retry: "ลองอีกครั้ง",
+    retrying: "กำลังลองอีกครั้ง…",
+    dashboard: "ไปที่แดชบอร์ด",
+  },
+  notFound: {
+    title: "ไม่พบหน้านี้",
+    description:
+      "ลิงก์อาจล้าสมัยหรือหน้านี้อาจย้ายไปแล้ว กลับไปที่ TutorPal กันเถอะ",
+    dashboard: "ไปที่แดชบอร์ด",
+  },
+} as const satisfies TranslationShape<typeof en>;
+
+export default th;

@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "@/lib/api-client";
 import { schedulesKeys } from "@/hooks/queries/query-keys";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 
 export const useDeleteStudent = (options?: { onSuccess?: () => void }) => {
+  const { t } = useTranslation("students");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -13,7 +15,7 @@ export const useDeleteStudent = (options?: { onSuccess?: () => void }) => {
       await apiClient.deleteV1StudentsById(studentId);
     },
     onSuccess: async (_, studentId) => {
-      toast.success("Student deleted successfully.");
+      toast.success(t("toast.deleteSuccess"));
       queryClient.removeQueries({ queryKey: studentsQueryKeys.detail(studentId) });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: studentsQueryKeys.lists() }),
@@ -25,7 +27,7 @@ export const useDeleteStudent = (options?: { onSuccess?: () => void }) => {
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Failed to delete student. Please try again."
+        error.message || t("toast.deleteError")
       );
     },
   });

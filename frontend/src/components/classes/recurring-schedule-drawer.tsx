@@ -7,6 +7,7 @@ import {
 	useWatch,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { z } from "zod";
 import {
 	AlertDialog,
@@ -33,34 +34,45 @@ import {
 } from "@/types/schedule";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 
-const recurringScheduleFormSchema = z.object({
-	effectiveDate: z.string().min(1, "Effective date is required"),
-	type: scheduleTypeSchema
-		.optional()
-		.refine((value) => value !== undefined, "Choose a schedule type."),
-	scheduleItems: z
-		.array(
-			z.object({
-				weekday: z.enum([
-					"MONDAY",
-					"TUESDAY",
-					"WEDNESDAY",
-					"THURSDAY",
-					"FRIDAY",
-					"SATURDAY",
-					"SUNDAY",
-				]),
-				time: z.string().regex(
-					/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-					"Invalid time format",
-				),
-				durationMinutes: z.number().min(1, "Duration must be at least 1 minute"),
-			}),
-		)
-		.min(1, "At least one weekday must be selected"),
-});
+function createRecurringScheduleFormSchema(t: TFunction) {
+	return z.object({
+		effectiveDate: z
+			.string()
+			.min(1, t("schedules:validation.effectiveDateRequired")),
+		type: scheduleTypeSchema
+			.optional()
+			.refine(
+				(value) => value !== undefined,
+				t("schedules:validation.typeRequired"),
+			),
+		scheduleItems: z
+			.array(
+				z.object({
+					weekday: z.enum([
+						"MONDAY",
+						"TUESDAY",
+						"WEDNESDAY",
+						"THURSDAY",
+						"FRIDAY",
+						"SATURDAY",
+						"SUNDAY",
+					]),
+					time: z.string().regex(
+						/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+						t("schedules:validation.invalidTime"),
+					),
+					durationMinutes: z
+						.number()
+						.min(1, t("schedules:validation.durationRequired")),
+				}),
+			)
+			.min(1, t("schedules:validation.weekdayRequired")),
+	});
+}
 
-type RecurringScheduleFormData = z.infer<typeof recurringScheduleFormSchema>;
+type RecurringScheduleFormData = z.infer<
+	ReturnType<typeof createRecurringScheduleFormSchema>
+>;
 
 interface RecurringScheduleDrawerProps {
 	hasNoAvailableHours: boolean;
@@ -85,6 +97,18 @@ const RECURRING_SCHEDULE_DRAWER_FORM_ID = "recurring-schedule-drawer-form";
 
 function getTodayDateString() {
 	return DateTime.today().toDateOnlyString();
+}
+
+function formatRecurringDate(value: string | undefined, fallback: string) {
+	const date = DateTime.tryFromDateOnlyString(value);
+
+	return date
+		? DateTime.formatDate(date, {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			})
+		: fallback;
 }
 
 function isLegacyRecurringOccurrence(
@@ -291,7 +315,7 @@ export function RecurringScheduleDrawer({
 		handleSubmit,
 		reset,
 	} = useForm<RecurringScheduleFormData>({
-		resolver: zodResolver(recurringScheduleFormSchema),
+		resolver: zodResolver(createRecurringScheduleFormSchema(t)),
 		defaultValues: getDefaultValues(recurringSchedule),
 	});
 	const effectiveDate = useWatch({
@@ -471,7 +495,10 @@ export function RecurringScheduleDrawer({
 						<p className="mt-1 text-sm text-on-surface-variant">
 							{t("schedules:recurring.previewDescription", {
 								count: affectedCount,
-								date: effectiveDate || t("schedules:recurring.notSelected"),
+								date: formatRecurringDate(
+									effectiveDate,
+									t("schedules:recurring.notSelected"),
+								),
 							})}
 						</p>
 						<p className="mt-1 text-sm font-medium text-on-surface-variant">
@@ -495,9 +522,10 @@ export function RecurringScheduleDrawer({
 						<AlertDialogDescription>
 							{t("schedules:recurring.confirmDescription", {
 								count: affectedCount,
-								date:
-									pendingValues?.effectiveDate ??
+								date: formatRecurringDate(
+									pendingValues?.effectiveDate,
 									t("schedules:recurring.notSelected"),
+								),
 								type: pendingValues?.type
 									? t(`schedules:type.${pendingValues.type}`)
 									: t("schedules:recurring.typeNotSelected"),

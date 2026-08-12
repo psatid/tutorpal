@@ -43,7 +43,7 @@ export class ClassHourAddition {
 			source: this.data.source,
 			sourceCourseName: this.data.sourceCourseName,
 			formattedHours: DateTime.formatDurationHours(this.data.hours),
-			formattedCreatedAt: DateTime.from(this.data.createdAt).format("PPp"),
+			formattedCreatedAt: DateTime.formatDateTime(this.data.createdAt),
 		};
 	}
 }

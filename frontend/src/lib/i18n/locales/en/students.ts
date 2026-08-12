@@ -32,6 +32,22 @@ export default {
 		description: "Check your connection and try again.",
 	},
 	phone: "Phone",
+	validation: {
+		nameMin: "Name must be at least 2 characters.",
+		phoneInvalid: "Please enter a valid Thailand phone number.",
+		gradeRequired: "Please select a grade level.",
+	},
+	toast: {
+		createSuccess: "Student profile created successfully.",
+		createError: "Failed to save student profile. Please try again.",
+		updateSuccess: "Student profile updated successfully.",
+		updateError: "Failed to update student profile. Please try again.",
+		deleteSuccess: "Student deleted successfully.",
+		deleteError: "Failed to delete student. Please try again.",
+		lineLinkError: "Failed to generate LINE link. Please try again.",
+		lineTestSuccess: "Test message sent to student's LINE account.",
+		lineTestError: "Failed to send test message. Please try again.",
+	},
 	sort: {
 		label: "Sort by",
 		sortedBy: "Sorted by",
@@ -108,6 +124,7 @@ export default {
 		copySuccess: "Copied to clipboard!",
 		copyFailed: "Failed to copy. Please copy the link manually.",
 		connecting: "Connecting to LINE...",
+		connect: "Connect with LINE",
 		readyDescription:
 			"Your tutor uses TutorPal to manage your classes. Connect your LINE account to receive schedule updates and notifications.",
 		retry: "Try Again",

@@ -24,7 +24,7 @@ export const useResetPassword = () => {
 
 			if (result.error) {
 				throw new AuthFlowError(
-					result.error.message || "Failed to reset password",
+					result.error.message || t("auth:errors.passwordResetFailed"),
 					(result.error as { code?: string }).code,
 				);
 			}

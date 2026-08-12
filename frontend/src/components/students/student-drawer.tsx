@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { useUpdateStudent } from "@/hooks/mutations/use-update-student";
 import { Student } from "@/models/student";
-import { studentSchema, type StudentFormData } from "@/types/student";
+import { createStudentSchema, type StudentFormData } from "@/types/student";
 
 export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
@@ -21,15 +21,6 @@ interface StudentDrawerProps {
   onModeChange: (mode: DrawerMode) => void;
 }
 
-const gradeOptions = [
-  { value: "6", label: "Grade 6" },
-  { value: "7", label: "Grade 7" },
-  { value: "8", label: "Grade 8" },
-  { value: "9", label: "Grade 9" },
-  { value: "10", label: "Grade 10" },
-  { value: "11", label: "Grade 11" },
-  { value: "12", label: "Grade 12" },
-];
 const STUDENT_DRAWER_FORM_ID = "student-drawer-form";
 
 export function StudentDrawer({
@@ -40,8 +31,11 @@ export function StudentDrawer({
   onModeChange,
 }: StudentDrawerProps) {
   const { t } = useTranslation(["students"]);
+  const gradeOptions = ["6", "7", "8", "9", "10", "11", "12"].map(
+    (grade) => ({ value: grade, label: t("students:grade", { grade }) }),
+  );
   const { handleSubmit, reset, control } = useForm<StudentFormData>({
-    resolver: zodResolver(studentSchema),
+    resolver: zodResolver(createStudentSchema(t)),
     defaultValues: {
       name: "",
       phone: "",

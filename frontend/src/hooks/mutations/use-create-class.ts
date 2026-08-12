@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "@/lib/api-client";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import type { PostV1ClassesBody } from "@/api/generated/models/postV1ClassesBody";
 
 export const useCreateClass = (options?: { onSuccess?: () => void }) => {
+  const { t } = useTranslation("classes");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -14,7 +16,7 @@ export const useCreateClass = (options?: { onSuccess?: () => void }) => {
       return response.data;
     },
     onSuccess: async () => {
-      toast.success("Class created. Add hours when you’re ready.");
+      toast.success(t("toast.createSuccess"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
@@ -22,7 +24,7 @@ export const useCreateClass = (options?: { onSuccess?: () => void }) => {
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to create class. Please try again.");
+      toast.error(error.message || t("toast.createError"));
     },
   });
 };

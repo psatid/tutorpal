@@ -47,6 +47,12 @@ export default {
 		courseName: "Enter a course name.",
 		hours: "Enter hours greater than zero.",
 	},
+	toast: {
+		createSuccess: "Course created.",
+		createError: "We couldn't create this course.",
+		updateSuccess: "Course updated.",
+		updateError: "We couldn't update this course.",
+	},
 	form: {
 		nameLabel: "Course name",
 		namePlaceholder: "e.g. Mathematics",

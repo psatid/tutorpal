@@ -76,12 +76,18 @@ export function WeekView({
     selectedWeekStart && !isSelectedWeekInBuffer
       ? [
           t("schedules:weekSelector.weekLabel", {
-            start: DateTime.from(selectedWeekStart).format(
-              "EEEE, MMMM d, yyyy",
-            ),
-            end: DateTime.from(getWeekEnd(selectedWeekStart)).format(
-              "EEEE, MMMM d, yyyy",
-            ),
+            start: DateTime.formatDate(selectedWeekStart, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            end: DateTime.formatDate(getWeekEnd(selectedWeekStart), {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
           }),
           t("schedules:weekSelector.selectedWeek"),
         ].join(", ")
@@ -407,10 +413,18 @@ export function WeekView({
             const rangeLabel = formatWeekRange(weekStart, weekEnd);
             const ariaLabel = [
               t("schedules:weekSelector.weekLabel", {
-                start: DateTime.from(weekStart).format(
-                  "EEEE, MMMM d, yyyy",
-                ),
-                end: DateTime.from(weekEnd).format("EEEE, MMMM d, yyyy"),
+                start: DateTime.formatDate(weekStart, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                end: DateTime.formatDate(weekEnd, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                }),
               }),
               isCurrentWeek
                 ? t("schedules:weekSelector.containsToday")

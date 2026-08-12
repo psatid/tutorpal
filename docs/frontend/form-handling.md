@@ -21,18 +21,42 @@ Zod schema and inferred types
   -> mutation hook
 ```
 
-## 1. Define the schema outside the component
+## 1. Define a translated schema factory outside the component
 
 Keep feature schemas and their inferred types under `frontend/src/types/`.
 The schema is the source of truth for validation and should also normalize
 values before submission, such as trimming names or converting numeric input.
+
+Validation messages must be created with the current translator rather than at
+module load. Export a schema factory that accepts `TFunction`, call it from the
+form with `t`, and infer types from its return value:
+
+```ts
+export function createCourseSchema(t: TFunction) {
+  return z.object({
+    name: z.string().trim().min(1, t("courses:validation.courseName")),
+  });
+}
+
+export type CourseFormData = z.output<ReturnType<typeof createCourseSchema>>;
+```
+
+```tsx
+const { t } = useTranslation("courses");
+const form = useForm<CourseFormInput, unknown, CourseFormData>({
+  resolver: zodResolver(createCourseSchema(t)),
+});
+```
+
+This keeps future validation attempts aligned with the active UI language while
+preserving the same parsed form output and API request shape.
 
 When input and output types differ, export both and pass all three generics to
 `useForm`:
 
 ```ts
 const form = useForm<CourseFormInput, unknown, CourseFormData>({
-  resolver: zodResolver(courseSchema),
+  resolver: zodResolver(createCourseSchema(t)),
   defaultValues: {
     name: "",
     defaultTotalHours: "",

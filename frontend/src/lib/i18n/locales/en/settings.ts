@@ -6,6 +6,9 @@ export default {
   cancel: "Cancel",
   backToApp: "Back to app",
   backToSettings: "Back to settings",
+  language: "Language / ภาษา",
+  logoutSuccess: "You have been logged out.",
+  logoutError: "Failed to log out. Please try again.",
   line: {
     title: "LINE messaging",
     description: "Use your own LINE Official Account to message students.",

@@ -7,12 +7,13 @@
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
 @import "@fontsource/inter/700.css";
+@import "@fontsource-variable/noto-sans-thai/wght.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Inter", sans-serif;
+  --font-sans: "Inter", "Noto Sans Thai Variable", sans-serif;
   --font-body: var(--font-sans);
   --font-label: var(--font-sans);
   --font-caption: var(--font-sans);

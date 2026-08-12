@@ -23,8 +23,21 @@ import { DateTime } from "@/lib/date-time";
 const selectedDate = DateTime.fromDateOnlyString("2026-07-19");
 const apiDate = selectedDate.toDateOnlyString();
 
-// API timestamp display
-const label = DateTime.from(lastVerifiedAt).format("PPp");
+// Locale-aware API timestamp display
+const label = DateTime.formatDateTime(lastVerifiedAt);
+
+// Locale-aware calendar dates and ranges
+const dateLabel = DateTime.formatDate(selectedDate, {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+const rangeLabel = DateTime.formatDateRange(startDate, endDate, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 
 // Lesson-duration values remain numeric, but use the shared formatter.
 const hours = DateTime.formatDurationHours(2.5); // "2.5"
@@ -47,9 +60,12 @@ native `Date` values, and existing `DateTime` instances.
   Screens and components keep translated labels and local interaction state.
 - Format outgoing calendar values with `.toDateOnlyString()` rather than
   `toISOString().slice(...)`.
-- Use `.format(...)`, `.isToday()`, `.isYesterday()`, `.isSameDay(...)`, and
-  arithmetic methods instead of native `Date` parsing, `getDay`, or manual
-  string manipulation. Use `DateTime.formatDurationHours(...)` for numeric
+- Use `DateTime.formatDate(...)`, `DateTime.formatDateTime(...)`, and
+  `DateTime.formatDateRange(...)` for user-facing dates. Use `.format(...)`
+  only when a date-fns pattern is required for calendar chrome or internal UI
+  metadata. Use `.isToday()`, `.isYesterday()`, `.isSameDay(...)`, and
+  arithmetic methods instead of native `Date` parsing or manual string
+  composition. Use `DateTime.formatDurationHours(...)` for numeric
   hour-duration display.
 - Use `.toDate()` only where a third-party UI component requires a native
   `Date`.
@@ -62,3 +78,13 @@ native `Date` values, and existing `DateTime` instances.
 - Direct `Intl.DateTimeFormat`, `Date.prototype.toLocaleString`, or ad-hoc
   `date-fns` imports in feature code.
 - Mixing a timestamp with a date-only value when comparing or grouping data.
+
+## Active locale convention
+
+`DateTime` follows the active `en` or `th` app language. It supplies the
+matching date-fns locale for calendar controls and uses `Intl` for all
+user-facing dates and ranges. Thai display always explicitly requests the
+Gregorian calendar and Latin digits; for example, August 12, 2026 is rendered
+as `วันพุธที่ 12 สิงหาคม 2026`, never as a Buddhist Era year. This affects
+display only: storage and API contracts remain ISO `YYYY-MM-DD`, and weeks
+continue to start on Monday.

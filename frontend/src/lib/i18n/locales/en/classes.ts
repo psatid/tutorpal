@@ -99,6 +99,11 @@ export default {
 		historyCourse: "Course preset · {{course}}",
 		historyCustom: "Custom hours",
 		loadMore: "Load more",
+		validation: {
+			range: "Enter hours from 0.01 to 99,999,999.99.",
+			precision: "Enter hours with no more than two decimal places.",
+			course: "Choose a course.",
+		},
 	},
 	loadingMore: "Loading more classes...",
 	sort: {

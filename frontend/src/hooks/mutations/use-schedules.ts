@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { schedulesKeys } from "@/hooks/queries/query-keys";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
@@ -7,6 +8,7 @@ import { apiClient } from "@/lib/api-client";
 import type { ScheduleType, Weekday } from "@/types/schedule";
 
 export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -65,7 +67,7 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 			return response.data;
 		},
 		onSuccess: () => {
-			toast.success("Schedule created successfully.");
+			toast.success(t("toast.createSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
@@ -73,13 +75,14 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 		},
 		onError: (error: Error) => {
 			toast.error(
-				error.message || "Failed to create schedule. Please try again.",
+				error.message || t("toast.createError"),
 			);
 		},
 	});
 };
 
 export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -102,7 +105,7 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 			return response.data;
 		},
 		onSuccess: (_, variables) => {
-			toast.success("Schedule updated successfully.");
+			toast.success(t("toast.updateSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables.id),
@@ -113,13 +116,14 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 		},
 		onError: (error: Error) => {
 			toast.error(
-				error.message || "Failed to update schedule. Please try again.",
+				error.message || t("toast.updateError"),
 			);
 		},
 	});
 };
 
 export const useDeleteSchedule = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -127,7 +131,7 @@ export const useDeleteSchedule = (options?: { onSuccess?: () => void }) => {
 			await apiClient.deleteV1SchedulesById(id);
 		},
 		onSuccess: () => {
-			toast.success("Schedule deleted successfully.");
+			toast.success(t("toast.deleteSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
@@ -135,13 +139,14 @@ export const useDeleteSchedule = (options?: { onSuccess?: () => void }) => {
 		},
 		onError: (error: Error) => {
 			toast.error(
-				error.message || "Failed to delete schedule. Please try again.",
+				error.message || t("toast.deleteError"),
 			);
 		},
 	});
 };
 
 export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -150,7 +155,7 @@ export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
 			return response.data;
 		},
 		onSuccess: (_, variables) => {
-			toast.success("Schedule completed successfully. Hours deducted.");
+			toast.success(t("toast.completeSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables),
@@ -161,13 +166,14 @@ export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
 		},
 		onError: (error: Error) => {
 			toast.error(
-				error.message || "Failed to complete schedule. Please try again.",
+				error.message || t("toast.completeError"),
 			);
 		},
 	});
 };
 
 export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -176,7 +182,7 @@ export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
 			return response.data;
 		},
 		onSuccess: (_, variables) => {
-			toast.success("Hours restored successfully.");
+			toast.success(t("toast.restoreSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables),
@@ -187,13 +193,14 @@ export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
 		},
 		onError: (error: Error) => {
 			toast.error(
-				error.message || "Failed to restore hours. Please try again.",
+				error.message || t("toast.restoreError"),
 			);
 		},
 	});
 };
 
 export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -216,7 +223,7 @@ export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void })
 			return response.data;
 		},
 		onSuccess: () => {
-			toast.success("Recurring schedule updated successfully.");
+			toast.success(t("toast.recurringUpdateSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
@@ -224,8 +231,7 @@ export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void })
 		},
 		onError: (error: Error) => {
 			toast.error(
-				error.message ||
-					"Failed to update recurring schedule. Please try again.",
+					error.message || t("toast.recurringUpdateError"),
 			);
 		},
 	});

@@ -49,12 +49,13 @@ function DateField({
   error,
   required,
   disabled,
-  placeholder = "Pick a date",
+  placeholder,
   ariaLabel,
   className,
   trigger,
 }: DateFieldProps) {
   const { t } = useTranslation("common");
+  const resolvedPlaceholder = placeholder ?? t("form.chooseDate");
   const [isOpen, setIsOpen] = useState(false);
   const fieldId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -120,7 +121,7 @@ function DateField({
               aria-describedby={describedBy}
               aria-invalid={hasError || undefined}
               disabled={disabled}
-              placeholder={placeholder}
+              placeholder={resolvedPlaceholder}
               className={className}
               trigger={trigger}
               data-state={isOpen ? "open" : "closed"}
@@ -140,7 +141,7 @@ function DateField({
             aria-describedby={describedBy}
             aria-invalid={hasError || undefined}
             disabled={disabled}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             className={className}
             trigger={trigger}
             aria-expanded={isOpen}
@@ -222,7 +223,7 @@ const DateFieldTrigger = forwardRef<
     >
       <CalendarIcon className="size-4 shrink-0" />
       <span className="min-w-0 truncate">
-        {date ? DateTime.from(date).format("PPP") : placeholder}
+        {date ? DateTime.formatDate(date) : placeholder}
       </span>
     </button>
   );

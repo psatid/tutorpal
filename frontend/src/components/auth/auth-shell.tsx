@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface AuthShellProps {
@@ -18,6 +19,8 @@ export function AuthShell({
   footer,
   ctaArea,
 }: AuthShellProps) {
+  const { t } = useTranslation("common");
+
   return (
     <div className="relative isolate flex min-h-dvh justify-center overflow-hidden bg-[#eaf1f8] px-4 py-4 sm:px-6 sm:py-6">
       <img
@@ -35,7 +38,7 @@ export function AuthShell({
           <div className="space-y-2">
             <img
               src="/app-icon.png"
-              alt="Logo"
+              alt={t("appName")}
               className="jun-sidebarIcon size-10"
             />
             {eyebrow ? (

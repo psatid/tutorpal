@@ -2,6 +2,7 @@ import { authClient } from "@/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { AuthFlowError } from "./use-signup";
 
 interface LoginCredentials {
@@ -19,6 +20,7 @@ interface UseLoginOptions {
  * Handles login, shows toast feedback, and navigates to the root on success.
  */
 export const useLogin = (options?: UseLoginOptions) => {
+  const { t } = useTranslation("auth");
   const navigate = useNavigate();
 
   return useMutation({
@@ -30,7 +32,7 @@ export const useLogin = (options?: UseLoginOptions) => {
 
       if (result.error) {
         throw new AuthFlowError(
-          result.error.message || "Login failed",
+          result.error.message || t("errors.loginFailed"),
           (result.error as { code?: string }).code,
         );
       }
@@ -38,7 +40,7 @@ export const useLogin = (options?: UseLoginOptions) => {
       return result.data;
     },
     onSuccess: () => {
-      toast.success("Welcome back! You have been logged in.");
+      toast.success(t("login.success"));
       navigate({ to: "/" });
       options?.onSuccess?.();
     },
@@ -49,7 +51,7 @@ export const useLogin = (options?: UseLoginOptions) => {
       }
 
       toast.error(
-        error.message || "Invalid email or password. Please try again.",
+        error.message || t("login.invalid"),
       );
     },
   });

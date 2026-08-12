@@ -3,7 +3,9 @@ import {
   DayPicker,
   getDefaultClassNames,
   type DayButton,
+  type Labels,
   type Locale,
+  type Modifiers,
 } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -11,6 +13,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeftIcon, ArrowRightIcon, ArrowDownIcon } from "@hugeicons/core-free-icons"
 import { DateTime } from "@/lib/date-time"
+import { useTranslation } from "react-i18next"
 
 function Calendar({
   className,
@@ -20,14 +23,61 @@ function Calendar({
   captionLayout = "label",
   buttonVariant = "ghost",
   locale,
+  weekStartsOn = 1,
   formatters,
+  labels,
   components,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
   fullWidth?: boolean
 }) {
+  const { i18n, t } = useTranslation("common")
+  const calendarLocale =
+    locale ?? DateTime.getDateFnsLocale(i18n.resolvedLanguage ?? i18n.language)
   const defaultClassNames = getDefaultClassNames()
+  const formatCalendarDayLabel = (date: Date, modifiers?: Modifiers) => {
+    const formattedDate = DateTime.formatDate(date, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+
+    if (modifiers?.today && modifiers.selected) {
+      return t("calendar.dayTodaySelected", { date: formattedDate })
+    }
+
+    if (modifiers?.today) {
+      return t("calendar.dayToday", { date: formattedDate })
+    }
+
+    if (modifiers?.selected) {
+      return t("calendar.daySelected", { date: formattedDate })
+    }
+
+    return t("calendar.day", { date: formattedDate })
+  }
+  const calendarLabels: Partial<Labels> = {
+    labelNav: () => t("calendar.navigation"),
+    labelGrid: (date) =>
+      t("calendar.month", {
+        month: DateTime.formatDate(date, { month: "long", year: "numeric" }),
+      }),
+    labelGridcell: (date, modifiers) => formatCalendarDayLabel(date, modifiers),
+    labelMonthDropdown: () => t("calendar.chooseMonth"),
+    labelYearDropdown: () => t("calendar.chooseYear"),
+    labelNext: () => t("calendar.nextMonth"),
+    labelPrevious: () => t("calendar.previousMonth"),
+    labelDayButton: (date, modifiers) => formatCalendarDayLabel(date, modifiers),
+    labelWeekday: (date) =>
+      t("calendar.weekday", {
+        weekday: DateTime.formatDate(date, { weekday: "long" }),
+      }),
+    labelWeekNumber: (weekNumber) =>
+      t("calendar.weekNumber", { weekNumber }),
+    labelWeekNumberHeader: () => t("calendar.weekNumberHeader"),
+  }
 
   return (
     <DayPicker
@@ -40,10 +90,15 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
-      locale={locale}
+      locale={calendarLocale}
+      weekStartsOn={weekStartsOn}
+      labels={{
+        ...calendarLabels,
+        ...labels,
+      }}
       formatters={{
         formatMonthDropdown: (date) =>
-          DateTime.from(date).format("LLL", { locale }),
+          DateTime.from(date).format("LLL", { locale: calendarLocale }),
         ...formatters,
       }}
       classNames={{
@@ -179,7 +234,7 @@ function Calendar({
           )
         },
         DayButton: ({ ...props }) => (
-          <CalendarDayButton fullWidth={fullWidth} locale={locale} {...props} />
+          <CalendarDayButton fullWidth={fullWidth} locale={calendarLocale} {...props} />
         ),
         WeekNumber: ({ children, ...props }) => {
           return (
@@ -219,7 +274,7 @@ function CalendarDayButton({
     <Button
       variant="ghost"
       size="icon"
-      data-day={DateTime.from(day.date).format("P", { locale })}
+      data-day={DateTime.from(day.date).toDateOnlyString()}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

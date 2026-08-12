@@ -1,8 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "@/lib/api-client";
 
 export const useGenerateLineLink = () => {
+  const { t } = useTranslation("students");
   return useMutation({
     mutationFn: async (studentId: string) => {
       const response = await apiClient.postV1LineLinkToken({ studentId });
@@ -10,7 +12,7 @@ export const useGenerateLineLink = () => {
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Failed to generate LINE link. Please try again.",
+        error.message || t("toast.lineLinkError"),
       );
     },
   });

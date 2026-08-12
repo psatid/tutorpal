@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { TFunction } from "i18next";
 
 export type Weekday =
 	| "MONDAY"
@@ -27,70 +28,75 @@ export interface RecurringScheduleSummary {
 }
 
 // Schema for the form - uses HH:MM format for time
-export const scheduleSchema = z
-	.object({
-		classId: z.string().min(1, "Class is required"),
-		date: z.string().min(1, "Date is required"),
-		type: scheduleTypeSchema
-			.optional()
-			.refine((value) => value !== undefined, "Choose a schedule type."),
-		time: z.string().optional(),
-		durationMinutes: z
-			.number()
-			.min(1, "Duration must be at least 1 minute")
-			.optional(),
-		notes: z.string().optional(),
-		status: z.enum(["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]),
-		recurring: z
-			.object({
-				scheduleItems: z
-					.array(
-						z.object({
-							weekday: z.enum([
-								"MONDAY",
-								"TUESDAY",
-								"WEDNESDAY",
-								"THURSDAY",
-								"FRIDAY",
-								"SATURDAY",
-								"SUNDAY",
-							]),
-							time: z
-								.string()
-								.regex(
-									/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-									"Invalid time format",
-								),
-							durationMinutes: z
-								.number()
-								.min(1, "Duration must be at least 1 minute"),
-						}),
-					)
-					.min(1, "At least one weekday must be selected"),
-			})
-			.optional(),
-	})
-	.superRefine((data, ctx) => {
-		if (!data.recurring) {
-			if (data.time === undefined || data.time === "") {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ["time"],
-					message: "Time is required for one-time schedules",
-				});
-			}
+export function createScheduleSchema(t: TFunction) {
+	return z
+		.object({
+			classId: z.string().min(1, t("schedules:validation.classRequired")),
+			date: z.string().min(1, t("schedules:validation.dateRequired")),
+			type: scheduleTypeSchema
+				.optional()
+				.refine(
+					(value) => value !== undefined,
+					t("schedules:validation.typeRequired"),
+				),
+			time: z.string().optional(),
+			durationMinutes: z
+				.number()
+				.min(1, t("schedules:validation.durationRequired"))
+				.optional(),
+			notes: z.string().optional(),
+			status: z.enum(["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]),
+			recurring: z
+				.object({
+					scheduleItems: z
+						.array(
+							z.object({
+								weekday: z.enum([
+									"MONDAY",
+									"TUESDAY",
+									"WEDNESDAY",
+									"THURSDAY",
+									"FRIDAY",
+									"SATURDAY",
+									"SUNDAY",
+								]),
+								time: z
+									.string()
+									.regex(
+										/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+										t("schedules:validation.invalidTime"),
+									),
+								durationMinutes: z
+									.number()
+									.min(1, t("schedules:validation.durationRequired")),
+							}),
+						)
+						.min(1, t("schedules:validation.weekdayRequired")),
+				})
+				.optional(),
+		})
+		.superRefine((data, ctx) => {
+			if (!data.recurring) {
+				if (data.time === undefined || data.time === "") {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						path: ["time"],
+						message: t("schedules:validation.timeRequired"),
+					});
+				}
 
-			if (data.durationMinutes === undefined) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ["durationMinutes"],
-					message: "Duration must be at least 1 minute",
-				});
+				if (data.durationMinutes === undefined) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						path: ["durationMinutes"],
+						message: t("schedules:validation.durationRequired"),
+					});
+				}
 			}
-		}
-	});
+		});
+}
 
-export type ScheduleFormData = z.infer<typeof scheduleSchema>;
+export type ScheduleFormData = z.infer<ReturnType<typeof createScheduleSchema>>;
 
 // Helper function to convert minutes since midnight to HH:MM format
 export function minutesToTimeString(minutes: number): string {

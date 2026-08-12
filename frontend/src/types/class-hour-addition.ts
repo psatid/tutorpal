@@ -1,10 +1,7 @@
 import { z } from "zod";
+import type { TFunction } from "i18next";
 
 const MAX_CUSTOM_HOURS = 99_999_999.99;
-const customHoursRangeError =
-	"Enter hours from 0.01 to 99,999,999.99.";
-const customHoursPrecisionError =
-	"Enter hours with no more than two decimal places.";
 
 function hasAtMostTwoDecimalPlaces(hours: number) {
 	const scaledHours = hours * 100;
@@ -14,33 +11,34 @@ function hasAtMostTwoDecimalPlaces(hours: number) {
 	);
 }
 
-const customHoursSchema = z
-	.coerce
-	.number({ error: customHoursRangeError })
-	.finite(customHoursRangeError)
-	.min(0.01, customHoursRangeError)
-	.max(MAX_CUSTOM_HOURS, customHoursRangeError)
-	.refine(
-		hasAtMostTwoDecimalPlaces,
-		customHoursPrecisionError,
-	);
+export function createClassHourAdditionFormSchema(t: TFunction) {
+	const customHoursRangeError = t("classes:hourAdditions.validation.range");
+	const customHoursPrecisionError = t("classes:hourAdditions.validation.precision");
+	const customHoursSchema = z
+		.coerce
+		.number({ error: customHoursRangeError })
+		.finite(customHoursRangeError)
+		.min(0.01, customHoursRangeError)
+		.max(MAX_CUSTOM_HOURS, customHoursRangeError)
+		.refine(hasAtMostTwoDecimalPlaces, customHoursPrecisionError);
 
-export const classHourAdditionFormSchema = z.discriminatedUnion("source", [
-	z.object({
-		source: z.literal("course"),
-		courseId: z.string().min(1, "Choose a course."),
-		hours: z.union([z.string(), z.number()]).optional(),
-	}),
-	z.object({
-		source: z.literal("custom"),
-		courseId: z.string().optional(),
-		hours: customHoursSchema,
-	}),
-]);
+	return z.discriminatedUnion("source", [
+		z.object({
+			source: z.literal("course"),
+			courseId: z.string().min(1, t("classes:hourAdditions.validation.course")),
+			hours: z.union([z.string(), z.number()]).optional(),
+		}),
+		z.object({
+			source: z.literal("custom"),
+			courseId: z.string().optional(),
+			hours: customHoursSchema,
+		}),
+	]);
+}
 
 export type ClassHourAdditionFormInput = z.input<
-	typeof classHourAdditionFormSchema
+	ReturnType<typeof createClassHourAdditionFormSchema>
 >;
 export type ClassHourAdditionFormValues = z.output<
-	typeof classHourAdditionFormSchema
+	ReturnType<typeof createClassHourAdditionFormSchema>
 >;

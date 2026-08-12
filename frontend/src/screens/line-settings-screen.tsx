@@ -148,7 +148,7 @@ export function LineSettingsScreen() {
             <div className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
               {configuredConnection.lastVerifiedAt
                 ? t("settings:line.lastVerified", {
-                    date: DateTime.from(configuredConnection.lastVerifiedAt).format("PPp"),
+                    date: DateTime.formatDateTime(configuredConnection.lastVerifiedAt),
                   })
                 : t("settings:line.connected")}
             </div>

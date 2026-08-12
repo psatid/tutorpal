@@ -73,7 +73,12 @@ export function WeekdayView({
   const offscreenSelectedAriaLabel =
     selectedDate && !isSelectedDateInBuffer
       ? [
-          DateTime.from(selectedDate).format("EEEE, MMMM d, yyyy"),
+          DateTime.formatDate(selectedDate, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }),
           DateTime.from(selectedDate).isToday()
             ? t("schedules:weekSelector.today")
             : undefined,
@@ -381,15 +386,20 @@ export function WeekdayView({
               ? dateTime.isSameDay(selectedDate)
               : false;
             const isDateToday = dateTime.isToday();
-            const dayName = dateTime.format("EEE");
-            const dayNumber = dateTime.format("d");
-            const monthName = dateTime.format("MMM");
+            const dayName = DateTime.formatDate(date, { weekday: "short" });
+            const dayNumber = DateTime.formatDate(date, { day: "numeric" });
+            const monthName = DateTime.formatDate(date, { month: "short" });
             const previousDate = dates[index - 1];
             const showsMonthMarker =
               !previousDate ||
-              dateTime.format("M") !== DateTime.from(previousDate).format("M");
+              date.getMonth() !== previousDate.getMonth();
             const ariaLabel = [
-              dateTime.format("EEEE, MMMM d, yyyy"),
+              DateTime.formatDate(date, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              }),
               isDateToday ? t("schedules:weekSelector.today") : undefined,
               isSelected ? t("schedules:weekSelector.selected") : undefined,
             ]

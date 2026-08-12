@@ -17,7 +17,7 @@ import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useUpdateClass } from "@/hooks/mutations/use-update-class";
 import type { Class } from "@/models/class";
 import {
-	classFormSchema,
+	createClassFormSchema,
 	type ClassFormInput,
 	type ClassFormValues,
 } from "@/types/class";
@@ -63,7 +63,7 @@ export function ClassForm({
 		reset,
 		setValue,
 	} = useForm<ClassFormInput, unknown, ClassFormValues>({
-		resolver: zodResolver(classFormSchema),
+		resolver: zodResolver(createClassFormSchema(t)),
 		defaultValues: getClassFormDefaultValues(classData),
 	});
 	const studentIds = useWatch({ control, name: "studentIds" }) ?? [];

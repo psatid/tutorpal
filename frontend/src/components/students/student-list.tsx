@@ -98,7 +98,7 @@ export function StudentList({
               toast.dismiss(loadingToastId);
               toast.error(
                 error.message ||
-                  "Failed to generate LINE link. Please try again.",
+                  t("students:toast.lineLinkError"),
               );
             },
           });

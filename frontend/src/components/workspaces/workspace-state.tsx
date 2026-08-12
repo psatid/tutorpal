@@ -1,11 +1,14 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function WorkspaceListSkeleton({ rows = 4 }: { rows?: number }) {
+	const { t } = useTranslation("common");
+
 	return (
-		<output aria-label="Loading" className="flex flex-col gap-1">
-			<span className="sr-only">Loading</span>
+		<output aria-label={t("loading")} className="flex flex-col gap-1">
+			<span className="sr-only">{t("loading")}</span>
 			{Array.from({ length: rows }).map((_, index) => (
 				<div
 					className="flex min-h-20 items-center gap-3 border-b border-border py-4"
@@ -27,13 +30,15 @@ export function WorkspaceErrorState({
 	title,
 	description,
 	onRetry,
-	retryLabel = "Try again",
+	retryLabel,
 }: {
 	title: string;
 	description: string;
 	onRetry: () => void;
 	retryLabel?: string;
 }) {
+	const { t } = useTranslation("common");
+
 	return (
 		<div className="flex min-h-64 flex-col items-center justify-center px-4 text-center">
 			<h2 className="text-lg font-medium tracking-[-0.01em] text-foreground">{title}</h2>
@@ -41,7 +46,7 @@ export function WorkspaceErrorState({
 				{description}
 			</p>
 			<Button className="mt-4" onClick={onRetry} variant="outline">
-				{retryLabel}
+				{retryLabel ?? t("retry")}
 			</Button>
 		</div>
 	);

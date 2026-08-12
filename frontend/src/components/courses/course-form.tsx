@@ -10,7 +10,7 @@ import type { Course } from "@/models/course";
 import {
 	type CourseFormData,
 	type CourseFormInput,
-	courseSchema,
+	createCourseSchema,
 } from "@/types/course";
 
 interface CourseFormProps {
@@ -26,7 +26,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
 		unknown,
 		CourseFormData
 	>({
-		resolver: zodResolver(courseSchema),
+		resolver: zodResolver(createCourseSchema(t)),
 		defaultValues: {
 			name: courseFormData?.name ?? "",
 			defaultTotalHours: courseFormData
