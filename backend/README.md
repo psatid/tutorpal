@@ -1,5 +1,21 @@
 # TutorPal backend
 
+## Make targets
+
+From this directory, use `make help` to list available commands. Common
+targets are:
+
+```sh
+make dev
+make cf-dev
+make check
+make test
+make deploy
+```
+
+The `deploy` target deploys the Cloudflare Worker. The `do-deploy` target is
+available for the legacy DigitalOcean App Platform path.
+
 ## Cloudflare Worker
 
 `src/cloudflare-worker.ts` is the Cloudflare entrypoint. It creates Prisma and
@@ -34,6 +50,7 @@ Set these runtime variables in `wrangler.jsonc` or through the Cloudflare
 dashboard with deployment-specific non-secret values:
 
 - `CORS_ORIGIN`
+- `ADMIN_FRONTEND_URL`
 - `BETTER_AUTH_URL`
 - `ENVIRONMENT`
 - `LOG_LEVEL`
@@ -41,6 +58,7 @@ dashboard with deployment-specific non-secret values:
 - `LINE_LINK_REDIRECT_URL`
 - `FRONTEND_URL`
 - `EMAIL_VERIFICATION_CALLBACK_URL`
+- `PUBLIC_SIGNUP_ENABLED` (`false` keeps account creation in the admin portal)
 
 Set each of these as a Worker secret before deployment; never commit their
 values or place them in `wrangler.jsonc`:
@@ -51,3 +69,21 @@ values or place them in `wrangler.jsonc`:
 
 Use `bun run cf:check` to bundle-check the Worker and `bun run cf:dev` for
 local Worker development. Deployment remains an explicit external operation.
+
+## Local account provisioning
+
+Public signup is disabled by default. Provision the first administrator from
+the backend directory with:
+
+```sh
+bun run bootstrap-admin --email admin@example.com --name "TutorPal Admin"
+```
+
+Pass the password through `BOOTSTRAP_ADMIN_PASSWORD` when you do not want it
+in shell history. The command uses Better Auth's admin creation path, refuses
+to overwrite an existing email, and sends a verification email after creation.
+
+The admin frontend runs on `http://localhost:5175` and the user frontend runs
+on `http://localhost:5173` by default. Both portals share this backend and
+database; only the admin portal can create regular users while
+`PUBLIC_SIGNUP_ENABLED=false`.

@@ -27,7 +27,7 @@ export function AuthShell({
         aria-hidden="true"
         alt=""
         className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
-        src="/stripe-auth-mesh.svg"
+        src="/stripe-.svg"
       />
       <div
         className={cn(

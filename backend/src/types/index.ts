@@ -1,3 +1,4 @@
+export * from "./admin-user.types";
 export * from "./class.types";
 export * from "./course.types";
 export * from "./line.types";

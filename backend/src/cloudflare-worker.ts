@@ -43,6 +43,7 @@ function createWorkerConfig(env: CloudflareEnv) {
 
 	return createAppConfig({
 		CORS_ORIGIN: requiredWorkerValue(env, "CORS_ORIGIN"),
+		ADMIN_FRONTEND_URL: requiredWorkerValue(env, "ADMIN_FRONTEND_URL"),
 		BETTER_AUTH_URL: requiredWorkerValue(env, "BETTER_AUTH_URL"),
 		BETTER_AUTH_SECRET: requiredWorkerValue(env, "BETTER_AUTH_SECRET"),
 		ENVIRONMENT: requiredWorkerValue(env, "ENVIRONMENT"),
@@ -59,6 +60,7 @@ function createWorkerConfig(env: CloudflareEnv) {
 			env,
 			"EMAIL_VERIFICATION_CALLBACK_URL",
 		),
+		PUBLIC_SIGNUP_ENABLED: env.PUBLIC_SIGNUP_ENABLED,
 		DATABASE_URL: connectionString,
 	});
 }

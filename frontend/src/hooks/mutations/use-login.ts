@@ -1,8 +1,8 @@
 import { authClient } from "@/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { AuthFlowError } from "./use-signup";
 
 interface LoginCredentials {
@@ -50,9 +50,7 @@ export const useLogin = (options?: UseLoginOptions) => {
         return;
       }
 
-      toast.error(
-        error.message || t("login.invalid"),
-      );
+      toast.error(error.message || t("login.invalid"));
     },
   });
 };

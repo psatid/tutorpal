@@ -78,7 +78,7 @@ export function LineLinkScreen() {
         aria-hidden="true"
         alt=""
         className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
-        src="/stripe-auth-mesh.svg"
+        src="/stripe-.svg"
       />
       <div className="relative z-10 w-full max-w-sm space-y-6 rounded-xl border border-white/80 bg-white p-6 text-center shadow-transient-card sm:p-8">
         <div className="space-y-2">

@@ -16,7 +16,7 @@ export class AppError extends Error {
 	constructor(
 		public errorCode: string,
 		message: string,
-		public status: 200 | 400 | 401 | 403 | 404 | 409 | 500 = 500,
+		public status: 200 | 400 | 401 | 403 | 404 | 409 | 500 | 502 = 500,
 	) {
 		super(message);
 		this.name = "AppError";
@@ -40,5 +40,9 @@ export class AppError extends Error {
 
 	static forbidden(errorCode: string, msg: string) {
 		return new AppError(errorCode, msg, 403);
+	}
+
+	static badGateway(errorCode: string, msg: string) {
+		return new AppError(errorCode, msg, 502);
 	}
 }

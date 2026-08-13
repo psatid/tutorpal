@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { openAPIRouteHandler } from "hono-openapi";
 import type { ApplicationDependencies } from "./app-dependencies";
 import { createLogger } from "./lib/logger";
+import { createAdminAuthTargetGuard } from "./middleware/admin-auth";
 import { errorHandler } from "./middleware/error-handler";
 import { createRequestLogger } from "./middleware/request-logger";
 import { createRoutes } from "./routes";
@@ -13,6 +14,10 @@ export function createApp(dependencies: ApplicationDependencies) {
 	const port = Number(config.PORT);
 	const app = new Hono<AppEnv>();
 	const apiLogger = createLogger("api", config);
+	const adminAuthTargetGuard = createAdminAuthTargetGuard({
+		auth,
+		prisma: dependencies.prisma,
+	});
 
 	app.use(createRequestLogger(apiLogger));
 	app.onError(errorHandler);
@@ -20,7 +25,11 @@ export function createApp(dependencies: ApplicationDependencies) {
 	app.use(
 		"*",
 		cors({
-			origin: config.CORS_ORIGIN,
+			origin: [
+				config.CORS_ORIGIN,
+				config.FRONTEND_URL,
+				config.ADMIN_FRONTEND_URL,
+			],
 			allowHeaders: ["Content-Type", "Authorization", "better-auth"],
 			allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 			exposeHeaders: ["Content-Length"],
@@ -29,7 +38,10 @@ export function createApp(dependencies: ApplicationDependencies) {
 		}),
 	);
 
-	app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+	app.on(["POST", "GET"], "/api/auth/*", async (c) => {
+		const guardResponse = await adminAuthTargetGuard(c.req.raw);
+		return guardResponse ?? auth.handler(c.req.raw);
+	});
 
 	app.route("/", createRoutes(routes));
 
@@ -50,6 +62,7 @@ export function createApp(dependencies: ApplicationDependencies) {
 				],
 				tags: [
 					{ name: "system", description: "System endpoints" },
+					{ name: "admin-users", description: "Administrator user management" },
 					{ name: "students", description: "Student management endpoints" },
 					{ name: "line", description: "LINE account linking endpoints" },
 				],

@@ -63,6 +63,7 @@ function createEnv(): CloudflareEnv {
 			connectionString: "postgresql://hyperdrive.example/tutorpal",
 		},
 		CORS_ORIGIN: "https://frontend.example.com",
+		ADMIN_FRONTEND_URL: "https://admin.example.com",
 		BETTER_AUTH_URL: "https://tutorpal-api.example.workers.dev",
 		BETTER_AUTH_SECRET: "test-better-auth-secret",
 		ENVIRONMENT: "test",
@@ -75,6 +76,7 @@ function createEnv(): CloudflareEnv {
 		FRONTEND_URL: "https://frontend.example.com",
 		EMAIL_VERIFICATION_CALLBACK_URL:
 			"https://frontend.example.com/verify-email",
+		PUBLIC_SIGNUP_ENABLED: "false",
 	};
 }
 

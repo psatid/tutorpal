@@ -3,8 +3,13 @@ import type { AppConfig } from "./lib/app-config";
 import { type Auth, createAuth } from "./lib/auth-factory";
 import { createLineClient } from "./lib/line";
 import { createLineCredentialCipher } from "./lib/line-credentials";
+import {
+	createRequireAdmin,
+	createRequireAdminOrigin,
+} from "./middleware/admin-auth";
 import { createRequireAuth } from "./middleware/auth";
 import {
+	AdminUserRepository,
 	ClassReminderRepository,
 	ClassRepository,
 	CourseRepository,
@@ -14,6 +19,7 @@ import {
 } from "./repositories";
 import type { RouteDependencies } from "./routes";
 import {
+	AdminUserService,
 	ClassReminderService,
 	ClassService,
 	CourseService,
@@ -34,6 +40,7 @@ export function createApplicationDependencies(
 	prisma: PrismaClient,
 ): ApplicationDependencies {
 	const classRepository = new ClassRepository(prisma);
+	const adminUserRepository = new AdminUserRepository(prisma);
 	const courseRepository = new CourseRepository(prisma);
 	const lineRepository = new LineRepository(prisma);
 	const scheduleRepository = new ScheduleRepository(prisma);
@@ -50,6 +57,11 @@ export function createApplicationDependencies(
 		auth,
 		routes: {
 			requireAuth: createRequireAuth({ auth, prisma }),
+			requireAdmin: createRequireAdmin({ auth }),
+			requireAdminOrigin: createRequireAdminOrigin(config.ADMIN_FRONTEND_URL),
+			adminUserService: new AdminUserService(adminUserRepository, auth, {
+				emailVerificationCallbackUrl: config.EMAIL_VERIFICATION_CALLBACK_URL,
+			}),
 			classService: new ClassService(classRepository),
 			courseService: new CourseService(courseRepository),
 			lineService: new LineService(lineRepository, studentRepository, {
@@ -60,6 +72,7 @@ export function createApplicationDependencies(
 			scheduleService: new ScheduleService(scheduleRepository, classRepository),
 			studentService: new StudentService(studentRepository),
 			getFrontendUrl: () => config.FRONTEND_URL,
+			isPublicSignupEnabled: () => config.PUBLIC_SIGNUP_ENABLED,
 		},
 	};
 }

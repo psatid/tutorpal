@@ -1,3 +1,4 @@
+export * from "./admin-user.repository";
 export * from "./class.repository";
 export * from "./class-reminder.repository";
 export * from "./course.repository";

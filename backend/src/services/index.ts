@@ -1,3 +1,4 @@
+export * from "./admin-user.service";
 export * from "./class.service";
 export * from "./class-reminder.service";
 export * from "./course.service";

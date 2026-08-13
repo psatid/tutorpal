@@ -12,7 +12,7 @@
 		"db:migrate": "prisma migrate dev",
 		"db:migrate:prod": "prisma migrate deploy",
 		"db:studio": "prisma studio",
-		"create-user": "bun run scripts/create-user.ts"
+		"bootstrap-admin": "bun run scripts/bootstrap-admin.ts"
 	},
 	"dependencies": {
 		"@better-auth/prisma-adapter": "^1.5.6",

@@ -1,5 +1,20 @@
 # TutorPal frontend
 
+## Make targets
+
+From this directory, use `make help` to list available commands. Common
+targets are:
+
+```sh
+make dev
+make build
+make pages-build
+make deploy PAGES_PROJECT=<project-name>
+```
+
+The deployment target requires the real Cloudflare Pages project name and does
+not provide a guessed default.
+
 ## Cloudflare Pages
 
 Deploy this application as a static Cloudflare Pages site. It does not use

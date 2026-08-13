@@ -11,6 +11,7 @@ import { RHFInputField, RHFPasswordField } from "@/components/ui/form/rhf";
 import { APP_ROUTES } from "@/constants/routes";
 import { useLogin } from "@/hooks/mutations/use-login";
 import { authClient } from "@/lib/auth-client";
+import { usePublicConfig } from "@/lib/public-config";
 
 export function LoginScreen() {
 	const { t } = useTranslation(["auth", "common"]);
@@ -35,6 +36,7 @@ export function LoginScreen() {
 	});
 
 	const { data: session } = authClient.useSession();
+	const { publicSignupEnabled } = usePublicConfig();
 	const { mutate: login, isPending: isLoginPending } = useLogin({
 		onError: (error) => {
 			if (error.code === "EMAIL_NOT_VERIFIED") {
@@ -111,18 +113,20 @@ export function LoginScreen() {
 				</>
 			}
 			footer={
-				<p className="flex flex-wrap items-center gap-1">
-					<span>{t("auth:login.alternatePrompt")}</span>
-					<Link
-						to={APP_ROUTES.SIGNUP}
-						className={buttonVariants({
-							variant: "link",
-							className: "h-auto p-0 font-semibold",
-						})}
-					>
-						{t("auth:login.alternateAction")}
-					</Link>
-				</p>
+				publicSignupEnabled ? (
+					<p className="flex flex-wrap items-center gap-1">
+						<span>{t("auth:login.alternatePrompt")}</span>
+						<Link
+							to={APP_ROUTES.SIGNUP}
+							className={buttonVariants({
+								variant: "link",
+								className: "h-auto p-0 font-semibold",
+							})}
+						>
+							{t("auth:login.alternateAction")}
+						</Link>
+					</p>
+				) : null
 			}
 		/>
 	);

@@ -1,43 +1,45 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "tutorpal-dev-api",
-  "main": "src/cloudflare-worker.ts",
-  "compatibility_date": "2026-08-12",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "triggers": {
-    "crons": ["*/15 * * * *"],
-  },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE_CACHE_DISABLED",
-      "id": "3a4bf5c376c54b0fb059556b27ad6a57",
-    },
-  ],
-  // Replace every example origin before deployment. Set secrets separately with Wrangler; do not add secret values here.
-  "vars": {
-    "CORS_ORIGIN": "https://dev.app.tutorpal.io",
-    "BETTER_AUTH_URL": "https://dev.api.tutorpal.io",
-    "ENVIRONMENT": "dev",
-    "LOG_LEVEL": "debug",
-    "RESEND_FROM_EMAIL": "TutorPal <no-reply@tutorpal.io>",
-    "LINE_LINK_REDIRECT_URL": "https://dev.api.tutorpal.io/v1/line/callback",
-    "FRONTEND_URL": "https://dev.app.tutorpal.io",
-    "EMAIL_VERIFICATION_CALLBACK_URL": "https://dev.app.tutorpal.io/verify-email",
-  },
-  "observability": {
-    "enabled": false,
-    "head_sampling_rate": 1,
-    "logs": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true,
-      "invocation_logs": true,
-    },
-    "traces": {
-      "enabled": false,
-      "persist": true,
-      "head_sampling_rate": 1,
-    },
-  },
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "tutorpal-dev-api",
+	"main": "src/cloudflare-worker.ts",
+	"compatibility_date": "2026-08-12",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"triggers": {
+		"crons": ["*/15 * * * *"]
+	},
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE_CACHE_DISABLED",
+			"id": "3a4bf5c376c54b0fb059556b27ad6a57"
+		}
+	],
+	// Replace every example origin before deployment. Set secrets separately with Wrangler; do not add secret values here.
+	"vars": {
+		"CORS_ORIGIN": "https://dev.app.tutorpal.io",
+		"ADMIN_FRONTEND_URL": "https://dev.admin.tutorpal.io",
+		"BETTER_AUTH_URL": "https://dev.api.tutorpal.io",
+		"ENVIRONMENT": "dev",
+		"LOG_LEVEL": "debug",
+		"RESEND_FROM_EMAIL": "TutorPal <no-reply@tutorpal.io>",
+		"LINE_LINK_REDIRECT_URL": "https://dev.api.tutorpal.io/v1/line/callback",
+		"FRONTEND_URL": "https://dev.app.tutorpal.io",
+		"EMAIL_VERIFICATION_CALLBACK_URL": "https://dev.app.tutorpal.io/verify-email",
+		"PUBLIC_SIGNUP_ENABLED": "false"
+	},
+	"observability": {
+		"enabled": false,
+		"head_sampling_rate": 1,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true,
+			"invocation_logs": true
+		},
+		"traces": {
+			"enabled": false,
+			"persist": true,
+			"head_sampling_rate": 1
+		}
+	}
 }
