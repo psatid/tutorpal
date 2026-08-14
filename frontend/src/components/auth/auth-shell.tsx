@@ -27,43 +27,45 @@ export function AuthShell({
         aria-hidden="true"
         alt=""
         className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
-        src="/stripe-.svg"
+        src="/stripe-auth-mesh.svg"
       />
-      <div
-        className={cn(
-          "flex w-full flex-col justify-center rounded-xl border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(31,71,112,0.12)] sm:max-w-xl sm:px-10 sm:py-10",
-        )}
-      >
-        <div className="space-y-8 sm:space-y-10">
-          <div className="space-y-2">
-            <img
-              src="/app-icon.png"
-              alt={t("appName")}
-              className="jun-sidebarIcon size-10"
-            />
-            {eyebrow ? (
-              <p className="text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                {eyebrow}
-              </p>
-            ) : null}
-            <h1 className="max-w-[12ch] text-4xl font-light tracking-[-0.02em] text-foreground text-balance sm:text-5xl">
-              {title}
-            </h1>
-            {subtitle ? (
-              <p className="max-w-[34ch] text-sm leading-6 text-muted-foreground sm:text-base">
-                {subtitle}
-              </p>
-            ) : null}
+      <div className={cn("flex w-full flex-col justify-center items-center")}>
+        <div
+          className={cn(
+            "rounded-xl border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(31,71,112,0.12)] sm:max-w-3xl sm:px-10 sm:py-10",
+          )}
+        >
+          <div className="space-y-8 sm:space-y-10">
+            <div className="space-y-2">
+              <img
+                src="/app-icon.png"
+                alt={t("appName")}
+                className="jun-sidebarIcon size-10"
+              />
+              {eyebrow ? (
+                <p className="text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  {eyebrow}
+                </p>
+              ) : null}
+              <h1 className="max-w-[12ch] text-4xl font-light tracking-[-0.02em] text-foreground text-balance sm:text-5xl">
+                {title}
+              </h1>
+              {subtitle ? (
+                <p className="max-w-[34ch] text-sm leading-6 text-muted-foreground sm:text-base">
+                  {subtitle}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-6">{form}</div>
           </div>
 
-          <div className="space-y-6">{form}</div>
-        </div>
-
-        <div className="mt-auto pt-8 sm:mt-0 sm:pt-10">
-          {ctaArea ? <div className="space-y-4">{ctaArea}</div> : null}
-          {footer ? (
-            <div className="pt-6 text-sm text-muted-foreground">{footer}</div>
-          ) : null}
+          <div className="mt-auto pt-8 sm:mt-0 sm:pt-10">
+            {ctaArea ? <div className="space-y-4">{ctaArea}</div> : null}
+            {footer ? (
+              <div className="pt-6 text-sm text-muted-foreground">{footer}</div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

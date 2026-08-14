@@ -24,9 +24,11 @@ import { Route as LayoutCoursesRouteImport } from './routes/_layout/courses'
 import { Route as LayoutClassesRouteImport } from './routes/_layout/classes'
 import { Route as LayoutStudentsIndexRouteImport } from './routes/_layout/students/index'
 import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
+import { Route as LayoutCoursesIndexRouteImport } from './routes/_layout/courses/index'
 import { Route as LayoutClassesIndexRouteImport } from './routes/_layout/classes/index'
 import { Route as LayoutStudentsStudentIdRouteImport } from './routes/_layout/students/$studentId'
 import { Route as LayoutSettingsLineRouteImport } from './routes/_layout/settings/line'
+import { Route as LayoutCoursesCourseIdRouteImport } from './routes/_layout/courses/$courseId'
 import { Route as LayoutClassesClassIdRouteImport } from './routes/_layout/classes/$classId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -87,9 +89,7 @@ const LayoutCoursesRoute = LayoutCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
   getParentRoute: () => LayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_layout/courses.lazy').then((d) => d.Route),
-)
+} as any)
 const LayoutClassesRoute = LayoutClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
@@ -107,6 +107,13 @@ const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutSettingsRoute,
 } as any)
+const LayoutCoursesIndexRoute = LayoutCoursesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutCoursesRoute,
+} as any).lazy(() =>
+  import('./routes/_layout/courses/index.lazy').then((d) => d.Route),
+)
 const LayoutClassesIndexRoute = LayoutClassesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -124,6 +131,11 @@ const LayoutSettingsLineRoute = LayoutSettingsLineRouteImport.update({
   path: '/line',
   getParentRoute: () => LayoutSettingsRoute,
 } as any)
+const LayoutCoursesCourseIdRoute = LayoutCoursesCourseIdRouteImport.update({
+  id: '/$courseId',
+  path: '/$courseId',
+  getParentRoute: () => LayoutCoursesRoute,
+} as any)
 const LayoutClassesClassIdRoute = LayoutClassesClassIdRouteImport.update({
   id: '/$classId',
   path: '/$classId',
@@ -139,14 +151,16 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/classes': typeof LayoutClassesRouteWithChildren
-  '/courses': typeof LayoutCoursesRoute
+  '/courses': typeof LayoutCoursesRouteWithChildren
   '/schedules': typeof LayoutSchedulesRoute
   '/settings': typeof LayoutSettingsRouteWithChildren
   '/students': typeof LayoutStudentsRouteWithChildren
   '/classes/$classId': typeof LayoutClassesClassIdRoute
+  '/courses/$courseId': typeof LayoutCoursesCourseIdRoute
   '/settings/line': typeof LayoutSettingsLineRoute
   '/students/$studentId': typeof LayoutStudentsStudentIdRoute
   '/classes/': typeof LayoutClassesIndexRoute
+  '/courses/': typeof LayoutCoursesIndexRoute
   '/settings/': typeof LayoutSettingsIndexRoute
   '/students/': typeof LayoutStudentsIndexRoute
 }
@@ -157,13 +171,14 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/courses': typeof LayoutCoursesRoute
   '/schedules': typeof LayoutSchedulesRoute
   '/': typeof LayoutIndexRoute
   '/classes/$classId': typeof LayoutClassesClassIdRoute
+  '/courses/$courseId': typeof LayoutCoursesCourseIdRoute
   '/settings/line': typeof LayoutSettingsLineRoute
   '/students/$studentId': typeof LayoutStudentsStudentIdRoute
   '/classes': typeof LayoutClassesIndexRoute
+  '/courses': typeof LayoutCoursesIndexRoute
   '/settings': typeof LayoutSettingsIndexRoute
   '/students': typeof LayoutStudentsIndexRoute
 }
@@ -177,15 +192,17 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_layout/classes': typeof LayoutClassesRouteWithChildren
-  '/_layout/courses': typeof LayoutCoursesRoute
+  '/_layout/courses': typeof LayoutCoursesRouteWithChildren
   '/_layout/schedules': typeof LayoutSchedulesRoute
   '/_layout/settings': typeof LayoutSettingsRouteWithChildren
   '/_layout/students': typeof LayoutStudentsRouteWithChildren
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/classes/$classId': typeof LayoutClassesClassIdRoute
+  '/_layout/courses/$courseId': typeof LayoutCoursesCourseIdRoute
   '/_layout/settings/line': typeof LayoutSettingsLineRoute
   '/_layout/students/$studentId': typeof LayoutStudentsStudentIdRoute
   '/_layout/classes/': typeof LayoutClassesIndexRoute
+  '/_layout/courses/': typeof LayoutCoursesIndexRoute
   '/_layout/settings/': typeof LayoutSettingsIndexRoute
   '/_layout/students/': typeof LayoutStudentsIndexRoute
 }
@@ -205,9 +222,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/classes/$classId'
+    | '/courses/$courseId'
     | '/settings/line'
     | '/students/$studentId'
     | '/classes/'
+    | '/courses/'
     | '/settings/'
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
@@ -218,13 +237,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/verify-email'
-    | '/courses'
     | '/schedules'
     | '/'
     | '/classes/$classId'
+    | '/courses/$courseId'
     | '/settings/line'
     | '/students/$studentId'
     | '/classes'
+    | '/courses'
     | '/settings'
     | '/students'
   id:
@@ -243,9 +263,11 @@ export interface FileRouteTypes {
     | '/_layout/students'
     | '/_layout/'
     | '/_layout/classes/$classId'
+    | '/_layout/courses/$courseId'
     | '/_layout/settings/line'
     | '/_layout/students/$studentId'
     | '/_layout/classes/'
+    | '/_layout/courses/'
     | '/_layout/settings/'
     | '/_layout/students/'
   fileRoutesById: FileRoutesById
@@ -367,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsIndexRouteImport
       parentRoute: typeof LayoutSettingsRoute
     }
+    '/_layout/courses/': {
+      id: '/_layout/courses/'
+      path: '/'
+      fullPath: '/courses/'
+      preLoaderRoute: typeof LayoutCoursesIndexRouteImport
+      parentRoute: typeof LayoutCoursesRoute
+    }
     '/_layout/classes/': {
       id: '/_layout/classes/'
       path: '/'
@@ -387,6 +416,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/line'
       preLoaderRoute: typeof LayoutSettingsLineRouteImport
       parentRoute: typeof LayoutSettingsRoute
+    }
+    '/_layout/courses/$courseId': {
+      id: '/_layout/courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/courses/$courseId'
+      preLoaderRoute: typeof LayoutCoursesCourseIdRouteImport
+      parentRoute: typeof LayoutCoursesRoute
     }
     '/_layout/classes/$classId': {
       id: '/_layout/classes/$classId'
@@ -410,6 +446,20 @@ const LayoutClassesRouteChildren: LayoutClassesRouteChildren = {
 
 const LayoutClassesRouteWithChildren = LayoutClassesRoute._addFileChildren(
   LayoutClassesRouteChildren,
+)
+
+interface LayoutCoursesRouteChildren {
+  LayoutCoursesCourseIdRoute: typeof LayoutCoursesCourseIdRoute
+  LayoutCoursesIndexRoute: typeof LayoutCoursesIndexRoute
+}
+
+const LayoutCoursesRouteChildren: LayoutCoursesRouteChildren = {
+  LayoutCoursesCourseIdRoute: LayoutCoursesCourseIdRoute,
+  LayoutCoursesIndexRoute: LayoutCoursesIndexRoute,
+}
+
+const LayoutCoursesRouteWithChildren = LayoutCoursesRoute._addFileChildren(
+  LayoutCoursesRouteChildren,
 )
 
 interface LayoutSettingsRouteChildren {
@@ -442,7 +492,7 @@ const LayoutStudentsRouteWithChildren = LayoutStudentsRoute._addFileChildren(
 
 interface LayoutRouteChildren {
   LayoutClassesRoute: typeof LayoutClassesRouteWithChildren
-  LayoutCoursesRoute: typeof LayoutCoursesRoute
+  LayoutCoursesRoute: typeof LayoutCoursesRouteWithChildren
   LayoutSchedulesRoute: typeof LayoutSchedulesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRouteWithChildren
   LayoutStudentsRoute: typeof LayoutStudentsRouteWithChildren
@@ -451,7 +501,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutClassesRoute: LayoutClassesRouteWithChildren,
-  LayoutCoursesRoute: LayoutCoursesRoute,
+  LayoutCoursesRoute: LayoutCoursesRouteWithChildren,
   LayoutSchedulesRoute: LayoutSchedulesRoute,
   LayoutSettingsRoute: LayoutSettingsRouteWithChildren,
   LayoutStudentsRoute: LayoutStudentsRouteWithChildren,

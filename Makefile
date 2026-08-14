@@ -13,6 +13,7 @@ PAGES_MODE ?= dev
 
 .PHONY: help dev frontend-dev admin-dev backend-dev build frontend-build admin-build backend-build \
 	frontend-run admin-run backend-run script frontend-deploy admin-deploy backend-deploy deploy \
+	backend-reminders-deploy \
 	migrate docker-build docker-push release do-deploy
 
 help:
@@ -33,7 +34,11 @@ help:
 		'  make script SCRIPT=migrate.sh ARGS=dev Run a repository script' \
 		'' \
 		'Deployment:' \
-		'  make deploy APP=backend               Deploy the Cloudflare Worker' \
+		'  make backend-build ENV=dev             Bundle-check dev Workers (ENV defaults to dev; prod is also supported)' \
+		'  make deploy APP=backend ENV=dev        Deploy dev reminders first, then dev API' \
+		'  make deploy APP=backend ENV=prod       Deploy prod reminders first, then prod API (after replacing placeholders)' \
+		'  make deploy APP=backend-reminders ENV=dev' \
+		'                                       Deploy only the environment reminder Worker' \
 		'  make deploy APP=frontend PAGES_PROJECT=<name>' \
 		'                                       Deploy the user Cloudflare Pages app' \
 		'  make deploy APP=admin-frontend PAGES_PROJECT=<name>' \
@@ -68,7 +73,7 @@ admin-build:
 	+$(MAKE) -C admin-frontend build
 
 backend-build:
-	+$(MAKE) -C backend build
+	+$(MAKE) -C backend build ENV="$(ENV)"
 
 frontend-run:
 	+$(MAKE) -C frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
@@ -90,12 +95,17 @@ admin-deploy:
 	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)"
 
 backend-deploy:
-	+$(MAKE) -C backend deploy
+	+$(MAKE) -C backend reminders-deploy ENV="$(ENV)"
+	+$(MAKE) -C backend deploy ENV="$(ENV)"
+
+backend-reminders-deploy:
+	+$(MAKE) -C backend reminders-deploy ENV="$(ENV)"
 
 deploy:
-	@test -n "$(APP)" || { echo 'Usage: make deploy APP=backend|frontend|admin-frontend [PAGES_PROJECT=<name>]'; exit 2; }
+	@test -n "$(APP)" || { echo 'Usage: make deploy APP=backend|backend-reminders|frontend|admin-frontend [ENV=dev|prod] [PAGES_PROJECT=<name>]'; exit 2; }
 	@case "$(APP)" in \
-		backend) $(MAKE) backend-deploy ;; \
+		backend) $(MAKE) backend-deploy ENV="$(ENV)" ;; \
+		backend-reminders) $(MAKE) backend-reminders-deploy ENV="$(ENV)" ;; \
 		frontend) $(MAKE) frontend-deploy PAGES_PROJECT="$(PAGES_PROJECT)" PAGES_MODE="$(PAGES_MODE)" ;; \
 		admin-frontend) $(MAKE) admin-deploy PAGES_PROJECT="$(PAGES_PROJECT)" ;; \
 		*) echo "Unknown APP: $(APP)"; exit 2 ;; \
@@ -104,6 +114,14 @@ deploy:
 migrate:
 	+$(MAKE) -C backend migrate ENV="$(ENV)"
 
+db-migrate:
+	+$(MAKE) -C backend db-migrate
+
+################################################################################
+# DEPRECATED
+# do not use docker targets. Use `make deploy` instead.
+# keeping theme for container deployment and release purposes
+################################################################################
 docker-build:
 	./scripts/build-push.sh
 

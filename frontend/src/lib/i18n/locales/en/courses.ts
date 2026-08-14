@@ -1,7 +1,7 @@
 export default {
 	title: "Courses",
 	subtitle:
-		"Reusable hour presets you can apply whenever a class needs more time.",
+		"Reusable hour and pricing presets you can apply whenever a class needs more time.",
 	count_one: "{{count}} course",
 	count_other: "{{count}} courses",
 	newCourse: "New course",
@@ -21,7 +21,7 @@ export default {
 	cancel: "Cancel",
 	close: "Close",
 	tryAgain: "Try again",
-	formDescription: "Set reusable hours for future additions.",
+	formDescription: "Set reusable hours and pricing for future additions.",
 	searchLabel: "Search courses",
 	clearSearch: "Clear search",
 	reset: "Reset",
@@ -34,6 +34,9 @@ export default {
 	noCoursesDescription:
 		"Create a reusable course to add its configured hours to classes later.",
 	defaultHours: "{{hours}} default hours",
+	courseMetadataHourly: "{{hours}} default hours · {{price}}/hour",
+	courseMetadataFixed: "{{hours}} default hours · {{price}} fixed package",
+	courseMetadataUnpriced: "{{hours}} default hours · Price not set",
 	loadError: {
 		title: "Courses couldn’t load",
 		description: "Check your connection and try again.",
@@ -46,6 +49,30 @@ export default {
 	validation: {
 		courseName: "Enter a course name.",
 		hours: "Enter hours greater than zero.",
+		priceRange: "Enter an amount from ฿0.00 to ฿9,999,999,999.99.",
+		pricePrecision: "Enter a price with no more than two decimal places.",
+	},
+	pricing: {
+		hourly: "{{price}}/hour",
+		fixed: "{{price}} fixed package",
+		unpriced: "Price not set",
+	},
+	detail: {
+		back: "Back to courses",
+		backToCourses: "Back to courses",
+		editCourse: "Edit course",
+		notFound: "Course not found",
+		loadError: {
+			title: "Course details couldn’t load",
+			description: "Check your connection and try again.",
+		},
+		refreshError: "Course details may be out of date. Try again to refresh.",
+		summary: {
+			price: "Price",
+			defaultHours: "Default hours",
+			recordedHours: "Recorded hours",
+			revenueMade: "Revenue made",
+		},
 	},
 	toast: {
 		createSuccess: "Course created.",
@@ -59,5 +86,22 @@ export default {
 		hoursLabel: "Preset hours",
 		hoursDescription:
 			"This amount is added when you choose this course for a class. Changes affect future additions only.",
+		priceTypeLegend: "Price type",
+		hourlyRate: "Hourly rate",
+		hourlyRateOptionDescription:
+			"Charge a THB rate for each preset hour.",
+		fixedPrice: "Fixed package price",
+		fixedPriceOptionDescription:
+			"Charge one THB price for the full preset.",
+		hourlyRateLabel: "Hourly rate (THB)",
+		hourlyRateDescription: "The rate per default hour, in THB.",
+		fixedPriceLabel: "Fixed package price (THB)",
+		fixedPriceDescription: "The full package price, in THB.",
+		priceOptional: "Optional — leave blank if the price is not set yet.",
+		calculationPreview: "Revenue preview",
+		calculationPending:
+			"Enter valid hours and price to see the default revenue.",
+		calculationValue: "{{amount}} for this course preset",
+		priceFutureAdditions: "Price changes affect future additions only.",
 	},
 } as const;

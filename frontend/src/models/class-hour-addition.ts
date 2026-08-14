@@ -7,6 +7,7 @@ type ClassHourAdditionDetails = {
 	classId: string;
 	source: "course" | "custom";
 	hours: number;
+	revenueAmount: number | null;
 	sourceCourseId: string | null;
 	sourceCourseName: string | null;
 	requestId: string;
@@ -26,6 +27,7 @@ export class ClassHourAddition {
 			classId: response.classId,
 			source: response.source,
 			hours: response.hours,
+			revenueAmount: response.revenueAmount,
 			sourceCourseId: response.sourceCourseId,
 			sourceCourseName: response.sourceCourseName,
 			requestId: response.requestId,
@@ -43,6 +45,10 @@ export class ClassHourAddition {
 			source: this.data.source,
 			sourceCourseName: this.data.sourceCourseName,
 			formattedHours: DateTime.formatDurationHours(this.data.hours),
+			formattedRevenueAmount:
+				this.data.revenueAmount === null
+					? null
+					: DateTime.formatThaiBaht(this.data.revenueAmount),
 			formattedCreatedAt: DateTime.formatDateTime(this.data.createdAt),
 		};
 	}

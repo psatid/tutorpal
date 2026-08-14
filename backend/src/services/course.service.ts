@@ -1,6 +1,7 @@
 import { AppError } from "../lib/error";
 import type { CourseModel } from "../models/course.model";
 import type {
+	CourseDetail,
 	CreateCourseDTO,
 	ICourseRepository,
 	UpdateCourseDTO,
@@ -26,6 +27,16 @@ export class CourseService {
 
 	async getCourseById(id: string, tutorId: string): Promise<CourseModel> {
 		const course = await this.repository.findById(id, tutorId);
+		if (!course)
+			throw AppError.notFound("COURSE_NOT_FOUND", "Course not found");
+		return course;
+	}
+
+	async getCourseDetailById(
+		id: string,
+		tutorId: string,
+	): Promise<CourseDetail> {
+		const course = await this.repository.findDetailById(id, tutorId);
 		if (!course)
 			throw AppError.notFound("COURSE_NOT_FOUND", "Course not found");
 		return course;

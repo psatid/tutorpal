@@ -41,5 +41,11 @@ generated/
 
 .env.*
 
+# Wrangler config-local development variables
+backend/wrangler/dev/.dev.vars
+backend/wrangler/dev/.dev.vars.*
+backend/wrangler/prod/.dev.vars
+backend/wrangler/prod/.dev.vars.*
+
 
 DEPLOY.md

@@ -16,6 +16,10 @@ export interface ClassDTO {
 	recurringSchedule?: RecurringScheduleDTO | null;
 }
 
+export interface ClassDetailDTO extends ClassDTO {
+	recordedRevenue: number;
+}
+
 export interface StudentInClassDTO {
 	id: string;
 	name: string;
@@ -45,6 +49,7 @@ export interface ClassHourAdditionDTO {
 	classId: string;
 	source: ClassHourAdditionSource;
 	hours: number;
+	revenueAmount: number | null;
 	sourceCourseId: string | null;
 	sourceCourseName: string | null;
 	requestId: string;
@@ -55,13 +60,20 @@ export type CreateClassHourAdditionDTO =
 	| {
 			source: "course";
 			courseId: string;
+			revenueAmount?: number | null;
 			requestId: string;
 	  }
 	| {
 			source: "custom";
 			hours: number;
+			revenueAmount?: number | null;
 			requestId: string;
 	  };
+
+export interface ClassDetail {
+	classData: ClassModel;
+	recordedRevenue: number;
+}
 
 export interface ClassHourAdditionResult {
 	addition: ClassHourAdditionModel;
@@ -82,6 +94,7 @@ export interface IClassRepository {
 		params?: ClassListParams,
 	): Promise<PaginatedResponse<ClassModel>>;
 	findById(id: string, tutorId: string): Promise<ClassModel | null>;
+	findDetailById(id: string, tutorId: string): Promise<ClassDetail | null>;
 	update(
 		id: string,
 		tutorId: string,

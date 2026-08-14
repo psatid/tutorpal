@@ -4,6 +4,7 @@ import type { PostV1ClassesByIdHourAdditions200 } from "@/api/generated/models/p
 import type { PostV1ClassesByIdHourAdditionsBody } from "@/api/generated/models/postV1ClassesByIdHourAdditionsBody";
 import { classHourAdditionsQueryKeys } from "@/constants/query-keys/class-hour-additions-query-keys";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
+import { coursesQueryKeys } from "@/constants/query-keys/courses-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
 import { apiClient } from "@/lib/api-client";
 
@@ -57,10 +58,17 @@ export function useAddClassHours(options?: {
 				throw classifyClassHourAdditionError(error);
 			}
 		},
-		onSuccess: async (result, { classId }) => {
+		onSuccess: async (result, { classId, data }) => {
 			await Promise.all([
 				queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
 				queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
+				...(data.source === "course"
+					? [
+							queryClient.invalidateQueries({
+								queryKey: coursesQueryKeys.detail(data.courseId),
+							}),
+						]
+					: []),
 				queryClient.invalidateQueries({
 					queryKey: classHourAdditionsQueryKeys.listsForClass(classId),
 				}),

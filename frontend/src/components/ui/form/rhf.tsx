@@ -8,6 +8,7 @@ import {
 import { useId } from "react";
 
 import { InputField } from "./input-field";
+import type { InputProps } from "../input";
 import { PasswordField } from "./password-field";
 import { SelectField } from "./select-field";
 import { DateField } from "./date-field";
@@ -22,9 +23,7 @@ interface RHFInputFieldProps<T extends FieldValues> {
   errorId?: string;
   required?: boolean;
   disabled?: boolean;
-  inputProps?: Omit<React.ComponentProps<"input">, "name"> & {
-    leftIcon?: LucideIcon;
-  };
+  inputProps?: Omit<InputProps, "name">;
 }
 
 function RHFInputField<T extends FieldValues>({
@@ -82,7 +81,9 @@ function RHFInputField<T extends FieldValues>({
             onChange={(e) => {
               const isNumber = inputProps?.type === "number";
               if (isNumber) {
-                onChange(parseFloat(e.target.value));
+                onChange(
+                  e.target.value === "" ? "" : parseFloat(e.target.value),
+                );
               } else {
                 onChange(e.target.value);
               }

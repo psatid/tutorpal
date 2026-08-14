@@ -10,7 +10,9 @@ export type LineCredentialCipher = {
 	decrypt(value: string): string;
 };
 
-function encryptionKey(encryptionKeyValue: string): Buffer {
+export function decodeLineCredentialEncryptionKey(
+	encryptionKeyValue: string,
+): Buffer {
 	const key = Buffer.from(encryptionKeyValue, "base64");
 	if (key.length !== 32) {
 		throw AppError.badRequest(
@@ -29,7 +31,7 @@ export function createLineCredentialCipher(
 			const iv = randomBytes(IV_BYTES);
 			const cipher = createCipheriv(
 				"aes-256-gcm",
-				encryptionKey(encryptionKeyValue),
+				decodeLineCredentialEncryptionKey(encryptionKeyValue),
 				iv,
 			);
 			const encrypted = Buffer.concat([
@@ -52,7 +54,7 @@ export function createLineCredentialCipher(
 			const encrypted = payload.subarray(IV_BYTES + AUTH_TAG_BYTES);
 			const decipher = createDecipheriv(
 				"aes-256-gcm",
-				encryptionKey(encryptionKeyValue),
+				decodeLineCredentialEncryptionKey(encryptionKeyValue),
 				iv,
 			);
 			decipher.setAuthTag(tag);

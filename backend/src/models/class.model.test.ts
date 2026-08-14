@@ -73,6 +73,16 @@ describe("ClassModel", () => {
 		});
 	});
 
+	test("adds recorded revenue only to the class detail DTO", () => {
+		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
+
+		expect(classModel.toClassDTO()).not.toHaveProperty("recordedRevenue");
+		expect(classModel.toClassDetailDTO(1_250)).toMatchObject({
+			id: "class-1",
+			recordedRevenue: 1_250,
+		});
+	});
+
 	test("serializes latest recurring schedule summaries without course context", () => {
 		const classModel = ClassModel.fromClassPrisma(
 			{

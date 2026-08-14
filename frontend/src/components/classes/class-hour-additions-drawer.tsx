@@ -32,11 +32,13 @@ import { useCourses } from "@/hooks/queries/use-courses";
 import { DateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
 import type { Class } from "@/models/class";
+import type { Course } from "@/models/course";
 import {
 	createClassHourAdditionFormSchema,
 	type ClassHourAdditionFormInput,
 	type ClassHourAdditionFormValues,
 } from "@/types/class-hour-addition";
+import { MAX_THB_AMOUNT } from "@/types/money";
 
 interface ClassHourAdditionsDrawerProps {
 	classData: Class | null;
@@ -49,6 +51,7 @@ const EMPTY_FORM_VALUES: ClassHourAdditionFormInput = {
 	source: "custom",
 	courseId: "",
 	hours: "",
+	revenueAmount: "",
 };
 
 type HourAdditionRequest = {
@@ -61,18 +64,29 @@ function getHourAdditionPayloadKey(
 	source: "course" | "custom",
 	courseId: string | undefined,
 	hours: string | number | undefined,
+	revenueAmount: string | number | null | undefined,
 ) {
+	const normalizedRevenueAmount = getPayloadNumber(revenueAmount);
 	if (source === "course") {
-		return `${classId}:course:${courseId ?? ""}`;
+		return `${classId}:course:${courseId ?? ""}:${normalizedRevenueAmount}`;
 	}
 
-	const normalizedHours =
-		typeof hours === "string" && hours.trim().length === 0
+	return `${classId}:custom:${getPayloadNumber(hours)}:${normalizedRevenueAmount}`;
+}
+
+function getPayloadNumber(value: string | number | null | undefined) {
+	if (value === null || value === undefined) return "";
+	const normalizedValue =
+		typeof value === "string" && value.trim().length === 0
 			? ""
-			: Number(hours);
-	return `${classId}:custom:${
-		Number.isFinite(normalizedHours) ? normalizedHours : String(hours ?? "")
-	}`;
+			: Number(value);
+	return Number.isFinite(normalizedValue)
+		? normalizedValue
+		: String(value ?? "");
+}
+
+function getCourseRevenueInput(course: Course | undefined) {
+	return course?.getDefaultRevenue() ?? "";
 }
 
 export function ClassHourAdditionsDrawer({
@@ -120,16 +134,27 @@ export function ClassHourAdditionsDrawer({
 		| string
 		| number
 		| undefined;
+	const revenueAmount = useWatch({ control, name: "revenueAmount" }) as
+		| string
+		| number
+		| null
+		| undefined;
 	const watchedPayloadKey = getHourAdditionPayloadKey(
 		classData?.getId() ?? "",
 		source,
 		courseId,
 		hours,
+		revenueAmount,
 	);
 	const selectedCourse = courses.find((course) => course.getId() === courseId);
 	const selectedCourseHours = selectedCourse
 		? DateTime.formatDurationHours(selectedCourse.getDefaultTotalHours())
 		: null;
+	const selectedCourseRevenue = selectedCourse?.getDefaultRevenue() ?? null;
+	const formattedSelectedCourseRevenue =
+		selectedCourseRevenue === null
+			? null
+			: DateTime.formatThaiBaht(selectedCourseRevenue);
 	const courseUnavailable =
 		source === "course" &&
 		courseId.length > 0 &&
@@ -144,14 +169,18 @@ export function ClassHourAdditionsDrawer({
 	}, [watchedPayloadKey]);
 
 	const addHours = useAddClassHours({
-		onSuccess: (result) => {
-			hourAdditionRequestRef.current = null;
-			setSubmitError(null);
-			toast.success(
-				t("classes:hourAdditions.success", {
-					hours: DateTime.formatDurationHours(result.addition.hours),
-				}),
-			);
+			onSuccess: (result) => {
+				hourAdditionRequestRef.current = null;
+				setSubmitError(null);
+				toast.success(
+					t("classes:hourAdditions.success", {
+						hours: DateTime.formatDurationHours(result.addition.hours),
+						revenue:
+							result.addition.revenueAmount === null
+								? t("classes:revenue.notRecorded")
+								: DateTime.formatThaiBaht(result.addition.revenueAmount),
+					}),
+				);
 			onOpenChange(false);
 		},
 		onError: (error) => {
@@ -177,7 +206,12 @@ export function ClassHourAdditionsDrawer({
 		const firstCourse = hasCourseLoadError ? undefined : courses[0];
 		reset(
 			firstCourse
-				? { source: "course", courseId: firstCourse.getId(), hours: "" }
+				? {
+						source: "course",
+						courseId: firstCourse.getId(),
+						hours: "",
+						revenueAmount: getCourseRevenueInput(firstCourse),
+					}
 				: EMPTY_FORM_VALUES,
 		);
 		initializedOpenRef.current = true;
@@ -191,12 +225,26 @@ export function ClassHourAdditionsDrawer({
 			shouldDirty: true,
 			shouldValidate: true,
 		});
-		if (nextSource === "course" && !courseId && courses[0]) {
-			setValue("courseId", courses[0].getId(), {
+		if (nextSource === "course") {
+			const nextCourse =
+				courses.find((course) => course.getId() === courseId) ?? courses[0];
+			if (!nextCourse) return;
+
+			setValue("courseId", nextCourse.getId(), {
 				shouldDirty: true,
 				shouldValidate: true,
 			});
+			setValue("revenueAmount", getCourseRevenueInput(nextCourse), {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			return;
 		}
+
+		setValue("revenueAmount", "", {
+			shouldDirty: true,
+			shouldValidate: true,
+		});
 	}
 
 	function submit(data: ClassHourAdditionFormValues) {
@@ -221,6 +269,7 @@ export function ClassHourAdditionsDrawer({
 			data.source,
 			data.source === "course" ? data.courseId : undefined,
 			data.source === "custom" ? data.hours : undefined,
+			data.revenueAmount,
 		);
 		let hourAdditionRequest = hourAdditionRequestRef.current;
 		if (!hourAdditionRequest || hourAdditionRequest.payloadKey !== payloadKey) {
@@ -238,11 +287,13 @@ export function ClassHourAdditionsDrawer({
 					? {
 							source: "course",
 							courseId: data.courseId,
+							revenueAmount: data.revenueAmount,
 							requestId: hourAdditionRequest.requestId,
 						}
 					: {
 							source: "custom",
 							hours: data.hours,
+							revenueAmount: data.revenueAmount,
 							requestId: hourAdditionRequest.requestId,
 						},
 		});
@@ -377,7 +428,15 @@ export function ClassHourAdditionsDrawer({
 									<Select
 										disabled={isCoursePresetUnavailable}
 										onValueChange={(value) => {
+											const nextCourse = courses.find(
+												(course) => course.getId() === value,
+											);
 											field.onChange(value ?? "");
+											setValue(
+												"revenueAmount",
+												getCourseRevenueInput(nextCourse),
+												{ shouldDirty: true, shouldValidate: true },
+											);
 											setSubmitError(null);
 										}}
 										value={field.value ?? null}
@@ -444,6 +503,38 @@ export function ClassHourAdditionsDrawer({
 							required
 						/>
 					)}
+					<RHFInputField
+						caption={
+							source === "course"
+								? formattedSelectedCourseRevenue
+									? t("classes:hourAdditions.courseRevenueCalculated", {
+											revenue: formattedSelectedCourseRevenue,
+										})
+									: selectedCourse
+										? t("classes:hourAdditions.courseRevenueManual")
+										: t("classes:hourAdditions.courseRevenuePending")
+								: t("classes:hourAdditions.customRevenueDescription")
+						}
+						control={control}
+						inputProps={{
+							inputMode: "decimal",
+							max: MAX_THB_AMOUNT,
+							min: 0,
+							placeholder: "0.00",
+							rightAdornment: (
+								<span
+									aria-hidden="true"
+									className="text-sm text-muted-foreground"
+								>
+									฿
+								</span>
+							),
+							step: 0.01,
+							type: "number",
+						}}
+						label={t("classes:hourAdditions.revenueLabel")}
+						name="revenueAmount"
+					/>
 				</FieldGroup>
 
 				{submitError ? (

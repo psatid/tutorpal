@@ -133,6 +133,15 @@ export function ClassInfoHeader({
 							hours: data.formattedTotalHours,
 						})}
 					</p>
+					<div className="mt-4 border-t border-white/20 pt-4">
+						<p className="text-xs font-medium uppercase tracking-[0.12em] text-white/70">
+							{t("classes:revenue.label")}
+						</p>
+						<p className="mt-1 text-lg font-semibold tabular-nums text-white">
+							{data.formattedRecordedRevenue ??
+								t("classes:revenue.notRecorded")}
+						</p>
+					</div>
 					{balanceProgress !== null ? (
 						<div
 							aria-label={t("classes:balance.label")}

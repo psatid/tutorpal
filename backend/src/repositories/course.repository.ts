@@ -3,6 +3,7 @@ import { prisma as defaultPrisma } from "../lib/db";
 import { CourseModel } from "../models/course.model";
 import type {
 	CourseDeleteOutcome,
+	CourseDetail,
 	CreateCourseDTO,
 	ICourseRepository,
 	UpdateCourseDTO,
@@ -11,6 +12,13 @@ import type {
 	PaginatedResponse,
 	PaginationParams,
 } from "../types/pagination.types";
+
+type AggregateValue = { toNumber(): number } | number | null;
+
+function toAggregateNumber(value: AggregateValue): number {
+	if (value === null) return 0;
+	return typeof value === "number" ? value : value.toNumber();
+}
 
 export class CourseRepository implements ICourseRepository {
 	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
@@ -21,6 +29,9 @@ export class CourseRepository implements ICourseRepository {
 				tutorId: data.tutorId,
 				name: data.name.trim(),
 				defaultTotalHours: data.defaultTotalHours,
+				pricingMode:
+					data.pricingMode === "hourly_rate" ? "HOURLY_RATE" : "FIXED_PRICE",
+				priceAmount: data.priceAmount ?? null,
 			},
 		});
 		return CourseModel.fromPrisma(course);
@@ -71,6 +82,30 @@ export class CourseRepository implements ICourseRepository {
 		return course ? CourseModel.fromPrisma(course) : null;
 	}
 
+	async findDetailById(
+		id: string,
+		tutorId: string,
+	): Promise<CourseDetail | null> {
+		const course = await this.prisma.course.findFirst({
+			where: { id, tutorId },
+		});
+		if (!course) return null;
+
+		const aggregate = await this.prisma.classHourAddition.aggregate({
+			where: {
+				source: "COURSE",
+				sourceCourseId: id,
+				class: { tutorId },
+			},
+			_sum: { hours: true, revenueAmount: true },
+		});
+		return {
+			course: CourseModel.fromPrisma(course),
+			recordedHours: toAggregateNumber(aggregate._sum.hours),
+			recordedRevenue: toAggregateNumber(aggregate._sum.revenueAmount),
+		};
+	}
+
 	async update(
 		id: string,
 		tutorId: string,
@@ -82,6 +117,17 @@ export class CourseRepository implements ICourseRepository {
 				...(data.name !== undefined ? { name: data.name.trim() } : {}),
 				...(data.defaultTotalHours !== undefined
 					? { defaultTotalHours: data.defaultTotalHours }
+					: {}),
+				...(data.pricingMode !== undefined
+					? {
+							pricingMode:
+								data.pricingMode === "hourly_rate"
+									? "HOURLY_RATE"
+									: "FIXED_PRICE",
+						}
+					: {}),
+				...(data.priceAmount !== undefined
+					? { priceAmount: data.priceAmount }
 					: {}),
 			},
 		});

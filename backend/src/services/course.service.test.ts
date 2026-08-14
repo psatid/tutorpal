@@ -18,6 +18,40 @@ function repositoryForDelete(outcome: CourseDeleteOutcome) {
 }
 
 describe("CourseService", () => {
+	test("returns the tutor-scoped course detail result and preserves not-found behavior", async () => {
+		let detailArgs: [string, string] | undefined;
+		const detail = {
+			course: {} as never,
+			recordedHours: 0,
+			recordedRevenue: 0,
+		};
+		const repository = {
+			findDetailById: async (id: string, tutorId: string) => {
+				detailArgs = [id, tutorId];
+				return detail;
+			},
+		} as unknown as ICourseRepository;
+		const service = new CourseService(repository);
+
+		await expect(
+			service.getCourseDetailById("course-1", "tutor-1"),
+		).resolves.toBe(detail);
+		expect(detailArgs).toEqual(["course-1", "tutor-1"]);
+
+		const missingRepository = {
+			findDetailById: async () => null,
+		} as unknown as ICourseRepository;
+		await expect(
+			new CourseService(missingRepository).getCourseDetailById(
+				"foreign-course",
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "COURSE_NOT_FOUND",
+			status: 404,
+		});
+	});
+
 	test("deletes a tutor-owned course even after it has been used as an hour preset", async () => {
 		const { repository, getDeleteCalls } = repositoryForDelete("deleted");
 		const service = new CourseService(repository);

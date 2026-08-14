@@ -11,6 +11,7 @@ type ClassHourAdditionPrismaRecord = {
 	classId: string;
 	source: "COURSE" | "CUSTOM";
 	hours: DecimalLike | number;
+	revenueAmount: DecimalLike | number | null;
 	sourceCourseId: string | null;
 	sourceCourseName: string | null;
 	requestId: string;
@@ -22,6 +23,7 @@ export class ClassHourAdditionModel {
 	readonly classId: string;
 	readonly source: ClassHourAdditionSource;
 	readonly hours: number;
+	readonly revenueAmount: number | null;
 	readonly sourceCourseId: string | null;
 	readonly sourceCourseName: string | null;
 	readonly requestId: string;
@@ -32,6 +34,7 @@ export class ClassHourAdditionModel {
 		classId: string;
 		source: ClassHourAdditionSource;
 		hours: number;
+		revenueAmount: number | null;
 		sourceCourseId: string | null;
 		sourceCourseName: string | null;
 		requestId: string;
@@ -41,6 +44,7 @@ export class ClassHourAdditionModel {
 		this.classId = props.classId;
 		this.source = props.source;
 		this.hours = props.hours;
+		this.revenueAmount = props.revenueAmount;
 		this.sourceCourseId = props.sourceCourseId;
 		this.sourceCourseName = props.sourceCourseName;
 		this.requestId = props.requestId;
@@ -58,6 +62,12 @@ export class ClassHourAdditionModel {
 				typeof addition.hours === "number"
 					? addition.hours
 					: addition.hours.toNumber(),
+			revenueAmount:
+				addition.revenueAmount === null
+					? null
+					: typeof addition.revenueAmount === "number"
+						? addition.revenueAmount
+						: addition.revenueAmount.toNumber(),
 			sourceCourseId: addition.sourceCourseId,
 			sourceCourseName: addition.sourceCourseName,
 			requestId: addition.requestId,
@@ -71,6 +81,7 @@ export class ClassHourAdditionModel {
 			classId: this.classId,
 			source: this.source,
 			hours: this.hours,
+			revenueAmount: this.revenueAmount,
 			sourceCourseId: this.sourceCourseId,
 			sourceCourseName: this.sourceCourseName,
 			requestId: this.requestId,

@@ -1,12 +1,12 @@
 {
-	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "tutorpal-dev-api",
-	"main": "src/cloudflare-worker.ts",
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "tutorpal-api-dev",
+	"main": "../../src/cloudflare-worker.ts",
 	"compatibility_date": "2026-08-12",
 	"compatibility_flags": ["nodejs_compat"],
 	"workers_dev": true,
 	"triggers": {
-		"crons": ["*/15 * * * *"]
+		"crons": []
 	},
 	"hyperdrive": [
 		{
@@ -14,7 +14,7 @@
 			"id": "3a4bf5c376c54b0fb059556b27ad6a57"
 		}
 	],
-	// Replace every example origin before deployment. Set secrets separately with Wrangler; do not add secret values here.
+	// Replace deployment-specific non-secret values before deploying.
 	"vars": {
 		"CORS_ORIGIN": "https://dev.app.tutorpal.io",
 		"ADMIN_FRONTEND_URL": "https://dev.admin.tutorpal.io",
@@ -41,5 +41,12 @@
 			"persist": true,
 			"head_sampling_rate": 1
 		}
+	},
+	"secrets": {
+		"required": [
+			"BETTER_AUTH_SECRET",
+			"RESEND_API_KEY",
+			"LINE_CREDENTIALS_ENCRYPTION_KEY"
+		]
 	}
 }

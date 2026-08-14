@@ -2,10 +2,16 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { MAX_CLASS_HOURS } from "../lib/class-hour-addition";
 import { prisma as defaultPrisma } from "../lib/db";
 import { AppError } from "../lib/error";
+import {
+	hasAtMostTwoDecimalPlaces,
+	MAX_CURRENCY_AMOUNT,
+	normalizeCurrencyAmount,
+} from "../lib/money";
 import { ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
 import type {
 	ClassDeleteOutcome,
+	ClassDetail,
 	ClassHourAdditionResult,
 	ClassListParams,
 	CreateClassDTO,
@@ -32,6 +38,7 @@ const classInclude = {
 
 type DecimalLike = { toNumber(): number };
 type HoursValue = DecimalLike | number;
+type MoneyValue = DecimalLike | number;
 
 function toHoursNumber(value: HoursValue): number {
 	return typeof value === "number" ? value : value.toNumber();
@@ -63,6 +70,26 @@ function normalizePositiveHours(hours: number): number {
 	return normalizedHours;
 }
 
+function normalizeRevenueAmount(
+	revenueAmount: number | null | undefined,
+): number | null {
+	if (revenueAmount === null || revenueAmount === undefined) return null;
+
+	if (
+		!Number.isFinite(revenueAmount) ||
+		revenueAmount < 0 ||
+		revenueAmount > MAX_CURRENCY_AMOUNT ||
+		!hasAtMostTwoDecimalPlaces(revenueAmount)
+	) {
+		throw AppError.badRequest(
+			"INVALID_REVENUE_AMOUNT",
+			"Revenue amount must be a non-negative value with at most two decimal places",
+		);
+	}
+
+	return normalizeCurrencyAmount(revenueAmount);
+}
+
 function assertHoursFitClassTotal(hours: number) {
 	if (hours > MAX_CLASS_HOURS) {
 		throw hourAdditionLimitExceeded(
@@ -92,10 +119,21 @@ function isMatchingHourAddition(
 	existing: {
 		source: "COURSE" | "CUSTOM";
 		hours: HoursValue;
+		revenueAmount: MoneyValue | null;
 		sourceCourseId: string | null;
 	},
 	data: CreateClassHourAdditionDTO,
 ): boolean {
+	if (
+		normalizeRevenueAmount(
+			existing.revenueAmount === null
+				? null
+				: toHoursNumber(existing.revenueAmount),
+		) !== normalizeRevenueAmount(data.revenueAmount)
+	) {
+		return false;
+	}
+
 	if (data.source === "course") {
 		return (
 			existing.source === "COURSE" && existing.sourceCourseId === data.courseId
@@ -113,6 +151,7 @@ function assertMatchingHourAddition(
 	existing: {
 		source: "COURSE" | "CUSTOM";
 		hours: HoursValue;
+		revenueAmount: MoneyValue | null;
 		sourceCourseId: string | null;
 	},
 	data: CreateClassHourAdditionDTO,
@@ -256,6 +295,26 @@ export class ClassRepository implements IClassRepository {
 		);
 	}
 
+	async findDetailById(
+		id: string,
+		tutorId: string,
+	): Promise<ClassDetail | null> {
+		const classData = await this.findById(id, tutorId);
+		if (!classData) return null;
+
+		const revenue = await this.prisma.classHourAddition.aggregate({
+			where: { classId: id },
+			_sum: { revenueAmount: true },
+		});
+		return {
+			classData,
+			recordedRevenue:
+				revenue._sum.revenueAmount === null
+					? 0
+					: revenue._sum.revenueAmount.toNumber(),
+		};
+	}
+
 	async update(
 		id: string,
 		tutorId: string,
@@ -309,8 +368,15 @@ export class ClassRepository implements IClassRepository {
 	): Promise<ClassHourAdditionResult> {
 		const normalizedData =
 			data.source === "custom"
-				? { ...data, hours: normalizePositiveHours(data.hours) }
-				: data;
+				? {
+						...data,
+						hours: normalizePositiveHours(data.hours),
+						revenueAmount: normalizeRevenueAmount(data.revenueAmount),
+					}
+				: {
+						...data,
+						revenueAmount: normalizeRevenueAmount(data.revenueAmount),
+					};
 
 		try {
 			return await this.prisma.$transaction(async (tx) => {
@@ -424,6 +490,7 @@ export class ClassRepository implements IClassRepository {
 						classId: id,
 						source: normalizedData.source === "course" ? "COURSE" : "CUSTOM",
 						hours,
+						revenueAmount: normalizedData.revenueAmount,
 						sourceCourseId,
 						sourceCourseName,
 						requestId: normalizedData.requestId,

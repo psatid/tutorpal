@@ -35,9 +35,9 @@ export function useCreateCourse(onSuccess?: () => void) {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (data: PostV1CoursesBody) => (await apiClient.postV1Courses(data)).data,
-		onSuccess: () => {
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			toast.success(t("toast.createSuccess"));
-			queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			onSuccess?.();
 		},
 		onError: (error: Error) => toast.error(error.message || t("toast.createError")),
@@ -49,9 +49,9 @@ export function useUpdateCourse(onSuccess?: () => void) {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: PutV1CoursesByIdBody }) => (await apiClient.putV1CoursesById(id, data)).data,
-		onSuccess: () => {
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			toast.success(t("toast.updateSuccess"));
-			queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
 			onSuccess?.();
 		},
 		onError: (error: Error) => toast.error(error.message || t("toast.updateError")),

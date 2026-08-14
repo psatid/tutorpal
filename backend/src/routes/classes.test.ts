@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import { Hono } from "hono";
+import { errorHandler } from "../middleware/error-handler";
 import { ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
 import type { AppEnv } from "../types/hono-env";
@@ -22,6 +23,7 @@ const customAddition = ClassHourAdditionModel.fromPrisma({
 	classId: "class-1",
 	source: "CUSTOM",
 	hours: 2.5,
+	revenueAmount: 500,
 	sourceCourseId: null,
 	sourceCourseName: null,
 	requestId,
@@ -33,6 +35,11 @@ let addHourData: unknown;
 let historyParams: unknown;
 let addHourOwnership: unknown;
 let historyOwnership: unknown;
+let detailOwnership: unknown;
+let detailResult: { classData: ClassModel; recordedRevenue: number } | null = {
+	classData: classModel,
+	recordedRevenue: 1_250,
+};
 
 mock.module("../repositories", () => ({
 	classRepository: {
@@ -64,6 +71,10 @@ mock.module("../repositories", () => ({
 				},
 			};
 		},
+		findDetailById: async (id: string, tutorId: string) => {
+			detailOwnership = { id, tutorId };
+			return detailResult;
+		},
 	},
 }));
 
@@ -93,7 +104,9 @@ mock.module("../lib/db", () => ({
 }));
 
 const { default: classRoutes } = await import("./classes");
-const app = new Hono<AppEnv>().route("/v1/classes", classRoutes);
+const app = new Hono<AppEnv>();
+app.onError(errorHandler);
+app.route("/v1/classes", classRoutes);
 
 function request(path: string, method = "GET", body?: unknown) {
 	return app.request(`http://api.test${path}`, {
@@ -149,6 +162,7 @@ describe("class routes", () => {
 			{
 				source: "custom",
 				hours: 2.5,
+				revenueAmount: 500,
 				requestId,
 			},
 		);
@@ -157,6 +171,7 @@ describe("class routes", () => {
 		expect(addHourData).toEqual({
 			source: "custom",
 			hours: 2.5,
+			revenueAmount: 500,
 			requestId,
 		});
 		expect(addHourOwnership).toEqual({ id: "class-1", tutorId: "tutor-1" });
@@ -167,6 +182,56 @@ describe("class routes", () => {
 		});
 	});
 
+	test("allows adding hours without recording revenue", async () => {
+		const response = await request(
+			"/v1/classes/class-1/hour-additions",
+			"POST",
+			{
+				source: "custom",
+				hours: 2.5,
+				requestId,
+			},
+		);
+
+		expect(response.status).toBe(200);
+		expect(addHourData).toEqual({
+			source: "custom",
+			hours: 2.5,
+			requestId,
+		});
+	});
+
+	test("returns recorded revenue only from the class detail route", async () => {
+		const response = await request("/v1/classes/class-1");
+
+		expect(response.status).toBe(200);
+		expect(detailOwnership).toEqual({ id: "class-1", tutorId: "tutor-1" });
+		expect(await response.json()).toEqual(
+			expect.objectContaining({ recordedRevenue: 1_250 }),
+		);
+	});
+
+	test("returns the standard not-found response for missing or foreign-owned detail", async () => {
+		const originalDetailResult = detailResult;
+		detailResult = null;
+
+		try {
+			const response = await request("/v1/classes/foreign-class");
+
+			expect(response.status).toBe(404);
+			expect(detailOwnership).toEqual({
+				id: "foreign-class",
+				tutorId: "tutor-1",
+			});
+			expect(await response.json()).toEqual({
+				errorCode: "CLASS_NOT_FOUND",
+				message: "Class not found",
+			});
+		} finally {
+			detailResult = originalDetailResult;
+		}
+	});
+
 	test("rejects malformed hour requests and exposes a read-only history route", async () => {
 		const invalid = await request(
 			"/v1/classes/class-1/hour-additions",
@@ -174,6 +239,7 @@ describe("class routes", () => {
 			{
 				source: "CUSTOM",
 				hours: 2.5,
+				revenueAmount: 500,
 				requestId,
 			},
 		);
@@ -182,28 +248,33 @@ describe("class routes", () => {
 		const missingRequestId = await request(
 			"/v1/classes/class-1/hour-additions",
 			"POST",
-			{ source: "custom", hours: 2.5 },
+			{ source: "custom", hours: 2.5, revenueAmount: 500 },
 		);
 		expect(missingRequestId.status).toBe(400);
 
 		const zeroHours = await request(
 			"/v1/classes/class-1/hour-additions",
 			"POST",
-			{ source: "custom", hours: 0, requestId },
+			{ source: "custom", hours: 0, revenueAmount: 500, requestId },
 		);
 		expect(zeroHours.status).toBe(400);
 
 		const subCentHours = await request(
 			"/v1/classes/class-1/hour-additions",
 			"POST",
-			{ source: "custom", hours: 1e-18, requestId },
+			{ source: "custom", hours: 1e-18, revenueAmount: 500, requestId },
 		);
 		expect(subCentHours.status).toBe(400);
 
 		const excessiveHours = await request(
 			"/v1/classes/class-1/hour-additions",
 			"POST",
-			{ source: "custom", hours: 100_000_000, requestId },
+			{
+				source: "custom",
+				hours: 100_000_000,
+				revenueAmount: 500,
+				requestId,
+			},
 		);
 		expect(excessiveHours.status).toBe(400);
 

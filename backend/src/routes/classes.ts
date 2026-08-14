@@ -3,6 +3,7 @@ import { describeRoute, validator } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { classRepository } from "../repositories";
 import {
+	ClassDetailSchemaResolver,
 	ClassHourAdditionListQuerySchema,
 	ClassHourAdditionResultSchemaResolver,
 	ClassListQuerySchema,
@@ -274,10 +275,10 @@ export function createClassRoutes({
 					description: "Get a class by ID",
 					responses: {
 						200: {
-							description: "Class found",
+							description: "Class found with recorded revenue",
 							content: {
 								"application/json": {
-									schema: ClassSchemaResolver,
+									schema: ClassDetailSchemaResolver,
 								},
 							},
 						},
@@ -292,8 +293,10 @@ export function createClassRoutes({
 				async (c) => {
 					const id = c.req.param("id");
 					const tutorId = c.get("tutorId");
-					const classData = await classService.getClassById(id, tutorId);
-					return c.json(classData.toClassDTO());
+					const classData = await classService.getClassDetailById(id, tutorId);
+					return c.json(
+						classData.classData.toClassDetailDTO(classData.recordedRevenue),
+					);
 				},
 			)
 

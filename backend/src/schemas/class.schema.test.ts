@@ -42,6 +42,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "course",
 				courseId: "course-1",
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(true);
@@ -49,6 +50,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 2.25,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(true);
@@ -56,6 +58,22 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 1.1,
+				revenueAmount: 0,
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "course",
+				courseId: "course-1",
+				requestId,
+			}).success,
+		).toBe(true);
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 1.1,
+				revenueAmount: null,
 				requestId,
 			}).success,
 		).toBe(true);
@@ -64,6 +82,7 @@ describe("class request contracts", () => {
 				source: "custom",
 				hours: 2,
 				courseId: "course-1",
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(false);
@@ -71,6 +90,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 1.234,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(false);
@@ -78,6 +98,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 0,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(false);
@@ -85,6 +106,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 1e-18,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(false);
@@ -92,6 +114,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 0.01,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(true);
@@ -99,6 +122,7 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 99_999_999.99,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(true);
@@ -106,9 +130,33 @@ describe("class request contracts", () => {
 			CreateClassHourAdditionSchema.safeParse({
 				source: "custom",
 				hours: 100_000_000,
+				revenueAmount: 850,
 				requestId,
 			}).success,
 		).toBe(false);
+		for (const revenueAmount of [
+			-0.01,
+			1.234,
+			10_000_000_000,
+			Number.POSITIVE_INFINITY,
+			Number.NaN,
+		]) {
+			expect(
+				CreateClassHourAdditionSchema.safeParse({
+					source: "custom",
+					hours: 1,
+					revenueAmount,
+					requestId,
+				}).success,
+			).toBe(false);
+		}
+		expect(
+			CreateClassHourAdditionSchema.safeParse({
+				source: "custom",
+				hours: 1,
+				requestId,
+			}).success,
+		).toBe(true);
 	});
 
 	test("uses the agreed class and hour-history pagination defaults", () => {

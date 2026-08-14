@@ -3,6 +3,7 @@ import { describeRoute, validator } from "hono-openapi";
 import { requireAuth } from "../middleware/auth";
 import { courseRepository } from "../repositories/course.repository";
 import {
+	CourseDetailSchemaResolver,
 	CourseListQuerySchema,
 	CourseSchemaResolver,
 	CreateCourseSchema,
@@ -78,18 +79,25 @@ export function createCourseRoutes({
 				description: "Get a course",
 				responses: {
 					200: {
-						description: "Course",
-						content: { "application/json": { schema: CourseSchemaResolver } },
+						description: "Course with recorded revenue",
+						content: {
+							"application/json": { schema: CourseDetailSchemaResolver },
+						},
 					},
 					404: { description: "Course not found" },
 				},
 			}),
 			async (c) => {
-				const course = await courseService.getCourseById(
+				const course = await courseService.getCourseDetailById(
 					c.req.param("id"),
 					c.get("tutorId"),
 				);
-				return c.json(course.toCourseDTO());
+				return c.json(
+					course.course.toCourseDetailDTO(
+						course.recordedHours,
+						course.recordedRevenue,
+					),
+				);
 			},
 		)
 		.put(

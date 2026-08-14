@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { AppConfig } from "./lib/app-config";
 import { type Auth, createAuth } from "./lib/auth-factory";
-import { createLineClient } from "./lib/line";
+import { createLineClient, sendLinePushMessage } from "./lib/line";
 import { createLineCredentialCipher } from "./lib/line-credentials";
 import {
 	createRequireAdmin,
@@ -78,14 +78,14 @@ export function createApplicationDependencies(
 }
 
 export function createClassReminderService(
-	config: AppConfig,
+	config: Pick<AppConfig, "LINE_CREDENTIALS_ENCRYPTION_KEY">,
 	prisma: PrismaClient,
 ) {
 	return new ClassReminderService(
 		new ClassReminderRepository(prisma),
 		undefined,
 		{
-			lineClient: createLineClient(config),
+			lineClient: { sendLinePushMessage },
 			credentialCipher: createLineCredentialCipher(
 				config.LINE_CREDENTIALS_ENCRYPTION_KEY,
 			),

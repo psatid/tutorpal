@@ -11,8 +11,6 @@ type FakePrisma = {
 };
 
 const prismaClients: FakePrisma[] = [];
-const applicationConfigs: Array<{ DATABASE_URL: string }> = [];
-const pollTimes: Date[] = [];
 
 mock.module("./lib/cloudflare-prisma", () => ({
 	createPrismaClient(connectionString: string): FakePrisma {
@@ -25,33 +23,6 @@ mock.module("./lib/cloudflare-prisma", () => ({
 		};
 		prismaClients.push(client);
 		return client;
-	},
-}));
-
-mock.module("./app-dependencies", () => ({
-	createApplicationDependencies(
-		config: { DATABASE_URL: string },
-		prisma: FakePrisma,
-	) {
-		applicationConfigs.push(config);
-		return { config, prisma };
-	},
-	createClassReminderService() {
-		return {
-			async poll(now: Date) {
-				pollTimes.push(now);
-			},
-		};
-	},
-}));
-
-mock.module("./app", () => ({
-	createApp() {
-		return {
-			async fetch() {
-				return new Response("ok");
-			},
-		};
 	},
 }));
 
@@ -93,8 +64,6 @@ function createExecutionContext() {
 
 beforeEach(() => {
 	prismaClients.length = 0;
-	applicationConfigs.length = 0;
-	pollTimes.length = 0;
 });
 
 describe("Cloudflare Worker", () => {
@@ -115,7 +84,7 @@ describe("Cloudflare Worker", () => {
 
 		expect(prismaClients).toHaveLength(2);
 		expect(prismaClients[0]).not.toBe(prismaClients[1]);
-		expect(applicationConfigs.map((config) => config.DATABASE_URL)).toEqual([
+		expect(prismaClients.map((client) => client.connectionString)).toEqual([
 			"postgresql://hyperdrive.example/tutorpal",
 			"postgresql://hyperdrive.example/tutorpal",
 		]);
@@ -124,21 +93,6 @@ describe("Cloudflare Worker", () => {
 		expect(prismaClients.map((client) => client.disconnectCalls)).toEqual([
 			1, 1,
 		]);
-	});
-
-	test("passes the Cron scheduled time to the reminder poll and disconnects", async () => {
-		const scheduledAt = Date.parse("2026-08-12T12:34:00.000Z");
-		const execution = createExecutionContext();
-
-		await worker.scheduled(
-			{ scheduledTime: scheduledAt },
-			createEnv(),
-			execution.context,
-		);
-
-		expect(pollTimes.map((time) => time.getTime())).toEqual([scheduledAt]);
-		await Promise.all(execution.pending);
-		expect(prismaClients[0]?.disconnectCalls).toBe(1);
 	});
 
 	test("fails before creating Prisma when a required secret is missing", async () => {

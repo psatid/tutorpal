@@ -1,6 +1,7 @@
 import { resolver } from "hono-openapi";
 import { z } from "zod";
 import { MAX_CLASS_HOURS } from "../lib/class-hour-addition";
+import { hasAtMostTwoDecimalPlaces, MAX_CURRENCY_AMOUNT } from "../lib/money";
 import { RecurringScheduleSchema } from "./schedule.schema";
 
 export const StudentInClassSchema = z.object({
@@ -19,6 +20,10 @@ export const ClassSchema = z.object({
 	updatedAt: z.string().datetime(),
 	remainingHours: z.number(),
 	recurringSchedule: RecurringScheduleSchema.nullable().optional(),
+});
+
+export const ClassDetailSchema = ClassSchema.extend({
+	recordedRevenue: z.number(),
 });
 
 const studentIdsSchema = z
@@ -70,19 +75,25 @@ const positiveHoursSchema = z
 		"Hours may have at most two decimal places",
 	);
 
-function hasAtMostTwoDecimalPlaces(hours: number) {
-	const scaledHours = hours * 100;
-	return (
-		Math.abs(scaledHours - Math.round(scaledHours)) <=
-		Number.EPSILON * Math.max(1, Math.abs(scaledHours)) * 4
+const revenueAmountSchema = z
+	.number()
+	.finite()
+	.min(0, "Revenue amount must be greater than or equal to 0")
+	.max(
+		MAX_CURRENCY_AMOUNT,
+		`Revenue amount must not exceed ${MAX_CURRENCY_AMOUNT.toFixed(2)}`,
+	)
+	.refine(
+		hasAtMostTwoDecimalPlaces,
+		"Revenue amount may have at most two decimal places",
 	);
-}
 
 export const CreateClassHourAdditionSchema = z.discriminatedUnion("source", [
 	z
 		.object({
 			source: z.literal("course"),
 			courseId: z.string().min(1, "Course is required"),
+			revenueAmount: revenueAmountSchema.nullable().optional(),
 			requestId: z.string().uuid(),
 		})
 		.strict(),
@@ -90,6 +101,7 @@ export const CreateClassHourAdditionSchema = z.discriminatedUnion("source", [
 		.object({
 			source: z.literal("custom"),
 			hours: positiveHoursSchema,
+			revenueAmount: revenueAmountSchema.nullable().optional(),
 			requestId: z.string().uuid(),
 		})
 		.strict(),
@@ -100,6 +112,7 @@ export const ClassHourAdditionSchema = z.object({
 	classId: z.string(),
 	source: z.enum(["course", "custom"]),
 	hours: z.number(),
+	revenueAmount: z.number().nullable(),
 	sourceCourseId: z.string().nullable(),
 	sourceCourseName: z.string().nullable(),
 	requestId: z.string().uuid(),
@@ -130,6 +143,7 @@ export const PaginatedClassHourAdditionListSchema = z.object({
 });
 
 export const ClassSchemaResolver = resolver(ClassSchema);
+export const ClassDetailSchemaResolver = resolver(ClassDetailSchema);
 export const PaginatedClassListSchemaResolver = resolver(
 	PaginatedClassListSchema,
 );

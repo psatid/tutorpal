@@ -63,18 +63,24 @@ export default {
 		remaining: "{{hours}} hours remaining",
 		total: "{{hours}} hours total",
 	},
+	revenue: {
+		label: "Recorded revenue",
+		notRecorded: "Revenue not recorded",
+	},
 	hourAdditions: {
 		title: "Add hours",
-		description: "Choose a course preset or enter a custom amount. Added hours cannot be changed later.",
+		description:
+			"Choose a course preset or enter custom hours and final revenue. Added values cannot be changed later.",
 		sourceLegend: "How would you like to add hours?",
 		coursePreset: "Course preset",
-		coursePresetDescription: "Use the course’s current configured hours.",
+		coursePresetDescription:
+			"Use the course’s current configured hours and revenue default.",
 		coursePresetLoading: "Loading course presets…",
 		coursePresetLoadError:
 			"Course presets couldn’t load. Add custom hours or try again.",
 		noCourses: "No courses are available. Create one first or add custom hours.",
 		customHours: "Custom hours",
-		customHoursDescription: "Enter the exact amount you want to add.",
+		customHoursDescription: "Enter the exact hours and revenue you want to record.",
 		courseLabel: "Course",
 		coursePlaceholder: "Choose a course",
 		unavailableCourse: "Selected course is unavailable",
@@ -83,19 +89,27 @@ export default {
 		customInputLabel: "Hours to add",
 		customInputDescription:
 			"Use a positive amount with up to two decimal places.",
+		revenueLabel: "Revenue to record (THB, optional)",
+		courseRevenueCalculated:
+			"Defaults to {{revenue}} from the course price. You can adjust it before adding.",
+		courseRevenueManual:
+			"This course has no price. Enter the final revenue to record.",
+		courseRevenuePending: "Choose a course to see its revenue default.",
+		customRevenueDescription:
+			"Optional. Enter the final revenue to record for these custom hours.",
 		submit: "Add hours",
 		submitPreset: "Add {{hours}} hours",
 		addAction: "Add hours",
 		courseOption: "{{name}} · {{hours}} hours",
-		success: "Added {{hours}} hours to this class.",
+		success: "Added {{hours}} hours and {{revenue}} to this class.",
 		courseUnavailable:
 			"The selected course is no longer available. Choose another course or enter custom hours.",
 		classUnavailable: "This class is no longer available. Return to the Classes list and try again.",
 		requestConflict: "This hour addition could not be confirmed. Please try again.",
 		error: "We couldn’t add hours. Check your connection and try again.",
-		historyTitle: "Hours added",
-		historyEmpty: "No hours have been added yet.",
-		historyError: "Hours added couldn’t load. Try again.",
+		historyTitle: "Hours & revenue history",
+		historyEmpty: "No hours or revenue have been recorded yet.",
+		historyError: "Hours and revenue history couldn’t load. Try again.",
 		historyCourse: "Course preset · {{course}}",
 		historyCustom: "Custom hours",
 		loadMore: "Load more",
@@ -103,6 +117,9 @@ export default {
 			range: "Enter hours from 0.01 to 99,999,999.99.",
 			precision: "Enter hours with no more than two decimal places.",
 			course: "Choose a course.",
+			revenueRange: "Enter an amount from ฿0.00 to ฿9,999,999,999.99.",
+			revenuePrecision:
+				"Enter revenue with no more than two decimal places.",
 		},
 	},
 	loadingMore: "Loading more classes...",

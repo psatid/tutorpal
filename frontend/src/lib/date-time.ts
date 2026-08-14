@@ -84,6 +84,14 @@ export class DateTime {
 		}).format(hours);
 	}
 
+	static formatThaiBaht(amount: number): string {
+		return `฿${new Intl.NumberFormat(DateTime.getIntlLocale(), {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+			numberingSystem: "latn",
+		}).format(amount)}`;
+	}
+
 	static formatDate(
 		input: DateTimeInput,
 		options: Intl.DateTimeFormatOptions = DEFAULT_DATE_FORMAT,

@@ -11,7 +11,8 @@ The current environment documented here is <code>dev</code>:
 - Web application: <code>https://dev.app.tutorpal.io</code>
 - API: <code>https://dev.api.tutorpal.io</code>
 - Cloudflare Pages project: <code>tutorpal-dev</code>
-- Cloudflare Worker: <code>tutorpal-dev-api</code>
+- Cloudflare API Worker: <code>tutorpal-api-dev</code>
+- Cloudflare reminder Worker: <code>tutorpal-reminders-dev</code>
 - Cloudflare DNS zone: <code>tutorpal.io</code>
 
 ## Architecture overview
@@ -24,7 +25,8 @@ flowchart LR
         dns["DNS + TLS<br/>Zone: tutorpal.io"]
         pages["Pages<br/>User Vite/React SPA<br/>dev.app.tutorpal.io"]
         adminPages["Pages<br/>Admin Vite/React SPA<br/>admin origin"]
-        worker["Worker: tutorpal-dev-api<br/>Hono API + Better Auth<br/>dev.api.tutorpal.io"]
+        apiWorker["Worker: tutorpal-api-dev<br/>Hono API + Better Auth<br/>dev.api.tutorpal.io"]
+        reminderWorker["Worker: tutorpal-reminders-dev<br/>Scheduled reminders"]
         cron["Cron Trigger<br/>*/15 * * * * UTC"]
         hyperdrive["Hyperdrive<br/>cache disabled<br/>HYPERDRIVE_CACHE_DISABLED"]
     end
@@ -38,22 +40,24 @@ flowchart LR
     browser -->|"HTTPS: web app"| dns
     dns -->|"dev.app.tutorpal.io"| pages
     dns -->|"ADMIN_FRONTEND_URL"| adminPages
-    dns -->|"dev.api.tutorpal.io"| worker
-    browser -->|"API + auth requests<br/>credentials included"| worker
-    cron -->|"scheduled()"| worker
-    worker -->|"Prisma + Better Auth"| hyperdrive
+    dns -->|"dev.api.tutorpal.io"| apiWorker
+    browser -->|"API + auth requests<br/>credentials included"| apiWorker
+    cron -->|"scheduled()"| reminderWorker
+    apiWorker -->|"Prisma + Better Auth"| hyperdrive
+    reminderWorker -->|"Prisma + delivery claims"| hyperdrive
     hyperdrive -->|"PostgreSQL connection"| postgres
-    worker -->|"verification/reset messages"| resend
-    worker -->|"OAuth + push messages"| line
-    line -->|"OAuth callback"| worker
+    apiWorker -->|"verification/reset messages"| resend
+    apiWorker -->|"OAuth + account-link messages"| line
+    reminderWorker -->|"push messages"| line
+    line -->|"OAuth callback"| apiWorker
 ~~~
 
 Cloudflare DNS routes the two public application hostnames. Pages serves only
 the compiled SPA and its deep-link fallback. The browser uses the public API
 origin compiled into <code>VITE_API_URL</code>; it never connects directly to
-PostgreSQL. The Worker creates the Prisma and Better Auth runtime for each
-request, uses Hyperdrive for database access, and handles the scheduled
-reminder poll.
+PostgreSQL. The API Worker creates the Prisma and Better Auth runtime for each
+request, while the reminder Worker creates its own Prisma runtime for scheduled
+polling. Both use Hyperdrive for database access.
 
 ## Cloudflare resource inventory
 
@@ -63,11 +67,12 @@ reminder poll.
 | Pages project | <code>tutorpal-dev</code> | Static frontend deployment from <code>frontend/dist</code> |
 | Pages custom domain | <code>dev.app.tutorpal.io</code> | Public web application origin |
 | Admin Pages project | Separate Pages project from <code>admin-frontend</code> | Restricted admin portal; its public origin is configured as <code>ADMIN_FRONTEND_URL</code> |
-| Worker | <code>tutorpal-dev-api</code> | Hono API, Better Auth, LINE integration, and Cron handler |
-| Worker custom domain | <code>dev.api.tutorpal.io</code> | Public API and authentication origin |
-| Worker development URL | <code>tutorpal-dev-api.psatid32.workers.dev</code> | Cloudflare-provided Worker endpoint for operational testing |
-| Hyperdrive binding | <code>HYPERDRIVE_CACHE_DISABLED</code> | Database connection to the existing Supabase PostgreSQL database with query caching disabled |
-| Cron Trigger | <code>*/15 * * * *</code> UTC | Invokes the Worker reminder handler at minutes <code>00</code>, <code>15</code>, <code>30</code>, and <code>45</code> of every hour |
+| API Worker | <code>tutorpal-api-dev</code> | Hono API, Better Auth, email, and LINE account linking |
+| Reminder Worker | <code>tutorpal-reminders-dev</code> | Scheduled reminder discovery, claiming, and LINE delivery; no public route |
+| Worker custom domain | <code>dev.api.tutorpal.io</code> | Public API and authentication origin attached to the API Worker |
+| API Worker development URL | <code>tutorpal-api-dev.psatid32.workers.dev</code> | Cloudflare-provided API endpoint for operational testing |
+| Hyperdrive binding | <code>HYPERDRIVE_CACHE_DISABLED</code> | Same cache-disabled database connection bound to both Workers |
+| Cron Trigger | <code>*/15 * * * *</code> UTC | Invokes the reminder Worker at minutes <code>00</code>, <code>15</code>, <code>30</code>, and <code>45</code> of every hour |
 
 The custom domains are the application origins. The <code>pages.dev</code> and
 <code>workers.dev</code> URLs remain useful for deployment checks, but
@@ -83,7 +88,7 @@ associations:
   Pages project. Its Pages deployment target is
   <code>tutorpal-dev.pages.dev</code>.
 - <code>dev.api.tutorpal.io</code> is attached to the
-  <code>tutorpal-dev-api</code> Worker through a Worker Custom Domain.
+  <code>tutorpal-api-dev</code> Worker through a Worker Custom Domain.
 
 Worker Custom Domains create the required Cloudflare DNS and certificate
 configuration. Do not replace the Worker Custom Domain with a regular CNAME to
@@ -156,42 +161,69 @@ callback configuration.
 
 ## Backend infrastructure
 
-The Worker configuration is
-[backend/wrangler.jsonc](../backend/wrangler.jsonc) and the module entrypoint
-is [backend/src/cloudflare-worker.ts](../backend/src/cloudflare-worker.ts).
+The development API Worker configuration is
+[backend/wrangler/dev/wrangler.api.dev.jsonc](../backend/wrangler/dev/wrangler.api.dev.jsonc)
+and its module entrypoint is
+[backend/src/cloudflare-worker.ts](../backend/src/cloudflare-worker.ts). The
+development reminder Worker configuration is
+[backend/wrangler/dev/wrangler.reminders.dev.jsonc](../backend/wrangler/dev/wrangler.reminders.dev.jsonc)
+and its module entrypoint is
+[backend/src/cloudflare-reminder-worker.ts](../backend/src/cloudflare-reminder-worker.ts).
+Production uses the matching
+[API](../backend/wrangler/prod/wrangler.api.prod.jsonc) and
+[reminder](../backend/wrangler/prod/wrangler.reminders.prod.jsonc) configs.
 
-The Worker exports both handlers:
+The Workers have separate responsibilities:
 
-- <code>fetch</code>: creates the request-scoped Prisma, Better Auth,
-  repositories, and Hono application, then serves the API request.
-- <code>scheduled</code>: creates the same database runtime and polls due class
-  reminders.
+- <code>tutorpal-api-dev</code> exports <code>fetch</code> and creates the
+  request-scoped Prisma, Better Auth, repositories, and Hono application.
+  Its <code>triggers.crons</code> list is explicitly empty.
+- <code>tutorpal-reminders-dev</code> exports <code>scheduled</code> only and
+  polls due class reminders. It has no public API route and receives only the
+  shared Hyperdrive binding plus the LINE encryption secret.
 
-The Worker uses the <code>nodejs_compat</code> compatibility flag for Prisma,
+Both Workers use the <code>nodejs_compat</code> compatibility flag for Prisma,
 <code>pg</code>, <code>Buffer</code>, and Node-compatible cryptography. The
-<code>HYPERDRIVE_CACHE_DISABLED</code> binding is required on every deployed
-environment; it is a Hyperdrive binding, not a secret or a regular Worker
-variable.
+<code>HYPERDRIVE_CACHE_DISABLED</code> binding is required on both deployed
+Workers; it is a Hyperdrive binding, not a secret or a regular Worker
+variable. The same Hyperdrive resource is bound twice; no second database
+configuration is created.
 
-Deploy and validate the Worker from the <code>backend</code> directory:
+Validate and deploy development from the repository root:
 
 ~~~bash
-cd backend
-bun run cf:check
-bunx wrangler deploy --keep-vars
+make backend-build ENV=dev
+make deploy APP=backend ENV=dev
 ~~~
 
-<code>--keep-vars</code> preserves variables and secrets managed in the
-Cloudflare dashboard. Keep the deployed Wrangler configuration and dashboard
-values consistent; the binding name and resource IDs must match
-<code>backend/wrangler.jsonc</code>.
+The aggregate backend deployment publishes the reminder Worker first and the
+API Worker second, removing the old API cron after the new schedule is active.
+For independent recovery operations, use
+<code>make deploy APP=backend-reminders ENV=dev</code> or run the explicit backend
+targets <code>make reminders-deploy</code> and <code>make deploy</code> from
+<code>backend</code>. <code>--keep-vars</code> preserves variables and secrets
+managed in the Cloudflare dashboard. Keep deployed configuration and dashboard
+values consistent; binding names and resource IDs must match both Wrangler
+files.
+
+`ENV` defaults to <code>dev</code> for backend Worker checks and deployments.
+For production, replace every
+<code>REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID</code> and <code>.invalid</code>
+placeholder in both production configs, provision the production secrets, then
+run <code>make backend-build ENV=prod</code> and
+<code>make deploy APP=backend ENV=prod</code>. The backend Makefile blocks a
+production deployment while any of those placeholders remain. Direct Wrangler
+package scripts remain explicit and must not be used for production until the
+placeholders have been replaced. Local Wrangler `.dev.vars` files are resolved
+next to the selected config; use the Git-ignored
+<code>backend/wrangler/dev/.dev.vars</code> for local development secrets.
 
 ## Data and integration flows
 
 ### PostgreSQL through Hyperdrive
 
-The Worker is the only application component that accesses the database. It
-uses Prisma with the connection string supplied by
+The API and reminder Workers are the application components that access the
+database. Both use Prisma with the connection string supplied by
 <code>HYPERDRIVE_CACHE_DISABLED.connectionString</code>. Hyperdrive is
 configured with query caching disabled because TutorPal performs authenticated
 CRUD, writes, transactions, timestamp-sensitive queries, decimal operations,
@@ -199,30 +231,32 @@ and reminder claiming.
 
 ### Authentication and email
 
-Better Auth runs inside the Worker. The Pages origin is allowed by CORS and
+Better Auth runs inside the API Worker. The Pages origin is allowed by CORS and
 browser requests include credentials so session cookies can be used across the
 user/admin frontend and API origins. Resend sends verification and
 password-reset emails; the links return users to the user Pages frontend.
 
 ### LINE integration
 
-The Worker handles LINE account linking and OAuth callbacks at
-<code>/v1/line/callback</code>, and sends LINE messages through the Messaging
-API. Existing encrypted LINE credentials must remain readable by preserving
-the configured <code>LINE_CREDENTIALS_ENCRYPTION_KEY</code> secret.
+The API Worker handles LINE account linking and OAuth callbacks at
+<code>/v1/line/callback</code>. The API and reminder Workers send LINE messages
+through the Messaging API. Existing encrypted LINE credentials must remain
+readable by provisioning the same
+<code>LINE_CREDENTIALS_ENCRYPTION_KEY</code> secret on both Workers.
 
 ### Reminder scheduling
 
-The Cron Trigger invokes <code>scheduled()</code> at minutes
-<code>00</code>, <code>15</code>, <code>30</code>, and <code>45</code> every
-hour in UTC. The reminder service uses the PostgreSQL claim, lease, retry-key,
-and delivery-status logic to make overlapping invocations and transient
-failures safe.
+The Cron Trigger invokes <code>scheduled()</code> on
+<code>tutorpal-reminders-dev</code> at minutes <code>00</code>, <code>15</code>,
+<code>30</code>, and <code>45</code> every hour in UTC. The reminder service
+uses the PostgreSQL claim, lease, retry-key, and delivery-status logic to make
+overlapping invocations and transient failures safe. The API Worker has no
+Cron trigger after cutover.
 
 ## Runtime configuration contract
 
-The current Worker values in <code>backend/wrangler.jsonc</code> use these
-origins:
+The current development Worker values in
+<code>backend/wrangler/dev/wrangler.api.dev.jsonc</code> use these origins:
 
 | Variable | Current value |
 | --- | --- |
@@ -242,11 +276,15 @@ environment:
 - <code>LOG_LEVEL=debug</code>
 - <code>RESEND_FROM_EMAIL=TutorPal &lt;no-reply@tutorpal.io&gt;</code>
 
-Store these values as Worker secrets and do not commit them:
+Store these values as API Worker secrets and do not commit them:
 
 - <code>BETTER_AUTH_SECRET</code>
 - <code>RESEND_API_KEY</code>
 - <code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>
+
+The reminder Worker only needs
+<code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>; provision the same value on both
+Workers.
 
 If a hostname changes, update the frontend build variable, Worker origin
 variables, the LINE Developers callback URL, and any email-link configuration
@@ -283,12 +321,16 @@ For Worker execution logs, use the Worker Observability view or run:
 
 ~~~bash
 cd backend
-bunx wrangler tail tutorpal-dev-api
+bunx wrangler tail tutorpal-api-dev
+bunx wrangler tail tutorpal-reminders-dev
 ~~~
 
 ## Related references
 
-- [Worker configuration](../backend/wrangler.jsonc)
+- [Development API Worker configuration](../backend/wrangler/dev/wrangler.api.dev.jsonc)
+- [Development reminder Worker configuration](../backend/wrangler/dev/wrangler.reminders.dev.jsonc)
+- [Production API Worker configuration](../backend/wrangler/prod/wrangler.api.prod.jsonc)
+- [Production reminder Worker configuration](../backend/wrangler/prod/wrangler.reminders.prod.jsonc)
 - [Cloudflare Workers Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
 - [Cloudflare Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)
 - [Cloudflare Pages custom domains](https://developers.cloudflare.com/pages/configuration/custom-domains/)

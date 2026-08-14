@@ -9,8 +9,9 @@ export const APP_ROUTES = {
 	STUDENT_DETAIL: "/students/$studentId",
 	CLASSES: "/classes",
 	COURSES: "/courses",
+	COURSE_DETAIL: "/courses/$courseId",
 	CLASS_DETAIL: "/classes/$classId",
 	SCHEDULES: "/schedules",
 	SETTINGS: "/settings",
 	LINE_SETTINGS: "/settings/line",
-};
+} as const;

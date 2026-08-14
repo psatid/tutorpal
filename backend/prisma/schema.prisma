@@ -34,6 +34,8 @@ model Course {
   tutorId           String
   name              String
   defaultTotalHours Decimal  @db.Decimal(10, 2)
+  pricingMode       CoursePricingMode
+  priceAmount       Decimal? @db.Decimal(12, 2)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -42,6 +44,13 @@ model Course {
   @@index([tutorId])
   @@index([tutorId, name])
   @@map("courses")
+}
+
+enum CoursePricingMode {
+  HOURLY_RATE
+  FIXED_PRICE
+
+  @@map("course_pricing_mode")
 }
 
 model Class {
@@ -74,6 +83,7 @@ model ClassHourAddition {
   classId          String
   source           ClassHourAdditionSource
   hours            Decimal                 @db.Decimal(10, 2)
+  revenueAmount    Decimal?                @db.Decimal(12, 2)
   sourceCourseId   String?
   sourceCourseName String?
   requestId        String                  @db.Uuid
@@ -83,6 +93,7 @@ model ClassHourAddition {
 
   @@unique([classId, requestId])
   @@index([classId, createdAt, id])
+  @@index([sourceCourseId])
   @@map("class_hour_additions")
 }
 

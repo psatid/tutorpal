@@ -78,9 +78,15 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 											{data.formattedCreatedAt}
 										</p>
 									</div>
-									<p className="shrink-0 tabular-nums text-sm font-medium text-foreground">
-										+{data.formattedHours}
-									</p>
+									<div className="max-w-36 shrink-0 space-y-1 text-right sm:max-w-none">
+										<p className="tabular-nums text-sm font-medium text-foreground">
+											+{data.formattedHours}
+										</p>
+										<p className="text-sm text-muted-foreground">
+											{data.formattedRevenueAmount ??
+												t("classes:revenue.notRecorded")}
+										</p>
+									</div>
 								</li>
 							);
 						})}

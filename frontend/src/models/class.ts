@@ -18,6 +18,7 @@ type ClassDetails = {
 	displayName: string;
 	totalHours: number;
 	remainingHours: number;
+	recordedRevenue: number | null;
 	students: ClassStudent[];
 	recurringSchedule?: RecurringScheduleSummary | null;
 };
@@ -119,6 +120,10 @@ export class Class {
 			displayName: this.getDisplayName(),
 			students: this.getStudents(),
 			balanceState: this.getBalanceState(),
+			formattedRecordedRevenue:
+				this.data.recordedRevenue === null
+					? null
+					: DateTime.formatThaiBaht(this.data.recordedRevenue),
 			...this.getHoursData(),
 		};
 	}
@@ -145,6 +150,8 @@ function toClassDetails(
 		displayName: response.displayName,
 		totalHours: response.totalHours,
 		remainingHours: response.remainingHours,
+		recordedRevenue:
+			"recordedRevenue" in response ? response.recordedRevenue : null,
 		students: response.students.map(ClassStudent.fromResponse),
 		recurringSchedule: response.recurringSchedule
 			? {

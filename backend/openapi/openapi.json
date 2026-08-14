@@ -1124,6 +1124,12 @@
                         "hours": {
                           "type": "number"
                         },
+                        "revenueAmount": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
                         "sourceCourseId": {
                           "type": [
                             "string",
@@ -1150,6 +1156,7 @@
                         "classId",
                         "source",
                         "hours",
+                        "revenueAmount",
                         "sourceCourseId",
                         "sourceCourseName",
                         "requestId",
@@ -1259,6 +1266,14 @@
                         "type": "string",
                         "minLength": 1
                       },
+                      "revenueAmount": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 9999999999.99
+                      },
                       "requestId": {
                         "type": "string",
                         "format": "uuid"
@@ -1282,6 +1297,14 @@
                         "type": "number",
                         "minimum": 0.01,
                         "maximum": 99999999.99
+                      },
+                      "revenueAmount": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 9999999999.99
                       },
                       "requestId": {
                         "type": "string",
@@ -1375,6 +1398,12 @@
                           "hours": {
                             "type": "number"
                           },
+                          "revenueAmount": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "sourceCourseId": {
                             "type": [
                               "string",
@@ -1401,6 +1430,7 @@
                           "classId",
                           "source",
                           "hours",
+                          "revenueAmount",
                           "sourceCourseId",
                           "sourceCourseName",
                           "requestId",
@@ -1485,7 +1515,7 @@
         "description": "Get a class by ID",
         "responses": {
           "200": {
-            "description": "Class found",
+            "description": "Class found with recorded revenue",
             "content": {
               "application/json": {
                 "schema": {
@@ -1633,6 +1663,9 @@
                         "updatedAt",
                         "scheduleItems"
                       ]
+                    },
+                    "recordedRevenue": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -1643,7 +1676,8 @@
                     "students",
                     "createdAt",
                     "updatedAt",
-                    "remainingHours"
+                    "remainingHours",
+                    "recordedRevenue"
                   ]
                 }
               }
@@ -1969,11 +2003,27 @@
                       "type": "string",
                       "format": "uuid"
                     },
+                    "tutorId": {
+                      "type": "string"
+                    },
                     "name": {
                       "type": "string"
                     },
                     "defaultTotalHours": {
                       "type": "number"
+                    },
+                    "pricingMode": {
+                      "type": "string",
+                      "enum": [
+                        "hourly_rate",
+                        "fixed_price"
+                      ]
+                    },
+                    "priceAmount": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "createdAt": {
                       "type": "string",
@@ -1986,8 +2036,11 @@
                   },
                   "required": [
                     "id",
+                    "tutorId",
                     "name",
                     "defaultTotalHours",
+                    "pricingMode",
+                    "priceAmount",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -2010,11 +2063,27 @@
                   "defaultTotalHours": {
                     "type": "number",
                     "exclusiveMinimum": 0
+                  },
+                  "pricingMode": {
+                    "type": "string",
+                    "enum": [
+                      "hourly_rate",
+                      "fixed_price"
+                    ]
+                  },
+                  "priceAmount": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9999999999.99
                   }
                 },
                 "required": [
                   "name",
-                  "defaultTotalHours"
+                  "defaultTotalHours",
+                  "pricingMode"
                 ]
               }
             }
@@ -2044,11 +2113,27 @@
                             "type": "string",
                             "format": "uuid"
                           },
+                          "tutorId": {
+                            "type": "string"
+                          },
                           "name": {
                             "type": "string"
                           },
                           "defaultTotalHours": {
                             "type": "number"
+                          },
+                          "pricingMode": {
+                            "type": "string",
+                            "enum": [
+                              "hourly_rate",
+                              "fixed_price"
+                            ]
+                          },
+                          "priceAmount": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
                           },
                           "createdAt": {
                             "type": "string",
@@ -2061,8 +2146,11 @@
                         },
                         "required": [
                           "id",
+                          "tutorId",
                           "name",
                           "defaultTotalHours",
+                          "pricingMode",
+                          "priceAmount",
                           "createdAt",
                           "updatedAt"
                         ]
@@ -2173,7 +2261,7 @@
         "description": "Get a course",
         "responses": {
           "200": {
-            "description": "Course",
+            "description": "Course with recorded revenue",
             "content": {
               "application/json": {
                 "schema": {
@@ -2183,11 +2271,27 @@
                       "type": "string",
                       "format": "uuid"
                     },
+                    "tutorId": {
+                      "type": "string"
+                    },
                     "name": {
                       "type": "string"
                     },
                     "defaultTotalHours": {
                       "type": "number"
+                    },
+                    "pricingMode": {
+                      "type": "string",
+                      "enum": [
+                        "hourly_rate",
+                        "fixed_price"
+                      ]
+                    },
+                    "priceAmount": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "createdAt": {
                       "type": "string",
@@ -2196,14 +2300,25 @@
                     "updatedAt": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "recordedHours": {
+                      "type": "number"
+                    },
+                    "recordedRevenue": {
+                      "type": "number"
                     }
                   },
                   "required": [
                     "id",
+                    "tutorId",
                     "name",
                     "defaultTotalHours",
+                    "pricingMode",
+                    "priceAmount",
                     "createdAt",
-                    "updatedAt"
+                    "updatedAt",
+                    "recordedHours",
+                    "recordedRevenue"
                   ]
                 }
               }
@@ -2242,11 +2357,27 @@
                       "type": "string",
                       "format": "uuid"
                     },
+                    "tutorId": {
+                      "type": "string"
+                    },
                     "name": {
                       "type": "string"
                     },
                     "defaultTotalHours": {
                       "type": "number"
+                    },
+                    "pricingMode": {
+                      "type": "string",
+                      "enum": [
+                        "hourly_rate",
+                        "fixed_price"
+                      ]
+                    },
+                    "priceAmount": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "createdAt": {
                       "type": "string",
@@ -2259,8 +2390,11 @@
                   },
                   "required": [
                     "id",
+                    "tutorId",
                     "name",
                     "defaultTotalHours",
+                    "pricingMode",
+                    "priceAmount",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -2283,6 +2417,21 @@
                   "defaultTotalHours": {
                     "type": "number",
                     "exclusiveMinimum": 0
+                  },
+                  "pricingMode": {
+                    "type": "string",
+                    "enum": [
+                      "hourly_rate",
+                      "fixed_price"
+                    ]
+                  },
+                  "priceAmount": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9999999999.99
                   }
                 }
               }

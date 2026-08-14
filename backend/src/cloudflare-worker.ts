@@ -1,8 +1,5 @@
 import { createApp } from "./app";
-import {
-	createApplicationDependencies,
-	createClassReminderService,
-} from "./app-dependencies";
+import { createApplicationDependencies } from "./app-dependencies";
 import { type AppConfigInput, createAppConfig } from "./lib/app-config";
 import { createPrismaClient } from "./lib/cloudflare-prisma";
 
@@ -16,10 +13,6 @@ export type CloudflareEnv = AppConfigInput & {
 
 export type CloudflareExecutionContext = {
 	waitUntil(promise: Promise<unknown>): void;
-};
-
-type ScheduledController = {
-	scheduledTime: number;
 };
 
 function requiredWorkerValue(
@@ -82,23 +75,4 @@ export async function fetch(
 	}
 }
 
-export async function scheduled(
-	controller: ScheduledController,
-	env: CloudflareEnv,
-	ctx: CloudflareExecutionContext,
-): Promise<void> {
-	const config = createWorkerConfig(env);
-	const prisma = createPrismaClient(config.DATABASE_URL);
-
-	try {
-		await createClassReminderService(config, prisma).poll(
-			new Date(controller.scheduledTime),
-		);
-	} catch (error) {
-		console.error("Class reminder poll failed", error);
-	} finally {
-		ctx.waitUntil(prisma.$disconnect());
-	}
-}
-
-export default { fetch, scheduled };
+export default { fetch };

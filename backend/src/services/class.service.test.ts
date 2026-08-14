@@ -27,6 +27,36 @@ function repositoryForDelete(outcome: ClassDeleteOutcome) {
 }
 
 describe("ClassService", () => {
+	test("returns the tutor-scoped class detail result and preserves not-found behavior", async () => {
+		let detailArgs: [string, string] | undefined;
+		const detail = { classData: {} as never, recordedRevenue: 0 };
+		const repository = {
+			findDetailById: async (id: string, tutorId: string) => {
+				detailArgs = [id, tutorId];
+				return detail;
+			},
+		} as unknown as IClassRepository;
+		const service = new ClassService(repository);
+
+		await expect(
+			service.getClassDetailById("class-1", "tutor-1"),
+		).resolves.toBe(detail);
+		expect(detailArgs).toEqual(["class-1", "tutor-1"]);
+
+		const missingRepository = {
+			findDetailById: async () => null,
+		} as unknown as IClassRepository;
+		await expect(
+			new ClassService(missingRepository).getClassDetailById(
+				"foreign-class",
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "CLASS_NOT_FOUND",
+			status: 404,
+		});
+	});
+
 	test("deletes a tutor-owned class with one repository call", async () => {
 		const { repository, getDeleteArgs, getDeleteCalls } =
 			repositoryForDelete("deleted");

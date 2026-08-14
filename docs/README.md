@@ -8,7 +8,9 @@ and operations. Run `make help` to see all targets. Common commands include:
 ```sh
 make dev
 make build
-make deploy APP=backend
+make deploy APP=backend ENV=dev
+# After replacing the production Worker config placeholders:
+make deploy APP=backend ENV=prod
 make deploy APP=frontend PAGES_PROJECT=<project-name>
 make deploy APP=admin-frontend PAGES_PROJECT=<project-name>
 make migrate ENV=dev

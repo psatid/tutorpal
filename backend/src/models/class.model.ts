@@ -1,5 +1,9 @@
 import { DateTime } from "../lib/date-time";
-import type { ClassDTO, StudentInClassDTO } from "../types/class.types";
+import type {
+	ClassDetailDTO,
+	ClassDTO,
+	StudentInClassDTO,
+} from "../types/class.types";
 import type { RecurringScheduleDTO } from "../types/schedule.types";
 
 type DecimalLike = { toNumber(): number };
@@ -100,6 +104,13 @@ export class ClassModel {
 			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 			remainingHours: this.remainingHours,
 			recurringSchedule: this.recurringSchedule,
+		};
+	}
+
+	toClassDetailDTO(recordedRevenue: number): ClassDetailDTO {
+		return {
+			...this.toClassDTO(),
+			recordedRevenue,
 		};
 	}
 }

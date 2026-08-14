@@ -2,6 +2,7 @@ import { AppError } from "../lib/error";
 import type { ClassModel } from "../models/class.model";
 import type { ClassHourAdditionModel } from "../models/class-hour-addition.model";
 import type {
+	ClassDetail,
 	ClassHourAdditionResult,
 	ClassListParams,
 	CreateClassDTO,
@@ -28,6 +29,14 @@ export class ClassService {
 
 	async getClassById(id: string, tutorId: string): Promise<ClassModel> {
 		const classData = await this.repository.findById(id, tutorId);
+		if (!classData) {
+			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
+		}
+		return classData;
+	}
+
+	async getClassDetailById(id: string, tutorId: string): Promise<ClassDetail> {
+		const classData = await this.repository.findDetailById(id, tutorId);
 		if (!classData) {
 			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
 		}
