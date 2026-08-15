@@ -6,7 +6,6 @@ BUN ?= bun
 BUNX ?= bunx
 ENV ?= dev
 ARGS ?=
-PAGES_MODE ?= dev
 PAGES_PROJECT ?=
 SCRIPT ?=
 
@@ -33,8 +32,7 @@ build:
 	$(BUN) run build
 
 pages-build:
-	$(BUN) run generate:api
-	$(BUN) run build --mode "$(PAGES_MODE)"
+	$(BUN) run build --mode "$(ENV)"
 
 preview:
 	$(BUN) run preview

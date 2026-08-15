@@ -5,6 +5,8 @@ import {
   useRef,
   type FocusEvent,
   type KeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { motion, useReducedMotion, type Transition } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -24,9 +26,56 @@ export interface WeekdayViewProps {
   className?: string;
 }
 
+interface TouchSelectionGesture {
+  key: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  isSwipe: boolean;
+  select: () => void;
+}
+
+interface TouchClickSuppression {
+  key: string;
+  armedAt: number;
+  expiresAt: number;
+}
+
+type NativeClickEvent = globalThis.MouseEvent & {
+  sourceCapabilities?: {
+    firesTouchEvents?: boolean;
+  } | null;
+};
+
 const EDGE_THRESHOLD = 128;
 const SMOOTH_SCROLL_SETTLE_DELAY = 150;
+const TOUCH_SWIPE_THRESHOLD = 8;
+const TOUCH_CLICK_SUPPRESSION_DELAY = 500;
 const WEEK_DAYS = 7;
+
+function hasTouchGestureExceededTapThreshold(
+  gesture: TouchSelectionGesture,
+  point: { clientX: number; clientY: number },
+): boolean {
+  return (
+    Math.hypot(point.clientX - gesture.startX, point.clientY - gesture.startY) >=
+    TOUCH_SWIPE_THRESHOLD
+  );
+}
+
+function isTouchGeneratedClick(
+  event: ReactMouseEvent<HTMLButtonElement>,
+  hasMousePointerInput: boolean,
+): boolean {
+  const sourceCapabilities = (
+    event.nativeEvent as NativeClickEvent
+  ).sourceCapabilities;
+
+  return (
+    sourceCapabilities?.firesTouchEvents ??
+    (event.detail > 0 && !hasMousePointerInput)
+  );
+}
 
 function getDateByDayOffset(date: Date, dayOffset: number): Date {
   const dateTime = DateTime.from(date);
@@ -64,6 +113,12 @@ export function WeekdayView({
   const smoothCenteringRef = useRef(false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
+  const lastMousePointerDownAtRef = useRef<number | null>(null);
+  const touchGestureRef = useRef<TouchSelectionGesture | null>(null);
+  const touchClickSuppressionRef = useRef<TouchClickSuppression | null>(
+    null,
+  );
+  const touchClickSuppressionTimeoutRef = useRef<number | null>(null);
   const motionTransition: Transition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
@@ -100,6 +155,34 @@ export function WeekdayView({
     smoothCenterScrollEndCleanupRef.current = null;
   }, []);
 
+  const clearTouchClickSuppression = useCallback(() => {
+    if (touchClickSuppressionTimeoutRef.current !== null) {
+      window.clearTimeout(touchClickSuppressionTimeoutRef.current);
+      touchClickSuppressionTimeoutRef.current = null;
+    }
+
+    touchClickSuppressionRef.current = null;
+  }, []);
+
+  const armTouchClickSuppression = useCallback(
+    (key: string) => {
+      clearTouchClickSuppression();
+
+      const armedAt = Date.now();
+
+      touchClickSuppressionRef.current = {
+        key,
+        armedAt,
+        expiresAt: armedAt + TOUCH_CLICK_SUPPRESSION_DELAY,
+      };
+      touchClickSuppressionTimeoutRef.current = window.setTimeout(
+        clearTouchClickSuppression,
+        TOUCH_CLICK_SUPPRESSION_DELAY,
+      );
+    },
+    [clearTouchClickSuppression],
+  );
+
   const scheduleSmoothCenterFallback = useCallback(() => {
     if (!smoothCenteringRef.current) return;
 
@@ -125,7 +208,13 @@ export function WeekdayView({
     }
   }, [clearSmoothCentering]);
 
-  useLayoutEffect(() => clearSmoothCentering, [clearSmoothCentering]);
+  useLayoutEffect(() => {
+    return () => {
+      clearSmoothCentering();
+      clearTouchClickSuppression();
+      touchGestureRef.current = null;
+    };
+  }, [clearSmoothCentering, clearTouchClickSuppression]);
 
   const centerSelectedDate = useCallback(
     (behavior: ScrollBehavior = "auto") => {
@@ -353,6 +442,116 @@ export function WeekdayView({
     [cancelSmoothCentering, dates, onDateSelect, onExtendDateBuffer],
   );
 
+  const handleRailPointerDownCapture = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      cancelSmoothCentering();
+
+      if (event.pointerType === "mouse") {
+        lastMousePointerDownAtRef.current = Date.now();
+      }
+    },
+    [cancelSmoothCentering],
+  );
+
+  const handleTouchPointerDown = useCallback(
+    (
+      event: ReactPointerEvent<HTMLButtonElement>,
+      key: string,
+      select: () => void,
+    ) => {
+      if (event.pointerType !== "touch" || !event.isPrimary) return;
+
+      touchGestureRef.current = {
+        key,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        isSwipe: false,
+        select,
+      };
+    },
+    [],
+  );
+
+  const handleTouchPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const gesture = touchGestureRef.current;
+
+      if (
+        !gesture ||
+        gesture.pointerId !== event.pointerId ||
+        gesture.isSwipe
+      ) {
+        return;
+      }
+
+      gesture.isSwipe = hasTouchGestureExceededTapThreshold(gesture, event);
+    },
+    [],
+  );
+
+  const handleTouchPointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const gesture = touchGestureRef.current;
+
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+      touchGestureRef.current = null;
+      armTouchClickSuppression(gesture.key);
+
+      if (!hasTouchGestureExceededTapThreshold(gesture, event) && !gesture.isSwipe) {
+        gesture.select();
+      }
+    },
+    [armTouchClickSuppression],
+  );
+
+  const handleTouchPointerCancel = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const gesture = touchGestureRef.current;
+
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+      touchGestureRef.current = null;
+      armTouchClickSuppression(gesture.key);
+    },
+    [armTouchClickSuppression],
+  );
+
+  const handleDateClick = useCallback(
+    (
+      event: ReactMouseEvent<HTMLButtonElement>,
+      date: Date,
+      dateKey: string,
+    ) => {
+      const suppression = touchClickSuppressionRef.current;
+      const now = Date.now();
+
+      if (suppression && now > suppression.expiresAt) {
+        clearTouchClickSuppression();
+      }
+
+      if (
+        suppression &&
+        suppression.key === dateKey &&
+        now <= suppression.expiresAt &&
+        isTouchGeneratedClick(
+          event,
+          lastMousePointerDownAtRef.current !== null &&
+            lastMousePointerDownAtRef.current >= suppression.armedAt,
+        )
+      ) {
+        clearTouchClickSuppression();
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      onDateSelect(date);
+    },
+    [clearTouchClickSuppression, onDateSelect],
+  );
+
   return (
     <div className={cn("min-w-0 max-w-full pb-3 pt-2 md:pb-4", className)}>
       <p id={instructionsId} className="sr-only">
@@ -367,8 +566,10 @@ export function WeekdayView({
         onFocus={handleRailFocus}
         onScroll={handleScroll}
         onWheel={cancelSmoothCentering}
-        onPointerDown={cancelSmoothCentering}
-        onTouchStart={cancelSmoothCentering}
+        onPointerDownCapture={handleRailPointerDownCapture}
+        onPointerMove={handleTouchPointerMove}
+        onPointerUp={handleTouchPointerUp}
+        onPointerCancel={handleTouchPointerCancel}
         className="relative min-w-0 max-w-full overflow-x-auto py-1 scroll-py-1 overscroll-x-contain touch-pan-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         {offscreenSelectedAriaLabel && (
@@ -382,6 +583,7 @@ export function WeekdayView({
         <div className="flex w-max min-w-[calc(100%+4rem)] gap-2 px-3 sm:px-4 lg:px-6">
           {dates.map((date, index) => {
             const dateTime = DateTime.from(date);
+            const dateKey = dateTime.toDateOnlyString();
             const isSelected = selectedDate
               ? dateTime.isSameDay(selectedDate)
               : false;
@@ -410,9 +612,14 @@ export function WeekdayView({
               <button
                 key={date.getTime()}
                 type="button"
-                onClick={() => onDateSelect(date)}
+                onPointerDown={(event) =>
+                  handleTouchPointerDown(event, dateKey, () =>
+                    onDateSelect(date),
+                  )
+                }
+                onClick={(event) => handleDateClick(event, date, dateKey)}
                 onKeyDown={(event) => handleKeyDown(event, date)}
-                data-date-key={dateTime.toDateOnlyString()}
+                data-date-key={dateKey}
                 className={cn(
                   "relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected

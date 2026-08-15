@@ -14,6 +14,10 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ScheduleViewSwitch,
+  type ScheduleViewMode,
+} from "@/components/schedules/schedule-view-switch";
 import { DateField } from "@/components/ui/form/date-field";
 import { DateTime } from "@/lib/date-time";
 import { WeekView } from "./week-view";
@@ -29,7 +33,8 @@ import {
 export interface WeekDateSelectorProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
-  viewMode?: "day" | "week";
+  viewMode?: ScheduleViewMode;
+  onViewModeChange: (viewMode: ScheduleViewMode) => void;
   className?: string;
 }
 
@@ -79,6 +84,7 @@ export function WeekDateSelector({
   selectedDate,
   onDateSelect,
   viewMode = "day",
+  onViewModeChange,
   className,
 }: WeekDateSelectorProps) {
   const { t } = useTranslation(["schedules"]);
@@ -217,9 +223,19 @@ export function WeekDateSelector({
     month: "long",
     year: "numeric",
   });
+  const shortMonthLabel = DateTime.formatDate(railSelectedDate, {
+    month: "short",
+    year: "numeric",
+  });
   const weekEnd = getDateInWeek(railSelectedWeekStart, WEEK_DAYS - 1);
   const weekLabel = formatWeekRange(railSelectedWeekStart, weekEnd, true);
+  const shortWeekLabel = formatWeekRange(railSelectedWeekStart, weekEnd).replace(
+    /\s*–\s*/g,
+    "–",
+  );
   const periodLabel = viewMode === "week" ? weekLabel : monthLabel;
+  const shortPeriodLabel =
+    viewMode === "week" ? shortWeekLabel : shortMonthLabel;
   const motionTransition: Transition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
@@ -250,7 +266,7 @@ export function WeekDateSelector({
   return (
     <div className={cn("mb-4", className)}>
       <div className="px-3 pt-3 sm:px-4 lg:px-6">
-        <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
           <div className="min-w-0">
             <DateField
               value={DateTime.from(railSelectedDate).toDateOnlyString()}
@@ -268,7 +284,7 @@ export function WeekDateSelector({
               trigger={
                 <button
                   type="button"
-                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full px-2 py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card sm:px-3"
+                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-full px-1.5 py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card sm:gap-1.5 sm:px-3"
                 >
                   <motion.span
                     className="relative block min-w-0"
@@ -289,7 +305,8 @@ export function WeekDateSelector({
                         transition={motionTransition}
                         className="block truncate"
                       >
-                        {periodLabel}
+                        <span className="sm:hidden">{shortPeriodLabel}</span>
+                        <span className="hidden sm:inline">{periodLabel}</span>
                       </motion.span>
                     </AnimatePresence>
                   </motion.span>
@@ -301,15 +318,21 @@ export function WeekDateSelector({
               }
             />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToday}
-            leftIcon={CalendarDays}
-            className="min-h-11 shrink-0 bg-card px-2 sm:px-3"
-          >
-            {t("schedules:weekSelector.today")}
-          </Button>
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToday}
+              className="min-h-11 bg-card px-1.5 sm:px-3"
+            >
+              <CalendarDays aria-hidden="true" className="hidden size-4 sm:block" />
+              {t("schedules:weekSelector.today")}
+            </Button>
+            <ScheduleViewSwitch
+              value={viewMode}
+              onChange={onViewModeChange}
+            />
+          </div>
         </div>
       </div>
 

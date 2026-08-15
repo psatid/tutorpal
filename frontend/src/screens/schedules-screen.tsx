@@ -18,11 +18,8 @@ import {
   type DrawerMode,
 } from "@/components/schedules/schedule-drawer";
 import { WeekDateSelector } from "@/components/schedules/week-date-selector";
-import {
-  ScheduleViewSwitch,
-  type ScheduleViewMode,
-  WeeklyScheduleTimeline,
-} from "@/components/schedules/weekly-schedule-timeline";
+import { WeeklyScheduleTimeline } from "@/components/schedules/weekly-schedule-timeline";
+import { type ScheduleViewMode } from "@/components/schedules/schedule-view-switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
@@ -194,14 +191,11 @@ export function SchedulesScreen() {
           : "flex min-h-[calc(100vh-200px)] flex-col"
       }
     >
-      <div className="flex shrink-0 justify-end px-3 pt-3 sm:px-4 lg:px-6">
-        <ScheduleViewSwitch value={viewMode} onChange={setViewMode} />
-      </div>
-
       <WeekDateSelector
         selectedDate={selectedDate}
         onDateSelect={setSelectedDate}
         viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* Search */}

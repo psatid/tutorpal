@@ -1,8 +1,4 @@
-import {
-  CalendarCheck2,
-  MapPin,
-  Monitor,
-} from "lucide-react";
+import { CalendarCheck2, MapPin, Monitor } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
@@ -18,53 +14,6 @@ const HOUR_HEIGHT = 48;
 const MIN_EVENT_HEIGHT = 44;
 const DAY_COLUMN_MIN_WIDTH = 144;
 const TIME_COLUMN_WIDTH = 56;
-
-export type ScheduleViewMode = "day" | "week";
-
-interface ScheduleViewSwitchProps {
-  value: ScheduleViewMode;
-  onChange: (value: ScheduleViewMode) => void;
-}
-
-export function ScheduleViewSwitch({
-  value,
-  onChange,
-}: ScheduleViewSwitchProps) {
-  const { t } = useTranslation(["schedules"]);
-  const options: Array<{ value: ScheduleViewMode; label: string }> = [
-    { value: "day", label: t("schedules:viewMode.day") },
-    { value: "week", label: t("schedules:viewMode.week") },
-  ];
-
-  return (
-    <fieldset
-      aria-label={t("schedules:viewMode.label")}
-      className="inline-flex h-11 items-center rounded-full border border-border bg-card p-0.5"
-    >
-      <legend className="sr-only">{t("schedules:viewMode.label")}</legend>
-      {options.map((option) => {
-        const isSelected = value === option.value;
-
-        return (
-          <button
-            aria-pressed={isSelected}
-            className={cn(
-              "min-h-9 rounded-full px-3 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none",
-              isSelected
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            type="button"
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </fieldset>
-  );
-}
 
 interface WeeklyScheduleTimelineProps {
   selectedDate: Date;
@@ -83,9 +32,7 @@ interface PositionedSchedule {
   schedule: GetV1Schedules200Item;
 }
 
-function getTimelineBounds(
-  schedules: GetV1Schedules200Item[],
-): TimelineBounds {
+function getTimelineBounds(schedules: GetV1Schedules200Item[]): TimelineBounds {
   let startMinutes = DEFAULT_START_MINUTES;
   let endMinutes = DEFAULT_END_MINUTES;
 
@@ -224,10 +171,7 @@ function ScheduleBlock({
       <span className="flex w-full min-w-0 items-center gap-1 font-semibold">
         <span className="min-w-0 truncate">{schedule.className}</span>
         <StatusIcon aria-hidden="true" className="size-3 shrink-0" />
-        <ScheduleTypeIcon
-          aria-hidden="true"
-          className="size-3 shrink-0"
-        />
+        <ScheduleTypeIcon aria-hidden="true" className="size-3 shrink-0" />
       </span>
       <span className="mt-0.5 truncate tabular-nums opacity-80">
         {startTime}–{endTime}
@@ -274,7 +218,7 @@ export function WeeklyScheduleTimeline({
     >
       <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain border-y border-border bg-card touch-pan-x touch-pan-y">
         <div
-          className="min-w-[1064px]"
+          className="min-w-266"
           style={{
             width: `max(100%, ${TIME_COLUMN_WIDTH + DAY_COLUMN_MIN_WIDTH * 7}px)`,
           }}
@@ -363,7 +307,7 @@ export function WeeklyScheduleTimeline({
                 <div
                   className={cn(
                     "relative border-r border-border last:border-r-0",
-                    DateTime.from(date).isToday() && "bg-primary/[0.02]",
+                    DateTime.from(date).isToday() && "bg-primary/2",
                   )}
                   key={dateKey}
                   style={{ height: `${timelineHeight}px` }}

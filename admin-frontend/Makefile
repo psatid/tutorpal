@@ -6,6 +6,7 @@ BUN ?= bun
 BUNX ?= bunx
 ARGS ?=
 PAGES_PROJECT ?=
+ENV ?= dev
 SCRIPT ?=
 
 .PHONY: help dev build preview run deploy
@@ -24,6 +25,9 @@ dev:
 
 build:
 	$(BUN) run build
+	
+pages-build:
+	$(BUN) run build --mode "$(ENV)"
 
 preview:
 	$(BUN) run preview
@@ -34,5 +38,5 @@ run:
 
 deploy:
 	@test -n "$(PAGES_PROJECT)" || { echo 'PAGES_PROJECT is required, for example: make deploy PAGES_PROJECT=tutorpal-admin'; exit 2; }
-	$(MAKE) build
+	$(MAKE) pages-build
 	$(BUNX) wrangler pages deploy dist --project-name "$(PAGES_PROJECT)"

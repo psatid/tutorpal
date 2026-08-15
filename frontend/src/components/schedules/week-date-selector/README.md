@@ -21,6 +21,7 @@ interface WeekDateSelectorProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
   viewMode?: "day" | "week";
+  onViewModeChange: (viewMode: "day" | "week") => void;
   className?: string;
 }
 ```
@@ -36,15 +37,18 @@ interface WeekDateSelectorProps {
 
 ### Selection and header controls
 
+- `WeekDateSelector` owns the shared 44px header: the calendar period trigger is on the left, while Today followed by the Day/Week switch form a non-wrapping right control cluster. The selector reports mode changes through `onViewModeChange`.
+- Below `sm`, the trigger shows a localized compact period label while retaining the complete month or week range in its accessible calendar label. Header controls use 8px spacing and retain 44px touch targets; at `sm` and wider, the full period label and existing gutters return.
 - The month label remains a `DateField` trigger and always reflects the committed selected date, never the passively visible dates. When the external date is `null`, the rail and header use today as an internal fallback until a date is selected.
 - Today and calendar selections call `onDateSelect`; a date outside the current buffer rebuilds the bounded range around that date.
 - Clicking/tapping a tile, ArrowLeft/ArrowRight, PageUp/PageDown, Today, and date-picker selections smoothly center the selected tile by default. Reduced-motion users receive instant positioning.
+- A touch tap commits on Pointer Events `pointerup` immediately before smooth centering begins. Horizontal swipes only scroll the rails and never change the committed selection; the following compatibility click is ignored so a tap commits once.
 - Selected dates use the primary tile treatment. Unselected today has a primary outline and dot; month boundaries show a compact month marker.
 
 ### Week mode
 
 - Uses eight complete Monday–Sunday ranges: four before the selected week, the selected week, and three after. Edge extension rotates one full week at a time and compensates the scroll position before paint.
-- Week buttons are 56px high and horizontally scrollable at every viewport. They show a compact range (`Aug 10–16`, `Aug 31 – Sep 6`, or both years when needed), retain a partial adjacent button at the edge, and do not add previous/next controls.
+- Week buttons are 56px high, have a 128px minimum width, and are horizontally scrollable at every viewport. They grow evenly to fill wider rails, while the track keeps at least enough continuation for one full tile of compensated edge scrolling. They show a compact range (`Aug 10–16`, `Aug 31 – Sep 6`, or both years when needed), retain a partial adjacent button at the edge, and do not add previous/next controls.
 - Choosing a week—whether from the rail or calendar—preserves the committed weekday within that target week. A calendar click identifies the target week rather than changing the active weekday.
 - The header stays in the same one-line position: it morphs from the day-mode month label to the current week range. The calendar uses a controlled Monday–Sunday range highlight and closes as soon as a day is chosen.
 
@@ -96,15 +100,15 @@ weekSelector: {
 ## Styling
 
 ```typescript
-// Scrollport and internally-guttered fixed-width track
+// Scrollport and internally-guttered responsive track
 className="relative min-w-0 max-w-full overflow-x-auto py-1 scroll-py-1 overscroll-x-contain touch-pan-x"
-className="flex w-max min-w-[calc(100%+4rem)] gap-2 px-3 sm:px-4 lg:px-6"
+className="flex w-max min-w-[max(calc(100%+8rem),114.285714%)] gap-2 px-3 sm:px-4 lg:px-6"
 
 // Date tiles
 className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5"
 
 // Week tiles
-className="relative flex h-14 w-32 shrink-0 items-center justify-center rounded-xl border px-3 py-1.5"
+className="relative flex h-14 min-w-32 flex-1 items-center justify-center rounded-xl border px-3 py-1.5"
 ```
 
 The component uses existing color, border, typography, motion, and focus-ring tokens. It intentionally does not add a scrollbar treatment, edge gradient, shadow, or a second toolbar.

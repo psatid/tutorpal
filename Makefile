@@ -9,7 +9,6 @@ SCRIPT ?=
 ARGS ?=
 GIT_SHA ?=
 PAGES_PROJECT ?=
-PAGES_MODE ?= dev
 
 .PHONY: help dev frontend-dev admin-dev backend-dev build frontend-build admin-build backend-build \
 	frontend-run admin-run backend-run script frontend-deploy admin-deploy backend-deploy deploy \
@@ -89,13 +88,22 @@ script:
 	./scripts/$(SCRIPT) $(ARGS)
 
 frontend-deploy:
-	+$(MAKE) -C frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)" PAGES_MODE="$(PAGES_MODE)"
+	+$(MAKE) -C frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)" ENV="$(ENV)"
+
+frontend-deploy-dev:
+	+$(MAKE) -C frontend deploy PAGES_PROJECT=tutor-portal-dev ENV=dev
 
 admin-deploy:
-	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)"
+	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT="$(PAGES_PROJECT) ENV="$(ENV)"
+
+admin-deploy-dev:
+	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT=admin-portal-dev ENV=dev
 
 backend-deploy:
 	+$(MAKE) -C backend reminders-deploy ENV="$(ENV)"
+	+$(MAKE) -C backend deploy ENV="$(ENV)"
+
+backend-api-deploy:
 	+$(MAKE) -C backend deploy ENV="$(ENV)"
 
 backend-reminders-deploy:
@@ -106,7 +114,7 @@ deploy:
 	@case "$(APP)" in \
 		backend) $(MAKE) backend-deploy ENV="$(ENV)" ;; \
 		backend-reminders) $(MAKE) backend-reminders-deploy ENV="$(ENV)" ;; \
-		frontend) $(MAKE) frontend-deploy PAGES_PROJECT="$(PAGES_PROJECT)" PAGES_MODE="$(PAGES_MODE)" ;; \
+		frontend) $(MAKE) frontend-deploy PAGES_PROJECT="$(PAGES_PROJECT)" ENV="$(ENV)" ;; \
 		admin-frontend) $(MAKE) admin-deploy PAGES_PROJECT="$(PAGES_PROJECT)" ;; \
 		*) echo "Unknown APP: $(APP)"; exit 2 ;; \
 	esac
