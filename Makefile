@@ -10,8 +10,8 @@ ARGS ?=
 GIT_SHA ?=
 PAGES_PROJECT ?=
 
-.PHONY: help dev frontend-dev admin-dev backend-dev build frontend-build admin-build backend-build \
-	frontend-run admin-run backend-run script frontend-deploy admin-deploy backend-deploy deploy \
+.PHONY: help dev frontend-dev admin-dev marketing-dev backend-dev build frontend-build admin-build marketing-build backend-build \
+	frontend-run admin-run marketing-run backend-run script frontend-deploy admin-deploy marketing-deploy backend-deploy deploy \
 	backend-reminders-deploy \
 	migrate docker-build docker-push release do-deploy
 
@@ -23,12 +23,14 @@ help:
 		'  make dev                              Start backend, user frontend, and admin frontend' \
 		'  make frontend-dev                     Start the user frontend' \
 		'  make admin-dev                        Start the admin frontend' \
+		'  make marketing-dev                    Start the public marketing Worker app' \
 		'  make backend-dev                      Start the Bun API server' \
 		'' \
 		'Build and scripts:' \
-		'  make build                            Build all three application projects' \
+		'  make build                            Build all four application projects' \
 		'  make frontend-run SCRIPT=build        Run a user frontend package script' \
 		'  make admin-run SCRIPT=build           Run an admin frontend package script' \
+		'  make marketing-run SCRIPT=build       Run a marketing frontend package script' \
 		'  make backend-run SCRIPT=check         Run a backend package script' \
 		'  make script SCRIPT=migrate.sh ARGS=dev Run a repository script' \
 		'' \
@@ -42,6 +44,7 @@ help:
 		'                                       Deploy the user Cloudflare Pages app' \
 		'  make deploy APP=admin-frontend PAGES_PROJECT=<name>' \
 		'                                       Deploy the admin Cloudflare Pages app' \
+		'  make deploy APP=marketing-frontend    Deploy the marketing Cloudflare Worker' \
 		'  make do-deploy COMPONENT=backend      Deploy through the legacy DigitalOcean script' \
 		'' \
 		'Operations:' \
@@ -51,7 +54,7 @@ help:
 		'  make release ENV=dev [GIT_SHA=...]    Promote backend images to an environment'
 
 dev:
-	+$(MAKE) -j3 frontend-dev admin-dev backend-dev
+	+$(MAKE) -j4 frontend-dev admin-dev marketing-dev backend-dev
 
 frontend-dev:
 	+$(MAKE) -C frontend dev
@@ -59,17 +62,23 @@ frontend-dev:
 admin-dev:
 	+$(MAKE) -C admin-frontend dev
 
+marketing-dev:
+	+$(MAKE) -C marketing-frontend dev
+
 backend-dev:
 	+$(MAKE) -C backend dev
 
 build:
-	+$(MAKE) -j3 frontend-build admin-build backend-build
+	+$(MAKE) -j4 frontend-build admin-build marketing-build backend-build
 
 frontend-build:
 	+$(MAKE) -C frontend build
 
 admin-build:
 	+$(MAKE) -C admin-frontend build
+
+marketing-build:
+	+$(MAKE) -C marketing-frontend build
 
 backend-build:
 	+$(MAKE) -C backend build ENV="$(ENV)"
@@ -79,6 +88,9 @@ frontend-run:
 
 admin-run:
 	+$(MAKE) -C admin-frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
+
+marketing-run:
+	+$(MAKE) -C marketing-frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
 
 backend-run:
 	+$(MAKE) -C backend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
@@ -96,6 +108,9 @@ frontend-deploy-dev:
 admin-deploy:
 	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT="$(PAGES_PROJECT) ENV="$(ENV)"
 
+marketing-deploy:
+	+$(MAKE) -C marketing-frontend deploy ENV="$(ENV)"
+
 admin-deploy-dev:
 	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT=admin-portal-dev ENV=dev
 
@@ -110,12 +125,13 @@ backend-reminders-deploy:
 	+$(MAKE) -C backend reminders-deploy ENV="$(ENV)"
 
 deploy:
-	@test -n "$(APP)" || { echo 'Usage: make deploy APP=backend|backend-reminders|frontend|admin-frontend [ENV=dev|prod] [PAGES_PROJECT=<name>]'; exit 2; }
+	@test -n "$(APP)" || { echo 'Usage: make deploy APP=backend|backend-reminders|frontend|admin-frontend|marketing-frontend [ENV=dev|prod] [PAGES_PROJECT=<name>]'; exit 2; }
 	@case "$(APP)" in \
 		backend) $(MAKE) backend-deploy ENV="$(ENV)" ;; \
 		backend-reminders) $(MAKE) backend-reminders-deploy ENV="$(ENV)" ;; \
 		frontend) $(MAKE) frontend-deploy PAGES_PROJECT="$(PAGES_PROJECT)" ENV="$(ENV)" ;; \
 		admin-frontend) $(MAKE) admin-deploy PAGES_PROJECT="$(PAGES_PROJECT)" ;; \
+		marketing-frontend) $(MAKE) marketing-deploy ENV="$(ENV)" ;; \
 		*) echo "Unknown APP: $(APP)"; exit 2 ;; \
 	esac
 

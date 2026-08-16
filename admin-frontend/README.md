@@ -24,6 +24,7 @@ targets are:
 
 ```sh
 make dev
+make generate-api
 make build
 make deploy PAGES_PROJECT=<project-name>
 ```
@@ -39,6 +40,11 @@ From this directory:
 bun install
 bun run dev
 ```
+
+`bun run dev` and `bun run build` generate the ignored Orval client first, so
+a clean checkout does not require `src/api/generated/` to exist. Run
+`bun run generate:api` directly when refreshing the client without starting or
+building the app. The command reads `../backend/openapi/openapi.json`.
 
 The admin app runs on `http://localhost:5175`. Set `VITE_API_URL` to the
 backend origin (normally `http://localhost:5174`) and `VITE_USER_APP_URL` to
@@ -59,7 +65,7 @@ no new environment variables or database migration are required.
 Deploy this directory as its own static Pages project:
 
 - Root directory: `admin-frontend`
-- Build command: `bun run build`
+- Build command: `bun run build` (generates the API client first)
 - Build output directory: `dist`
 - `VITE_API_URL`: the public backend origin
 - `VITE_USER_APP_URL`: the public user portal origin

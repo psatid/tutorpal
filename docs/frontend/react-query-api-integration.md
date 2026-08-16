@@ -8,6 +8,10 @@ Query. Use it for new features and when refactoring existing ones.
 > hooks, stable selected domain hooks, resource-owned keys, and class models in
 > `src/models/`. Schedules remain the next migration candidate.
 
+The admin portal follows the same generated-client boundary. Its Orval
+configuration lives at `admin-frontend/orval.config.ts`, and its ignored client
+output is regenerated automatically before development and production builds.
+
 ## Goals
 
 - Keep the TanStack Query cache in the raw API-response shape.

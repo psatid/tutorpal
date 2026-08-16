@@ -21,7 +21,7 @@ import {
 	useUpdateAdminUser,
 } from "@/hooks/mutations/use-admin-user-mutations";
 import { useAdminUsers } from "@/hooks/queries/use-admin-users";
-import { AdminUserApiError } from "@/lib/admin-users-api";
+import { getApiErrorCode } from "@/lib/api-client";
 import type {
 	AdminUser,
 	AdminUserCreateFormData,
@@ -340,17 +340,15 @@ function getAdminUserErrorMessage(
 	error: unknown,
 	t: (key: string) => string,
 ) {
-	if (error instanceof AdminUserApiError) {
-		switch (error.errorCode) {
-			case "USER_EMAIL_EXISTS":
-				return t("users.errors.emailInUse");
-			case "USER_NOT_FOUND":
-				return t("users.errors.notFound");
-			case "EMAIL_ALREADY_VERIFIED":
-				return t("users.errors.alreadyVerified");
-			case "VERIFICATION_EMAIL_FAILED":
-				return t("users.errors.verificationFailed");
-		}
+	switch (getApiErrorCode(error)) {
+		case "USER_EMAIL_EXISTS":
+			return t("users.errors.emailInUse");
+		case "USER_NOT_FOUND":
+			return t("users.errors.notFound");
+		case "EMAIL_ALREADY_VERIFIED":
+			return t("users.errors.alreadyVerified");
+		case "VERIFICATION_EMAIL_FAILED":
+			return t("users.errors.verificationFailed");
 	}
 
 	return t("users.errors.generic");

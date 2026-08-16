@@ -9,12 +9,13 @@ PAGES_PROJECT ?=
 ENV ?= dev
 SCRIPT ?=
 
-.PHONY: help dev build preview run deploy
+.PHONY: help dev generate-api build preview run deploy
 
 help:
 	@printf '%s\n' \
 		'TutorPal admin frontend commands' \
 		'  make dev                              Start Vite development server' \
+		'  make generate-api                     Generate the Orval API client' \
 		'  make build                            Type-check and build the app' \
 		'  make preview                          Preview the built app' \
 		'  make run SCRIPT=<name> [ARGS="..."]   Run a package.json script' \
@@ -22,6 +23,9 @@ help:
 
 dev:
 	$(BUN) run dev
+
+generate-api:
+	$(BUN) run generate:api
 
 build:
 	$(BUN) run build

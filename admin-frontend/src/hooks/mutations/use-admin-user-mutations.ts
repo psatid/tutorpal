@@ -1,17 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PatchV1AdminUsersByIdBody } from "@/api/generated/models/patchV1AdminUsersByIdBody";
+import type { PostV1AdminUsersBody } from "@/api/generated/models/postV1AdminUsersBody";
+import type { PostV1AdminUsersByIdPasswordBody } from "@/api/generated/models/postV1AdminUsersByIdPasswordBody";
 import { adminUserQueryKeys } from "@/constants/admin-user-query-keys";
-import {
-	createAdminUser,
-	deactivateAdminUser,
-	reactivateAdminUser,
-	resendAdminUserVerification,
-	setAdminUserPassword,
-	updateAdminUser,
-} from "@/lib/admin-users-api";
-import type {
-	AdminUserCreateFormData,
-	AdminUserEditFormData,
-} from "@/types/admin-user";
+import { apiClient } from "@/lib/api-client";
 
 function useAdminUserListInvalidation() {
 	const queryClient = useQueryClient();
@@ -24,7 +16,8 @@ export function useCreateAdminUser() {
 	const invalidateLists = useAdminUserListInvalidation();
 
 	return useMutation({
-		mutationFn: (input: AdminUserCreateFormData) => createAdminUser(input),
+		mutationFn: async (input: PostV1AdminUsersBody) =>
+			(await apiClient.postV1AdminUsers(input)).data,
 		onSuccess: invalidateLists,
 	});
 }
@@ -33,8 +26,13 @@ export function useUpdateAdminUser() {
 	const invalidateLists = useAdminUserListInvalidation();
 
 	return useMutation({
-		mutationFn: ({ id, input }: { id: string; input: AdminUserEditFormData }) =>
-			updateAdminUser(id, input),
+		mutationFn: async ({
+			id,
+			input,
+		}: {
+			id: string;
+			input: PatchV1AdminUsersByIdBody;
+		}) => (await apiClient.patchV1AdminUsersById(id, input)).data,
 		onSuccess: invalidateLists,
 	});
 }
@@ -43,8 +41,14 @@ export function useSetAdminUserPassword() {
 	const invalidateLists = useAdminUserListInvalidation();
 
 	return useMutation({
-		mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
-			setAdminUserPassword(id, newPassword),
+		mutationFn: async ({
+			id,
+			newPassword,
+		}: {
+			id: string;
+			newPassword: PostV1AdminUsersByIdPasswordBody["newPassword"];
+		}) =>
+			(await apiClient.postV1AdminUsersByIdPassword(id, { newPassword })).data,
 		onSuccess: invalidateLists,
 	});
 }
@@ -53,7 +57,8 @@ export function useDeactivateAdminUser() {
 	const invalidateLists = useAdminUserListInvalidation();
 
 	return useMutation({
-		mutationFn: deactivateAdminUser,
+		mutationFn: async (id: string) =>
+			(await apiClient.postV1AdminUsersByIdDeactivate(id)).data,
 		onSuccess: invalidateLists,
 	});
 }
@@ -62,7 +67,8 @@ export function useReactivateAdminUser() {
 	const invalidateLists = useAdminUserListInvalidation();
 
 	return useMutation({
-		mutationFn: reactivateAdminUser,
+		mutationFn: async (id: string) =>
+			(await apiClient.postV1AdminUsersByIdReactivate(id)).data,
 		onSuccess: invalidateLists,
 	});
 }
@@ -71,7 +77,8 @@ export function useResendAdminUserVerification() {
 	const invalidateLists = useAdminUserListInvalidation();
 
 	return useMutation({
-		mutationFn: resendAdminUserVerification,
+		mutationFn: async (id: string) =>
+			(await apiClient.postV1AdminUsersByIdVerification(id)).data,
 		onSuccess: invalidateLists,
 	});
 }
