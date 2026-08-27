@@ -31,7 +31,17 @@ import {
 } from "./triggers";
 import UserSetting from "./user-settings";
 
-export const AppSidebar = () => {
+type AppSidebarProps = {
+  isImpersonating: boolean;
+  isExitingTutorView: boolean;
+  onExitTutorView: () => void;
+};
+
+export const AppSidebar = ({
+  isImpersonating,
+  isExitingTutorView,
+  onExitTutorView,
+}: AppSidebarProps) => {
   const { t } = useTranslation(["common", "navigation", "settings"]);
   const { session } = useSession();
   const location = useLocation();
@@ -165,7 +175,11 @@ export const AppSidebar = () => {
           <div className="p-2">
             <ul className="jun-sidebarMenu">
               <li className="jun-sidebarMenuItem">
-                <UserSetting>
+                <UserSetting
+                  isExitingTutorView={isExitingTutorView}
+                  isImpersonating={isImpersonating}
+                  onExitTutorView={onExitTutorView}
+                >
                   <button className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
                     <Avatar className="jun-sidebarIcon h-8 w-8">
                       <AvatarImage

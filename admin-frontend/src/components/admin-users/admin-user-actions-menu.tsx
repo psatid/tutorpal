@@ -3,6 +3,7 @@ import {
 	Ellipsis,
 	KeyRound,
 	Mail,
+	Monitor,
 	Pencil,
 	RotateCcw,
 } from "lucide-react";
@@ -23,6 +24,7 @@ type AdminUserActionsMenuProps = {
 	onEdit: (user: AdminUser) => void;
 	onSetPassword: (user: AdminUser) => void;
 	onResendVerification: (user: AdminUser) => void;
+	onOpenTutorView: (user: AdminUser) => void;
 	onStatusChange: (user: AdminUser) => void;
 };
 
@@ -32,6 +34,7 @@ export function AdminUserActionsMenu({
 	onEdit,
 	onSetPassword,
 	onResendVerification,
+	onOpenTutorView,
 	onStatusChange,
 }: AdminUserActionsMenuProps) {
 	const { t } = useTranslation("admin");
@@ -66,6 +69,15 @@ export function AdminUserActionsMenu({
 						<Mail aria-hidden="true" />
 						{t("users.actions.resendVerification")}
 					</DropdownMenuItem>
+				) : null}
+				{user.status === "active" ? (
+					<>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onClick={() => onOpenTutorView(user)}>
+							<Monitor aria-hidden="true" />
+							{t("users.actions.openTutorView")}
+						</DropdownMenuItem>
+					</>
 				) : null}
 				<DropdownMenuSeparator />
 				<DropdownMenuItem

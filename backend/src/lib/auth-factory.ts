@@ -7,7 +7,16 @@ import { sendResetPasswordEmail, sendVerificationEmail } from "./auth-email";
 import { createResendEmailSender } from "./resend";
 
 const adminAccessControl = createAccessControl({
-	user: ["create", "list", "get", "update", "set-email", "set-password", "ban"],
+	user: [
+		"create",
+		"list",
+		"get",
+		"update",
+		"set-email",
+		"set-password",
+		"ban",
+		"impersonate",
+	],
 	session: [],
 } as const);
 
@@ -21,6 +30,7 @@ export const browserAdminRoles = {
 			"set-email",
 			"set-password",
 			"ban",
+			"impersonate",
 		],
 		session: [],
 	}),
@@ -36,8 +46,6 @@ const disabledAdminPaths = [
 	"/admin/list-user-sessions",
 	"/admin/unban-user",
 	"/admin/ban-user",
-	"/admin/impersonate-user",
-	"/admin/stop-impersonating",
 	"/admin/revoke-user-session",
 	"/admin/revoke-user-sessions",
 	"/admin/remove-user",
@@ -125,6 +133,7 @@ export function createAuth(config: AppConfig, prisma: PrismaClient) {
 			admin({
 				defaultRole: "user",
 				adminRoles: ["admin"],
+				impersonationSessionDuration: 3600,
 				ac: adminAccessControl,
 				roles: browserAdminRoles,
 			}),

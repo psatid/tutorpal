@@ -1,6 +1,12 @@
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { RouteError } from "@/components/route-fallback";
 import { useAuth } from "@/contexts/auth-context";
+import { useStopImpersonation } from "@/hooks/mutations/use-stop-impersonation";
+import {
+  getAdminImpersonationRecoveryUrl,
+  hasImpersonationRecoveryMarker,
+} from "@/lib/impersonation-recovery";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -11,11 +17,23 @@ export const Route = createFileRoute("/_layout")({
 });
 
 function LayoutRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isImpersonating, user } = useAuth();
   const navigate = useNavigate();
+  const stopImpersonation = useStopImpersonation();
+
+  const exitTutorView = () => {
+    if (isImpersonating) {
+      stopImpersonation.mutate();
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
+      if (hasImpersonationRecoveryMarker()) {
+        window.location.assign(getAdminImpersonationRecoveryUrl());
+        return;
+      }
+
       void navigate({ to: "/login", replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
@@ -36,8 +54,21 @@ function LayoutRoute() {
 
   return (
     <div className="jun-layout jun-layout-safeArea min-h-dvh">
-      <AppSidebar />
+      <AppSidebar
+        isExitingTutorView={stopImpersonation.isPending}
+        isImpersonating={isImpersonating}
+        onExitTutorView={exitTutorView}
+      />
       <main className="jun-content min-w-0 bg-background">
+        {isImpersonating ? (
+          <ImpersonationBanner
+            errorCategory={stopImpersonation.error?.category}
+            isError={stopImpersonation.isError}
+            isPending={stopImpersonation.isPending}
+            onExit={exitTutorView}
+            userName={user?.name}
+          />
+        ) : null}
         <Outlet />
       </main>
     </div>

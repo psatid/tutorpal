@@ -1,8 +1,28 @@
 import type { PrismaClient } from "@prisma/client";
 import type { Context, Next } from "hono";
 import type { Auth } from "../lib/auth-factory";
+import {
+	createImpersonationUserNotFoundResponse,
+	isImpersonationStartPath,
+} from "../lib/auth-impersonation";
 import { AppError } from "../lib/error";
 import type { AppEnv } from "../types/hono-env";
+
+const STOP_IMPERSONATING_PATH = "/api/auth/admin/stop-impersonating";
+const SIGN_OUT_PATH = "/api/auth/sign-out";
+
+function appErrorResponse(error: AppError): Response {
+	return new Response(
+		JSON.stringify({
+			errorCode: error.errorCode,
+			message: error.message,
+		}),
+		{
+			status: error.status,
+			headers: { "Content-Type": "application/json" },
+		},
+	);
+}
 
 export function createRequireAdmin({ auth }: { auth: Auth }) {
 	return async (c: Context<AppEnv>, next: Next) => {
@@ -35,12 +55,49 @@ export function createRequireAdminOrigin(adminOrigin: string) {
 	};
 }
 
+export function createAuthImpersonationGuard({
+	auth,
+}: {
+	auth: Auth;
+	prisma: PrismaClient;
+	adminOrigin: string;
+}) {
+	return async (request: Request): Promise<Response | undefined> => {
+		const url = new URL(request.url);
+
+		// The application-owned transactional wrapper in app.ts is the only
+		// route allowed to invoke the native start endpoint. Do not let a future
+		// dispatch change delegate either the exact path or a trailing variant.
+		if (isImpersonationStartPath(url.pathname)) {
+			return createImpersonationUserNotFoundResponse();
+		}
+
+		if (request.method === "POST" && url.pathname === SIGN_OUT_PATH) {
+			try {
+				const session = await auth.api.getSession({ headers: request.headers });
+				if (session?.session.impersonatedBy) {
+					return appErrorResponse(
+						AppError.forbidden(
+							"IMPERSONATION_STOP_REQUIRED",
+							"Stop impersonation before signing out",
+						),
+					);
+				}
+			} catch {
+				// Let Better Auth preserve its normal sign-out error handling.
+			}
+		}
+
+		return undefined;
+	};
+}
+
 /**
  * Keeps Better Auth's browser-facing admin endpoints scoped to regular users.
  *
- * The endpoints are disabled in the Better Auth configuration, but this guard
- * remains in front of the handler so a future endpoint re-enable cannot make
- * admin targets manageable by accident.
+ * The disabled endpoints remain behind this guard so a future endpoint
+ * re-enable cannot make admin targets manageable by accident. Start is owned
+ * by the transactional wrapper and native stop remains deliberately unguarded.
  */
 export function createAdminAuthTargetGuard({
 	auth,
@@ -51,6 +108,12 @@ export function createAdminAuthTargetGuard({
 }) {
 	return async (request: Request): Promise<Response | undefined> => {
 		const url = new URL(request.url);
+		if (isImpersonationStartPath(url.pathname)) {
+			return createImpersonationUserNotFoundResponse();
+		}
+		if (url.pathname === STOP_IMPERSONATING_PATH) {
+			return undefined;
+		}
 		if (!url.pathname.startsWith("/api/auth/admin/")) return undefined;
 
 		const session = await auth.api.getSession({ headers: request.headers });

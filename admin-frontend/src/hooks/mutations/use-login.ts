@@ -1,11 +1,8 @@
-import {
-	authClient,
-	getEmailVerificationCallbackUrl,
-} from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 interface LoginCredentials {
   email: string;
@@ -14,7 +11,7 @@ interface LoginCredentials {
 
 interface UseLoginOptions {
   onSuccess?: () => void;
-  onError?: (error: Error) => void;
+  onError?: () => void;
 }
 
 /**
@@ -24,37 +21,37 @@ interface UseLoginOptions {
 export const useLogin = (options?: UseLoginOptions) => {
   const { t } = useTranslation("auth");
   const navigate = useNavigate();
+  const createLoginError = () => new Error(t("errors.loginFailed"));
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const result = await authClient.signIn.email({
-        email: credentials.email,
-        password: credentials.password,
-		callbackURL: getEmailVerificationCallbackUrl(credentials.email),
-      });
+      try {
+        const result = await authClient.signIn.email({
+          email: credentials.email,
+          password: credentials.password,
+        });
 
-      if (result.error) {
-        throw new Error(
-          result.error.message || t("errors.loginFailed"),
-        );
+        if (result.error) {
+          throw createLoginError();
+        }
+
+        return result.data;
+      } catch {
+        throw createLoginError();
       }
-
-      return result.data;
     },
     onSuccess: () => {
       toast.success(t("login.success"));
       navigate({ to: "/" });
       options?.onSuccess?.();
     },
-    onError: (error: Error) => {
+    onError: () => {
       if (options?.onError) {
-        options.onError(error);
+        options.onError();
         return;
       }
 
-      toast.error(
-        error.message || t("login.invalid"),
-      );
+      toast.error(t("login.invalid"));
     },
   });
 };

@@ -17,14 +17,16 @@ TutorPal portal and does not offer public signup or login flows.
 ## Public page story
 
 The page starts with the real Home screen, then uses a scroll-led story to walk
-through Classes, Schedules, Today, and the connected tutoring workflow. On
-desktop, the workflow becomes a full-height pinned stage while each story beat
-passes through the viewport. On mobile, a shorter pinned preview stays above
-the current story copy and releases after the connected workflow. The connected view also includes the real Courses capture. It explains
-how a tutor can create a class, schedule the first session, and see the day take
-shape before covering students, hours, revenue, and LINE messaging. English is the
-default language, and the public copy can be switched to Thai without changing
-the form contract or the product screenshot asset set.
+through the Classes list, Add hours, Add schedule, Schedule Day, Schedule Week,
+and Today. On desktop, a substantial preview stays pinned beside compact story
+intervals; on tablet it stacks before the story rail so the source UI stays
+readable. On mobile, a shorter pinned preview stays above the current story
+copy and releases after the Today step. The sequence explains how a tutor can
+start from a class record, add the hours they teach, schedule the first session,
+and review that same session in Day, Week, and Today before covering students,
+hours, revenue, and LINE messaging. English is the default language, and the
+public copy can be switched to Thai without changing the form contract or the
+product screenshot asset set.
 
 ## Beta interest flow
 
@@ -45,6 +47,11 @@ ship current admin emails, real student names, fixture classes, test-user data,
 or other private portal content. A small fictional demo dataset is allowed for
 capture when it is isolated to the screenshots and filtered so unrelated
 workspace records are not visible. The current set uses one fictional learner,
-one class, one course preset, and one scheduled session across `home.jpg`,
-`schedules.jpg`, `courses.jpg`, and `classes.jpg`. The landing page must use
-authentic captures or plain explanatory copy, not fake product interfaces.
+one class, one course preset, and one scheduled session across the base
+captures plus the workflow captures. The landing page starts the workflow with
+`classes.jpg`, then uses `workflow-02-add-hours.jpg`,
+`workflow-03-add-schedule.jpg`, `workflow-04-schedule-day.jpg`,
+`workflow-05-schedule-week.jpg`, and `workflow-06-today-connected.jpg`.
+`workflow-01-create-class.jpg` remains in the public asset folder as a verified
+source capture but is not referenced by the current page. The landing page must
+use authentic captures or plain explanatory copy, not fake product interfaces.

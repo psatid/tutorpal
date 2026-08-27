@@ -1,14 +1,21 @@
 export type MarketingLanguage = 'en' | 'th'
 
-export type TourId = 'classes' | 'schedules' | 'today' | 'connected'
+export type TourId =
+  | 'classes'
+  | 'add-hours'
+  | 'add-schedule'
+  | 'schedule-day'
+  | 'schedule-week'
+  | 'today'
 
 type TourCopy = {
   id: TourId
+  progress: string
   label: string
   title: string
   copy: string
-  image?: string
-  alt?: string
+  image: string
+  alt: string
 }
 
 type MarketingCopy = {
@@ -44,12 +51,6 @@ type MarketingCopy = {
     description: string
     caption: string
     items: TourCopy[]
-    connectedCaptions: {
-      day: string
-      week: string
-      setup: string
-      class: string
-    }
   }
   benefits: {
     title: string
@@ -94,11 +95,6 @@ type MarketingCopy = {
   }
 }
 
-const englishImages = {
-  home: '/product-previews/home.jpg',
-  schedules: '/product-previews/schedules.jpg',
-}
-
 export const marketingCopy: Record<MarketingLanguage, MarketingCopy> = {
   en: {
     header: {
@@ -129,47 +125,65 @@ export const marketingCopy: Record<MarketingLanguage, MarketingCopy> = {
       previewAlt: "TutorPal Home screen showing today's sessions and work ahead",
     },
     workflow: {
-      title: 'From first class to the next session.',
-      description: 'Create a class, add a student, and schedule the first session without leaving the flow.',
-      caption: 'Scroll the story to see how a tutoring day comes together.',
+      title: 'From class setup to today’s lessons.',
+      description: 'Follow the six steps you take in TutorPal: create a class, add hours, schedule it, then review the same session in Day, Week, and Today.',
+      caption: 'Scroll through each step to follow one class from setup to today’s session.',
       items: [
         {
           id: 'classes',
+          progress: 'Step 1 of 6',
           label: 'Classes',
-          title: 'Create the class once.',
-          copy: 'Add a class, student, and the hours you want to keep together.',
+          title: 'Start with the class.',
+          copy: 'See the class, its student, and the teaching hours that remain in one clear list.',
           image: '/product-previews/classes.jpg',
-          alt: 'TutorPal Classes screen showing a class and its student details',
+          alt: 'TutorPal Classes list showing a class, its student, and remaining teaching hours',
         },
         {
-          id: 'schedules',
-          label: 'Schedules',
-          title: 'Add the first session.',
-          copy: 'Choose a day and time, then keep one-time or recurring sessions on the calendar.',
-          image: englishImages.schedules,
-          alt: 'TutorPal Schedules screen with day and week planning controls',
+          id: 'add-hours',
+          progress: 'Step 2 of 6',
+          label: 'Add hours',
+          title: 'Add the hours.',
+          copy: 'Set the total teaching hours before the first session.',
+          image: '/product-previews/workflow-02-add-hours.jpg',
+          alt: 'TutorPal class details showing the Add hours form and remaining hours',
+        },
+        {
+          id: 'add-schedule',
+          progress: 'Step 3 of 6',
+          label: 'Add schedule',
+          title: 'Schedule the first session.',
+          copy: 'Choose the class, place, date, time, and duration in one short form.',
+          image: '/product-previews/workflow-03-add-schedule.jpg',
+          alt: 'TutorPal Add New Schedule form for the class',
+        },
+        {
+          id: 'schedule-day',
+          progress: 'Step 4 of 6',
+          label: 'Schedule: Day',
+          title: 'See the day clearly.',
+          copy: 'Use the day view to find the next session and its details at a glance.',
+          image: '/product-previews/workflow-04-schedule-day.jpg',
+          alt: 'TutorPal Schedules Day view showing the class session',
+        },
+        {
+          id: 'schedule-week',
+          progress: 'Step 5 of 6',
+          label: 'Schedule: Week',
+          title: 'Plan the week in one pass.',
+          copy: 'Switch to Week when you want the whole teaching rhythm in view.',
+          image: '/product-previews/workflow-05-schedule-week.jpg',
+          alt: 'TutorPal Schedules Week view showing upcoming class sessions',
         },
         {
           id: 'today',
+          progress: 'Step 6 of 6',
           label: 'Today',
-          title: 'Open the day with context.',
-          copy: 'See the next session, remaining hours, and what needs your attention.',
-          image: englishImages.home,
-          alt: 'TutorPal Home screen with Today and the work ahead',
-        },
-        {
-          id: 'connected',
-          label: 'Connected workflow',
-          title: 'Keep the context from lesson to message.',
-          copy: 'Keep students, classes, hours, revenue, and LINE messaging in one connected flow.',
+          title: 'Come back to a connected day.',
+          copy: 'Open Today to see the same session, what to do next, and the path back to the schedule.',
+          image: '/product-previews/workflow-06-today-connected.jpg',
+          alt: 'TutorPal Today screen showing the scheduled session and remaining class hours',
         },
       ],
-      connectedCaptions: {
-        day: 'See the day',
-        week: 'Plan the week',
-        setup: 'Reuse the setup',
-        class: 'Track the class',
-      },
     },
     benefits: {
       title: 'What you get',
@@ -268,47 +282,65 @@ export const marketingCopy: Record<MarketingLanguage, MarketingCopy> = {
       previewAlt: 'หน้าหลัก TutorPal แสดงเซสชันของวันนี้และงานที่ต้องทำต่อ',
     },
     workflow: {
-      title: 'จากคลาสแรกสู่เซสชันถัดไป',
-      description: 'สร้างคลาส เพิ่มนักเรียน และจัดเซสชันแรกได้ในขั้นตอนเดียว',
-      caption: 'เลื่อนดูเรื่องราวเพื่อเห็นว่าวันสอนค่อย ๆ เป็นรูปเป็นร่างอย่างไร',
+      title: 'จากสร้างคลาสสู่บทเรียนของวันนี้',
+      description: 'ทำตามหกขั้นตอนเดียวกับใน TutorPal: สร้างคลาส เพิ่มชั่วโมง เพิ่มตารางเรียน แล้วดูเซสชันเดิมในมุมมองวัน สัปดาห์ และวันนี้',
+      caption: 'เลื่อนดูทีละขั้นเพื่อดูเส้นทางของคลาสเดียวตั้งแต่เริ่มต้นจนถึงเซสชันวันนี้',
       items: [
         {
           id: 'classes',
+          progress: 'ขั้นตอนที่ 1 จาก 6',
           label: 'คลาส',
-          title: 'สร้างคลาสไว้ครั้งเดียว',
-          copy: 'เพิ่มคลาส นักเรียน และจำนวนชั่วโมงที่ต้องการดูแลไว้ด้วยกัน',
+          title: 'เริ่มจากคลาส',
+          copy: 'ดูคลาส นักเรียน และชั่วโมงสอนคงเหลือรวมกันในรายการเดียว',
           image: '/product-previews/classes.jpg',
-          alt: 'หน้าคลาส TutorPal แสดงคลาสและข้อมูลนักเรียน',
+          alt: 'หน้ารายการคลาสของ TutorPal แสดงคลาส นักเรียน และชั่วโมงสอนคงเหลือ',
         },
         {
-          id: 'schedules',
-          label: 'ตารางเรียน',
-          title: 'เพิ่มเซสชันแรก',
-          copy: 'เลือกวันและเวลา แล้วเก็บทั้งเซสชันครั้งเดียวและเซสชันแบบประจำไว้ในปฏิทิน',
-          image: englishImages.schedules,
-          alt: 'หน้าตารางเรียน TutorPal พร้อมตัวควบคุมวันและสัปดาห์',
+          id: 'add-hours',
+          progress: 'ขั้นตอนที่ 2 จาก 6',
+          label: 'เพิ่มชั่วโมง',
+          title: 'เพิ่มชั่วโมง',
+          copy: 'กำหนดจำนวนชั่วโมงสอนทั้งหมดก่อนเซสชันแรก',
+          image: '/product-previews/workflow-02-add-hours.jpg',
+          alt: 'หน้ารายละเอียดคลาสของ TutorPal แสดงแบบฟอร์มเพิ่มชั่วโมงและชั่วโมงคงเหลือ',
+        },
+        {
+          id: 'add-schedule',
+          progress: 'ขั้นตอนที่ 3 จาก 6',
+          label: 'เพิ่มตารางเรียน',
+          title: 'จัดเซสชันแรก',
+          copy: 'เลือกคลาส สถานที่ วันที่ เวลา และระยะเวลาในฟอร์มสั้น ๆ เดียว',
+          image: '/product-previews/workflow-03-add-schedule.jpg',
+          alt: 'แบบฟอร์มเพิ่มตารางเรียนใหม่ของ TutorPal สำหรับคลาส',
+        },
+        {
+          id: 'schedule-day',
+          progress: 'ขั้นตอนที่ 4 จาก 6',
+          label: 'ตารางเรียน: วัน',
+          title: 'เห็นภาพของวันชัดเจน',
+          copy: 'ใช้มุมมองวันเพื่อหาเซสชันถัดไปและรายละเอียดได้ทันที',
+          image: '/product-previews/workflow-04-schedule-day.jpg',
+          alt: 'มุมมองตารางเรียนรายวันของ TutorPal แสดงเซสชันของคลาส',
+        },
+        {
+          id: 'schedule-week',
+          progress: 'ขั้นตอนที่ 5 จาก 6',
+          label: 'ตารางเรียน: สัปดาห์',
+          title: 'วางแผนทั้งสัปดาห์ในมุมมองเดียว',
+          copy: 'สลับเป็นมุมมองสัปดาห์เมื่อต้องการเห็นจังหวะการสอนทั้งหมด',
+          image: '/product-previews/workflow-05-schedule-week.jpg',
+          alt: 'มุมมองตารางเรียนรายสัปดาห์ของ TutorPal แสดงเซสชันคลาสที่กำลังจะมาถึง',
         },
         {
           id: 'today',
+          progress: 'ขั้นตอนที่ 6 จาก 6',
           label: 'วันนี้',
-          title: 'เปิดวันพร้อมบริบทครบถ้วน',
-          copy: 'เห็นเซสชันถัดไป ชั่วโมงที่เหลือ และสิ่งที่ต้องดูแลต่อ',
-          image: englishImages.home,
-          alt: 'หน้าหลัก TutorPal แสดงวันนี้และงานที่ต้องทำต่อ',
-        },
-        {
-          id: 'connected',
-          label: 'เวิร์กโฟลว์ที่เชื่อมต่อ',
-          title: 'เก็บบริบทตั้งแต่บทเรียนถึงข้อความ',
-          copy: 'เก็บข้อมูลนักเรียน คลาส ชั่วโมง รายได้ และการส่งข้อความผ่าน LINE ไว้ในกระบวนการเดียว',
+          title: 'กลับมาที่วันที่มีบริบทครบ',
+          copy: 'เปิดวันนี้เพื่อเห็นเซสชันเดิม สิ่งที่ต้องทำต่อ และทางกลับไปยังตารางเรียน',
+          image: '/product-previews/workflow-06-today-connected.jpg',
+          alt: 'หน้าวันนี้ของ TutorPal แสดงเซสชันตามกำหนดและชั่วโมงคงเหลือของคลาส',
         },
       ],
-      connectedCaptions: {
-        day: 'ดูภาพรวมวันนี้',
-        week: 'วางแผนสัปดาห์',
-        setup: 'ใช้การตั้งค่าเดิม',
-        class: 'ติดตามคลาส',
-      },
     },
     benefits: {
       title: 'สิ่งที่คุณจะได้',

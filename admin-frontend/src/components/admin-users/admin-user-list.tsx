@@ -27,6 +27,7 @@ type AdminUserListProps = {
 	onEdit: (user: AdminUser) => void;
 	onSetPassword: (user: AdminUser) => void;
 	onResendVerification: (user: AdminUser) => void;
+	onOpenTutorView: (user: AdminUser) => void;
 	onStatusChangeRequest: (user: AdminUser) => void;
 	isMutating: boolean;
 };
@@ -49,6 +50,7 @@ export function AdminUserList({
 	onEdit,
 	onSetPassword,
 	onResendVerification,
+	onOpenTutorView,
 	onStatusChangeRequest,
 	isMutating,
 }: AdminUserListProps) {
@@ -124,6 +126,7 @@ export function AdminUserList({
 							isFetching={isFetching}
 							isMutating={isMutating}
 							onEdit={onEdit}
+							onOpenTutorView={onOpenTutorView}
 							onResendVerification={onResendVerification}
 							onSetPassword={onSetPassword}
 							onStatusChangeRequest={onStatusChangeRequest}
@@ -188,6 +191,7 @@ function UserRows({
 	isFetching,
 	isMutating,
 	onEdit,
+	onOpenTutorView,
 	onSetPassword,
 	onResendVerification,
 	onStatusChangeRequest,
@@ -196,6 +200,7 @@ function UserRows({
 	| "isFetching"
 	| "isMutating"
 	| "onEdit"
+	| "onOpenTutorView"
 	| "onSetPassword"
 	| "onResendVerification"
 	| "onStatusChangeRequest"
@@ -247,6 +252,7 @@ function UserRows({
 						<AdminUserActionsMenu
 							disabled={isMutating}
 							onEdit={onEdit}
+							onOpenTutorView={onOpenTutorView}
 							onResendVerification={onResendVerification}
 							onSetPassword={onSetPassword}
 							onStatusChange={onStatusChangeRequest}

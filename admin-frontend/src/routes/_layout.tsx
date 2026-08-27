@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { RouteError } from "@/components/route-fallback";
 import { useAdminAccess } from "@/hooks/use-admin-access";
 import { authClient } from "@/lib/auth-client";
+import { ENV } from "@/lib/env";
 import { createFileRoute, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldAlert } from "lucide-react";
@@ -14,14 +15,22 @@ export const Route = createFileRoute("/_layout")({
 });
 
 function AdminLayout() {
-	const { isAuthenticated, isLoading, canManageUsers } = useAdminAccess();
+	const { isAuthenticated, isLoading, isImpersonating, canManageUsers } =
+		useAdminAccess();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!isLoading && !isAuthenticated) {
+		if (isLoading) return;
+
+		if (!isAuthenticated) {
 			void navigate({ to: "/login", replace: true });
+			return;
 		}
-	}, [isAuthenticated, isLoading, navigate]);
+
+		if (isImpersonating) {
+			window.location.replace(ENV.USER_APP_URL);
+		}
+	}, [isAuthenticated, isImpersonating, isLoading, navigate]);
 
 	if (isLoading) {
 		return (
@@ -33,6 +42,14 @@ function AdminLayout() {
 
 	if (!isAuthenticated) {
 		return <Navigate replace to="/login" />;
+	}
+
+	if (isImpersonating) {
+		return (
+			<div className="flex min-h-dvh items-center justify-center bg-surface">
+				<Loader2 className="size-8 animate-spin text-primary" />
+			</div>
+		);
 	}
 
 	if (!canManageUsers) {

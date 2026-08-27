@@ -121,6 +121,8 @@ The frontend is a static Vite/React SPA:
 - Runtime backend: the Worker at <code>https://dev.api.tutorpal.io</code>
 - Deployment model: build locally and upload the generated <code>dist</code>
   directory
+- Admin recovery destination: build-time <code>VITE_ADMIN_APP_URL</code>, used
+  when a tutor-view session stops or the original admin session is unavailable
 
 The frontend does not use Pages Functions, a Pages <code>_worker.js</code>
 entrypoint, or Workers Static Assets. A direct upload deployment can be
@@ -151,6 +153,15 @@ email updates, password reset, verification resend, and reversible
 deactivation/reactivation. Permanent deletion and role management are not
 available. Deactivation and password reset revoke existing sessions; changing
 an email resets verification and sends a new verification link.
+
+The admin workspace can start native Better Auth impersonation for active
+regular users only. It navigates in the same tab to the user portal configured
+by <code>VITE_USER_APP_URL</code>. The user portal uses the same API origin and
+credentials, shows a persistent tutor-view banner, and returns through native
+stop-impersonation to <code>VITE_ADMIN_APP_URL</code>. The backend's
+<code>ADMIN_FRONTEND_URL</code> must exactly match the admin browser origin for
+the start request; CORS and Better Auth trusted-origin configuration must
+include both portal origins.
 
 ## Marketing Worker and beta interest flow
 
@@ -198,8 +209,10 @@ Public signup is controlled on the Worker by
 provisioned through the admin portal. The user frontend reads the server-owned
 value from <code>/v1/config</code> and fails closed if the configuration cannot
 be read. No new environment variable or database migration is needed for
-admin user management; it uses the existing Better Auth user fields and
-callback configuration.
+admin user management or impersonation at the database layer. Impersonation
+uses the existing Better Auth <code>Session.impersonatedBy</code> field; the
+frontend build variables <code>VITE_USER_APP_URL</code> and
+<code>VITE_ADMIN_APP_URL</code> must be set to the two deployed portal origins.
 
 ## Backend infrastructure
 

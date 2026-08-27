@@ -12,14 +12,34 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
+type UserSettingProps = {
+  children: React.ReactElement;
+  isImpersonating: boolean;
+  isExitingTutorView: boolean;
+  onExitTutorView: () => void;
+};
+
 export default function UserSetting({
   children,
-}: {
-  children: React.ReactElement;
-}) {
+  isImpersonating,
+  isExitingTutorView,
+  onExitTutorView,
+}: UserSettingProps) {
   const { t } = useTranslation(["common", "settings"]);
   const { session } = useSession();
   const logout = useLogout();
+  const isPending = isImpersonating
+    ? isExitingTutorView
+    : logout.isPending;
+
+  const handleAccountAction = () => {
+    if (isImpersonating) {
+      onExitTutorView();
+      return;
+    }
+
+    logout.mutate();
+  };
 
   return (
     <DropdownMenu>
@@ -57,9 +77,11 @@ export default function UserSetting({
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => logout.mutate()}>
-          {logout.isPending ? <Loader2 className="animate-spin" /> : <LogOut />}
-          {t("settings:logout")}
+        <DropdownMenuItem disabled={isPending} onClick={handleAccountAction}>
+          {isPending ? <Loader2 className="animate-spin" /> : <LogOut />}
+          {isImpersonating
+            ? t("settings:exitTutorView")
+            : t("settings:logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

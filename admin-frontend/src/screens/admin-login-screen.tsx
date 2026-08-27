@@ -27,12 +27,15 @@ export function AdminLoginScreen() {
 		defaultValues: { email: "", password: "" },
 	});
 	const { mutate: login, isPending } = useLogin({
-		onError: (error) => {
-			toast.error(error.message || adminT("login.error"));
+		onError: () => {
+			toast.error(adminT("login.error"));
 		},
 	});
+	const isImpersonationRecovery =
+		new URLSearchParams(window.location.search).get("recovery") ===
+		"impersonation";
 
-	if (session) {
+	if (session && !isImpersonationRecovery) {
 		return <Navigate to="/" />;
 	}
 
@@ -47,6 +50,14 @@ export function AdminLoginScreen() {
 					noValidate
 					onSubmit={handleSubmit((data) => login(data))}
 				>
+					{isImpersonationRecovery ? (
+						<p
+							className="rounded-lg border border-warning/30 bg-warning-container p-3 text-sm leading-6 text-warning-container-foreground"
+							role="status"
+						>
+							{adminT("login.impersonationRecovery")}
+						</p>
+					) : null}
 					<RHFInputField
 						control={control}
 						name="email"

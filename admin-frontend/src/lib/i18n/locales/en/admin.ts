@@ -8,6 +8,8 @@ export default {
 		passwordPlaceholder: "Enter your password",
 		submit: "Sign in",
 		error: "Unable to sign in.",
+		impersonationRecovery:
+			"Tutor view may have ended. Sign in again to return to the admin portal.",
 		footer:
 			"Admin accounts are provisioned by the application owner. Public signup is not available here.",
 	},
@@ -47,6 +49,7 @@ export default {
 			edit: "Edit",
 			setPassword: "Set password",
 			resendVerification: "Resend verification",
+			openTutorView: "Open tutor view",
 			deactivate: "Deactivate",
 			reactivate: "Reactivate",
 			cancel: "Cancel",
@@ -74,6 +77,18 @@ export default {
 		confirmReactivate: {
 			title: "Reactivate user?",
 			description: "{{name}} will be able to access TutorPal again.",
+		},
+		impersonation: {
+			title: "Open tutor view?",
+			description:
+				"You’ll have the same full TutorPal access that {{name}} normally has. Any action you take will affect this tutor’s TutorPal account.",
+			sameTabWarning:
+				"Continue in this tab only. Do not use another tab, private window, or browser profile while tutor view is active.",
+			confirm: "Open tutor view",
+			opening: "Opening tutor view…",
+			openingStatus: "Opening tutor view. Please wait.",
+			error: "We couldn’t open the tutor view. Please try again.",
+			retry: "Try again",
 		},
 		feedback: {
 			created: "User created and verification email sent.",

@@ -34,6 +34,17 @@ export default {
     unknownEmail: "No email address",
     avatarAlt: "Profile photo",
   },
+  impersonation: {
+    banner: {
+      label: "Tutor view notice",
+      title: "Tutor view is active",
+      description: "You are viewing TutorPal as {{name}}.",
+      exitError: "We couldn’t return to the admin view. Try again.",
+      recovery:
+        "Your original admin session is no longer available. Sign in to the admin portal again.",
+      recoveryLink: "Go to admin sign in",
+    },
+  },
   accessibility: {
     toggleSidebar: "Toggle sidebar",
     close: "Close",

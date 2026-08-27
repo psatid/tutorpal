@@ -28,3 +28,20 @@ never log a stack.
 Pino removes authorization, cookie, password, secret, token, and LINE
 credential fields. Do not place credentials in free-form error text or stack
 messages: field redaction cannot reliably remove embedded text.
+
+## Impersonation audit events
+
+The authentication boundary emits best-effort lifecycle events for the native
+admin impersonation flow:
+
+- `auth.impersonation.started`
+- `auth.impersonation.stopped`
+- `auth.impersonation.failed`
+
+Lifecycle records contain only the action or event name, status, origin,
+reason code for failures, and verified identifiers when available:
+`actorUserId`, `targetUserId`, and `impersonationSessionId`. Start-event target
+identifiers come from the validated native response and persisted session, not
+from the request body. Cookies, authorization headers, tokens, names, email
+addresses, and raw request bodies are never logged. Audit logging is
+best-effort and cannot change the authentication response.

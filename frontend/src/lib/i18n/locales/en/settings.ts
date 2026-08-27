@@ -1,6 +1,8 @@
 export default {
   title: "Settings",
   logout: "Log out",
+  exitTutorView: "Exit tutor view",
+  exitingTutorView: "Exiting tutor view…",
   cancel: "Cancel",
   language: "Language / ภาษา",
   logoutSuccess: "You have been logged out.",

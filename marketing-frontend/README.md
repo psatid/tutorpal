@@ -23,20 +23,32 @@ portal flow. Keep screenshots static and use them for the hero, product tour,
 and social preview. Do not replace them with hand-built fake dashboard markup.
 
 The approved capture set includes `home.jpg`, `schedules.jpg`, `courses.jpg`,
-and `classes.jpg`. Filter or frame the portal so only the sanitized demo flow
-is visible. Never include unrelated workspace records just to make a screen
-look fuller.
+and `classes.jpg` for the hero and supporting product surfaces. The literal
+workflow uses the real Classes list followed by five workflow captures:
+`classes.jpg`, `workflow-02-add-hours.jpg`, `workflow-03-add-schedule.jpg`,
+`workflow-04-schedule-day.jpg`, `workflow-05-schedule-week.jpg`, and
+`workflow-06-today-connected.jpg`.
+The workflow captures must show the real Classes list, Add hours, Add New
+Schedule, Schedules Day, Schedules Week, and Home/Today states. Keep the same
+fictional class and session visible across the sequence where the product
+allows it. Filter or frame the portal so only the sanitized demo flow is
+visible. Never include unrelated workspace records just to make a screen look
+fuller. Crop or mask account chrome whenever it exposes a tutor name, email,
+avatar, or other identity; the workflow assets must not rely on a runtime
+redaction layer.
 
 The home page uses CSS motion and `IntersectionObserver` only. The product tour
-becomes a header-safe pinned stage at desktop and mobile while each story row
-passes through the reading band. Mobile uses a shorter preview stage above the
-current story copy so the app screen stays readable on a narrow viewport. On
-desktop and mobile, as each row crosses the reading band, `IntersectionObserver`
-selects the next real screenshot. The pin is CSS positioning, not a scroll
-hijack, so the page remains normally scrollable.
-FAQ answers use a native
-disclosure with a CSS height and opacity reveal. English is the server-rendered
-default; the header language switcher changes the landing and privacy copy to
+uses a preview-led 58/42 desktop composition with compact story intervals and a
+header-safe pinned stage. At tablet widths (768px–1119px) the preview stacks before the story
+rail so screenshots retain their native proportions. Mobile uses a shorter
+preview stage above the current story copy so the app screen stays readable on
+a narrow viewport. Every preview reserves the source 822:781 ratio and uses
+containment rather than cropping or stretching. On desktop and mobile, as each
+row crosses the reading band, `IntersectionObserver` selects the next real
+screenshot. The pin is CSS positioning, not a scroll hijack, so the page
+remains normally scrollable.
+FAQ answers use a native disclosure that opens and closes instantly. English is
+the server-rendered default; the header language switcher changes the landing and privacy copy to
 Thai, updates the document language, and keeps route anchors and form field
 names unchanged. Product screenshots remain English captures from the real
 portal. All copy remains available without JavaScript.

@@ -4,6 +4,8 @@ import type { TranslationShape } from "../types";
 const th = {
   title: "การตั้งค่า",
   logout: "ออกจากระบบ",
+  exitTutorView: "ออกจากมุมมองผู้สอน",
+  exitingTutorView: "กำลังออกจากมุมมองผู้สอน…",
   cancel: "ยกเลิก",
   language: "Language / ภาษา",
   logoutSuccess: "คุณออกจากระบบแล้ว",

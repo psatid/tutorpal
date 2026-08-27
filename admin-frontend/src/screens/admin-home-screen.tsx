@@ -9,6 +9,7 @@ import {
 	EditAdminUserDrawer,
 	SetAdminUserPasswordDrawer,
 } from "@/components/admin-users/admin-user-drawers";
+import { AdminUserImpersonationDialog } from "@/components/admin-users/admin-user-impersonation-dialog";
 import { AdminUserStatusDialog } from "@/components/admin-users/admin-user-status-dialog";
 import { ScreenLayout } from "@/components/layout/screen-layout";
 import { ADMIN_USER_PAGE_SIZE } from "@/constants/admin-user-query-keys";
@@ -20,8 +21,10 @@ import {
 	useSetAdminUserPassword,
 	useUpdateAdminUser,
 } from "@/hooks/mutations/use-admin-user-mutations";
+import { useImpersonateAdminUser } from "@/hooks/mutations/use-impersonate-admin-user";
 import { useAdminUsers } from "@/hooks/queries/use-admin-users";
 import { getApiErrorCode } from "@/lib/api-client";
+import { ENV } from "@/lib/env";
 import type {
 	AdminUser,
 	AdminUserCreateFormData,
@@ -43,6 +46,9 @@ export function AdminHomeScreen() {
 	const navigate = Route.useNavigate();
 	const [drawer, setDrawer] = useState<WorkspaceDrawer>(null);
 	const [statusUser, setStatusUser] = useState<AdminUser | null>(null);
+	const [impersonationUser, setImpersonationUser] = useState<AdminUser | null>(
+		null,
+	);
 	const [searchDraft, setSearchDraft] = useState(search.search);
 	const focusReturnRef = useRef<{
 		element: HTMLElement | null;
@@ -67,7 +73,12 @@ export function AdminHomeScreen() {
 	}, [navigate, search.search, searchDraft]);
 
 	useEffect(() => {
-		if (drawer !== null || statusUser !== null || !focusReturnRef.current) {
+		if (
+			drawer !== null ||
+			statusUser !== null ||
+			impersonationUser !== null ||
+			!focusReturnRef.current
+		) {
 			return;
 		}
 
@@ -97,7 +108,7 @@ export function AdminHomeScreen() {
 		});
 
 		return () => window.cancelAnimationFrame(frame);
-	}, [drawer, statusUser]);
+	}, [drawer, impersonationUser, statusUser]);
 	const usersQuery = useAdminUsers({
 		search: search.search,
 		status: search.status,
@@ -127,6 +138,7 @@ export function AdminHomeScreen() {
 	const deactivateUser = useDeactivateAdminUser();
 	const reactivateUser = useReactivateAdminUser();
 	const resendVerification = useResendAdminUserVerification();
+	const impersonateUser = useImpersonateAdminUser();
 
 	const isMutating =
 		createUser.isPending ||
@@ -134,7 +146,8 @@ export function AdminHomeScreen() {
 		setPassword.isPending ||
 		deactivateUser.isPending ||
 		reactivateUser.isPending ||
-		resendVerification.isPending;
+		resendVerification.isPending ||
+		impersonateUser.isPending;
 
 	const updateSearch = (update: Partial<typeof search>, resetPage = true) => {
 		void navigate({
@@ -238,6 +251,16 @@ export function AdminHomeScreen() {
 		});
 	};
 
+	const handleImpersonationConfirm = () => {
+		if (!impersonationUser) return;
+
+		impersonateUser.mutate(impersonationUser.id, {
+			onSuccess: () => {
+				window.location.assign(ENV.USER_APP_URL);
+			},
+		});
+	};
+
 	return (
 		<ScreenLayout className="min-h-dvh">
 			<div className="mx-auto w-full max-w-6xl space-y-6">
@@ -279,6 +302,11 @@ export function AdminHomeScreen() {
 					onEdit={(user) => {
 						rememberFocus(user.id);
 						setDrawer({ mode: "edit", user });
+					}}
+					onOpenTutorView={(user) => {
+						rememberFocus(user.id);
+						impersonateUser.reset();
+						setImpersonationUser(user);
 					}}
 					onPageChange={(page) => updateSearch({ page }, false)}
 					onResendVerification={handleResendVerification}
@@ -331,6 +359,18 @@ export function AdminHomeScreen() {
 				onConfirm={handleStatusConfirm}
 				onOpenChange={(open) => !open && setStatusUser(null)}
 				user={statusUser}
+			/>
+			<AdminUserImpersonationDialog
+				isError={impersonateUser.isError}
+				isPending={impersonateUser.isPending}
+				onConfirm={handleImpersonationConfirm}
+				onOpenChange={(open) => {
+					if (!open) {
+						setImpersonationUser(null);
+						impersonateUser.reset();
+					}
+				}}
+				user={impersonationUser}
 			/>
 		</ScreenLayout>
 	);
