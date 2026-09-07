@@ -13,49 +13,51 @@ bun run dev
 The public routes are `/`, `/privacy`, `/robots.txt`, and `/sitemap.xml`. The
 beta form posts to the same-origin `/api/beta-interest` Worker route.
 
-## Marketing assets and motion
+## Homepage and product proof
 
-Authentic product previews live in `public/product-previews/`. Capture the
-English TutorPal portal from a clean account with no admin email, test-user
-names, fixture classes, or personal data. A small fictional capture dataset is
-allowed when it is isolated to the screenshots and clearly reflects the real
-portal flow. Keep screenshots static and use them for the hero, product tour,
-and social preview. Do not replace them with hand-built fake dashboard markup.
+The homepage implements the approved hybrid: B's centered, connected schedule
+hero followed by A's four alternating teaching-day chapters. The primary
+**Explore TutorPal** action leads to `#workflow`; the existing beta form remains
+at `#beta`. Comparison variants and the local prototype form are archived and
+are no longer part of the runtime.
 
-The approved capture set includes `home.jpg`, `schedules.jpg`, `courses.jpg`,
-and `classes.jpg` for the hero and supporting product surfaces. The literal
-workflow uses the real Classes list followed by five workflow captures:
-`classes.jpg`, `workflow-02-add-hours.jpg`, `workflow-03-add-schedule.jpg`,
-`workflow-04-schedule-day.jpg`, `workflow-05-schedule-week.jpg`, and
-`workflow-06-today-connected.jpg`.
-The workflow captures must show the real Classes list, Add hours, Add New
-Schedule, Schedules Day, Schedules Week, and Home/Today states. Keep the same
-fictional class and session visible across the sequence where the product
-allows it. Filter or frame the portal so only the sanitized demo flow is
-visible. Never include unrelated workspace records just to make a screen look
-fuller. Crop or mask account chrome whenever it exposes a tutor name, email,
-avatar, or other identity; the workflow assets must not rely on a runtime
-redaction layer.
+The story follows one sanitized class through its learner and hour balance,
+Day/Week planning, Today confirmation, and completed-session history. Scheduling
+already reserves class hours, so completion never deducts them again. The
+illustrations preserve TutorPal's real labels, status values, and product layout.
+The detailed Week view is explicitly captioned as a Fri–Sun crop.
 
-The home page uses CSS motion and `IntersectionObserver` only. The product tour
-uses a preview-led 58/42 desktop composition with compact story intervals and a
-header-safe pinned stage. At tablet widths (768px–1119px) the preview stacks before the story
-rail so screenshots retain their native proportions. Mobile uses a shorter
-preview stage above the current story copy so the app screen stays readable on
-a narrow viewport. Every preview reserves the source 822:781 ratio and uses
-containment rather than cropping or stretching. On desktop and mobile, as each
-row crosses the reading band, `IntersectionObserver` selects the next real
-screenshot. The pin is CSS positioning, not a scroll hijack, so the page
-remains normally scrollable.
-FAQ answers use a native disclosure that opens and closes instantly. English is
-the server-rendered default; the header language switcher changes the landing and privacy copy to
-Thai, updates the document language, and keeps route anchors and form field
-names unchanged. Product screenshots remain English captures from the real
-portal. All copy remains available without JavaScript.
-Reduced-motion users get the same content without transforms, reveals,
-accordion transitions, or screenshot crossfades.
+The feature section includes students, classes, hours, schedules, revenue, and
+LINE integration. Its labelled demo capture uses the exact backend reminder
+message with fictional student details. It is not a screenshot of a real
+received message. The current reminder message is English, including on the
+Thai page; the surrounding copy and caption are localized. See
+[image provenance](../docs/marketing-assets/README.md) for the capture source,
+refresh instructions, and original decorative artwork.
 
-Build the production app with:
+Production images are imported optimized WebP assets under
+`src/assets/marketing/`, with intrinsic dimensions. Decorative imagery has
+empty alt text; the LINE image has a descriptive alt, visible demo caption,
+and an accessible message transcript. Existing sanitized portal captures under
+`public/product-previews/` remain reference material and include the social
+preview asset.
+
+## Motion, language, and accessibility
+
+CSS and `IntersectionObserver` provide one-time hero and chapter motion without
+replacing normal scrolling. The four chapter cues are balance-fill emphasis,
+Day/Week settling, a visible indigo Today confirmation outline, and
+completed-session emphasis. Content is rendered before JavaScript; reduced
+motion leaves the same information static.
+
+English is the server-rendered default. The language switcher updates marketing
+and privacy copy and document language, preserving anchors and form field names.
+Small screens use linear product panels and story sections. FAQ answers use
+native disclosures. The live `BetaLeadForm` retains validation, loading/errors,
+Turnstile, the existing endpoint, privacy notice, and native
+`?beta=success|error` handling.
+
+Build and verify with:
 
 ```bash
 bun run build
@@ -84,3 +86,13 @@ consistent, so concurrent requests can race the five-attempt and 24-hour email
 checks. If strict concurrent enforcement is required before production, replace
 the KV coordinator with an explicitly approved strongly consistent primitive
 such as a Durable Object.
+
+## Approved exploration
+
+The user selected B's hero with A's remaining sections, then approved
+implementation on September 8, 2026. The [prototype archive](../docs/prototypes/README.md)
+preserves all three alternatives and the selection rationale. The old
+`?variant=` comparison UI is removed; the homepage is now the chosen design.
+
+Implementation remains local until the user requests commits, pushes, or
+deployment. Existing deployment prerequisites above still apply.

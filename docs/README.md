@@ -25,6 +25,8 @@ Each application also has a local Makefile with the same core targets:
 - [Backend Makefile](../backend/Makefile)
 
 - [Frontend Documentation](frontend/README.md)
+- [Marketing Image Provenance](marketing-assets/README.md)
+- [Cinematic Homepage Exploration Archive](prototypes/README.md)
 - [Authenticated Screen Layout](frontend/screen-layout.md)
 - [Backend Documentation](backend/README.md)
 - [Cloudflare Infrastructure](infrastructure.md)

@@ -1,138 +1,93 @@
 # Marketing design direction
 
-## Visual lane
+## Approved direction
 
-TutorPal is an English-first SaaS landing page for independent tutors. The
-page uses calm product storytelling with a light-first cool neutral surface,
-TutorPal navy, and one indigo action color. It takes structural inspiration
-from product walkthrough pages such as Parnuan, while keeping TutorPal's own
-brand, copy, and real portal screens.
+The production homepage uses the selected B + A hybrid: B's centered,
+Week-led product composition and A's transition and four alternating story
+chapters. The user approved this implementation on September 8, 2026.
+The emotional promise is “my teaching day is under control”; launch awareness
+leads, with **Explore TutorPal** as the primary action and beta interest at the
+close.
 
-The design dials for this page are:
+Preserve TutorPal's indigo `#533AFD`, navy `#0D253D`, cool-white surfaces,
+Inter/Noto Sans Thai typography, compact product panels, and accessible focus
+treatment. Reuse the established marketing tokens. The visual warmth comes
+from composition and teaching materials, rather than changing the palette.
 
-- `DESIGN_VARIANCE 7`: an asymmetric split hero, varied editorial value rows,
-  and a preview-led two-column product tour.
-- `MOTION_INTENSITY 6`: purposeful entry, reveal, and state-change motion.
-- `VISUAL_DENSITY 4`: compact story intervals with enough real product detail to
-  make the workflow understandable without dead viewport gaps.
+## Page structure
 
-## Section structure
+1. Header with Product, Workflow, Beta, language selection, and the configured
+   portal link when available.
+2. `#product` centered hero with the faithful Week crop as the main plane,
+   Class balance and Today confirmation supporting it, and
+   **Explore TutorPal** leading to `#workflow`.
+3. Quiet transition into the teaching-day story.
+4. `#workflow` four alternating chapters: class context; Day/Week planning;
+   pending Today confirmation; completed-session history.
+5. `#benefits` feature list and LINE integration proof, including a labelled demo reminder
+   image, truthful description, and accessible transcript.
+6. Native FAQ disclosures.
+7. Real beta form, privacy notice, and footer.
 
-The public home route keeps the existing anchors and conversion path:
+The original comparison switcher, variant routing, and local non-submitting
+form do not belong in the production experience. Alternatives are preserved in
+the [exploration archive](../docs/prototypes/README.md).
 
-1. Sticky header with Product, Workflow, Beta, and the optional portal link.
-2. `#product` hero with the real TutorPal Home screen and the two actions
-   `Join the beta` and `See the app`.
-3. `#workflow` scroll-led product tour for the Classes list, Add hours, Add
-   schedule, Schedule Day, Schedule Week, and Today.
-4. `#benefits` What you get section covering students, classes, schedules,
-   hours, revenue, and LINE messaging.
-5. `#faq` short native disclosure answers.
-6. `#beta` existing beta interest form and privacy notice.
-7. Footer and privacy link.
+## Product fidelity and imagery
 
-## Product screenshot rules
+The user explicitly approved faithful UI illustrations in place of mandatory
+product screenshots. They must preserve real TutorPal concepts and states:
+class membership, remaining/total hours, recorded revenue, Day/Week schedule
+controls, Today agenda, confirmation, and completed sessions. The same fictional
+English foundations class and Maya Chen learner connect the story.
 
-Product previews are static assets under `public/product-previews/`. Capture
-the English portal with a clean account that has no admin email, test-user
-names, fixture classes, or personal data. Keep the full portal frame visible
-and capture only screens that help explain the public product story.
+The Week illustration is explicitly a Fri–Sun detail crop. Scheduling has
+already reserved the session's hours; changing its status to Completed must
+not deduct the same hours a second time. Keep the depicted balance at 7.0/10.0.
 
-The current approved captures are:
+The LINE image is a demo capture, clearly labelled in the image
+and caption. Its message comes from the actual backend template and uses
+sample details. It is not a real received message, proof of delivery, or a
+customer testimonial. The current backend message is English; localize
+surrounding marketing copy without inventing a Thai message format.
+The feature promise is connecting a tutor-owned LINE Official Account and
+sending class reminders to linked students.
 
-- `home.jpg` for the Home and Today view, with a sanitized scheduled session.
-- `schedules.jpg` for planning sessions, with the same demo class selected.
-- `courses.jpg` for reusable course details, filtered to the demo course.
-- `classes.jpg` for the first workflow state: the class list with its student,
-  total hours, and remaining hours.
-- `workflow-01-create-class.jpg` is retained as a capture source but is not
-  referenced by the current landing page.
-- `workflow-02-add-hours.jpg` for the real Add hours drawer with sanitized
-  hours and revenue values.
-- `workflow-03-add-schedule.jpg` for the real Add New Schedule drawer.
-- `workflow-04-schedule-day.jpg` for the real Schedules Day view.
-- `workflow-05-schedule-week.jpg` for the real Schedules Week view.
-- `workflow-06-today-connected.jpg` for the real Home/Today state with the
-  same demo session and its path back to the schedule.
+Decorative calendar/clock/notebook art is separate from product proof and has
+empty alt text. Production images reserve intrinsic dimensions and use optimized
+WebP. See [image provenance](../docs/marketing-assets/README.md) for capture
+sources and refresh instructions. Existing sanitized portal captures remain
+reference material; never use private workspace records or account identity.
 
-The current demo capture set uses one fictional learner, one fictional class,
-one course preset, and one scheduled session. Keep this dataset isolated to
-public preview captures. Do not ship the signed-in account identity, existing
-workspace records, or any data copied from a real tutor account.
+## Motion
 
-Do not recreate these views with HTML rectangles, sample rows, fake status
-labels, invented numbers, or miniature dashboard components. If a new screen
-is needed, capture it from the real product and check it for private data
-before adding it to the public bundle. The social preview references the real
-Home capture as well.
+Use CSS and one-time IntersectionObserver reveals with cleanup. Content must
+be visible before JavaScript and page scrolling must remain native.
 
-## Motion model
+- The hero planes settle in a short, controlled sequence.
+- Class balance fill receives emphasis without changing its numeric value.
+- The Day and Week illustrations settle in sequence.
+- Today confirmation receives a visible indigo outline.
+- The completed-session chapter receives a restrained final emphasis.
+- Native FAQ disclosure remains immediate.
 
-Motion is CSS-first and SSR-safe. `IntersectionObserver` selects the active
-workflow screenshot as each direct-select row crosses the reading band and
-adds one-time reveal classes to value rows. The browser never hides content
-until JavaScript runs, and there are no scroll listeners or scroll-position
-calculations.
+Reduced-motion preferences remove animations, translations, fill effects,
+outline animation, and smooth anchor scrolling while retaining all information
+and actions. No looping floats, scroll hijacking, or hidden-content dependency.
 
-- Hero copy and the real Home capture enter in a short stagger to establish
-  hierarchy.
-- The tour uses a header-safe pinned screenshot stage at desktop and mobile.
-  Desktop uses a substantial preview column beside compact 280–360px story
-  intervals; mobile uses a shorter stage above the current story copy so the
-  app screen stays readable on a narrow viewport.
-  Each story row gets its own scroll interval while the next workflow beat
-  enters the reading band.
-- As each workflow row crosses the reading band, `IntersectionObserver`
-  changes the active authentic screenshot so the scroll itself explains the
-  path from creating a class to adding hours, scheduling a session, and
-  reviewing Day, Week, and Today.
-- Clicking a workflow row remains available as a direct way to inspect a step;
-  rows are direct-select controls, not accordions, and have no plus/cross
-  affordance.
-- The preview uses a short opacity crossfade to make each workflow change
-  legible. Every source frame keeps its native 822:781 ratio with containment,
-  so the portal UI is not cropped or stretched. The pin uses normal CSS sticky positioning and does not
-  intercept or replace page scrolling.
-- On mobile, the pinned authentic screenshot stays above the current story
-  copy. If JavaScript is unavailable, each row falls back to its inline
-  screenshot so the workflow remains understandable in reading order.
-- Value rows reveal as they enter the viewport.
-- Buttons and the mobile menu use short transform and color feedback.
-- FAQ answers use native disclosure semantics and open or close instantly. The
-  FAQ has no height animation or plus-icon rotation.
-- `prefers-reduced-motion: reduce` removes entry transforms, reveal motion,
-  crossfades, accordion transitions, and menu transitions while leaving every
-  state and control available.
+## Responsive and accessible behavior
 
-## Responsive behavior
+Verify 320, 390, 768, 1024, and wide desktop layouts in English and Thai.
+Desktop preserves controlled hero overlap and alternating story columns;
+compact layouts put product panels and story content in readable linear order.
+The LINE figure follows its explanatory copy on phones.
 
-The layout is checked at 320px, 390px, 768px, 1024px, and wide desktop.
+Maintain semantic landmarks, h1-to-h2 hierarchy, visible figure captions,
+44px controls, visible focus, and text contrast of at least 4.5:1. Thai headings
+need comfortable leading and wrapping. Product panels are illustrative, not
+interactive controls. Keep beta labels, errors, Turnstile states, native
+success/error handling, and the privacy link intact.
 
-- At desktop widths (1120px and up), the tour preview is pinned in a
-  header-safe viewport stage and the layout gives the preview roughly 58% of
-  the tour width while each feature row uses a compact scroll interval beside
-  it. At mobile
-  widths, the preview pins above the current story row and releases after the
-  Today step. The header stays on one line and both CTA labels stay unbroken.
-- At tablet widths (768px–1119px), the preview stacks before the story rail so
-  the screenshots do not become narrow or squeezed.
-- Below 768px, the header uses a native keyboard-operable `details` menu, the
-  hero stacks, and the tour becomes a single-column sequence where each row's
-  copy is followed by its authentic screenshot.
-- At 320px and 390px, the hero actions become full-width rows, controls remain
-  at least 44px tall, and the page clips no content horizontally.
-
-All visual controls have visible focus states, labels remain above form fields,
-and the beta form keeps its original field names, validation, Turnstile state,
-and error focus behavior.
-
-## Language behavior
-
-English is the server-rendered default so the page has a stable first paint and
-existing links remain familiar. The header language switcher changes the
-marketing and privacy copy between English and Thai, updates the document
-language for assistive technology, and keeps all product screenshots as the
-English captures from the real portal. Desktop places the switcher with the
-portal and beta actions; mobile places it inside the keyboard-operable menu.
-The switch does not change route paths, anchors, form field names, validation,
-Turnstile behavior, or the native FAQ disclosure interaction.
+English is the server-rendered default. The language switch updates document
+language and copy without changing route paths, anchors, form field names,
+validation, or the beta API contract.

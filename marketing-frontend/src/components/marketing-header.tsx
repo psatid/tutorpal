@@ -3,7 +3,8 @@ import { MarketingLanguageSwitch, useMarketingLanguage } from './marketing-langu
 const portalUrl = import.meta.env.PUBLIC_PORTAL_URL
 
 export function MarketingHeader() {
-  const { copy } = useMarketingLanguage()
+  const { copy, language } = useMarketingLanguage()
+  const explore = language === 'th' ? 'สำรวจ' : 'Explore'
 
   return (
     <header className="site-header">
@@ -20,7 +21,7 @@ export function MarketingHeader() {
         <div className="header-actions">
           <MarketingLanguageSwitch />
           {portalUrl ? <a className="portal-link" href={portalUrl}>{copy.header.portalLogin}</a> : null}
-          <a className="button button-compact" href="#beta">{copy.header.joinBeta}</a>
+          <a className="button button-compact" href="#workflow">{explore}</a>
         </div>
         <details className="mobile-menu">
           <summary aria-label={copy.header.mobileMenuLabel}><span /><span /><span /></summary>
