@@ -3,8 +3,8 @@
 ## Approved direction
 
 The production homepage uses the selected B + A hybrid: B's centered,
-Week-led product composition and A's transition and four alternating story
-chapters. The user approved this implementation on September 8, 2026.
+Week-led product composition and A's factual teaching-day story, refined into
+compact scenes and a paired confirmation/completion chapter. The user approved this implementation on September 8, 2026.
 The emotional promise is “my teaching day is under control”; launch awareness
 leads, with **Explore TutorPal** as the primary action and beta interest at the
 close.
@@ -23,10 +23,11 @@ and no contrasting side gutters or constrained section backgrounds.
    Class balance and Today confirmation supporting it, and
    **Explore TutorPal** leading to `#workflow`.
 3. Quiet transition into the teaching-day story.
-4. `#workflow` four alternating chapters: class context; Day/Week planning;
-   pending Today confirmation; completed-session history.
-5. `#benefits` feature list and LINE integration proof, including a reminder image,
-   truthful description, and accessible transcript.
+4. `#workflow` compact class context, a contained Day/Week planning composition,
+   then pending Today confirmation and completed-session history side by side
+   on desktop. On smaller screens, the state comparison stacks in story order.
+5. `#benefits` feature list and LINE integration proof with a semantic message
+   stage, truthful description, and a scroll-triggered incoming message.
 6. Native FAQ disclosures.
 7. Real beta form, privacy notice, and footer.
 
@@ -46,12 +47,13 @@ The Week illustration is explicitly a Fri–Sun detail crop. Scheduling has
 already reserved the session's hours; changing its status to Completed must
 not deduct the same hours a second time. Keep the depicted balance at 7.0/10.0.
 
-The LINE image is a composed capture with fictional details. Per the selected
-copy treatment, product panels and the LINE image omit visible illustrative,
-demo, and sample labels. Provenance is documented here rather than displayed
-on the homepage. Its message comes from the actual backend template. It is not
-a real received message, proof of delivery, or a customer testimonial. The current backend message is English; localize
-surrounding marketing copy without inventing a Thai message format.
+The LINE visual is semantic HTML, with a fictional account, date, and message
+bubble. The visible message itself uses the exact backend English template,
+including line breaks, on both language versions. Do not duplicate the message
+as a hidden transcript, invent a Thai backend message, or add delivery/read
+receipts. Product panels and the LINE stage omit visible illustrative/demo
+labels; asset provenance remains documented separately. This is a product
+illustration, not a received message or customer testimonial.
 The feature promise is connecting a tutor-owned LINE Official Account and
 sending class reminders to linked students.
 
@@ -63,24 +65,33 @@ reference material; never use private workspace records or account identity.
 
 ## Motion
 
+The motion presentations for [CoreShift](https://dribbble.com/shots/25869450-Sleek-Landing-Page-for-CoreShift)
+and the [analytics platform concept](https://dribbble.com/shots/26455331-Landing-Page-for-a-Data-Driven-Analytics-Platform)
+inform the modular compositions and progressive section reveals. Adapt them
+to TutorPal’s white canvas and factual product panels.
+
 Use GSAP, ScrollTrigger, and `@gsap/react` within the homepage's scoped React
-lifecycle. The choreography runs from 1120px up; compact layouts stay static.
-Content is visible in the server-rendered page; scrolling stays native.
+lifecycle. Content is visible in the server-rendered page; scrolling stays native.
 
-- Hero planes settle in a controlled sequence without losing their base layout.
-- Transition phrases reveal progressively with scroll, with equivalent readable
-  text available to assistive technology.
-- Product panels move into place as their teaching-day chapters enter view.
-- The planning chapter briefly pins its copy alongside the schedule panels only
-  at widths of at least 1120px; smaller viewports retain normal document flow.
-- Balance and confirmation emphasis preserve the depicted product state.
-- Native FAQ disclosure remains immediate.
+- Hero planes settle without losing their base layout.
+- Transition copy forms a compact editorial bridge into the product scenes.
+- Each scene owns its copy/media reveal; meaningful UI remains legible while
+  moving into place. Reveals complete within the scene's own scroll range.
+- Planning uses a Week-led composition with the Day panel contained inside its
+  media area. No text or media is pinned or allowed to spill into another scene.
+- Pending and completed states share one two-column desktop scene, with a short
+  stagger and preserved confirmation/status emphasis.
+- LINE's account header and date remain recognizable from the first visible
+  frame. The message bubble arrives once as the stage enters view, with enough
+  initial opacity to avoid an empty-card state; no looping notification or
+  real message is sent. Reduced motion renders the finished message immediately.
+- Smaller non-reduced-motion layouts use short entrance sequences rather than
+  desktop scrubbed movement. Native FAQ disclosure remains immediate.
 
-Media-query contexts must revert animations, pins, and inline styles on resize,
-language changes, reduced-motion changes, and route unmount. Refresh measurements
-after fonts and image dimensions settle. Do not kill other routes' triggers.
-Reduced motion shows the complete static composition, without pinning, scrubbed
-opacity, translations, or smooth anchor scrolling. No looping floats, scroll
+Media-query contexts revert animations and inline styles on resize, language
+changes, reduced-motion changes, and route unmount. Refresh measurements after
+fonts settle. Do not kill other routes' triggers. Reduced motion and disabled
+JavaScript show all content in its final readable state. No pinning, scroll
 hijacking, or hidden-content dependency.
 
 Implementation references: [GSAP React lifecycle](https://github.com/greensock/react),
@@ -89,12 +100,13 @@ and [ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/).
 
 ## Responsive and accessible behavior
 
-Verify 320, 390, 768, 1024, and wide desktop layouts in English and Thai.
-Desktop preserves controlled hero overlap and alternating story columns;
+Verify 320, 390, 768, 1024, 1200, and 1470px layouts in English and Thai.
+At 1200 × 783, sample the full planning-to-confirmation scroll interval: each
+copy/media box must stay in its own scene and never intersect the next scene.
+Desktop preserves controlled hero overlap and varied story compositions;
 compact layouts put product panels and story content in readable linear order.
-The LINE figure follows its explanatory copy on phones. Its exact reminder
-transcript stays in a clipped, visually hidden element and never occupies
-visible space beneath the image. Check the computed hiding styles in the browser.
+The LINE stage follows its explanatory copy on phones; the message is selectable
+text and occurs once in the accessibility tree.
 Hero headings should fit in two to three lines, including narrow phones.
 
 Maintain semantic landmarks, h1-to-h2 hierarchy, descriptive image alternatives,

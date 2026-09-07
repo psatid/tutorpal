@@ -3,7 +3,6 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useRef, type ReactNode } from 'react'
-import lineReminderDemo from '../assets/marketing/line-reminder-demo.webp'
 import { BetaLeadForm } from './beta-lead-form'
 import { FaqSection } from './faq-section'
 import { Footer } from './footer'
@@ -226,7 +225,7 @@ function StoryBeat({
           <p>{copy}</p>
         </div>
       </div>
-      {children}
+      <div className="scene-media">{children}</div>
     </article>
   )
 }
@@ -246,24 +245,19 @@ function LineReminderProof() {
             : 'Connect your LINE Official Account and send class reminders to linked students.'}
         </p>
       </div>
-      <figure>
-        <img
-          src={lineReminderDemo}
-          width={800}
-          height={1000}
-          loading="lazy"
-          alt={
-            thai
-              ? 'ข้อความเตือนคลาส LINE สำหรับ Maya Chen เกี่ยวกับ English foundations'
-              : 'LINE class reminder for Maya Chen about English foundations'
-          }
-          aria-describedby="line-reminder-transcript"
-          onLoad={() => ScrollTrigger.refresh()}
-        />
-        <p id="line-reminder-transcript" className="screen-reader-text">
-          {transcript}
-        </p>
-      </figure>
+      <div className="line-reminder-stage" data-motion>
+        <div className="line-account">
+          <span className="line-account-mark" aria-hidden="true">
+            LINE
+          </span>
+          <div>
+            <strong>{thai ? 'บัญชีสอนของคุณ' : 'Your tutoring account'}</strong>
+            <span>LINE Official Account</span>
+          </div>
+        </div>
+        <p className="line-message-date">Aug 16, 2026</p>
+        <p className="line-reminder-message">{transcript}</p>
+      </div>
     </section>
   )
 }
@@ -298,12 +292,158 @@ export function MarketingHomepage({
         })
       }
 
+      const animateScenes = (scrub: boolean) => {
+        const beats = Array.from(
+          mainRef.current?.querySelectorAll<HTMLElement>(
+            '.homepage-story-beat',
+          ) ?? [],
+        )
+
+        beats.forEach((beat, index) => {
+          const copy = beat.querySelector<HTMLElement>('.story-copy')
+          const media = beat.querySelector<HTMLElement>('.scene-media')
+          if (!copy || !media) return
+
+          const timeline = gsap.timeline({
+            defaults: { ease: scrub ? 'none' : 'power3.out' },
+            delay: index === 3 ? 0.16 : 0,
+            scrollTrigger: {
+              trigger: beat,
+              start: scrub ? 'top 82%' : 'top 84%',
+              end: scrub ? 'center 64%' : undefined,
+              scrub: scrub || undefined,
+              toggleActions: scrub ? undefined : 'play none none none',
+            },
+          })
+
+          timeline
+            .fromTo(
+              copy,
+              { y: 20, opacity: 0.65 },
+              { y: 0, opacity: 1, duration: scrub ? 0.8 : 0.45 },
+            )
+            .fromTo(
+              media,
+              { y: 36, scale: 0.96, opacity: 0.65, clipPath: 'inset(10% 0 0)' },
+              {
+                y: 0,
+                scale: 1,
+                opacity: 1,
+                clipPath: 'inset(0 0 0)',
+                duration: scrub ? 1 : 0.6,
+              },
+              scrub ? 0 : 0.04,
+            )
+
+          if (index === 0) {
+            const progress = beat.querySelector<HTMLElement>('.balance-progress i')
+            if (progress) {
+              timeline.fromTo(
+                progress,
+                { scaleX: 0.6 },
+                { scaleX: 1, duration: scrub ? 0.45 : 0.3 },
+                '<0.1',
+              )
+            }
+          }
+
+          if (index === 1) {
+            const week = beat.querySelector<HTMLElement>('.week-master')
+            const day = beat.querySelector<HTMLElement>('.day-panel')
+            if (week) {
+              timeline.fromTo(
+                week,
+                { y: 16, opacity: 0.72 },
+                { y: 0, opacity: 1, duration: scrub ? 0.45 : 0.3 },
+                '<0.08',
+              )
+            }
+            if (day) {
+              timeline.fromTo(
+                day,
+                { y: 16, opacity: 0.72 },
+                { y: 0, opacity: 1, duration: scrub ? 0.45 : 0.3 },
+                '<0.12',
+              )
+            }
+          }
+
+          const confirmation = beat.querySelector<HTMLElement>('.confirm-box')
+          if (index === 2 && confirmation) {
+            timeline.to(
+              confirmation,
+              {
+                outlineColor: 'var(--marketing-accent)',
+                outlineOffset: '2px',
+                duration: scrub ? 0.4 : 0.25,
+              },
+              '<0.12',
+            )
+          }
+          if (index === 3 && confirmation) {
+            timeline.fromTo(
+              confirmation,
+              { y: 8, opacity: 0.72, scale: 0.98 },
+              { y: 0, opacity: 1, scale: 1, duration: scrub ? 0.45 : 0.3 },
+              '<0.12',
+            )
+          }
+        })
+      }
+
+      const animateLineReminder = () => {
+        const proof = mainRef.current?.querySelector<HTMLElement>('.line-proof')
+        const stage = proof?.querySelector<HTMLElement>('.line-reminder-stage')
+        const account = proof?.querySelector<HTMLElement>('.line-account')
+        const date = proof?.querySelector<HTMLElement>('.line-message-date')
+        const message = proof?.querySelector<HTMLElement>('.line-reminder-message')
+        if (!stage || !account || !date || !message) return
+
+        const timeline = gsap.timeline({
+          defaults: { ease: 'power3.out' },
+          scrollTrigger: {
+            trigger: stage,
+            start: 'top 72%',
+            toggleActions: 'play none none none',
+          },
+        })
+        timeline
+          .fromTo(
+            [account, date],
+            { y: 6, opacity: 0.8 },
+            { y: 0, opacity: 1, duration: 0.26, stagger: 0.08 },
+          )
+          .fromTo(
+            message,
+            {
+              x: -24,
+              y: 20,
+              scale: 0.97,
+              opacity: 0.55,
+              clipPath: 'inset(8% 0 0)',
+            },
+            {
+              x: 0,
+              y: 0,
+              scale: 1,
+              opacity: 1,
+              clipPath: 'inset(0 0 0)',
+              duration: 0.6,
+            },
+          )
+      }
+
       mm.add('(prefers-reduced-motion: reduce)', () => {
         gsap.set('[data-motion]', { clearProps: 'all' })
       })
 
+      mm.add('(prefers-reduced-motion: no-preference) and (max-width: 1119px)', () => {
+        animateScenes(false)
+        animateLineReminder()
+      })
+
       mm.add(
-        '(min-width: 1120px) and (prefers-reduced-motion: no-preference)',
+        '(prefers-reduced-motion: no-preference) and (min-width: 1120px)',
         () => {
           const heroTimeline = gsap.timeline({
             defaults: { ease: 'power3.out' },
@@ -329,103 +469,20 @@ export function MarketingHomepage({
 
           gsap.fromTo(
             '.transition-phrase',
-            { opacity: 0.2 },
+            { opacity: 0.6 },
             {
               opacity: 1,
               stagger: 0.16,
               scrollTrigger: {
                 trigger: '.homepage-transition',
-                start: 'top 76%',
-                end: 'bottom 48%',
+                start: 'top 72%',
+                end: 'center 60%',
                 scrub: true,
               },
             },
           )
-
-          gsap.utils
-            .toArray<HTMLElement>('.homepage-story-beat')
-            .forEach((beat) => {
-              const panel = beat.querySelector<HTMLElement>(
-                '.marketing-panel, .paired-panels',
-              )
-              if (!panel) return
-              gsap.fromTo(
-                panel,
-                { y: 38, scale: 0.96, opacity: 0.45 },
-                {
-                  y: 0,
-                  scale: 1,
-                  opacity: 1,
-                  ease: 'none',
-                  scrollTrigger: {
-                    trigger: beat,
-                    start: 'top 82%',
-                    end: 'center 46%',
-                    scrub: true,
-                  },
-                },
-              )
-            })
-
-          gsap.fromTo(
-            '.homepage-story-beat-1 .balance-progress i',
-            { scaleX: 0.6 },
-            {
-              scaleX: 1,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: '.homepage-story-beat-1',
-                start: 'top 76%',
-                end: 'center 52%',
-                scrub: true,
-              },
-            },
-          )
-
-          gsap.to('.homepage-story-beat-3 .confirm-box', {
-            outlineColor: 'var(--marketing-accent)',
-            outlineOffset: '2px',
-            scrollTrigger: {
-              trigger: '.homepage-story-beat-3',
-              start: 'top 68%',
-              end: 'center 48%',
-              scrub: true,
-            },
-          })
-
-          gsap.fromTo(
-            '.line-proof figure',
-            { y: 20, scale: 0.97, opacity: 0.55 },
-            {
-              y: 0,
-              scale: 1,
-              opacity: 1,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: '.line-proof',
-                start: 'top 80%',
-                end: 'center 50%',
-                scrub: true,
-              },
-            },
-          )
-
-          const planningBeat = mainRef.current?.querySelector<HTMLElement>(
-            '.homepage-story-beat-2',
-          )
-          const planningCopy =
-            planningBeat?.querySelector<HTMLElement>('.story-copy')
-          if (planningBeat && planningCopy) {
-            ScrollTrigger.create({
-              trigger: planningBeat,
-              start: 'top 28%',
-              end: 'bottom 62%',
-              pin: planningCopy,
-              pinSpacing: false,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-            })
-          }
+          animateScenes(true)
+          animateLineReminder()
         },
       )
 
@@ -531,30 +588,32 @@ export function MarketingHomepage({
               <WeekMaster />
             </div>
           </StoryBeat>
-          <StoryBeat
-            index={3}
-            title={thai ? 'มาถึงอย่างพร้อม' : 'Arrive prepared.'}
-            copy={
-              thai
-                ? 'ยืนยันสิ่งที่เกิดขึ้น แล้วไปต่ออย่างมั่นใจ'
-                : 'Confirm what happened, then move ahead with confidence.'
-            }
-          >
-            <TodayPanel />
-          </StoryBeat>
-          <StoryBeat
-            index={4}
-            title={
-              thai ? 'เก็บบทเรียนที่เสร็จแล้ว' : 'Keep completed lessons close.'
-            }
-            copy={
-              thai
-                ? 'เซสชันที่เสร็จแล้วอยู่ในประวัติของคลาสเดียวกัน'
-                : 'A completed session stays in the history of the same class.'
-            }
-          >
-            <TodayPanel completed />
-          </StoryBeat>
+          <div className="lesson-state-row">
+            <StoryBeat
+              index={3}
+              title={thai ? 'มาถึงอย่างพร้อม' : 'Arrive prepared.'}
+              copy={
+                thai
+                  ? 'ยืนยันสิ่งที่เกิดขึ้น แล้วไปต่ออย่างมั่นใจ'
+                  : 'Confirm what happened, then move ahead with confidence.'
+              }
+            >
+              <TodayPanel />
+            </StoryBeat>
+            <StoryBeat
+              index={4}
+              title={
+                thai ? 'เก็บบทเรียนที่เสร็จแล้ว' : 'Keep completed lessons close.'
+              }
+              copy={
+                thai
+                  ? 'เซสชันที่เสร็จแล้วอยู่ในประวัติของคลาสเดียวกัน'
+                  : 'A completed session stays in the history of the same class.'
+              }
+            >
+              <TodayPanel completed />
+            </StoryBeat>
+          </div>
         </section>
         <section
           className="capability-rail"

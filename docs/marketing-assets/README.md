@@ -2,9 +2,14 @@
 
 ## LINE reminder demo
 
+The homepage now renders the account header, date, and exact reminder as semantic
+HTML so the incoming message can animate independently. The message is visible
+and accessible directly; there is no duplicate hidden transcript. The following
+capture remains historical reference material and is not imported by the page.
+
 The reminder visual is a faithful composed capture, consistent
 with the approved use of product illustrations. It is not a screenshot of a
-real received message. The production asset is
+real received message. The retained reference asset is
 `marketing-frontend/src/assets/marketing/line-reminder-demo.webp` (800 × 1000).
 It was captured from the [local HTML composition](line-reminder-demo.html) using
 the browser and encoded as lossless WebP. Visible demo, illustrative, and
@@ -20,8 +25,8 @@ without inventing a Thai reminder format.
 
 To refresh, verify the backend message template, serve the source HTML locally,
 capture its 800 × 1000 viewport, inspect the result, and encode the screenshot
-as lossless WebP. Update the image and accessible transcript together if the
-actual message changes. Do not send a real LINE message to create an asset
+as lossless WebP. If the backend format changes, keep the retained capture and
+the homepage’s visible HTML message consistent with that template. Do not send a real LINE message to create an asset
 without the user's explicit authorization.
 
 ## Decorative teaching objects
@@ -37,6 +42,6 @@ the [prototype archive](../prototypes/README.md).
 
 The sanitized captures in `marketing-frontend/public/product-previews/` remain
 reference material and include the social preview image. The selected homepage
-uses faithful localized product illustrations and the composed LINE reminder.
+uses faithful localized product illustrations and a semantic LINE message stage.
 No signed-in account identity or private workspace records belong in marketing
 assets.

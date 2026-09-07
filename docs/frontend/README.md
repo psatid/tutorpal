@@ -11,7 +11,8 @@
 The public marketing app is separate from the authenticated frontend. See its
 [README](../../marketing-frontend/README.md) for local development and the
 approved cinematic homepage. The implementation combines B's product hero with
-A's teaching-day story, the real beta form, and a LINE reminder visual.
+a compact teaching-day story, the real beta form, and an animated semantic LINE
+reminder stage.
 See [image provenance](../marketing-assets/README.md) and the
 [exploration archive](../prototypes/README.md) for source material.
 

@@ -16,7 +16,8 @@ beta form posts to the same-origin `/api/beta-interest` Worker route.
 ## Homepage and product proof
 
 The homepage implements the approved hybrid: B's centered, Week-led schedule
-hero followed by A's four alternating teaching-day chapters. The white canvas
+hero followed by compact teaching-day scenes and a paired pending/completed
+state comparison. The white canvas
 extends to both viewport edges; decorative hero objects and floating connector
 labels are omitted. The primary
 **Explore TutorPal** action leads to `#workflow`; the existing beta form remains
@@ -30,31 +31,28 @@ illustrations preserve TutorPal's real labels, status values, and product layout
 The detailed Week view is explicitly captioned as a Fri–Sun crop.
 
 The feature section includes students, classes, hours, schedules, revenue, and
-LINE integration. Its composed reminder visual uses the exact backend reminder
-message with fictional student details. It is not a screenshot of a real
-received message. The current reminder message is English, including on the
-Thai page; the surrounding copy is localized. Product panels and the LINE
-visual omit visible illustrative, demo, and sample labels. See
-[image provenance](../docs/marketing-assets/README.md) for the capture source,
-refresh instructions, and original decorative artwork.
+LINE integration. A semantic HTML conversation stage displays the exact backend
+English reminder with fictional student details. Its incoming bubble arrives
+when the section enters view; it is not a live LINE interaction. The message
+remains English on the Thai page, with localized surrounding copy. It appears
+once as selectable, accessible text, without a duplicate hidden transcript.
+Product panels and the LINE stage omit visible illustrative/demo labels.
 
-Production images are imported optimized WebP assets under
-`src/assets/marketing/`, with intrinsic dimensions. The LINE image has a
-descriptive alt and an exact message transcript that is visually hidden.
-The decorative teaching-object asset remains archived and is not rendered. Existing sanitized portal captures under
+The earlier LINE WebP and decorative artwork remain reference assets, not
+homepage runtime imports. See [image provenance](../docs/marketing-assets/README.md)
+for their sources. Existing sanitized portal captures under
 `public/product-previews/` remain reference material and include the social
 preview asset.
 
 ## Motion, language, and accessibility
 
-GSAP ScrollTrigger and `@gsap/react` provide scoped hero entrances, scroll-linked
-transition phrases, and product-panel movement. The planning copy briefly pins
-beside its panels at widths of at least 1120px. Compact layouts remain static.
-Normal scrolling and static
-server-rendered content remain available. Reduced motion disables pinning and
-scroll effects. Animation contexts revert on language, breakpoint, preference,
-and route changes. Editorial headings use Outfit with Noto Sans Thai; product
-panels keep their existing typography.
+GSAP ScrollTrigger and `@gsap/react` provide scoped hero entrances, contained
+copy/media reveals, a staggered pending/completed comparison, and LINE message
+arrival. No scene is pinned. Desktop scenes may scrub within their own bounds;
+compact layouts use brief entrance sequences. Reduced motion and JavaScript-
+disabled pages display complete readable content. Animation contexts revert
+on language, breakpoint, preference, and route changes. Editorial headings use
+Outfit with Noto Sans Thai; product panels keep their existing typography.
 
 English is the server-rendered default. The language switcher updates marketing
 and privacy copy and document language, preserving anchors and form field names.
@@ -100,5 +98,5 @@ implementation on September 8, 2026. The [prototype archive](../docs/prototypes/
 preserves all three alternatives and the selection rationale. The old
 `?variant=` comparison UI is removed; the homepage is now the chosen design.
 
-Implementation remains local until the user requests commits, pushes, or
-deployment. Existing deployment prerequisites above still apply.
+Implementation and verified commits remain local until the user requests a
+push or deployment. Existing deployment prerequisites above still apply.
