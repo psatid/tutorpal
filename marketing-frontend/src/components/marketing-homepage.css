@@ -4,7 +4,18 @@
 .capability-rail,
 .line-proof {
   color: var(--marketing-navy);
-  background: var(--marketing-surface);
+  background: #fff;
+}
+
+.marketing-homepage {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  background: #fff;
+}
+
+.marketing-homepage [id] {
+  scroll-margin-top: 6.5rem;
 }
 
 .homepage-hero {
@@ -14,10 +25,9 @@
   text-align: center;
 }
 
-.homepage-hero > div:first-child {
-  max-width: 54rem;
+.hero-copy {
+  max-width: 64rem;
   margin: 0 auto;
-  animation: homepage-hero-settle 360ms var(--marketing-motion-ease) both;
 }
 
 .homepage-hero h1,
@@ -31,11 +41,18 @@
 }
 
 .homepage-hero h1 {
-  font-size: clamp(3rem, 6.5vw, 5.8rem);
-  line-height: 0.98;
+  max-width: 64rem;
+  font-family: 'Outfit Variable', 'Noto Sans Thai Variable', sans-serif;
+  font-size: clamp(3rem, 5.8vw, 5.8rem);
+  line-height: 1;
 }
 
-.homepage-hero > div:first-child > p {
+html[lang='th'] .homepage-hero h1 {
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.hero-copy > p {
   max-width: 38rem;
   margin: 1.5rem auto 2rem;
   color: var(--marketing-ink-muted);
@@ -48,6 +65,7 @@
   position: relative;
   width: min(100%, 980px);
   height: 430px;
+  grid-auto-flow: dense;
   margin: 2rem auto 0;
 }
 
@@ -63,6 +81,7 @@
   font-size: 0.72rem;
   line-height: 1.35;
   text-align: left;
+  box-shadow: 0 5px 8px rgba(13, 37, 61, 0.08);
 }
 
 .marketing-panel,
@@ -74,14 +93,6 @@
 .marketing-panel small,
 .marketing-panel p {
   overflow-wrap: anywhere;
-}
-
-.marketing-panel figcaption {
-  position: absolute;
-  right: 0.8rem;
-  bottom: 0.45rem;
-  color: var(--marketing-ink-muted);
-  font-size: 0.58rem;
 }
 
 .panel-topline,
@@ -224,68 +235,40 @@
   display: none;
 }
 
-.homepage-product-universe .balance-panel {
+.hero-balance-motion {
   position: absolute;
   z-index: 2;
   top: 3rem;
   left: 3%;
   width: 29%;
+}
+
+.hero-balance-plane {
   transform: rotate(-5deg);
 }
 
-.homepage-product-universe .week-master {
+.hero-week-motion {
   position: absolute;
   z-index: 3;
   bottom: 0;
   left: 50%;
   width: 56%;
+}
+
+.hero-week-plane {
   transform: translateX(-50%);
 }
 
-.homepage-product-universe .today-panel {
+.hero-today-motion {
   position: absolute;
   z-index: 2;
   top: 2rem;
   right: 4%;
   width: 30%;
+}
+
+.hero-today-plane {
   transform: rotate(5deg);
-}
-
-.homepage-product-universe > img {
-  position: absolute;
-  z-index: 1;
-  right: -6%;
-  bottom: -3rem;
-  width: 250px;
-  height: auto;
-  mix-blend-mode: multiply;
-  opacity: 0.25;
-}
-
-.connection {
-  position: absolute;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--marketing-ink-muted);
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-
-.connection i {
-  width: 28px;
-  height: 1px;
-  background: var(--marketing-accent);
-}
-
-.connection-one {
-  top: 4.5rem;
-  left: 31%;
-}
-.connection-two {
-  top: 4.6rem;
-  right: 31%;
 }
 
 .panel-appbar {
@@ -602,11 +585,11 @@
 
 .homepage-transition {
   width: min(760px, calc(100% - 3rem));
-  padding: 7rem 0 4rem;
+  padding: 10rem 0 7rem;
   margin: 0 auto;
 }
 
-.homepage-transition p {
+.homepage-transition-visual {
   margin: 0;
   color: var(--marketing-navy);
   font-size: clamp(1.75rem, 3vw, 3rem);
@@ -616,10 +599,14 @@
   text-wrap: balance;
 }
 
+.transition-phrase {
+  display: block;
+}
+
 .homepage-story {
   display: grid;
   max-width: 1120px;
-  padding-bottom: 5rem;
+  padding-bottom: 8rem;
   margin: 0 auto;
 }
 
@@ -630,12 +617,12 @@
   grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.35fr);
   align-items: center;
   gap: clamp(2rem, 7vw, 7rem);
-  padding: 4.5rem 0;
+  padding: clamp(7rem, 10vw, 10rem) 0;
 }
 
 .homepage-story-beat:nth-child(even) {
   grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
-  background: var(--marketing-surface-muted);
+  background: #fff;
 }
 
 .homepage-story-beat:nth-child(even) > div {
@@ -649,8 +636,9 @@
 }
 .homepage-story h2,
 .line-proof h2 {
-  font-size: clamp(2rem, 4vw, 3.8rem);
-  line-height: 1.02;
+  font-family: 'Outfit Variable', 'Noto Sans Thai Variable', sans-serif;
+  font-size: clamp(2.1rem, 4vw, 4rem);
+  line-height: 1.06;
 }
 .homepage-story p,
 .line-proof p {
@@ -716,92 +704,21 @@
   display: block;
   border-radius: 12px;
 }
-.line-proof figcaption {
-  margin-top: 0.7rem;
-  color: var(--marketing-ink-muted);
-  font-size: 0.78rem;
-  text-align: center;
-}
-
-.homepage-product-universe.is-revealed .marketing-panel {
-  animation: homepage-panel-settle 300ms var(--marketing-motion-ease) both;
-}
-.homepage-product-universe.is-revealed .today-panel {
-  animation-delay: 120ms;
-}
-.homepage-product-universe.is-revealed .connection i {
-  animation: homepage-connector 340ms var(--marketing-motion-ease) both;
-  transform-origin: left;
-}
-.homepage-product-universe.is-revealed .connection-two i {
-  animation-delay: 140ms;
-}
-.homepage-story-beat-1.is-revealed .balance-progress i {
-  animation: homepage-progress-fill 260ms var(--marketing-motion-ease) both;
-  transform-origin: left;
-}
-.homepage-story-beat-2.is-revealed .day-panel {
-  animation: homepage-panel-settle 220ms var(--marketing-motion-ease) both;
-}
-.homepage-story-beat-2.is-revealed .week-master {
-  animation: homepage-panel-settle 240ms var(--marketing-motion-ease) 100ms both;
-}
 .homepage-story-beat-3 .confirm-box {
   outline: 2px solid transparent;
 }
-.homepage-story-beat-3.is-revealed .confirm-box {
-  animation: homepage-confirm-focus 240ms var(--marketing-motion-ease) both;
-}
-.homepage-story-beat-4.is-revealed .confirm-box.is-completed {
-  animation: homepage-panel-settle 240ms var(--marketing-motion-ease) both;
-}
-.line-proof.is-revealed figure {
-  animation: homepage-panel-settle 280ms var(--marketing-motion-ease) both;
-}
 
-@keyframes homepage-hero-settle {
-  from {
-    opacity: 0.82;
-    translate: 0 10px;
-  }
-  to {
-    opacity: 1;
-    translate: 0;
-  }
-}
-@keyframes homepage-panel-settle {
-  from {
-    translate: 0 7px;
-  }
-  to {
-    translate: 0;
-  }
-}
-@keyframes homepage-connector {
-  from {
-    scale: 0 1;
-  }
-  to {
-    scale: 1;
-  }
-}
-@keyframes homepage-progress-fill {
-  from {
-    scale: 0.72 1;
-  }
-  to {
-    scale: 1;
-  }
-}
-@keyframes homepage-confirm-focus {
-  from {
-    outline-color: transparent;
-    outline-offset: 4px;
-  }
-  to {
-    outline-color: var(--marketing-accent);
-    outline-offset: 2px;
-  }
+.screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  margin: -1px;
+  padding: 0;
+  white-space: pre-wrap;
 }
 
 @media (min-width: 768px) and (max-width: 1119px) {
@@ -812,16 +729,17 @@
     align-items: end;
     gap: 1rem;
   }
-  .homepage-product-universe .balance-panel,
-  .homepage-product-universe .week-master,
-  .homepage-product-universe .today-panel {
+  .hero-balance-motion,
+  .hero-week-motion,
+  .hero-today-motion {
     position: static;
     width: auto;
     transform: none;
   }
-  .homepage-product-universe > img,
-  .homepage-product-universe .connection {
-    display: none;
+  .hero-balance-plane,
+  .hero-week-plane,
+  .hero-today-plane {
+    transform: none;
   }
   .homepage-story-beat {
     padding-right: 1.5rem;
@@ -835,15 +753,20 @@
     padding: 4.5rem 0 5rem;
   }
   .homepage-hero h1 {
-    font-size: clamp(2.65rem, 14vw, 4.3rem);
+    font-size: clamp(2rem, 10vw, 3.1rem);
   }
   .homepage-product-universe,
-  .homepage-product-universe .balance-panel,
-  .homepage-product-universe .week-master,
-  .homepage-product-universe .today-panel {
+  .hero-balance-motion,
+  .hero-week-motion,
+  .hero-today-motion {
     position: static;
     width: 100%;
     height: auto;
+    transform: none;
+  }
+  .hero-balance-plane,
+  .hero-week-plane,
+  .hero-today-plane {
     transform: none;
   }
   .homepage-product-universe {
@@ -851,13 +774,9 @@
     gap: 0.9rem;
     margin-top: 2rem;
   }
-  .homepage-product-universe > img,
-  .connection {
-    display: none;
-  }
   .homepage-transition {
     width: min(100% - 2rem, 620px);
-    padding: 4rem 0 2.5rem;
+    padding: 5rem 0 3.5rem;
   }
   .homepage-story,
   .homepage-story-beat,
@@ -870,7 +789,7 @@
   .homepage-story-beat {
     min-height: 0;
     gap: 1.5rem;
-    padding: 3.5rem 1rem;
+    padding: clamp(3.5rem, 16vw, 5rem) 1rem;
   }
   .homepage-story-beat > * {
     min-width: 0;
@@ -901,16 +820,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .homepage-hero > div:first-child,
-  .homepage-product-universe.is-revealed .marketing-panel,
-  .homepage-product-universe.is-revealed .connection i,
-  .homepage-story-beat.is-revealed .marketing-panel,
-  .homepage-story-beat.is-revealed .balance-progress i,
-  .homepage-story-beat.is-revealed .confirm-box,
-  .line-proof.is-revealed figure {
-    animation: none;
-    transition: none;
-    transform: none;
-    translate: 0;
+  .hero-balance-motion,
+  .hero-week-motion,
+  .hero-today-motion,
+  [data-motion] {
+    transform: none !important;
+    opacity: 1 !important;
   }
 }

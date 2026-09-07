@@ -17,9 +17,12 @@
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-thai": "^5.3.0",
+    "@fontsource-variable/outfit": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
+    "@gsap/react": "^2.1.2",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
+    "gsap": "^3.15.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

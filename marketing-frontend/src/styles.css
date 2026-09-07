@@ -68,6 +68,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { min-width: 320px; margin: 0; overflow-x: hidden; background: var(--marketing-canvas); }
+body:has(.marketing-homepage) { background: #fff; }
 body, button, input, textarea { font-family: inherit; }
 a { color: inherit; }
 button, input, textarea { font: inherit; }

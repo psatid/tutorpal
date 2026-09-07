@@ -15,8 +15,10 @@ beta form posts to the same-origin `/api/beta-interest` Worker route.
 
 ## Homepage and product proof
 
-The homepage implements the approved hybrid: B's centered, connected schedule
-hero followed by A's four alternating teaching-day chapters. The primary
+The homepage implements the approved hybrid: B's centered, Week-led schedule
+hero followed by A's four alternating teaching-day chapters. The white canvas
+extends to both viewport edges; decorative hero objects and floating connector
+labels are omitted. The primary
 **Explore TutorPal** action leads to `#workflow`; the existing beta form remains
 at `#beta`. Comparison variants and the local prototype form are archived and
 are no longer part of the runtime.
@@ -28,27 +30,31 @@ illustrations preserve TutorPal's real labels, status values, and product layout
 The detailed Week view is explicitly captioned as a Fri–Sun crop.
 
 The feature section includes students, classes, hours, schedules, revenue, and
-LINE integration. Its labelled demo capture uses the exact backend reminder
+LINE integration. Its composed reminder visual uses the exact backend reminder
 message with fictional student details. It is not a screenshot of a real
 received message. The current reminder message is English, including on the
-Thai page; the surrounding copy and caption are localized. See
+Thai page; the surrounding copy is localized. Product panels and the LINE
+visual omit visible illustrative, demo, and sample labels. See
 [image provenance](../docs/marketing-assets/README.md) for the capture source,
 refresh instructions, and original decorative artwork.
 
 Production images are imported optimized WebP assets under
-`src/assets/marketing/`, with intrinsic dimensions. Decorative imagery has
-empty alt text; the LINE image has a descriptive alt, visible demo caption,
-and an accessible message transcript. Existing sanitized portal captures under
+`src/assets/marketing/`, with intrinsic dimensions. The LINE image has a
+descriptive alt and an exact message transcript that is visually hidden.
+The decorative teaching-object asset remains archived and is not rendered. Existing sanitized portal captures under
 `public/product-previews/` remain reference material and include the social
 preview asset.
 
 ## Motion, language, and accessibility
 
-CSS and `IntersectionObserver` provide one-time hero and chapter motion without
-replacing normal scrolling. The four chapter cues are balance-fill emphasis,
-Day/Week settling, a visible indigo Today confirmation outline, and
-completed-session emphasis. Content is rendered before JavaScript; reduced
-motion leaves the same information static.
+GSAP ScrollTrigger and `@gsap/react` provide scoped hero entrances, scroll-linked
+transition phrases, and product-panel movement. The planning copy briefly pins
+beside its panels at widths of at least 1120px. Compact layouts remain static.
+Normal scrolling and static
+server-rendered content remain available. Reduced motion disables pinning and
+scroll effects. Animation contexts revert on language, breakpoint, preference,
+and route changes. Editorial headings use Outfit with Noto Sans Thai; product
+panels keep their existing typography.
 
 English is the server-rendered default. The language switcher updates marketing
 and privacy copy and document language, preserving anchors and form field names.

@@ -1,6 +1,9 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import '@fontsource-variable/outfit'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useRef, type ReactNode } from 'react'
 import lineReminderDemo from '../assets/marketing/line-reminder-demo.webp'
-import tutorObjects from '../assets/marketing/tutor-objects.webp'
 import { BetaLeadForm } from './beta-lead-form'
 import { FaqSection } from './faq-section'
 import { Footer } from './footer'
@@ -10,36 +13,7 @@ import './marketing-homepage.css'
 
 type NativeStatus = 'success' | 'error' | undefined
 
-function useSceneReveal<T extends HTMLElement = HTMLElement>() {
-  const sceneRef = useRef<T>(null)
-
-  useEffect(() => {
-    const scene = sceneRef.current
-    if (!scene) return
-
-    if (
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      !('IntersectionObserver' in window)
-    ) {
-      scene.classList.add('is-revealed')
-      return
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return
-        scene.classList.add('is-revealed')
-        observer.disconnect()
-      },
-      { threshold: 0, rootMargin: '0px 0px -12% 0px' },
-    )
-
-    observer.observe(scene)
-    return () => observer.disconnect()
-  }, [])
-
-  return sceneRef
-}
+gsap.registerPlugin(ScrollTrigger, useGSAP)
 
 function useHomepageCopy() {
   const { language, copy } = useMarketingLanguage()
@@ -49,13 +23,7 @@ function useHomepageCopy() {
     thai,
     lesson: 'English foundations',
     learner: 'Maya Chen',
-    previewLabel: thai ? 'ตัวอย่าง TutorPal' : 'Illustrative TutorPal preview',
   }
-}
-
-function PreviewCaption() {
-  const { previewLabel } = useHomepageCopy()
-  return <figcaption>{previewLabel}</figcaption>
 }
 
 function BalancePanel({ compact = false }: { compact?: boolean }) {
@@ -91,7 +59,6 @@ function BalancePanel({ compact = false }: { compact?: boolean }) {
         </div>
         <p>{thai ? 'รายได้ที่บันทึกแล้ว ฿2,400' : 'Recorded revenue ฿2,400'}</p>
       </div>
-      <PreviewCaption />
     </figure>
   )
 }
@@ -150,7 +117,6 @@ function TodayPanel({ completed = false }: { completed?: boolean }) {
           )}
         </div>
       </div>
-      <PreviewCaption />
     </figure>
   )
 }
@@ -211,7 +177,6 @@ function WeekMaster() {
           ? 'มุมมองสัปดาห์ · รายละเอียด ศ.–อา.'
           : 'Week view · Fri–Sun detail'}
       </span>
-      <PreviewCaption />
     </figure>
   )
 }
@@ -238,7 +203,6 @@ function DayPanel() {
         </div>
         <span>10:00</span>
       </div>
-      <PreviewCaption />
     </figure>
   )
 }
@@ -254,15 +218,13 @@ function StoryBeat({
   copy: string
   children: ReactNode
 }) {
-  const sceneRef = useSceneReveal<HTMLElement>()
   return (
-    <article
-      ref={sceneRef}
-      className={`homepage-story-beat homepage-story-beat-${index}`}
-    >
-      <div>
-        <h2>{title}</h2>
-        <p>{copy}</p>
+    <article className={`homepage-story-beat homepage-story-beat-${index}`}>
+      <div className="story-copy-slot">
+        <div className="story-copy">
+          <h2>{title}</h2>
+          <p>{copy}</p>
+        </div>
       </div>
       {children}
     </article>
@@ -271,16 +233,11 @@ function StoryBeat({
 
 function LineReminderProof() {
   const { thai } = useHomepageCopy()
-  const lineProofRef = useSceneReveal<HTMLElement>()
   const heading = thai ? 'การเชื่อมต่อ LINE' : 'LINE integration'
   const transcript =
     'Class reminder\n\nHi Maya Chen, your English foundations class starts in 1 hour.\n\nDate: Aug 16, 2026\nTime: 9:00 AM–10:00 AM\nTime zone: Asia/Bangkok'
   return (
-    <section
-      ref={lineProofRef}
-      className="line-proof"
-      aria-labelledby="line-proof-title"
-    >
+    <section className="line-proof" aria-labelledby="line-proof-title">
       <div>
         <h2 id="line-proof-title">{heading}</h2>
         <p>
@@ -297,16 +254,15 @@ function LineReminderProof() {
           loading="lazy"
           alt={
             thai
-              ? 'ตัวอย่างเดโม LINE ที่แสดงข้อความเตือนคลาส English foundations สำหรับ Maya Chen'
-              : 'Illustrative demo LINE reminder message for Maya Chen about English foundations'
+              ? 'ข้อความเตือนคลาส LINE สำหรับ Maya Chen เกี่ยวกับ English foundations'
+              : 'LINE class reminder for Maya Chen about English foundations'
           }
+          aria-describedby="line-reminder-transcript"
+          onLoad={() => ScrollTrigger.refresh()}
         />
-        <figcaption>
-          {thai
-            ? 'ตัวอย่างการแจ้งเตือน LINE'
-            : 'Illustrative LINE reminder preview'}
-        </figcaption>
-        <p className="screen-reader-text">{transcript}</p>
+        <p id="line-reminder-transcript" className="screen-reader-text">
+          {transcript}
+        </p>
       </figure>
     </section>
   )
@@ -318,20 +274,189 @@ export function MarketingHomepage({
   nativeStatus: NativeStatus
 }) {
   const { copy, thai } = useHomepageCopy()
-  const heroRef = useSceneReveal<HTMLDivElement>()
+  const mainRef = useRef<HTMLElement>(null)
+  const transitionPhrases = thai
+    ? ['ก่อนเปิดแท็บต่อไป', 'คุณรู้แล้วว่า', 'วันนี้ต้องให้ความสำคัญกับอะไร']
+    : [
+        'Before the next tab opens,',
+        'you know what deserves',
+        'your attention.',
+      ]
+  const transitionText = thai
+    ? 'ก่อนเปิดแท็บต่อไป คุณรู้แล้วว่าวันนี้ต้องให้ความสำคัญกับอะไร'
+    : 'Before the next tab opens, you know what deserves your attention.'
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia(mainRef)
+      let refreshFrame: number | undefined
+      const refresh = () => {
+        if (refreshFrame) cancelAnimationFrame(refreshFrame)
+        refreshFrame = requestAnimationFrame(() => {
+          refreshFrame = undefined
+          ScrollTrigger.refresh()
+        })
+      }
+
+      mm.add('(prefers-reduced-motion: reduce)', () => {
+        gsap.set('[data-motion]', { clearProps: 'all' })
+      })
+
+      mm.add(
+        '(min-width: 1120px) and (prefers-reduced-motion: no-preference)',
+        () => {
+          const heroTimeline = gsap.timeline({
+            defaults: { ease: 'power3.out' },
+          })
+          heroTimeline
+            .fromTo(
+              '.hero-week-motion',
+              { y: 30, opacity: 0.72 },
+              { y: 0, opacity: 1, duration: 0.62 },
+            )
+            .fromTo(
+              '.hero-balance-motion',
+              { y: 18, opacity: 0.76 },
+              { y: 0, opacity: 1, duration: 0.48 },
+              '-=0.38',
+            )
+            .fromTo(
+              '.hero-today-motion',
+              { y: 22, opacity: 0.76 },
+              { y: 0, opacity: 1, duration: 0.5 },
+              '-=0.42',
+            )
+
+          gsap.fromTo(
+            '.transition-phrase',
+            { opacity: 0.2 },
+            {
+              opacity: 1,
+              stagger: 0.16,
+              scrollTrigger: {
+                trigger: '.homepage-transition',
+                start: 'top 76%',
+                end: 'bottom 48%',
+                scrub: true,
+              },
+            },
+          )
+
+          gsap.utils
+            .toArray<HTMLElement>('.homepage-story-beat')
+            .forEach((beat) => {
+              const panel = beat.querySelector<HTMLElement>(
+                '.marketing-panel, .paired-panels',
+              )
+              if (!panel) return
+              gsap.fromTo(
+                panel,
+                { y: 38, scale: 0.96, opacity: 0.45 },
+                {
+                  y: 0,
+                  scale: 1,
+                  opacity: 1,
+                  ease: 'none',
+                  scrollTrigger: {
+                    trigger: beat,
+                    start: 'top 82%',
+                    end: 'center 46%',
+                    scrub: true,
+                  },
+                },
+              )
+            })
+
+          gsap.fromTo(
+            '.homepage-story-beat-1 .balance-progress i',
+            { scaleX: 0.6 },
+            {
+              scaleX: 1,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: '.homepage-story-beat-1',
+                start: 'top 76%',
+                end: 'center 52%',
+                scrub: true,
+              },
+            },
+          )
+
+          gsap.to('.homepage-story-beat-3 .confirm-box', {
+            outlineColor: 'var(--marketing-accent)',
+            outlineOffset: '2px',
+            scrollTrigger: {
+              trigger: '.homepage-story-beat-3',
+              start: 'top 68%',
+              end: 'center 48%',
+              scrub: true,
+            },
+          })
+
+          gsap.fromTo(
+            '.line-proof figure',
+            { y: 20, scale: 0.97, opacity: 0.55 },
+            {
+              y: 0,
+              scale: 1,
+              opacity: 1,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: '.line-proof',
+                start: 'top 80%',
+                end: 'center 50%',
+                scrub: true,
+              },
+            },
+          )
+
+          const planningBeat = mainRef.current?.querySelector<HTMLElement>(
+            '.homepage-story-beat-2',
+          )
+          const planningCopy =
+            planningBeat?.querySelector<HTMLElement>('.story-copy')
+          if (planningBeat && planningCopy) {
+            ScrollTrigger.create({
+              trigger: planningBeat,
+              start: 'top 28%',
+              end: 'bottom 62%',
+              pin: planningCopy,
+              pinSpacing: false,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+            })
+          }
+        },
+      )
+
+      ScrollTrigger.sort()
+      let cancelled = false
+      refresh()
+      document.fonts?.ready.then(() => {
+        if (!cancelled) refresh()
+      })
+      return () => {
+        cancelled = true
+        if (refreshFrame) cancelAnimationFrame(refreshFrame)
+        mm.revert()
+      }
+    },
+    { scope: mainRef, dependencies: [thai], revertOnUpdate: true },
+  )
+
   return (
     <>
       <a className="skip-link" href="#main-content">
         {copy.common.skipToContent}
       </a>
       <MarketingHeader />
-      <main id="main-content">
+      <main ref={mainRef} id="main-content" className="marketing-homepage">
         <section
           className="homepage-hero"
           id="product"
           aria-labelledby="homepage-title"
         >
-          <div>
+          <div className="hero-copy">
             <h1 id="homepage-title">
               {thai
                 ? 'ทุกอย่างสำหรับวันสอนที่ชัดเจนขึ้น'
@@ -346,32 +471,33 @@ export function MarketingHomepage({
               {thai ? 'สำรวจ TutorPal' : 'Explore TutorPal'}
             </a>
           </div>
-          <div ref={heroRef} className="homepage-product-universe">
-            <BalancePanel compact />
-            <WeekMaster />
-            <TodayPanel />
-            <span className="connection connection-one">
-              {thai ? 'คลาส' : 'Class'} <i /> {thai ? 'ตาราง' : 'Schedule'}
-            </span>
-            <span className="connection connection-two">
-              {thai ? 'ตาราง' : 'Schedule'} <i /> {thai ? 'วันนี้' : 'Today'}
-            </span>
-            <img
-              src={tutorObjects}
-              width={1536}
-              height={1024}
-              loading="lazy"
-              alt=""
-              aria-hidden="true"
-            />
+          <div className="homepage-product-universe">
+            <div className="hero-balance-motion" data-motion>
+              <div className="hero-balance-plane">
+                <BalancePanel compact />
+              </div>
+            </div>
+            <div className="hero-week-motion" data-motion>
+              <div className="hero-week-plane">
+                <WeekMaster />
+              </div>
+            </div>
+            <div className="hero-today-motion" data-motion>
+              <div className="hero-today-plane">
+                <TodayPanel />
+              </div>
+            </div>
           </div>
         </section>
         <section className="homepage-transition">
-          <p>
-            {thai
-              ? 'ก่อนเปิดแท็บต่อไป คุณรู้แล้วว่าวันนี้ต้องให้ความสำคัญกับอะไร'
-              : 'Before the next tab opens, you know what deserves your attention.'}
+          <p className="homepage-transition-visual" aria-hidden="true">
+            {transitionPhrases.map((phrase) => (
+              <span key={phrase} className="transition-phrase">
+                {phrase}
+              </span>
+            ))}
           </p>
+          <p className="screen-reader-text">{transitionText}</p>
         </section>
         <section
           className="homepage-story"
