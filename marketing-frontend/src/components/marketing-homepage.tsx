@@ -2,6 +2,7 @@ import '@fontsource-variable/outfit'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { SplitText } from 'gsap/SplitText'
 import { useRef, type ReactNode } from 'react'
 import { BetaLeadForm } from './beta-lead-form'
 import { FaqSection } from './faq-section'
@@ -12,7 +13,7 @@ import './marketing-homepage.css'
 
 type NativeStatus = 'success' | 'error' | undefined
 
-gsap.registerPlugin(ScrollTrigger, useGSAP)
+gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP)
 
 function useHomepageCopy() {
   const { language, copy } = useMarketingLanguage()
@@ -62,7 +63,13 @@ function BalancePanel({ compact = false }: { compact?: boolean }) {
   )
 }
 
-function TodayPanel({ completed = false }: { completed?: boolean }) {
+function TodayPanel({
+  completed = false,
+  compact = false,
+}: {
+  completed?: boolean
+  compact?: boolean
+}) {
   const { thai, lesson } = useHomepageCopy()
   const status = completed
     ? thai
@@ -72,19 +79,36 @@ function TodayPanel({ completed = false }: { completed?: boolean }) {
       ? 'ตามตาราง'
       : 'Scheduled'
   return (
-    <figure className="marketing-panel today-panel">
-      <div className="panel-appbar">
-        <span className="mini-logo">T</span>
-        <strong>{thai ? 'หน้าหลัก' : 'Home'}</strong>
-        <span>{thai ? 'ไทย' : 'English'}</span>
-      </div>
-      <div className="today-title">
-        <span>{thai ? 'วันอาทิตย์ 16 สิงหาคม' : 'Sunday, August 16'}</span>
-        <h3>{thai ? 'วันนี้' : 'Today'}</h3>
-        <p>
-          {thai ? 'เซสชันและงานที่รออยู่' : 'Your sessions and the work ahead.'}
-        </p>
-      </div>
+    <figure className={`marketing-panel today-panel${compact ? ' is-compact' : ''}`}>
+      {compact ? (
+        <div className="compact-today-title">
+          <span>
+            {completed
+              ? thai
+                ? 'ประวัติเซสชัน'
+                : 'Session history'
+              : thai
+                ? 'เซสชันที่ต้องยืนยัน'
+                : 'Session to confirm'}
+          </span>
+          <strong>{lesson}</strong>
+        </div>
+      ) : (
+        <>
+          <div className="panel-appbar">
+            <span className="mini-logo">T</span>
+            <strong>{thai ? 'หน้าหลัก' : 'Home'}</strong>
+            <span>{thai ? 'ไทย' : 'English'}</span>
+          </div>
+          <div className="today-title">
+            <span>{thai ? 'วันอาทิตย์ 16 สิงหาคม' : 'Sunday, August 16'}</span>
+            <h3>{thai ? 'วันนี้' : 'Today'}</h3>
+            <p>
+              {thai ? 'เซสชันและงานที่รออยู่' : 'Your sessions and the work ahead.'}
+            </p>
+          </div>
+        </>
+      )}
       <div className="agenda-row">
         <span>09:00</span>
         <div>
@@ -218,7 +242,7 @@ function StoryBeat({
   children: ReactNode
 }) {
   return (
-    <article className={`homepage-story-beat homepage-story-beat-${index}`}>
+    <article className={`homepage-story-beat homepage-story-beat-${index}`} data-reveal-card>
       <div className="story-copy-slot">
         <div className="story-copy">
           <h2>{title}</h2>
@@ -238,7 +262,7 @@ function LineReminderProof() {
   return (
     <section className="line-proof" aria-labelledby="line-proof-title">
       <div>
-        <h2 id="line-proof-title">{heading}</h2>
+        <h2 key={thai ? 'line-th' : 'line-en'} id="line-proof-title" data-split-heading>{heading}</h2>
         <p>
           {thai
             ? 'เชื่อมต่อ LINE Official Account และส่งการแจ้งเตือนคลาสให้กับนักเรียนที่เชื่อมไว้'
@@ -269,20 +293,12 @@ export function MarketingHomepage({
 }) {
   const { copy, thai } = useHomepageCopy()
   const mainRef = useRef<HTMLElement>(null)
-  const transitionPhrases = thai
-    ? ['ก่อนเปิดแท็บต่อไป', 'คุณรู้แล้วว่า', 'วันนี้ต้องให้ความสำคัญกับอะไร']
-    : [
-        'Before the next tab opens,',
-        'you know what deserves',
-        'your attention.',
-      ]
-  const transitionText = thai
-    ? 'ก่อนเปิดแท็บต่อไป คุณรู้แล้วว่าวันนี้ต้องให้ความสำคัญกับอะไร'
-    : 'Before the next tab opens, you know what deserves your attention.'
-
   useGSAP(
     () => {
-      const mm = gsap.matchMedia(mainRef)
+      const root = mainRef.current
+      if (!root) return
+
+      const mm = gsap.matchMedia()
       let refreshFrame: number | undefined
       const refresh = () => {
         if (refreshFrame) cancelAnimationFrame(refreshFrame)
@@ -292,107 +308,8 @@ export function MarketingHomepage({
         })
       }
 
-      const animateScenes = (scrub: boolean) => {
-        const beats = Array.from(
-          mainRef.current?.querySelectorAll<HTMLElement>(
-            '.homepage-story-beat',
-          ) ?? [],
-        )
-
-        beats.forEach((beat, index) => {
-          const copy = beat.querySelector<HTMLElement>('.story-copy')
-          const media = beat.querySelector<HTMLElement>('.scene-media')
-          if (!copy || !media) return
-
-          const timeline = gsap.timeline({
-            defaults: { ease: scrub ? 'none' : 'power3.out' },
-            delay: index === 3 ? 0.16 : 0,
-            scrollTrigger: {
-              trigger: beat,
-              start: scrub ? 'top 82%' : 'top 84%',
-              end: scrub ? 'center 64%' : undefined,
-              scrub: scrub || undefined,
-              toggleActions: scrub ? undefined : 'play none none none',
-            },
-          })
-
-          timeline
-            .fromTo(
-              copy,
-              { y: 20, opacity: 0.65 },
-              { y: 0, opacity: 1, duration: scrub ? 0.8 : 0.45 },
-            )
-            .fromTo(
-              media,
-              { y: 36, scale: 0.96, opacity: 0.65, clipPath: 'inset(10% 0 0)' },
-              {
-                y: 0,
-                scale: 1,
-                opacity: 1,
-                clipPath: 'inset(0 0 0)',
-                duration: scrub ? 1 : 0.6,
-              },
-              scrub ? 0 : 0.04,
-            )
-
-          if (index === 0) {
-            const progress = beat.querySelector<HTMLElement>('.balance-progress i')
-            if (progress) {
-              timeline.fromTo(
-                progress,
-                { scaleX: 0.6 },
-                { scaleX: 1, duration: scrub ? 0.45 : 0.3 },
-                '<0.1',
-              )
-            }
-          }
-
-          if (index === 1) {
-            const week = beat.querySelector<HTMLElement>('.week-master')
-            const day = beat.querySelector<HTMLElement>('.day-panel')
-            if (week) {
-              timeline.fromTo(
-                week,
-                { y: 16, opacity: 0.72 },
-                { y: 0, opacity: 1, duration: scrub ? 0.45 : 0.3 },
-                '<0.08',
-              )
-            }
-            if (day) {
-              timeline.fromTo(
-                day,
-                { y: 16, opacity: 0.72 },
-                { y: 0, opacity: 1, duration: scrub ? 0.45 : 0.3 },
-                '<0.12',
-              )
-            }
-          }
-
-          const confirmation = beat.querySelector<HTMLElement>('.confirm-box')
-          if (index === 2 && confirmation) {
-            timeline.to(
-              confirmation,
-              {
-                outlineColor: 'var(--marketing-accent)',
-                outlineOffset: '2px',
-                duration: scrub ? 0.4 : 0.25,
-              },
-              '<0.12',
-            )
-          }
-          if (index === 3 && confirmation) {
-            timeline.fromTo(
-              confirmation,
-              { y: 8, opacity: 0.72, scale: 0.98 },
-              { y: 0, opacity: 1, scale: 1, duration: scrub ? 0.45 : 0.3 },
-              '<0.12',
-            )
-          }
-        })
-      }
-
       const animateLineReminder = () => {
-        const proof = mainRef.current?.querySelector<HTMLElement>('.line-proof')
+        const proof = root.querySelector<HTMLElement>('.line-proof')
         const stage = proof?.querySelector<HTMLElement>('.line-reminder-stage')
         const account = proof?.querySelector<HTMLElement>('.line-account')
         const date = proof?.querySelector<HTMLElement>('.line-message-date')
@@ -410,7 +327,7 @@ export function MarketingHomepage({
         timeline
           .fromTo(
             [account, date],
-            { y: 6, opacity: 0.8 },
+              { y: 6, opacity: 0.76 },
             { y: 0, opacity: 1, duration: 0.26, stagger: 0.08 },
           )
           .fromTo(
@@ -419,72 +336,137 @@ export function MarketingHomepage({
               x: -24,
               y: 20,
               scale: 0.97,
-              opacity: 0.55,
-              clipPath: 'inset(8% 0 0)',
+              opacity: 0.7,
             },
             {
               x: 0,
               y: 0,
               scale: 1,
               opacity: 1,
-              clipPath: 'inset(0 0 0)',
               duration: 0.6,
             },
           )
       }
 
-      mm.add('(prefers-reduced-motion: reduce)', () => {
-        gsap.set('[data-motion]', { clearProps: 'all' })
-      })
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        const heroKicker = root.querySelector<HTMLElement>('.hero-kicker')
+        const heroTitle = root.querySelector<HTMLElement>('.homepage-hero h1')
+        const heroSupport = root.querySelector<HTMLElement>('.hero-support')
+        const heroCta = root.querySelector<HTMLElement>('.hero-actions')
+        const heroWeek = root.querySelector<HTMLElement>('.hero-week-motion')
+        const heroBalance = root.querySelector<HTMLElement>('.hero-balance-motion')
+        const heroToday = root.querySelector<HTMLElement>('.hero-today-motion')
 
-      mm.add('(prefers-reduced-motion: no-preference) and (max-width: 1119px)', () => {
-        animateScenes(false)
+        gsap.timeline({ defaults: { ease: 'power3.out' } })
+          .from(heroKicker, { y: 12, opacity: 0.78, duration: 0.48 })
+          .from(heroTitle, { y: 24, opacity: 0.78, duration: 0.64 }, '-=0.36')
+          .from(heroSupport, { y: 14, opacity: 0.78, duration: 0.5 }, '-=0.44')
+          .from(heroCta, { y: 12, opacity: 0.78, duration: 0.5 }, '-=0.4')
+          .from(heroWeek, { y: 28, opacity: 0.76, duration: 0.68 }, '-=0.3')
+          .from(heroBalance, { y: 18, opacity: 0.78, duration: 0.48 }, '-=0.52')
+          .from(heroToday, { y: 18, opacity: 0.78, duration: 0.48 }, '-=0.42')
+
+        root.querySelectorAll<HTMLElement>('[data-reveal-card]').forEach((card) => {
+          const copy = card.querySelector<HTMLElement>('.story-copy')
+          const media = card.querySelector<HTMLElement>('.scene-media')
+          if (!copy || !media) return
+          gsap.timeline({
+            defaults: { ease: 'power3.out' },
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 79%',
+              toggleActions: 'play none none none',
+            },
+          })
+            .from(copy, { y: 18, opacity: 0.76, duration: 0.46 })
+            .from(media, { y: 26, opacity: 0.76, scale: 0.985, duration: 0.6 }, '-=0.34')
+        })
+
+        const balanceProgress = root.querySelector<HTMLElement>('.story-balance .balance-progress i')
+        if (balanceProgress) {
+          gsap.from(balanceProgress, {
+            scaleX: 0.7,
+            transformOrigin: 'left center',
+            duration: 0.54,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: balanceProgress,
+              start: 'top 82%',
+              toggleActions: 'play none none none',
+            },
+          })
+        }
+
+        const pendingConfirm = root.querySelector<HTMLElement>('.workflow-proof-scheduled .confirm-box')
+        const completedConfirm = root.querySelector<HTMLElement>('.workflow-proof-completed .confirm-box')
+        if (pendingConfirm && completedConfirm) {
+          gsap.timeline({
+            defaults: { ease: 'power3.out' },
+            scrollTrigger: {
+              trigger: pendingConfirm,
+              start: 'top 76%',
+              toggleActions: 'play none none none',
+            },
+          })
+            .from(pendingConfirm, { y: 12, opacity: 0.76, duration: 0.38 })
+            .from(completedConfirm, { y: 12, opacity: 0.76, duration: 0.42 }, '-=0.2')
+        }
+
         animateLineReminder()
       })
 
-      mm.add(
-        '(prefers-reduced-motion: no-preference) and (min-width: 1120px)',
-        () => {
-          const heroTimeline = gsap.timeline({
-            defaults: { ease: 'power3.out' },
-          })
-          heroTimeline
-            .fromTo(
-              '.hero-week-motion',
-              { y: 30, opacity: 0.72 },
-              { y: 0, opacity: 1, duration: 0.62 },
-            )
-            .fromTo(
-              '.hero-balance-motion',
-              { y: 18, opacity: 0.76 },
-              { y: 0, opacity: 1, duration: 0.48 },
-              '-=0.38',
-            )
-            .fromTo(
-              '.hero-today-motion',
-              { y: 22, opacity: 0.76 },
-              { y: 0, opacity: 1, duration: 0.5 },
-              '-=0.42',
-            )
-
-          gsap.fromTo(
-            '.transition-phrase',
-            { opacity: 0.6 },
-            {
-              opacity: 1,
-              stagger: 0.16,
+      mm.add('(prefers-reduced-motion: no-preference) and (min-width: 768px)', () => {
+        const splits = Array.from(
+          root.querySelectorAll<HTMLElement>('[data-split-heading]'),
+          (heading) => SplitText.create(heading, {
+            type: 'lines',
+            mask: 'lines',
+            aria: 'auto',
+            autoSplit: true,
+            onSplit: (split) => gsap.from(split.lines, {
+              yPercent: 105,
+              opacity: 0.74,
+              duration: 0.58,
+              ease: 'power3.out',
+              stagger: 0.08,
               scrollTrigger: {
-                trigger: '.homepage-transition',
-                start: 'top 72%',
-                end: 'center 60%',
-                scrub: true,
+                trigger: heading,
+                start: 'top 80%',
+                toggleActions: 'play none none none',
               },
-            },
-          )
-          animateScenes(true)
-          animateLineReminder()
-        },
-      )
+            }),
+          }),
+        )
+        const balancePlane = root.querySelector<HTMLElement>('.hero-balance-plane')
+        const todayPlane = root.querySelector<HTMLElement>('.hero-today-plane')
+        const hero = root.querySelector<HTMLElement>('.homepage-hero')
+        const story = root.querySelector<HTMLElement>('.homepage-story')
+
+        if (balancePlane && hero) {
+          gsap.to(balancePlane, {
+            y: -20,
+            ease: 'none',
+            scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.4 },
+          })
+        }
+        if (todayPlane && hero) {
+          gsap.to(todayPlane, {
+            y: -34,
+            ease: 'none',
+            scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.4 },
+          })
+        }
+        if (story) {
+          gsap.from(story, {
+            y: 24,
+            opacity: 0.86,
+            duration: 0.68,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: story, start: 'top 82%', toggleActions: 'play none none none' },
+          })
+        }
+        return () => splits.forEach((split) => split.revert())
+      })
 
       ScrollTrigger.sort()
       let cancelled = false
@@ -506,7 +488,7 @@ export function MarketingHomepage({
       <a className="skip-link" href="#main-content">
         {copy.common.skipToContent}
       </a>
-      <MarketingHeader />
+      <MarketingHeader floating />
       <main ref={mainRef} id="main-content" className="marketing-homepage">
         <section
           className="homepage-hero"
@@ -514,19 +496,27 @@ export function MarketingHomepage({
           aria-labelledby="homepage-title"
         >
           <div className="hero-copy">
+            <p className="hero-kicker">
+              {thai ? 'ผู้ช่วยที่จัดระเบียบวันสอน' : 'For independent tutors'}
+            </p>
             <h1 id="homepage-title">
               {thai
                 ? 'ทุกอย่างสำหรับวันสอนที่ชัดเจนขึ้น'
                 : 'Everything for a clearer teaching day.'}
             </h1>
-            <p>
+            <p className="hero-support">
               {thai
                 ? 'มุมมองที่ทำให้วันสอนเดินหน้า อยู่ใกล้กันพอจะใช้ได้ทันที'
                 : 'The views that keep a teaching day moving sit close enough to use when you need them.'}
             </p>
-            <a className="button" href="#workflow">
-              {thai ? 'สำรวจ TutorPal' : 'Explore TutorPal'}
-            </a>
+            <div className="hero-actions">
+              <a className="button" href="#workflow">
+                {thai ? 'สำรวจ TutorPal' : 'Explore TutorPal'}
+              </a>
+              <a className="text-link" href="#beta">
+                {copy.hero.joinBeta}
+              </a>
+            </div>
           </div>
           <div className="homepage-product-universe">
             <div className="hero-balance-motion" data-motion>
@@ -546,21 +536,25 @@ export function MarketingHomepage({
             </div>
           </div>
         </section>
-        <section className="homepage-transition">
-          <p className="homepage-transition-visual" aria-hidden="true">
-            {transitionPhrases.map((phrase) => (
-              <span key={phrase} className="transition-phrase">
-                {phrase}
-              </span>
-            ))}
+        <section className="homepage-transition" aria-label={thai ? 'จังหวะของวันสอน' : 'Teaching-day rhythm'}>
+          <p>
+            {thai
+              ? 'ก่อนเปิดแท็บต่อไป คุณรู้แล้วว่าวันนี้ต้องให้ความสำคัญกับอะไร'
+              : 'Before the next tab opens, you know what deserves your attention.'}
           </p>
-          <p className="screen-reader-text">{transitionText}</p>
         </section>
         <section
           className="homepage-story"
           id="workflow"
           aria-label={thai ? 'เส้นทางการสอน' : 'Teaching journey'}
         >
+          <div className="story-introduction">
+            <p className="story-promise">
+              {thai
+                ? 'บริบทที่ชัดเจน ทำให้ทุกขั้นตอนต่อกัน'
+                : 'Clear context keeps every next step connected.'}
+            </p>
+          </div>
           <StoryBeat
             index={1}
             title={thai ? 'คลาสที่มีบริบท' : 'A class with context.'}
@@ -570,64 +564,67 @@ export function MarketingHomepage({
                 : 'See the learner, remaining hours, and recorded revenue.'
             }
           >
-            <BalancePanel />
+            <div className="feature-panel story-balance"><BalancePanel /></div>
           </StoryBeat>
-          <StoryBeat
-            index={2}
-            title={
-              thai ? 'วางแผนทั้งวันและสัปดาห์' : 'Plan the day and the week.'
-            }
-            copy={
-              thai
-                ? 'เซสชันเดียวกันอยู่ในมุมมองที่เหมาะกับการตัดสินใจ'
-                : 'The same session appears in the view that helps you decide.'
-            }
-          >
-            <div className="paired-panels">
-              <DayPanel />
-              <WeekMaster />
-            </div>
-          </StoryBeat>
-          <div className="lesson-state-row">
-            <StoryBeat
-              index={3}
-              title={thai ? 'มาถึงอย่างพร้อม' : 'Arrive prepared.'}
-              copy={
-                thai
-                  ? 'ยืนยันสิ่งที่เกิดขึ้น แล้วไปต่ออย่างมั่นใจ'
-                  : 'Confirm what happened, then move ahead with confidence.'
-              }
-            >
-              <TodayPanel />
-            </StoryBeat>
-            <StoryBeat
-              index={4}
-              title={
-                thai ? 'เก็บบทเรียนที่เสร็จแล้ว' : 'Keep completed lessons close.'
-              }
-              copy={
-                thai
-                  ? 'เซสชันที่เสร็จแล้วอยู่ในประวัติของคลาสเดียวกัน'
-                  : 'A completed session stays in the history of the same class.'
-              }
-            >
-              <TodayPanel completed />
-            </StoryBeat>
+          <div className="workflow-proof-grid" aria-label={thai ? 'การวางแผนและสถานะเซสชัน' : 'Planning and session states'}>
+            <article className="workflow-proof-planning" data-reveal-card>
+              <div className="story-copy">
+                <h2>{thai ? 'วางแผนทั้งวันและสัปดาห์' : 'Plan the day and the week.'}</h2>
+                <p>
+                  {thai
+                    ? 'เซสชันเดียวกันอยู่ในมุมมองที่เหมาะกับการตัดสินใจ'
+                    : 'The same session appears in the view that helps you decide.'}
+                </p>
+              </div>
+              <div className="scene-media">
+                <div className="paired-panels">
+                  <WeekMaster />
+                  <DayPanel />
+                </div>
+              </div>
+            </article>
+            <article className="workflow-proof-state workflow-proof-scheduled" data-reveal-card>
+              <div className="story-copy">
+                <h2>{thai ? 'มาถึงอย่างพร้อม' : 'Arrive prepared.'}</h2>
+                <p>
+                  {thai
+                    ? 'ยืนยันสิ่งที่เกิดขึ้น แล้วไปต่ออย่างมั่นใจ'
+                    : 'Confirm what happened, then move ahead with confidence.'}
+                </p>
+              </div>
+              <div className="scene-media"><TodayPanel compact /></div>
+            </article>
+            <article className="workflow-proof-state workflow-proof-completed" data-reveal-card>
+              <div className="story-copy">
+                <h2>{thai ? 'เก็บบทเรียนที่เสร็จแล้ว' : 'Keep completed lessons close.'}</h2>
+                <p>
+                  {thai
+                    ? 'เซสชันที่เสร็จแล้วอยู่ในประวัติของคลาสเดียวกัน'
+                    : 'A completed session stays in the history of the same class.'}
+                </p>
+              </div>
+              <div className="scene-media"><TodayPanel completed compact /></div>
+            </article>
           </div>
         </section>
-        <section
-          className="capability-rail"
-          id="benefits"
-          aria-label={thai ? 'ความสามารถของ TutorPal' : 'TutorPal capabilities'}
-        >
-          <strong>
-            {thai
-              ? 'นักเรียน · คลาส · ชั่วโมง · ตาราง · รายได้'
-              : 'Students · Classes · Hours · Schedules · Revenue'}
-          </strong>
+        <section className="capability-stage" id="benefits" aria-labelledby="capability-title">
+          <div className="capability-introduction">
+            <h2 key={thai ? 'capability-th' : 'capability-en'} id="capability-title" data-split-heading>
+              {thai
+                ? 'ทุกส่วนของวันสอน เชื่อมถึงกัน'
+                : 'Every part of a teaching day, connected.'}
+            </h2>
+            <p className="capability-copy">
+              {thai
+                ? 'นักเรียน คลาส ชั่วโมง ตาราง และรายได้ อยู่ใกล้กับการเตือนที่ส่งถึงผู้เรียน'
+                : 'Students, classes, hours, schedules, and revenue stay close to the reminder that reaches your learner.'}
+            </p>
+          </div>
+          <LineReminderProof />
         </section>
-        <LineReminderProof />
-        <FaqSection />
+        <div className="homepage-closing">
+          <FaqSection />
+        </div>
         <section
           className="beta-section"
           id="beta"

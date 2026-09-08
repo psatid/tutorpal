@@ -68,7 +68,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { min-width: 320px; margin: 0; overflow-x: hidden; background: var(--marketing-canvas); }
-body:has(.marketing-homepage) { background: #fff; }
+body:has(.marketing-homepage) { background: var(--marketing-canvas); }
 body, button, input, textarea { font-family: inherit; }
 a { color: inherit; }
 button, input, textarea { font: inherit; }
@@ -110,6 +110,25 @@ h1, h2, h3, p { margin-top: 0; }
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.site-header.is-floating {
+  top: .75rem;
+  border-bottom: 0;
+  padding: 0 1rem;
+  background: transparent;
+  pointer-events: none;
+}
+
+.site-header.is-floating .header-inner {
+  width: min(1040px, 100%);
+  min-height: 60px;
+  border: 1px solid var(--marketing-border);
+  border-radius: var(--marketing-radius-panel);
+  padding: 0 .85rem;
+  background: var(--marketing-surface);
+  box-shadow: 0 4px 8px var(--marketing-shadow-soft);
+  pointer-events: auto;
 }
 
 .wordmark {
@@ -527,12 +546,15 @@ h1 span { display: block; }
 @media (max-width: 767px) {
   .header-inner, .hero-grid, .workflow-section, .benefits-layout, .section-layout, .faq-layout, .footer-inner, .privacy-page { width: min(100% - 2rem, var(--marketing-max)); }
   .header-inner { min-height: 64px; }
+  .site-header.is-floating { top: .5rem; padding: 0 1rem; }
+  .site-header.is-floating .header-inner { width: 100%; min-height: 56px; padding: 0 .7rem; }
   .desktop-nav, .header-actions { display: none; }
   .mobile-menu { position: relative; display: block; margin-left: auto; }
   .mobile-menu summary { width: 44px; height: 44px; display: grid; align-content: center; gap: 4px; list-style: none; cursor: pointer; }
   .mobile-menu summary::-webkit-details-marker { display: none; }
   .mobile-menu summary span { width: 21px; height: 2px; display: block; margin-left: auto; background: var(--marketing-ink-strong); transform-origin: center; transition: transform var(--marketing-motion-fast) var(--marketing-motion-ease), opacity var(--marketing-motion-fast) var(--marketing-motion-ease); }
   .mobile-menu nav { position: absolute; top: 52px; right: 0; min-width: 190px; display: grid; padding: .5rem; border: 1px solid var(--marketing-border); border-radius: var(--marketing-radius-panel); background: var(--marketing-surface); box-shadow: 0 12px 25px var(--marketing-shadow); }
+  .site-header.is-floating .mobile-menu nav { box-shadow: none; }
   .mobile-menu[open] nav { animation: mobile-menu-enter var(--marketing-motion-fast) var(--marketing-motion-ease) both; }
   .mobile-menu[open] summary span:nth-child(1) { transform: translate3d(0, 6px, 0) rotate(45deg); }
   .mobile-menu[open] summary span:nth-child(2) { opacity: 0; }

@@ -10,9 +10,11 @@
 
 The public marketing app is separate from the authenticated frontend. See its
 [README](../../marketing-frontend/README.md) for local development and the
-approved cinematic homepage. The implementation combines B's product hero with
-a compact teaching-day story, the real beta form, and an animated semantic LINE
-reminder stage.
+redesigned homepage. The implementation combines floating navigation, a Week-led
+product hero, asymmetric workflow demonstrations, and a rounded foreground
+transition into a navy LINE reminder chapter. Product visuals are responsive
+HTML compositions; entrances play once and reduced motion keeps content static.
+The existing English/Thai support, CTA destinations, and real beta form remain.
 See [image provenance](../marketing-assets/README.md) and the
 [exploration archive](../prototypes/README.md) for source material.
 

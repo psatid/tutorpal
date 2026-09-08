@@ -15,11 +15,11 @@ beta form posts to the same-origin `/api/beta-interest` Worker route.
 
 ## Homepage and product proof
 
-The homepage implements the approved hybrid: B's centered, Week-led schedule
-hero followed by compact teaching-day scenes and a paired pending/completed
-state comparison. The white canvas
-extends to both viewport edges; decorative hero objects and floating connector
-labels are omitted. The primary
+The homepage uses a compact floating navigation, a centered Week-led schedule
+hero, a class-context split, and an asymmetric planning and lesson-state grid.
+The light foreground has rounded lower corners above the navy LINE chapter;
+native scrolling reveals that surface without a pinned scene. Content follows
+a 1240px maximum measure with generous section spacing. The primary
 **Explore TutorPal** action leads to `#workflow`; the existing beta form remains
 at `#beta`. Comparison variants and the local prototype form are archived and
 are no longer part of the runtime.
@@ -30,8 +30,8 @@ already reserves class hours, so completion never deducts them again. The
 illustrations preserve TutorPal's real labels, status values, and product layout.
 The detailed Week view is explicitly captioned as a Fri–Sun crop.
 
-The feature section includes students, classes, hours, schedules, revenue, and
-LINE integration. A semantic HTML conversation stage displays the exact backend
+Recomposed, responsive HTML product panels show students, classes, hours,
+schedules, and revenue. A semantic HTML conversation stage displays the exact backend
 English reminder with fictional student details. Its incoming bubble arrives
 when the section enters view; it is not a live LINE interaction. The message
 remains English on the Thai page, with localized surrounding copy. It appears
@@ -46,18 +46,22 @@ preview asset.
 
 ## Motion, language, and accessibility
 
-GSAP ScrollTrigger and `@gsap/react` provide scoped hero entrances, contained
-copy/media reveals, a staggered pending/completed comparison, and LINE message
-arrival. No scene is pinned. Desktop scenes may scrub within their own bounds;
-compact layouts use brief entrance sequences. Reduced motion and JavaScript-
-disabled pages display complete readable content. Animation contexts revert
-on language, breakpoint, preference, and route changes. Editorial headings use
-Outfit with Noto Sans Thai; product panels keep their existing typography.
+GSAP ScrollTrigger and `@gsap/react` provide a sequenced hero entrance,
+selected heading reveals, staggered feature entrances, and LINE message arrival.
+Text and card entrances play once; continuous scroll movement is reserved for
+decorative depth. No scene is pinned, and scrolling backward does not reverse
+the content entrances. Reduced motion and JavaScript-disabled pages display
+complete readable content. Animation contexts revert on language, breakpoint,
+preference, and route changes. Editorial headings use Outfit with Noto Sans Thai;
+product panels keep their existing typography. The landing page reuses the
+existing marketing palette and preserves the light document theme.
 
 English is the server-rendered default. The language switcher updates marketing
 and privacy copy and document language, preserving anchors and form field names.
-Small screens use linear product panels and story sections. FAQ answers use
-native disclosures. The live `BetaLeadForm` retains validation, loading/errors,
+Small screens lead with the Week panel and omit the hero's duplicate supporting
+panels; the class and lesson details remain in the linear workflow below.
+The floating header has anchor clearance, and FAQ answers use native
+disclosures. The live `BetaLeadForm` retains validation, loading/errors,
 Turnstile, the existing endpoint, privacy notice, and native
 `?beta=success|error` handling.
 
@@ -91,12 +95,16 @@ checks. If strict concurrent enforcement is required before production, replace
 the KV coordinator with an explicitly approved strongly consistent primitive
 such as a Durable Object.
 
-## Approved exploration
+## Design references and exploration
 
 The user selected B's hero with A's remaining sections, then approved
 implementation on September 8, 2026. The [prototype archive](../docs/prototypes/README.md)
-preserves all three alternatives and the selection rationale. The old
-`?variant=` comparison UI is removed; the homepage is now the chosen design.
+preserves all three alternatives and the selection rationale. The subsequent
+redesign uses Outcrowd's [analytics landing-page reference](https://dribbble.com/shots/26455331-Landing-Page-for-a-Data-Driven-Analytics-Platform)
+for the rounded surface transition and [CoreShift reference](https://dribbble.com/shots/25869450-Sleek-Landing-Page-for-CoreShift)
+for floating navigation, composition, and coordinated motion. TutorPal's own
+palette, typography, factual product story, language support, and CTA destinations
+remain the source of truth. The old `?variant=` comparison UI remains removed.
 
 Implementation and verified commits remain local until the user requests a
 push or deployment. Existing deployment prerequisites above still apply.
