@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,12 +32,38 @@ const emptyCredentials: LineConnectionCredentials = {
   loginChannelSecret: "",
 };
 
-function connectionError(error: unknown, fallback: string) {
-  if (typeof error === "object" && error && "response" in error) {
-    const response = error.response as { data?: { message?: string } };
-    return response.data?.message || fallback;
+const lineErrorTranslationKeys = {
+  LINE_CREDENTIALS_INVALID: "settings:line.credentialsInvalid",
+  LINE_CONNECTION_REQUIRED: "settings:line.connectionRequired",
+  LINE_TEST_RECIPIENT_REQUIRED: "settings:line.testRecipientRequired",
+  LINE_TEST_ACCOUNT_NOT_FRIEND: "settings:line.testAccountNotFriend",
+} as const;
+
+function isLineSettingsErrorCode(
+  errorCode: string,
+): errorCode is keyof typeof lineErrorTranslationKeys {
+  return Object.prototype.hasOwnProperty.call(lineErrorTranslationKeys, errorCode);
+}
+
+function connectionError(error: unknown, t: TFunction, fallback: string) {
+  if (typeof error !== "object" || error === null || !("response" in error)) {
+    return fallback;
   }
-  return fallback;
+
+  const response = error.response;
+  if (typeof response !== "object" || response === null || !("data" in response)) {
+    return fallback;
+  }
+
+  const data = response.data;
+  if (typeof data !== "object" || data === null || !("errorCode" in data)) {
+    return fallback;
+  }
+
+  const errorCode = data.errorCode;
+  return typeof errorCode === "string" && isLineSettingsErrorCode(errorCode)
+    ? t(lineErrorTranslationKeys[errorCode])
+    : fallback;
 }
 
 export function LineSettingsScreen() {
@@ -56,19 +83,19 @@ export function LineSettingsScreen() {
       setEditing(false);
       toast.success(t("settings:line.saved"));
     },
-    onError: (error) => toast.error(connectionError(error, t("settings:line.saveFailed"))),
+    onError: (error) => toast.error(connectionError(error, t, t("settings:line.saveFailed"))),
   });
 
   const connectTestAccount = useMutation({
     mutationFn: startLineTestRecipientAuthorization,
     onSuccess: (authUrl) => window.location.assign(authUrl),
-    onError: (error) => toast.error(connectionError(error, t("settings:line.connectTestFailed"))),
+    onError: (error) => toast.error(connectionError(error, t, t("settings:line.connectTestFailed"))),
   });
 
   const sendTest = useMutation({
     mutationFn: sendLineConnectionTestMessage,
     onSuccess: () => toast.success(t("settings:line.testSent")),
-    onError: (error) => toast.error(connectionError(error, t("settings:line.testFailed"))),
+    onError: (error) => toast.error(connectionError(error, t, t("settings:line.testFailed"))),
   });
 
   useEffect(() => {
@@ -243,7 +270,7 @@ function ConnectionSummary({ connection }: ConnectionSummaryProps) {
           <p
             className={cn(
               "flex items-center gap-2 text-sm font-semibold",
-              isConnected ? "text-green-700" : "text-muted-foreground",
+              isConnected ? "text-success-container-foreground" : "text-muted-foreground",
             )}
             role="status"
           >

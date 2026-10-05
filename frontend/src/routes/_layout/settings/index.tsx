@@ -3,6 +3,6 @@ import { APP_ROUTES } from "@/constants/routes";
 
 export const Route = createFileRoute("/_layout/settings/")({
   beforeLoad: () => {
-    throw redirect({ to: APP_ROUTES.LINE_SETTINGS, replace: true });
+    throw redirect({ to: APP_ROUTES.ACCOUNT_SETTINGS, replace: true });
   },
 });

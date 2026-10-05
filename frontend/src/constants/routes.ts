@@ -13,5 +13,6 @@ export const APP_ROUTES = {
 	CLASS_DETAIL: "/classes/$classId",
 	SCHEDULES: "/schedules",
 	SETTINGS: "/settings",
+	ACCOUNT_SETTINGS: "/settings/account",
 	LINE_SETTINGS: "/settings/line",
 } as const;

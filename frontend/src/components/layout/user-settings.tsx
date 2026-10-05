@@ -1,6 +1,7 @@
+import { Link } from "@tanstack/react-router";
 import { useLogout } from "@/hooks/mutations/use-logout";
 import { useSession } from "@/hooks/use-session";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, UserRound } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -11,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { APP_ROUTES } from "@/constants/routes";
 
 type UserSettingProps = {
   children: React.ReactElement;
@@ -77,7 +79,20 @@ export default function UserSetting({
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled={isPending} onClick={handleAccountAction}>
+        {!isImpersonating ? (
+          <DropdownMenuItem
+            className="min-h-11"
+            render={<Link to={APP_ROUTES.ACCOUNT_SETTINGS} />}
+          >
+            <UserRound />
+            {t("settings:account.title")}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem
+          className="min-h-11"
+          disabled={isPending}
+          onClick={handleAccountAction}
+        >
           {isPending ? <Loader2 className="animate-spin" /> : <LogOut />}
           {isImpersonating
             ? t("settings:exitTutorView")

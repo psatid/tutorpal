@@ -10,6 +10,39 @@ const th = {
   language: "Language / ภาษา",
   logoutSuccess: "คุณออกจากระบบแล้ว",
   logoutError: "ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง",
+  account: {
+    title: "บัญชี",
+    description: "จัดการวิธีเข้าสู่ระบบ TutorPal ของคุณ",
+    methodsTitle: "วิธีเข้าสู่ระบบ",
+    methodsDescription: "เฉพาะวิธีเข้าสู่ระบบที่เชื่อมต่อแล้วเท่านั้นที่เข้าถึงบัญชีของคุณได้",
+    checking: "กำลังตรวจสอบวิธีเข้าสู่ระบบ…",
+    fetchError: "ไม่สามารถตรวจสอบวิธีเข้าสู่ระบบของคุณได้",
+    retry: "ลองอีกครั้ง",
+    linked: "เชื่อมต่อแล้ว",
+    notLinked: "ยังไม่ได้เชื่อมต่อ",
+    password: {
+      title: "รหัสผ่าน",
+      description: "เข้าสู่ระบบด้วยอีเมลและรหัสผ่านของคุณ",
+    },
+    google: {
+      title: "Google",
+      description: "เข้าสู่ระบบด้วยบัญชี Google ที่เชื่อมต่อกับ TutorPal",
+    },
+    line: {
+      title: "LINE",
+      description: "เชื่อมต่อ LINE หลังจากเข้าสู่ระบบด้วยรหัสผ่านหรือ Google",
+      connect: "เชื่อมต่อ LINE",
+      connecting: "กำลังเชื่อมต่อ LINE…",
+      checking: "กำลังตรวจสอบความพร้อมใช้งานของการเข้าสู่ระบบด้วย LINE…",
+      unavailable: "การเข้าสู่ระบบด้วย LINE ยังไม่พร้อมใช้งานในขณะนี้",
+      availabilityError:
+        "ไม่สามารถตรวจสอบความพร้อมใช้งานของการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง",
+      retryAvailability: "ลองอีกครั้ง",
+      connected: "เชื่อมต่อ LINE กับบัญชีของคุณแล้ว",
+      connectFailed: "ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาลองอีกครั้ง",
+      notReflected: "ยังไม่ได้เชื่อมต่อ LINE กรุณาลองอีกครั้ง",
+    },
+  },
   line: {
     title: "การเชื่อมต่อ LINE",
     description: "เชื่อมต่อ LINE Official Account ของคุณเพื่อส่งข้อความถึงนักเรียน",
@@ -20,6 +53,11 @@ const th = {
     retry: "ลองอีกครั้ง",
     saved: "บันทึกและยืนยันการเชื่อมต่อ LINE แล้ว",
     saveFailed: "ไม่สามารถบันทึกการเชื่อมต่อ LINE ได้",
+    credentialsInvalid: "ข้อมูลรับรอง LINE ไม่ถูกต้อง โปรดตรวจสอบแล้วลองอีกครั้ง",
+    connectionRequired: "เชื่อมต่อและยืนยันบัญชี LINE ของคุณก่อนดำเนินการต่อ",
+    testRecipientRequired: "เชื่อมต่อบัญชี LINE ส่วนตัวสำหรับทดสอบก่อนดำเนินการต่อ",
+    testAccountNotFriend:
+      "เพิ่ม LINE Official Account ของคุณเป็นเพื่อน แล้วลองเชื่อมต่อบัญชีทดสอบอีกครั้ง",
     connectTitle: "เชื่อมต่อบัญชีทางการของคุณ",
     updateTitle: "อัปเดตข้อมูลรับรอง",
     setupHelp:

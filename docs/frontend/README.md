@@ -9,12 +9,17 @@
 ## Marketing site
 
 The public marketing app is separate from the authenticated frontend. See its
-[README](../../marketing-frontend/README.md) for local development and the
-redesigned homepage. The implementation combines floating navigation, a Week-led
-product hero, asymmetric workflow demonstrations, and a rounded foreground
-transition into a navy LINE reminder chapter. Product visuals are responsive
-HTML compositions; entrances play once and reduced motion keeps content static.
-The existing English/Thai support, CTA destinations, and real beta form remain.
+[README](../../marketing-frontend/README.md),
+[product story](../../marketing-frontend/PRODUCT.md), and
+[design direction](../../marketing-frontend/DESIGN.md). The Relay-inspired
+homepage combines a pale ice canvas, semantic SAT product scenes, violet
+WebGL filaments, and scroll-driven product framing. Presence, Change, Closure,
+and Readiness lead into a contracting wordmark, signup, and native FAQ.
+One bounded sticky hero works across desktop and phones, with shorter holds on
+small screens. Motion is enabled without a visible toggle; a short intro gives
+way to event-driven rendering with zero idle frames. Reduced motion, disabled JavaScript, and rendering failures
+retain a complete static presentation. English/Thai support, the privacy route,
+and the beta endpoint remain; the homepage beta form and its anchors are removed.
 See [image provenance](../marketing-assets/README.md) and the
 [exploration archive](../prototypes/README.md) for source material.
 

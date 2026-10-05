@@ -26,10 +26,28 @@ For a Git-integrated Pages project, configure:
 - Build command: `bun run generate:api && bun run build --mode dev`
 - Build output directory: `dist`
 - Build environment variable: `VITE_API_URL=<BACKEND_API_ORIGIN>`
+- Build environment variable: `VITE_ADMIN_APP_URL=<ADMIN_PORTAL_ORIGIN>`
 
-`VITE_API_URL` is compiled into the browser bundle, so it must be a public API
-origin and must never contain a secret. The `.env.example` file provides the
-local placeholder with the same build-time contract.
+`VITE_API_URL` and `VITE_ADMIN_APP_URL` are compiled into the browser bundle.
+They must be public origins and must never contain secrets. The admin origin is
+used for impersonation stop/recovery navigation. The `.env.example` file
+provides the local placeholder with the same build-time contract.
+
+## Tutor social login
+
+Google and LINE buttons are controlled by the backend's `/v1/config` response;
+the frontend does not contain provider credentials. The login screen keeps
+email/password as the primary path and shows only the providers explicitly
+enabled by the server.
+
+Existing tutors can review linked sign-in methods at `/settings/account`.
+Connect LINE there after signing in with password or Google. The existing
+`/settings/line` route is for a tutor's LINE Official Account Messaging API
+credentials and is intentionally separate from LINE sign-in.
+
+Provider callback registration, Worker environment variables, and the database
+identity migration are documented in
+[`../docs/features/social-login.md`](../docs/features/social-login.md).
 
 Cloudflare Pages supplies SPA fallback behavior when the output has no
 top-level `404.html`, which is the intended Vite output for this application.

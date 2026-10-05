@@ -20,6 +20,16 @@ const th = {
 		passwordPlaceholder: "กรอกรหัสผ่านของคุณ",
 		forgotPassword: "ลืมรหัสผ่าน?",
 		submit: "เข้าสู่ระบบ",
+		socialDivider: "หรือเข้าสู่ระบบด้วย",
+		continueWithGoogle: "เข้าสู่ระบบด้วย Google",
+		continueWithLine: "เข้าสู่ระบบด้วย LINE",
+		redirectingToGoogle: "กำลังไปยัง Google…",
+		redirectingToLine: "กำลังไปยัง LINE…",
+		socialError:
+			"เราไม่สามารถเข้าสู่ระบบให้คุณได้ ใช้ Google หรืออีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ แล้วเชื่อมต่อ LINE จากการตั้งค่าบัญชี",
+		socialConfigError:
+			"ไม่สามารถตรวจสอบความพร้อมใช้งานของการเข้าสู่ระบบได้ กรุณาลองอีกครั้ง",
+		retryAvailability: "ลองอีกครั้ง",
 		alternatePrompt: "ยังไม่มีบัญชีใช่ไหม?",
 		alternateAction: "สร้างบัญชี",
 		success: "ยินดีต้อนรับกลับ คุณเข้าสู่ระบบแล้ว",
@@ -56,6 +66,7 @@ const th = {
 	signup: {
 		title: "สร้างบัญชีของคุณ",
 		subtitle: "ตั้งค่า TutorPal ในไม่กี่ขั้นตอน",
+		progress: "ความคืบหน้าการสมัคร: ขั้นตอนที่ {{current}} จาก {{total}}",
 		submit: "สร้างบัญชี",
 		successTitle: "ตรวจสอบกล่องจดหมายของคุณ",
 		successBody:

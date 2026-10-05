@@ -1,8 +1,13 @@
 import { Scalar } from "@scalar/hono-api-reference";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
+import type { SocialLoginConfig } from "../lib/app-config";
+import { PublicConfigResponseResolver } from "../schemas";
 
-export function createBaseRoutes(getPublicSignupEnabled = () => false) {
+export function createBaseRoutes(
+	getPublicSignupEnabled = () => false,
+	getSocialLogin = (): SocialLoginConfig => ({ google: false, line: false }),
+) {
 	return new Hono()
 		.get(
 			"/health",
@@ -25,10 +30,19 @@ export function createBaseRoutes(getPublicSignupEnabled = () => false) {
 				responses: {
 					200: {
 						description: "Public client configuration",
+						content: {
+							"application/json": {
+								schema: PublicConfigResponseResolver,
+							},
+						},
 					},
 				},
 			}),
-			(c) => c.json({ publicSignupEnabled: getPublicSignupEnabled() }),
+			(c) =>
+				c.json({
+					publicSignupEnabled: getPublicSignupEnabled(),
+					socialLogin: getSocialLogin(),
+				}),
 		)
 		.get(
 			"/docs",

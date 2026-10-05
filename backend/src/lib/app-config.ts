@@ -26,6 +26,15 @@ export type AppConfigInput = {
 	FRONTEND_URL?: string;
 	EMAIL_VERIFICATION_CALLBACK_URL?: string;
 	PUBLIC_SIGNUP_ENABLED?: string;
+	GOOGLE_CLIENT_ID?: string;
+	GOOGLE_CLIENT_SECRET?: string;
+	LINE_LOGIN_CHANNEL_ID?: string;
+	LINE_LOGIN_CHANNEL_SECRET?: string;
+};
+
+export type SocialLoginConfig = {
+	google: boolean;
+	line: boolean;
 };
 
 export type AppConfig = {
@@ -44,6 +53,11 @@ export type AppConfig = {
 	FRONTEND_URL: string;
 	EMAIL_VERIFICATION_CALLBACK_URL: string;
 	PUBLIC_SIGNUP_ENABLED: boolean;
+	GOOGLE_CLIENT_ID: string;
+	GOOGLE_CLIENT_SECRET: string;
+	LINE_LOGIN_CHANNEL_ID: string;
+	LINE_LOGIN_CHANNEL_SECRET: string;
+	SOCIAL_LOGIN: SocialLoginConfig;
 };
 
 function getLogLevel(logLevel: string | undefined): LogLevel {
@@ -77,7 +91,36 @@ export function parseBooleanFlag(
 	);
 }
 
+function getOptionalCredential(value: string | undefined): string {
+	return value?.trim() ?? "";
+}
+
+function isSocialProviderConfigured(
+	provider: string,
+	clientId: string,
+	clientSecret: string,
+): boolean {
+	if (clientId === "" && clientSecret === "") {
+		return false;
+	}
+
+	if (clientId === "" || clientSecret === "") {
+		throw new Error(
+			`Incomplete ${provider} OAuth configuration: both client ID and client secret are required.`,
+		);
+	}
+
+	return true;
+}
+
 export function createAppConfig(input: AppConfigInput): AppConfig {
+	const googleClientId = getOptionalCredential(input.GOOGLE_CLIENT_ID);
+	const googleClientSecret = getOptionalCredential(input.GOOGLE_CLIENT_SECRET);
+	const lineLoginChannelId = getOptionalCredential(input.LINE_LOGIN_CHANNEL_ID);
+	const lineLoginChannelSecret = getOptionalCredential(
+		input.LINE_LOGIN_CHANNEL_SECRET,
+	);
+
 	return {
 		PORT: input.PORT ?? "5174",
 		CORS_ORIGIN: input.CORS_ORIGIN ?? "http://localhost:5173",
@@ -101,5 +144,21 @@ export function createAppConfig(input: AppConfigInput): AppConfig {
 			input.EMAIL_VERIFICATION_CALLBACK_URL ??
 			"http://localhost:5173/verify-email",
 		PUBLIC_SIGNUP_ENABLED: parseBooleanFlag(input.PUBLIC_SIGNUP_ENABLED),
+		GOOGLE_CLIENT_ID: googleClientId,
+		GOOGLE_CLIENT_SECRET: googleClientSecret,
+		LINE_LOGIN_CHANNEL_ID: lineLoginChannelId,
+		LINE_LOGIN_CHANNEL_SECRET: lineLoginChannelSecret,
+		SOCIAL_LOGIN: {
+			google: isSocialProviderConfigured(
+				"Google",
+				googleClientId,
+				googleClientSecret,
+			),
+			line: isSocialProviderConfigured(
+				"LINE Login",
+				lineLoginChannelId,
+				lineLoginChannelSecret,
+			),
+		},
 	};
 }

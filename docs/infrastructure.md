@@ -131,6 +131,7 @@ performed with:
 ~~~bash
 cd frontend
 export VITE_API_URL="https://dev.api.tutorpal.io"
+export VITE_ADMIN_APP_URL="https://dev.admin.tutorpal.io"
 bun run generate:api
 bun run build --mode dev
 bunx wrangler pages deploy dist --project-name tutorpal-dev
@@ -291,6 +292,32 @@ browser requests include credentials so session cookies can be used across the
 user/admin frontend and API origins. Resend sends verification and
 password-reset emails; the links return users to the user Pages frontend.
 
+### Tutor social login
+
+Google and LINE Login are optional API Worker integrations for existing,
+admin-provisioned tutors. Configure complete credential pairs:
+
+- Google: <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>
+- LINE Login: <code>LINE_LOGIN_CHANNEL_ID</code> and
+  <code>LINE_LOGIN_CHANNEL_SECRET</code>
+
+An absent pair disables that provider; an incomplete pair fails Worker
+configuration validation. The user frontend receives only boolean provider
+flags from <code>/v1/config</code>. Social signup remains disabled, and LINE
+enrollment from Account settings uses the server-side state/PKCE/nonce flow
+with no OAuth token persistence.
+
+Register these exact callback URLs in the provider consoles, replacing
+<code>API_ORIGIN</code> with the deployed <code>BETTER_AUTH_URL</code>:
+
+- <code>API_ORIGIN/api/auth/callback/google</code>
+- <code>API_ORIGIN/api/auth/callback/line</code>
+- <code>API_ORIGIN/v1/auth/social-accounts/line/callback</code>
+
+The existing student LINE-link callback remains
+<code>API_ORIGIN/v1/line/callback</code>; it is separate from tutor social
+sign-in.
+
 ### LINE integration
 
 The API Worker handles LINE account linking and OAuth callbacks at
@@ -336,6 +363,13 @@ Store these values as API Worker secrets and do not commit them:
 - <code>BETTER_AUTH_SECRET</code>
 - <code>RESEND_API_KEY</code>
 - <code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>
+- <code>GOOGLE_CLIENT_SECRET</code> (when Google sign-in is enabled)
+- <code>LINE_LOGIN_CHANNEL_SECRET</code> (when LINE Login is enabled)
+
+Set the corresponding provider IDs as API Worker variables:
+
+- <code>GOOGLE_CLIENT_ID</code>
+- <code>LINE_LOGIN_CHANNEL_ID</code>
 
 The reminder Worker only needs
 <code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>; provision the same value on both
@@ -365,8 +399,13 @@ The health endpoint should return HTTP <code>200</code> with
 - With <code>PUBLIC_SIGNUP_ENABLED=false</code>, the user portal hides signup,
   direct signup visits return to login, and the Better Auth signup endpoint
   rejects new accounts. Admin-created users receive verification email links.
+- With social login enabled, existing tutors can complete Google sign-in,
+  LINE sign-in, and LINE enrollment from Account settings; unlinked social
+  identities cannot create accounts.
 - Existing encrypted LINE credentials can be read and the OAuth callback uses
   the custom API domain.
+- The deployed provider consoles contain the exact callback URLs documented
+  above, and <code>/v1/config</code> reports the intended provider flags.
 - CRUD, transactions, timestamps, decimals, and reminder claim queries work
   through Hyperdrive.
 - Cron runs at the four quarter-hour marks and does not duplicate reminder

@@ -83,6 +83,8 @@ Cloudflare dashboard with deployment-specific non-secret values:
 - `FRONTEND_URL`
 - `EMAIL_VERIFICATION_CALLBACK_URL`
 - `PUBLIC_SIGNUP_ENABLED` (`false` keeps account creation in the admin portal)
+- `GOOGLE_CLIENT_ID` (optional; enables Google sign-in when paired with its secret)
+- `LINE_LOGIN_CHANNEL_ID` (optional; enables LINE Login when paired with its secret)
 
 Set each of these as a Worker secret before deployment; never commit their
 values or place them in a Wrangler config:
@@ -90,6 +92,8 @@ values or place them in a Wrangler config:
 - `BETTER_AUTH_SECRET`
 - `RESEND_API_KEY`
 - `LINE_CREDENTIALS_ENCRYPTION_KEY`
+- `GOOGLE_CLIENT_SECRET` (required only when Google sign-in is enabled)
+- `LINE_LOGIN_CHANNEL_SECRET` (required only when LINE Login is enabled)
 
 Provision `LINE_CREDENTIALS_ENCRYPTION_KEY` on both deployed Workers. The
 reminder config declares it as required, but secret values are still managed
@@ -143,3 +147,25 @@ The admin frontend runs on `http://localhost:5175` and the user frontend runs
 on `http://localhost:5173` by default. Both portals share this backend and
 database; only the admin portal can create regular users while
 `PUBLIC_SIGNUP_ENABLED=false`.
+
+## Tutor social login
+
+Google and LINE Login are optional backend integrations for existing,
+admin-provisioned tutors. Set the complete provider pairs in the selected
+Worker environment; a missing pair disables that provider and an incomplete
+pair fails configuration validation. Provider secrets belong in Wrangler
+secrets or the Git-ignored local `.dev.vars` file, never in the frontend.
+
+Register these exact provider callback URLs, using the deployed
+`BETTER_AUTH_URL` as the API origin:
+
+- Google: `<BETTER_AUTH_URL>/api/auth/callback/google`
+- LINE linked-account sign-in: `<BETTER_AUTH_URL>/api/auth/callback/line`
+- LINE Account enrollment: `<BETTER_AUTH_URL>/v1/auth/social-accounts/line/callback`
+
+The user portal exposes social actions only when the server's `/v1/config`
+response enables them. Account settings uses the controlled LINE enrollment
+endpoint; the existing `/settings/line` page remains the separate LINE
+Messaging API credentials screen. Run `bun run db:migrate:prod` before first
+production enablement so the provider identity uniqueness migration has been
+applied.

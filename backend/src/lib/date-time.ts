@@ -1,6 +1,7 @@
 import {
 	addDays,
 	addHours,
+	addMinutes,
 	compareAsc as compareDatesAsc,
 	getDay,
 	isBefore as isBeforeDate,
@@ -87,6 +88,10 @@ export class DateTime {
 
 	addHours(hours: number): DateTime {
 		return new DateTime(addHours(this.dateTime, hours));
+	}
+
+	addMinutes(minutes: number): DateTime {
+		return new DateTime(addMinutes(this.dateTime, minutes));
 	}
 
 	isBefore(other: DateTimeInput): boolean {

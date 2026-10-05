@@ -17,6 +17,16 @@ export default {
 		passwordPlaceholder: "Enter your password",
 		forgotPassword: "Forgot password?",
 		submit: "Sign In",
+		socialDivider: "Or continue with",
+		continueWithGoogle: "Continue with Google",
+		continueWithLine: "Continue with LINE",
+		redirectingToGoogle: "Redirecting to Google…",
+		redirectingToLine: "Redirecting to LINE…",
+		socialError:
+			"We couldn’t sign you in. Use Google or email and password to recover, then connect LINE from Account settings.",
+		socialConfigError:
+			"We couldn't check sign-in availability. Please try again.",
+		retryAvailability: "Retry",
 		alternatePrompt: "Don't have an account yet?",
 		alternateAction: "Create account",
 		success: "Welcome back! You have been logged in.",
@@ -54,6 +64,7 @@ export default {
 	signup: {
 		title: "Create your account",
 		subtitle: "Set up TutorPal in a few quick steps.",
+		progress: "Signup progress: step {{current}} of {{total}}",
 		submit: "Create account",
 		successTitle: "Check your inbox",
 		successBody:

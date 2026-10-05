@@ -4,6 +4,7 @@ import { Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
+import { validateLineAuthorizationUrl } from "@/lib/line-authorization-url";
 
 type LinkState = "loading" | "ready" | "success" | "error";
 
@@ -54,7 +55,7 @@ export function LineLinkScreen() {
       const response = await apiClient.getV1LineAuthUrl({
         token,
       });
-      window.location.href = response.data.authUrl;
+      window.location.href = validateLineAuthorizationUrl(response.data.authUrl);
     } catch {
       setLinkError("network");
       setState("error");
@@ -73,29 +74,32 @@ export function LineLinkScreen() {
   const canRetry = linkError === "network";
 
   return (
-    <div className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden bg-[#eaf1f8] p-6">
+    <div className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden bg-background p-6">
       <img
         aria-hidden="true"
         alt=""
-        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
-        src="/stripe-.svg"
+        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70 dark:opacity-25"
+        src="/stripe-auth-mesh.svg"
       />
-      <div className="relative z-10 w-full max-w-sm space-y-6 rounded-xl border border-white/80 bg-white p-6 text-center shadow-transient-card sm:p-8">
+      <main
+        aria-busy={state === "loading"}
+        className="relative z-10 w-full max-w-sm space-y-6 rounded-xl border border-border bg-card p-6 text-center text-card-foreground sm:p-8"
+      >
         <div className="space-y-2">
           <div className="flex justify-center">
-            <div className="flex size-20 items-center justify-center rounded-xl bg-primary-container">
+            <div className="flex size-20 items-center justify-center rounded-xl bg-primary/10">
               <span className="text-3xl font-semibold text-primary">TP</span>
             </div>
           </div>
-          <h1 className="font-headline text-2xl font-light tracking-[-0.02em] text-on-surface">
+          <h1 className="font-headline text-2xl font-light tracking-[-0.02em] text-foreground">
             TutorPal
           </h1>
         </div>
 
         {state === "loading" && (
-          <div className="space-y-4">
+          <div aria-live="polite" className="space-y-4" role="status">
             <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-            <p className="text-on-surface-variant">
+            <p className="text-muted-foreground">
               {t("students:line.connecting")}
             </p>
           </div>
@@ -103,14 +107,13 @@ export function LineLinkScreen() {
 
         {state === "ready" && (
           <div className="space-y-6">
-            <p className="text-on-surface-variant leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               {t("students:line.readyDescription")}
             </p>
             <Button
               onClick={handleConnect}
               size="lg"
-              className="w-full"
-              style={{ backgroundColor: "#06C755" }}
+              className="w-full bg-success-container text-success-container-foreground hover:bg-success-container/80 active:bg-success-container/70"
             >
               {t("students:line.connect")}
             </Button>
@@ -119,31 +122,31 @@ export function LineLinkScreen() {
 
         {state === "success" && (
           <div className="space-y-4">
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
+            <CheckCircle2 className="w-16 h-16 text-success mx-auto" />
             <div className="space-y-1">
-              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-on-surface">
+              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
                 {t("students:line.successTitle")}
               </h2>
               {linkedName && (
-                <p className="text-on-surface-variant">
+                <p className="text-muted-foreground">
                   {t("students:line.connectedAs", { name: linkedName })}
                 </p>
               )}
             </div>
-            <p className="text-sm text-on-surface-variant">
+            <p className="text-sm text-muted-foreground">
               {t("students:line.closePage")}
             </p>
           </div>
         )}
 
         {state === "error" && (
-          <div className="space-y-4">
+          <div aria-live="assertive" className="space-y-4" role="alert">
             <XCircle className="w-16 h-16 text-destructive mx-auto" />
             <div className="space-y-1">
-              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-on-surface">
+              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
                 {t("students:line.errorTitle")}
               </h2>
-              <p className="text-on-surface-variant">{errorMessage}</p>
+              <p className="text-muted-foreground">{errorMessage}</p>
             </div>
             {canRetry ? (
               <Button
@@ -154,13 +157,13 @@ export function LineLinkScreen() {
                 {t("students:line.retry")}
               </Button>
             ) : (
-              <p className="text-sm text-on-surface-variant">
+              <p className="text-sm text-muted-foreground">
                 {t("students:line.askTutor")}
               </p>
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

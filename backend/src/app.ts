@@ -270,7 +270,7 @@ export function createApp(dependencies: ApplicationDependencies) {
 		}
 	});
 
-	app.route("/", createRoutes(routes));
+	app.route("/", createRoutes(routes, apiLogger));
 
 	app.get(
 		"/v1/docs/open-api",
@@ -292,6 +292,10 @@ export function createApp(dependencies: ApplicationDependencies) {
 					{ name: "admin-users", description: "Administrator user management" },
 					{ name: "students", description: "Student management endpoints" },
 					{ name: "line", description: "LINE account linking endpoints" },
+					{
+						name: "social-accounts",
+						description: "Tutor social account enrollment endpoints",
+					},
 				],
 			},
 		}),

@@ -27,6 +27,10 @@
     {
       "name": "line",
       "description": "LINE account linking endpoints"
+    },
+    {
+      "name": "social-accounts",
+      "description": "Tutor social account enrollment endpoints"
     }
   ],
   "paths": {
@@ -40,6 +44,53 @@
         "responses": {
           "200": {
             "description": "Service is healthy"
+          }
+        }
+      }
+    },
+    "/v1/config": {
+      "get": {
+        "operationId": "getV1Config",
+        "tags": [
+          "system"
+        ],
+        "description": "Public client configuration",
+        "responses": {
+          "200": {
+            "description": "Public client configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "publicSignupEnabled": {
+                      "type": "boolean"
+                    },
+                    "socialLogin": {
+                      "type": "object",
+                      "properties": {
+                        "google": {
+                          "type": "boolean"
+                        },
+                        "line": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "google",
+                        "line"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "publicSignupEnabled",
+                    "socialLogin"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }
@@ -4299,6 +4350,77 @@
             "required": true
           }
         ]
+      }
+    },
+    "/v1/auth/social-accounts/line/authorization": {
+      "post": {
+        "operationId": "postV1AuthSocialAccountsLineAuthorization",
+        "tags": [
+          "social-accounts"
+        ],
+        "description": "Start authenticated LINE account enrollment for the current tutor",
+        "responses": {
+          "200": {
+            "description": "LINE authorization URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "authorizationUrl"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Tutor is not eligible to enroll LINE"
+          },
+          "404": {
+            "description": "LINE sign-in is not configured"
+          }
+        }
+      }
+    },
+    "/v1/auth/social-accounts/line/callback": {
+      "get": {
+        "operationId": "getV1AuthSocialAccountsLineCallback",
+        "tags": [
+          "social-accounts"
+        ],
+        "description": "Complete LINE account enrollment and redirect to the fixed account-settings result",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Fixed redirect to account settings with connected or error result"
+          }
+        }
       }
     },
     "/v1/line/auth-url": {

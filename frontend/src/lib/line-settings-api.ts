@@ -3,6 +3,7 @@ import type {
   GetV1LineConnection200,
   PutV1LineConnectionBody,
 } from "@/api/generated/models";
+import { validateLineAuthorizationUrl } from "@/lib/line-authorization-url";
 
 export type LineConnectionStatus = GetV1LineConnection200;
 export type LineConnectionCredentials = PutV1LineConnectionBody;
@@ -21,7 +22,7 @@ export async function saveLineConnection(
 
 export async function startLineTestRecipientAuthorization(): Promise<string> {
   const response = await apiClient.postV1LineConnectionTestRecipientAuthorize();
-  return response.data.authUrl;
+  return validateLineAuthorizationUrl(response.data.authUrl);
 }
 
 export async function sendLineConnectionTestMessage(): Promise<void> {

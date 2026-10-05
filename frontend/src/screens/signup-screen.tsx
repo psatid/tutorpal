@@ -205,7 +205,17 @@ export function SignupScreen() {
           }}
           className="space-y-6"
         >
-          <div className="flex gap-2">
+          <div
+            role="progressbar"
+            aria-valuemin={1}
+            aria-valuemax={3}
+            aria-valuenow={step + 1}
+            aria-label={t("auth:signup.progress", {
+              current: step + 1,
+              total: 3,
+            })}
+            className="flex gap-2"
+          >
             {stepConfig.map((_, index) => (
               <div
                 key={index}

@@ -15,6 +15,7 @@ import {
 	CourseRepository,
 	LineRepository,
 	ScheduleRepository,
+	SocialAccountRepository,
 	StudentRepository,
 } from "./repositories";
 import type { RouteDependencies } from "./routes";
@@ -25,6 +26,7 @@ import {
 	CourseService,
 	LineService,
 	ScheduleService,
+	SocialAccountService,
 	StudentService,
 } from "./services";
 
@@ -44,6 +46,7 @@ export function createApplicationDependencies(
 	const courseRepository = new CourseRepository(prisma);
 	const lineRepository = new LineRepository(prisma);
 	const scheduleRepository = new ScheduleRepository(prisma);
+	const socialAccountRepository = new SocialAccountRepository(prisma);
 	const studentRepository = new StudentRepository(prisma);
 	const lineClient = createLineClient(config);
 	const credentialCipher = createLineCredentialCipher(
@@ -70,9 +73,14 @@ export function createApplicationDependencies(
 				credentialCipher,
 			}),
 			scheduleService: new ScheduleService(scheduleRepository, classRepository),
+			socialAccountService: new SocialAccountService(
+				socialAccountRepository,
+				config,
+			),
 			studentService: new StudentService(studentRepository),
 			getFrontendUrl: () => config.FRONTEND_URL,
 			isPublicSignupEnabled: () => config.PUBLIC_SIGNUP_ENABLED,
+			getSocialLogin: () => config.SOCIAL_LOGIN,
 		},
 	};
 }

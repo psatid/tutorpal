@@ -22,17 +22,17 @@ export function AuthShell({
   const { t } = useTranslation("common");
 
   return (
-    <div className="relative isolate flex min-h-dvh justify-center overflow-hidden bg-[#eaf1f8] px-4 py-4 sm:px-6 sm:py-6">
+    <div className="relative isolate flex min-h-dvh justify-center overflow-hidden bg-background px-4 py-4 sm:px-6 sm:py-6">
       <img
         aria-hidden="true"
         alt=""
-        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70"
+        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70 dark:opacity-25"
         src="/stripe-auth-mesh.svg"
       />
       <div className={cn("flex w-full flex-col justify-center items-center")}>
-        <div
+        <main
           className={cn(
-            "rounded-xl border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(31,71,112,0.12)] sm:max-w-3xl sm:px-10 sm:py-10",
+            "rounded-xl border border-border bg-card px-5 py-6 sm:max-w-3xl sm:px-10 sm:py-10",
           )}
         >
           <div className="space-y-8 sm:space-y-10">
@@ -66,7 +66,7 @@ export function AuthShell({
               <div className="pt-6 text-sm text-muted-foreground">{footer}</div>
             ) : null}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

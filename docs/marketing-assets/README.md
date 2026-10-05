@@ -1,47 +1,79 @@
-# Marketing image provenance
+# Marketing asset provenance
 
-## LINE reminder demo
+## Current Relay-inspired homepage
 
-The homepage now renders the account header, date, and exact reminder as semantic
-HTML so the incoming message can animate independently. The message is visible
-and accessible directly; there is no duplicate hidden transcript. The following
-capture remains historical reference material and is not imported by the page.
+The homepage uses original semantic HTML/CSS product scenes and procedural
+WebGL light. It contains no generated teaching photograph, downloaded 3D model,
+or raster product screenshot. The scenes illustrate recognizable Today, Week,
+confirmation and class-record structures without claiming pixel-exact app UI.
+Illustrative controls are non-interactive spans.
 
-The reminder visual is a faithful composed capture, consistent
-with the approved use of product illustrations. It is not a screenshot of a
-real received message. The retained reference asset is
-`marketing-frontend/src/assets/marketing/line-reminder-demo.webp` (800 × 1000).
-It was captured from the [local HTML composition](line-reminder-demo.html) using
-the browser and encoded as lossless WebP. Visible demo, illustrative, and
-sample labels are omitted at the user’s request; provenance stays in this document. It has no delivery/read receipt,
-real contact identity, or private data.
+### SAT scene data
 
-The message uses the exact template in
-`backend/src/repositories/class-reminder.repository.ts`, with the fictional
-student Maya Chen and class English foundations. The sample starts August 16,
-2026 at 09:00 in Asia/Bangkok and lasts one hour. The current backend message is
-English; the Thai marketing page localizes the surrounding description
-without inventing a Thai reminder format.
+`marketing-frontend/src/components/product-scenes.tsx` owns the fictional
+sixteen-session week of October 5–11, 2026, Asia/Bangkok. All sessions last one
+hour. Weekdays have after-school lessons; weekends have morning/afternoon lessons.
+The desktop view explicitly labels its shown teaching-hour windows; tablet and
+phone detail views include separate agendas for days outside the focused grid.
 
-To refresh, verify the backend message template, serve the source HTML locally,
-capture its 800 × 1000 viewport, inspect the result, and encode the screenshot
-as lossless WebP. If the backend format changes, keep the retained capture and
-the homepage’s visible HTML message consistent with that template. Do not send a real LINE message to create an asset
-without the user's explicit authorization.
+June teaches SAT Math and SAT Reading & Writing to Narin, Mina, Ari, Eli, Ben,
+Cam and Dara, plus a weekend group. Narin's Wednesday 18:30 SAT Math lesson moves
+to Thursday 18:30–19:30. Monday's 17:00 lesson is completed with 7/10 hours
+remaining. October 3's completed hour and two already-reserved hours account for
+the three used/committed hours; moving and completing a lesson do not deduct again.
+No private customer data, test scores, diagnostics or outcome claims are used.
 
-## Decorative teaching objects
+### Procedural light and fallback
 
-`marketing-frontend/src/assets/marketing/tutor-objects.webp` (1536 × 1024) is an
-optimized derivative of artwork generated during the approved exploration:
-a white calendar, clock, and indigo notebook. It is decorative, not evidence
-of a product feature. It is no longer rendered on the homepage following the
-hero cleanup. The original generated asset and prompt are preserved in
-the [prototype archive](../prototypes/README.md).
+`light-poster.webp` (1400×800) is an optimized capture of the actual production
+Three.js shader at progress zero and time zero, on the production `#f7f9fe`
+background. It remains visible during loading, reduced motion, unavailable
+WebGL, and context failure. It is decorative and carries no product claims.
+The live effect uses a single shader quad with curved violet/cyan filaments.
+See the [design direction](../../marketing-frontend/DESIGN.md) for motion and
+rendering constraints. The social preview is `public/social-preview.svg`.
 
-## Existing portal captures
+### LINE reminder
 
-The sanitized captures in `marketing-frontend/public/product-previews/` remain
-reference material and include the social preview image. The selected homepage
-uses faithful localized product illustrations and a semantic LINE message stage.
-No signed-in account identity or private workspace records belong in marketing
-assets.
+The current homepage renders a semantic HTML account header and message using
+the exact template in `backend/src/repositories/class-reminder.repository.ts`:
+
+```text
+Class reminder
+
+Hi Narin, your SAT Math class starts in 1 hour.
+
+Date: Oct 8, 2026
+Time: 6:30 PM–7:30 PM
+Time zone: Asia/Bangkok
+```
+
+The message is English in both marketing locales because the backend template
+is English. Thai localizes the surrounding explanation. June appears only in
+the illustrative account header, not inside the reminder body. There is no
+invented delivery/read receipt. Never send a real LINE message solely to create
+an asset without explicit authorization.
+
+## Historical reference assets
+
+`marketing-frontend/public/marketing/product-*.webp` are unused captures from the
+previous screenshot presentation. They were made with production portal React
+components and CSS in a temporary Vite fixture using synthetic API data. English
+and Thai captures used actual application translations; crops were encoded as
+WebP without painting over UI. The previous Physics studio/Narin scenario moved
+October 7 at 10:00 to October 8 at 11:00 and is superseded by the SAT scene above.
+No current homepage import references those files.
+
+
+The [local LINE composition](line-reminder-demo.html) and
+`marketing-frontend/src/assets/marketing/line-reminder-demo.webp` (800×1000)
+are a composed historical example for Maya Chen / English foundations on
+August 16, 2026. They are not imported by the current homepage and are not a
+capture of a received message.
+
+`marketing-frontend/src/assets/marketing/tutor-objects.webp` (1536×1024) is
+historical generated artwork, also unused. The original prompt and exploration
+are retained in the [prototype archive](../prototypes/README.md).
+The earlier sanitized `public/product-previews/` captures remain references.
+The rejected lesson-block sculpture and teaching photograph are not rendered
+by the current homepage.

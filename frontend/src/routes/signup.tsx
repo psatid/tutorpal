@@ -9,17 +9,18 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupRoute() {
-	const { isPending, publicSignupEnabled } = usePublicConfig();
+	const { data, isPending } = usePublicConfig();
 
 	if (isPending) {
 		return (
-			<div className="flex min-h-dvh items-center justify-center bg-surface">
+			<div className="flex min-h-dvh items-center justify-center bg-background">
 				<Loader2 className="size-8 animate-spin text-primary" />
 			</div>
 		);
 	}
 
-	if (!publicSignupEnabled) {
+	// Keep an in-progress form mounted while a previously enabled config refreshes.
+	if (!data?.publicSignupEnabled) {
 		return <Navigate replace to="/login" />;
 	}
 

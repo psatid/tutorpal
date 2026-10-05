@@ -1,4 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
+import type { Logger } from "pino";
+import type { SocialLoginConfig } from "../lib/app-config";
 import { getLocalAuth } from "../lib/auth";
 import { getLocalAppConfig } from "../lib/local-config";
 import {
@@ -12,6 +14,7 @@ import {
 	courseRepository,
 	lineRepository,
 	scheduleRepository,
+	socialAccountRepository,
 	studentRepository,
 } from "../repositories";
 import {
@@ -20,6 +23,7 @@ import {
 	CourseService,
 	LineService,
 	ScheduleService,
+	SocialAccountService,
 	StudentService,
 } from "../services";
 import type { AppEnv } from "../types/hono-env";
@@ -29,6 +33,7 @@ import { createClassRoutes } from "./classes";
 import { createCourseRoutes } from "./courses";
 import { createLineRoutes } from "./line";
 import { createScheduleRoutes } from "./schedules";
+import { createSocialAccountRoutes } from "./social-accounts";
 import { createStudentRoutes } from "./students";
 
 export type RouteDependencies = {
@@ -40,9 +45,11 @@ export type RouteDependencies = {
 	courseService: CourseService;
 	lineService: LineService;
 	scheduleService: ScheduleService;
+	socialAccountService: SocialAccountService;
 	studentService: StudentService;
 	getFrontendUrl(): string;
 	isPublicSignupEnabled(): boolean;
+	getSocialLogin(): SocialLoginConfig;
 };
 
 function createDefaultRouteDependencies(): RouteDependencies {
@@ -60,23 +67,39 @@ function createDefaultRouteDependencies(): RouteDependencies {
 		courseService: new CourseService(courseRepository),
 		lineService: new LineService(lineRepository, studentRepository),
 		scheduleService: new ScheduleService(scheduleRepository, classRepository),
+		socialAccountService: new SocialAccountService(
+			socialAccountRepository,
+			config,
+		),
 		studentService: new StudentService(studentRepository),
 		getFrontendUrl: () => getLocalAppConfig().FRONTEND_URL,
 		isPublicSignupEnabled: () => getLocalAppConfig().PUBLIC_SIGNUP_ENABLED,
+		getSocialLogin: () => getLocalAppConfig().SOCIAL_LOGIN,
 	};
 }
 
 export function createRoutes(
 	dependencies: RouteDependencies = createDefaultRouteDependencies(),
+	logger?: Pick<Logger, "warn">,
 ) {
 	return new Hono<AppEnv>()
 		.basePath("/v1")
-		.route("/", createBaseRoutes(dependencies.isPublicSignupEnabled))
+		.route(
+			"/",
+			createBaseRoutes(
+				dependencies.isPublicSignupEnabled,
+				dependencies.getSocialLogin,
+			),
+		)
 		.route("/admin/users", createAdminUserRoutes(dependencies))
 		.route("/students", createStudentRoutes(dependencies))
 		.route("/classes", createClassRoutes(dependencies))
 		.route("/courses", createCourseRoutes(dependencies))
 		.route("/schedules", createScheduleRoutes(dependencies))
+		.route(
+			"/auth/social-accounts",
+			createSocialAccountRoutes({ ...dependencies, logger }),
+		)
 		.route("/line", createLineRoutes(dependencies));
 }
 

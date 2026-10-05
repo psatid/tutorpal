@@ -4,4 +4,5 @@ export * from "./class-reminder.repository";
 export * from "./course.repository";
 export * from "./line.repository";
 export * from "./schedule.repository";
+export * from "./social-account.repository";
 export * from "./student.repository";

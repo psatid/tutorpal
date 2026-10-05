@@ -8,6 +8,22 @@ describe("base routes", () => {
 		);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ publicSignupEnabled: false });
+		expect(await response.json()).toEqual({
+			publicSignupEnabled: false,
+			socialLogin: { google: false, line: false },
+		});
+	});
+
+	test("returns server-owned social login availability", async () => {
+		const response = await createBaseRoutes(
+			() => true,
+			() => ({ google: true, line: false }),
+		).fetch(new Request("http://localhost/config"));
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			publicSignupEnabled: true,
+			socialLogin: { google: true, line: false },
+		});
 	});
 });
