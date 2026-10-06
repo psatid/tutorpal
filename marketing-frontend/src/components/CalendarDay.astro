@@ -1,0 +1,16 @@
+---
+import { copy, type Locale } from '../content';
+import { weeklyLessons, weekDays, lessonTime, lessonDateTime } from '../lessons';
+interface Props { day: typeof weekDays[number]; lang: Locale }
+const { day, lang } = Astro.props;
+const lessons = weeklyLessons.filter(lesson => lesson.date === day.date);
+---
+<section class="calendar-day" aria-labelledby={`day-${day.number}`}>
+  <h3 id={`day-${day.number}`}><span>{day[lang]}</span><time datetime={day.date}>{day.number}</time></h3>
+  <ul class="calendar-lessons">
+    {lessons.map(lesson => <li class={`calendar-event ${lesson.tone}`} data-calendar-event data-lesson-id={lesson.id} style={`--start:${lesson.startHour-10};--duration:${lesson.endHour-lesson.startHour}`}>
+      <p class="event-time"><time datetime={lessonDateTime(lesson)}>{lessonTime(lesson)}</time></p><h4>{lesson.curriculum}</h4><p class="event-level">{lesson.level}</p><p class="event-student">{lesson.shortName}</p>
+    </li>)}
+    {!lessons.length && <li class="calendar-empty">{copy[lang].noLessons}</li>}
+  </ul>
+</section>

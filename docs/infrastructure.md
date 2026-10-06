@@ -15,7 +15,8 @@ The current environment documented here is <code>dev</code>:
 - Cloudflare reminder Worker: <code>tutorpal-reminders-dev</code>
 - Cloudflare DNS zone: <code>tutorpal.io</code>
 
-The public TutorPal marketing site is a separate TanStack Start SSR Worker.
+The public TutorPal marketing site is a separate prerendered Astro site served
+by Cloudflare Workers Static Assets.
 Production routes the apex domain <code>tutorpal.io</code> to that Worker; it
 does not share the authenticated Pages app or its signup behavior.
 
@@ -28,7 +29,7 @@ flowchart LR
     subgraph cf["Cloudflare"]
         dns["DNS + TLS<br/>Zone: tutorpal.io"]
         pages["Pages<br/>User Vite/React SPA<br/>dev.app.tutorpal.io"]
-        marketingWorker["Worker: tutorpal-marketing<br/>TanStack Start SSR<br/>tutorpal.io"]
+        marketingWorker["Worker: tutorpal-marketing<br/>Astro static assets<br/>tutorpal.io"]
         adminPages["Pages<br/>Admin Vite/React SPA<br/>admin origin"]
         apiWorker["Worker: tutorpal-api-dev<br/>Hono API + Better Auth<br/>dev.api.tutorpal.io"]
         reminderWorker["Worker: tutorpal-reminders-dev<br/>Scheduled reminders"]
@@ -71,7 +72,7 @@ polling. Both use Hyperdrive for database access.
 | --- | --- | --- |
 | DNS zone | <code>tutorpal.io</code> | Authoritative DNS, proxying, and TLS for application hostnames |
 | Pages project | <code>tutorpal-dev</code> | Static frontend deployment from <code>frontend/dist</code> |
-| Marketing Worker | <code>tutorpal-marketing</code> | TanStack Start SSR marketing application and beta interest endpoint |
+| Marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
 | Marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
 | Pages custom domain | <code>dev.app.tutorpal.io</code> | Public web application origin |
 | Admin Pages project | Separate Pages project from <code>admin-frontend</code> | Restricted admin portal; its public origin is configured as <code>ADMIN_FRONTEND_URL</code> |
@@ -164,35 +165,31 @@ stop-impersonation to <code>VITE_ADMIN_APP_URL</code>. The backend's
 the start request; CORS and Better Auth trusted-origin configuration must
 include both portal origins.
 
-## Marketing Worker and beta interest flow
+## Marketing site
 
-The public marketing application lives in <code>marketing-frontend</code> and
-is a Cloudflare Worker using TanStack Start full-document SSR. Its route surface
-is <code>/</code>, <code>/privacy</code>, <code>/robots.txt</code>,
-<code>/sitemap.xml</code>, and same-origin <code>POST /api/beta-interest</code>.
-Deploy it with <code>make marketing-build</code> followed by
-<code>make deploy APP=marketing-frontend</code>.
+The public marketing application lives in <code>marketing-frontend</code>.
+Astro generates complete English HTML at <code>/</code> and Thai HTML at
+<code>/th/</code>, along with <code>/robots.txt</code>,
+<code>/sitemap.xml</code>, and a static 404 page. Each locale has a self-canonical
+URL and reciprocal language alternates; English is the unprefixed default.
+The canonical origin is <code>https://tutorpal.io</code>.
 
-Set <code>PUBLIC_SITE_URL</code> to the canonical marketing origin. Optional
-public variables are <code>PUBLIC_PORTAL_URL</code> and
-<code>PUBLIC_TURNSTILE_SITE_KEY</code>; provide them to the Worker build because
-they are used by the SSR/client-rendered public UI. Set <code>DISCORD_WEBHOOK_URL</code> and
-<code>TURNSTILE_SECRET_KEY</code> as Worker secrets, and bind
-<code>BETA_RATE_LIMIT_KV</code> to a dedicated KV namespace. The Worker returns
-a clear 502 configuration error and never reports a successful submission when
-any required integration is absent.
+The Worker serves <code>marketing-frontend/dist</code> as static assets, without
+a request-time Astro runtime or adapter. GSAP and a decorative Three.js light
+field enhance the HTML in the browser. No content or conversion depends on
+WebGL, and reduced-motion and mobile presentations remain in natural flow.
 
-The beta endpoint validates name, email, subject, consent, and the
-Turnstile token; verifies Turnstile server-side; and forwards only the
-submitted lead details to the configured Discord webhook. Its KV-backed
-windows target five attempts per IP per hour and one successful normalized
-email per 24 hours. Cloudflare KV is eventually consistent and does not offer
-an atomic read-modify-write transaction, so these windows are best-effort under
-concurrency. A strict guarantee requires an explicitly approved coordinator
-such as a Durable Object and a corresponding binding/configuration change.
-The endpoint does not create product accounts or store leads in TutorPal’s
-database. JSON callers receive structured status responses, while native form
-posts redirect back to the marketing page with a success or error state.
+Run <code>make marketing-dev</code> for development and
+<code>make marketing-build</code> to check and build. A future authorized publish
+uses <code>make deploy APP=marketing-frontend</code>. Build and preview do not
+publish or modify the Cloudflare account.
+
+Every primary CTA links to <code>https://app.tutorpal.io</code>. Public signup
+availability is controlled by the separate application. The marketing site has
+no signup logic, beta-interest API, forms, tracking, database, KV, Turnstile,
+Discord integration, or required secrets. Older beta-flow documentation and
+configuration no longer describe this application. See the
+[marketing README](../marketing-frontend/README.md) for commands and configuration.
 
 Both static portals intentionally exclude crawlers with both a
 <code>&lt;meta name="robots" content="noindex, nofollow" /&gt;</code> directive and

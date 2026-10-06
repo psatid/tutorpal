@@ -1,0 +1,23 @@
+{
+  "name": "@tutorpal/marketing",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "check": "astro check",
+    "build": "astro check && astro build",
+    "preview": "astro preview --host 127.0.0.1",
+    "deploy": "bun run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/noto-sans-thai": "5.3.0",
+    "astro": "7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.2",
+    "wrangler": "4.147.0"
+  }
+}

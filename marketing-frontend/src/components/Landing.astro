@@ -1,0 +1,118 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CalendarDay from './CalendarDay.astro';
+import { copy, type Locale } from '../content';
+import { featuredLesson, featuredDate, studentSummaries, weekDays, lessonTime, lessonDateTime, reminderTime, reminderMessage } from '../lessons';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const c = copy[lang];
+const home = lang === 'en' ? '/' : '/th/';
+const app = 'https://app.tutorpal.io';
+---
+<Layout lang={lang} prepareMotion>
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href={home} aria-label="TutorPal home"><img src="/app-icon-small.png" width="32" height="32" alt="" />TutorPal</a>
+      <nav class="desktop-nav" aria-label={lang === 'en' ? 'Main navigation' : 'เมนูหลัก'}><a href="#how-it-works">{c.nav[0]}</a><a href="#workspace">{c.nav[1]}</a><a href="#questions">{c.nav[2]}</a></nav>
+      <div class="nav-end"><a class="language" href={lang === 'en' ? '/th/' : '/'} lang={lang === 'en' ? 'th' : 'en'} aria-label={lang === 'en' ? 'เปลี่ยนเป็นภาษาไทย' : 'Switch to English'}>{lang === 'en' ? 'ไทย' : 'English'}</a><a class="nav-cta" href={app}>{c.open}<span aria-hidden="true">↗</span></a></div>
+      <details class="mobile-menu"><summary aria-label={c.menu}><span></span><span></span></summary><nav aria-label={c.menu}><a href="#how-it-works">{c.nav[0]}</a><a href="#workspace">{c.nav[1]}</a><a href="#questions">{c.nav[2]}</a><a class="mobile-menu-cta" href={app}>{c.open}<span aria-hidden="true">↗</span></a></nav></details>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1 id="hero-heading">{c.hero[0]}<br/><span>{c.hero[1]}</span></h1>
+          <p class="hero-description">{c.intro}</p>
+          <div class="actions"><a class="button primary" href={app}>{c.open}</a><a class="button secondary" href="#how-it-works">{c.explore}</a></div>
+        </div>
+        <div class="hero-product" role="group" aria-label={c.workflowLabel}>
+          <div class="hero-card-slot lesson-slot" data-hero-card="0">
+            <div class="hero-card-float">
+              <article class="lesson-window product-card">
+                <div class="lesson-top"><span class="badge"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v4m10-4v4M4 10h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>{c.scheduled}</span><span class="subject-icon" aria-hidden="true">✎</span></div>
+                <h2>{featuredLesson.subject}</h2>
+                <ul class="lesson-details">
+                  <li><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3Z"/></svg><span>{featuredLesson.student}</span></li>
+                  <li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v4m10-4v4M4 10h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg><time datetime={featuredLesson.date}>{featuredDate[lang]}</time></li>
+                  <li><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg><time datetime={lessonDateTime(featuredLesson)}>{lessonTime(featuredLesson)}</time></li>
+                  <li><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5h4"/></svg><span>2 h</span></li>
+                </ul>
+              </article>
+            </div>
+          </div>
+          <div class="hero-card-slot hours-slot" data-hero-card="1">
+            <div class="hero-card-float">
+              <div class="hours-window product-card"><span class="hours-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12v8m7-16v16m7-11v11"/></svg></span><div><p>{c.hoursLeft}</p><div class="hour-values"><strong>10 <span aria-hidden="true">→</span> 8 h</strong></div><p class="hour-caption">{c.reserved}</p></div></div>
+            </div>
+          </div>
+          <div class="hero-card-slot reminder-slot" data-hero-card="2">
+            <div class="hero-card-float">
+              <div class="reminder-window product-card"><span class="line-mark"><span>LINE</span></span><div><p>{c.reminder}</p><span>{featuredLesson.subject} · {reminderTime}</span></div><svg class="notification-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 20a3 3 0 0 0 6 0M12 2v3M5 16l2-3V9a5 5 0 0 1 10 0v4l2 3v1H5Z"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="calendar-section section-pad" aria-labelledby="calendar-heading">
+      <div class="container">
+        <div class="section-intro"><h2 id="calendar-heading" data-reveal>{c.calendarTitle}</h2><p class="section-description" data-reveal>{c.calendarBody}</p></div>
+        <div class="calendar-frame surface-frame" data-calendar-frame role="group" aria-label={`${c.weekLabel} · Asia/Bangkok`}>
+          <div class="calendar-surface">
+            <div class="calendar-toolbar"><span>{c.weekLabel}</span><span>Asia/Bangkok</span></div>
+            <div class="calendar-grid">
+              <div class="calendar-hours" aria-hidden="true">{Array.from({length:10},(_,i)=><span style={`--hour:${i}`}>{String(i+10).padStart(2,'0')}:00</span>)}</div>
+              {weekDays.slice(0,3).map(day => <CalendarDay day={day} lang={lang} />)}
+              <details class="calendar-remainder" data-agenda-remainder open>
+                <summary><span class="agenda-show-all">{lang === 'en' ? 'Show all 7 days' : 'ดูครบทั้ง 7 วัน'}</span><span class="agenda-show-less">{lang === 'en' ? 'Show only 3 days' : 'ดูเฉพาะ 3 วันแรก'}</span><span aria-hidden="true">⌄</span></summary>
+                <div class="calendar-remainder-days">{weekDays.slice(3).map(day => <CalendarDay day={day} lang={lang} />)}</div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace-section section-pad" aria-labelledby="workspace-heading">
+      <div class="container">
+        <div class="section-intro"><div><h2 id="workspace-heading" data-reveal>{c.workspaceTitle[0]}<br/><span>{c.workspaceTitle[1]}</span></h2></div><p class="section-description" data-reveal>{c.workspaceBody}</p></div>
+        <div class="workspace-frame surface-frame" data-reveal>
+          <div class="workspace-app">
+            <aside class="workspace-sidebar" aria-hidden="true"><img src="/app-icon-small.png" alt="" width="30" height="30"/><span>▦</span><span class="active">♧</span><span>▤</span><span>◷</span><span class="sidebar-bottom">T</span></aside>
+            <div class="workspace-main"><div class="workspace-toolbar"><span>TutorPal <span class="toolbar-divider">/</span> {c.students}</span><span class="tutor-avatar">T</span></div>
+              <div class="workspace-title"><div><p class="micro">{c.workspaceLabel}</p><h3>{c.students}<span>{String(studentSummaries.length).padStart(2,'0')}</span></h3></div><span class="workspace-view">{c.classes} ↗</span></div>
+              <table class="student-table" aria-label={c.students}><thead>
+                <tr class="table-head"><th id="student-name" scope="col">{c.student}</th><th id="student-class" scope="col">{c.subject}</th><th id="student-hours" scope="col">{c.remaining}</th><th id="student-last-lesson" scope="col">{c.lastLesson}</th></tr></thead><tbody>
+                {studentSummaries.map(person => <tr class="student-row"><td class="person" headers="student-name"><span class={`avatar ${person.tone}`}>{person.initial}</span><strong>{person.name}</strong></td><td class="class-name" headers="student-class"><span>{person.curriculum}</span><small class="student-level">{person.level}</small></td><td class="remaining" headers="student-hours"><strong>{person.hours}</strong> h<span class="balance-track" aria-hidden="true"><span class={`balance-fill ${person.tone}`} data-balance-fill style={`width:${Number(person.hours)*6}%`}></span></span></td><td class="last-lesson" headers="student-last-lesson">{person.lastLesson}<small>{c.complete}</small></td></tr>)}
+              </tbody></table>
+              <div class="lesson-record"><div class="record-symbol" aria-hidden="true">↳</div><div><span class="micro">{c.records} · Min Chantarat</span><p>{lang === 'en' ? 'Quadratic equations & problem solving' : 'สมการกำลังสองและการแก้โจทย์ปัญหา'}</p></div><span>01 OCT<span class="record-check">✓</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="workspace-caption"><span>{lang === 'en' ? 'Any subject. Every next step.' : 'ทุกวิชา ทุกก้าวของการเรียนรู้'}</span></div>
+      </div>
+    </section>
+
+    <section class="line-section section-pad" aria-labelledby="line-heading"><div class="container line-grid">
+      <div class="line-copy"><h2 id="line-heading" data-reveal>{c.lineTitle[0]}<br/><span>{c.lineTitle[1]}</span></h2><p class="section-description" data-reveal>{c.lineBody}</p><ul class="line-notes">{c.lineNotes.map(note=><li><span aria-hidden="true">✓</span>{note}</li>)}</ul></div>
+      <div class="line-scene" data-reveal><div class="message-phone surface-frame"><div class="phone-top"><span aria-hidden="true">‹</span><div><span class="line-online"></span>{lang === 'en' ? 'Your tutoring account' : 'บัญชีติวเตอร์ของคุณ'}</div><span aria-hidden="true">•••</span></div><div class="phone-body"><div class="message-date">THU, 8 OCT</div><div class="chat-row"><span class="chat-avatar">T</span><div class="chat-bubble" lang="en"><p>{reminderMessage}</p></div></div><p class="message-note">{c.linePreview} · {reminderTime}</p></div><div class="phone-bottom" aria-hidden="true"><span>＋</span><span class="message-input"></span><span>☺</span></div></div></div>
+    </div></section>
+
+    <section id="questions" class="faq-section section-pad" aria-labelledby="faq-heading"><div class="container faq-grid"><div><h2 id="faq-heading" data-reveal>{c.faqTitle}</h2></div><div class="faq-list">{c.faqs.map(faq=><details><summary>{faq.q}<span aria-hidden="true">+</span></summary><div class="faq-answer"><p>{faq.a}</p></div></details>)}</div></div></section>
+
+    <section class="closing" aria-labelledby="closing-heading">
+      <div class="closing-decor" aria-hidden="true">
+        <div class="closing-slot tile-calendar"><div class="closing-float"><div class="closing-tile"><svg viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="34" rx="5"/><rect x="12" y="4" width="5" height="11" rx="2"/><rect x="31" y="4" width="5" height="11" rx="2"/><path d="M5 18h38v3H5Z" fill="#FFFFFF"/><g fill="#FFFFFF"><circle cx="13" cy="28" r="2.5"/><circle cx="35" cy="28" r="2.5"/><circle cx="13" cy="36" r="2.5"/><circle cx="24" cy="36" r="2.5"/><circle cx="35" cy="36" r="2.5"/></g><circle class="selected-day" cx="24" cy="28" r="2.5"/></svg></div></div></div>
+        <div class="closing-slot tile-clock"><div class="closing-float"><div class="closing-tile"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/><path d="M24 13v12l-7 7" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>
+        <div class="closing-slot tile-pencil"><div class="closing-float"><div class="closing-tile"><svg viewBox="0 0 48 48"><path d="M8 30 29 9a7 7 0 0 1 10 10L18 40 4 44Z"/><path d="M4 44 8 30 18 40Z" fill="#FFFFFF"/><path d="m4 44 2-7 5 5Z" fill="#0D253D"/></svg></div></div></div>
+        <div class="closing-slot tile-book"><div class="closing-float"><div class="closing-tile"><svg viewBox="0 0 48 48"><rect x="5" y="5" width="38" height="38" rx="5"/><path class="book-spine" d="M12 5h6v38h-6Z"/><path class="book-spine" d="M24 34h13v3H24Z" opacity=".55"/></svg></div></div></div>
+        <div class="closing-slot tile-student"><div class="closing-float"><div class="closing-tile"><svg viewBox="0 0 48 48"><circle cx="24" cy="15" r="10"/><path d="M5 44v-3a19 19 0 0 1 38 0v3Z"/></svg></div></div></div>
+        <div class="closing-slot tile-chat"><div class="closing-float"><div class="closing-tile"><svg viewBox="0 0 48 48"><rect x="5" y="6" width="38" height="31" rx="10"/><path d="M14 33v11l14-11Z"/><g fill="#FFFFFF"><circle cx="15" cy="22" r="2.7"/><circle cx="24" cy="22" r="2.7"/><circle cx="33" cy="22" r="2.7"/></g></svg></div></div></div>
+      </div>
+      <div class="container"><div class="closing-copy"><h2 id="closing-heading" data-reveal>{c.closeTitle[0]}<br/><span>{c.closeTitle[1]}</span></h2><p data-reveal>{c.closeBody}</p><a class="button primary" href={app}>{c.open}<span aria-hidden="true">↗</span></a></div></div>
+    </section>
+  </main>
+  <footer class="site-footer container"><a class="brand" href={home}><img src="/app-icon-small.png" width="28" height="28" alt=""/>TutorPal</a><span>{c.footer}</span><div><span>© 2026 TutorPal</span><a href={lang === 'en' ? '/th/' : '/'} lang={lang === 'en' ? 'th' : 'en'}>{lang === 'en' ? 'ภาษาไทย' : 'English'} ↗</a></div></footer>
+  <script src="../scripts/main.ts"></script>
+</Layout>

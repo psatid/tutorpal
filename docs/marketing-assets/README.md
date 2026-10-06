@@ -1,79 +1,98 @@
 # Marketing asset provenance
 
-## Current Relay-inspired homepage
+The Astro homepage in `marketing-frontend/` uses original semantic HTML/CSS
+product illustrations on a light canvas. The approved Concept A draws on the
+centered headline, generous whitespace, and floating-card composition of
+[ChronoTask](https://dribbble.com/shots/25000009-ChronoTask-Landing-Page), with
+[Sleek CoreShift](https://dribbble.com/shots/25869450-Sleek-Landing-Page-for-CoreShift)
+and [AI Project Management Assistant](https://dribbble.com/shots/27190142-AI-Project-Management-Assistant-SaaS-Landing-Page)
+as secondary references. No paid template source, customer screenshots, or private
+student information is included. The user's selected image is a design reference,
+not a production raster asset; live product details remain readable HTML.
 
-The homepage uses original semantic HTML/CSS product scenes and procedural
-WebGL light. It contains no generated teaching photograph, downloaded 3D model,
-or raster product screenshot. The scenes illustrate recognizable Today, Week,
-confirmation and class-record structures without claiming pixel-exact app UI.
-Illustrative controls are non-interactive spans.
+## Fictional tutoring story
 
-### SAT scene data
+The example is a two-hour SAT Math lesson for Min on October 8, 2026 in
+Asia/Bangkok. Scheduling 16:00–18:00 reserves two hours from a ten-hour balance,
+leaving eight. Its upcoming reminder is at 15:00. This featured math lesson is
+not a weekly calendar event.
 
-`marketing-frontend/src/components/product-scenes.tsx` owns the fictional
-sixteen-session week of October 5–11, 2026, Asia/Bangkok. All sessions last one
-hour. Weekdays have after-school lessons; weekends have morning/afternoon lessons.
-The desktop view explicitly labels its shown teaching-hour windows; tablet and
-phone detail views include separate agendas for days outside the focused grid.
+The separate English-only weekly view covers 5–11 October with twelve lessons:
 
-June teaches SAT Math and SAT Reading & Writing to Narin, Mina, Ari, Eli, Ben,
-Cam and Dara, plus a weekend group. Narin's Wednesday 18:30 SAT Math lesson moves
-to Thursday 18:30–19:30. Monday's 17:00 lesson is completed with 7/10 hours
-remaining. October 3's completed hour and two already-reserved hours account for
-the three used/committed hours; moving and completing a lesson do not deduct again.
-No private customer data, test scores, diagnostics or outcome claims are used.
+| Day | Earlier lesson | Later lesson |
+| --- | --- | --- |
+| Monday | Ploy · IELTS · Foundation · 10:00–12:00 | Nath · SAT English · Intensive · 16:00–18:00 |
+| Tuesday | Mook · A-Level English · Basic · 11:00–13:00 | Beam · IELTS Speaking · Intensive · 17:00–19:00 |
+| Wednesday | Fai · SAT English · Foundation · 10:00–12:00 | Nath · A-Level English · Intensive · 15:00–17:00 |
+| Thursday | Ploy · IELTS · Basic · 10:00–12:00 | Earn · SAT English · Intensive · 16:00–18:00 |
+| Friday | Mook · A-Level English · Foundation · 11:00–13:00 | Beam · IELTS · Intensive · 17:00–19:00 |
+| Saturday | Fai · SAT English · Basic · 10:00–12:00 | Nath · A-Level English · Intensive · 14:00–16:00 |
 
-### Procedural light and fallback
+Sunday has no lessons. The independent math workspace shows four students:
+Min (SAT Math, Foundation), Ploy (A-Level Mathematics, Intensive), Kiet (SAT Math,
+Basic), and Fern (A-Level Mathematics, Advanced). Its lesson record concerns
+quadratic equations and problem solving.
 
-`light-poster.webp` (1400×800) is an optimized capture of the actual production
-Three.js shader at progress zero and time zero, on the production `#f7f9fe`
-background. It remains visible during loading, reduced motion, unavailable
-WebGL, and context failure. It is decorative and carries no product claims.
-The live effect uses a single shader quad with curved violet/cyan filaments.
-See the [design direction](../../marketing-frontend/DESIGN.md) for motion and
-rendering constraints. The social preview is `public/social-preview.svg`.
+Completing a lesson does not deduct reserved hours a second time. The product
+copy applies to tutoring generally, and repeated demo captions are omitted.
 
-### LINE reminder
+Names, lessons, dates, and balances are illustrative. They are not testimonials,
+customer counts, learning results, or claims of exam-specific capabilities.
+The composed scenes demonstrate supported workflows rather than pixel-exact
+screenshots. Illustrative controls do not impersonate working application actions.
 
-The current homepage renders a semantic HTML account header and message using
-the exact template in `backend/src/repositories/class-reminder.repository.ts`:
+## LINE reminder
+
+The notification uses the real message shape from
+`backend/src/repositories/class-reminder.repository.ts`:
 
 ```text
 Class reminder
 
-Hi Narin, your SAT Math class starts in 1 hour.
+Hi Min, your SAT Math class starts in 1 hour.
 
 Date: Oct 8, 2026
-Time: 6:30 PM–7:30 PM
+Time: 4:00 PM–6:00 PM
 Time zone: Asia/Bangkok
 ```
 
-The message is English in both marketing locales because the backend template
-is English. Thai localizes the surrounding explanation. June appears only in
-the illustrative account header, not inside the reminder body. There is no
-invented delivery/read receipt. Never send a real LINE message solely to create
-an asset without explicit authorization.
+The message remains English in both website languages because the backend
+template is English. Thai translates its surrounding explanation. An upcoming
+reminder preview is not a delivery receipt. No real LINE messages are sent to
+create or test the landing page.
 
-## Historical reference assets
+## Identity and decorative assets
 
-`marketing-frontend/public/marketing/product-*.webp` are unused captures from the
-previous screenshot presentation. They were made with production portal React
-components and CSS in a temporary Vite fixture using synthetic API data. English
-and Thai captures used actual application translations; crops were encoded as
-WebP without painting over UI. The previous Physics studio/Narin scenario moved
-October 7 at 10:00 to October 8 at 11:00 and is superseded by the SAT scene above.
-No current homepage import references those files.
+Reuse the existing TutorPal app icon. The 96px UI/favicon derivative preserves its
+appearance while reducing the asset from 391,358 to 6,878 bytes; organization
+metadata retains the original. Inter and Noto Sans Thai are self-hosted
+from their Fontsource packages, with OFL license copies in
+`marketing-frontend/public/licenses/`. Optional hero entrance/floating motion uses CSS with small script coordination;
+static HTML is the default when scripts are disabled, motion is reduced, or
+enhancement setup fails. A bounded landing-only head guard prepares optional
+reveal targets before paint and permanently releases unclaimed preparation after
+two seconds. It does not conceal navigation, hero copy/actions, or FAQ controls.
+No procedural light, canvas, or WebGL asset remains.
 
+The closing CTA uses six original inline SVG objects inspired by the substantial
+white-tile and filled-symbol style of the [live ChronoTask footer](https://chronotasks.vercel.app/).
+Calendar, clock, pencil, book, student, and chat silhouettes are authored locally;
+no reference assets are copied or downloaded. The supplied timeline screenshot
+informs blue/orange product hues and is not shipped as an asset. Schedule and
+student avatars now use the requested `#17B5F3` and `#F79303` with white text;
+these pairs have approximately 2.35:1 and 2.30:1 contrast and are explicitly
+approved exceptions. The illustrated book's deeper spine remains independent
+of avatar colors. Indigo and all remaining-hour bars retain `#533AFD`.
 
-The [local LINE composition](line-reminder-demo.html) and
-`marketing-frontend/src/assets/marketing/line-reminder-demo.webp` (800×1000)
-are a composed historical example for Maya Chen / English foundations on
-August 16, 2026. They are not imported by the current homepage and are not a
-capture of a received message.
+Social previews are original light vector compositions of the site's identity and
+product story. `social.svg` embeds the existing small logo bytes unmodified and is
+deterministically rasterized with Sharp. Its output and regeneration command live
+with the marketing implementation.
 
-`marketing-frontend/src/assets/marketing/tutor-objects.webp` (1536×1024) is
-historical generated artwork, also unused. The original prompt and exploration
-are retained in the [prototype archive](../prototypes/README.md).
-The earlier sanitized `public/product-previews/` captures remain references.
-The rejected lesson-block sculpture and teaching photograph are not rendered
-by the current homepage.
+## Historical material
+
+The previous TanStack Start marketing site was deleted before this Astro build.
+Old references to screenshots, image-generation experiments, beta forms, and
+marketing components describe that retired implementation. The
+[prototype archive](../prototypes/README.md) and [old LINE composition](line-reminder-demo.html)
+are historical references, not current page assets.

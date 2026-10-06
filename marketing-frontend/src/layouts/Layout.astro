@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+import { copy, type Locale } from '../content';
+interface Props { lang: Locale; noindex?: boolean; title?: string; prepareMotion?: boolean; }
+const { lang, noindex = false, title, prepareMotion = false } = Astro.props;
+const c = copy[lang];
+const canonical = `https://tutorpal.io${lang === 'en' ? '/' : '/th/'}`;
+const schema = { '@context':'https://schema.org', '@graph': [
+ { '@type':'Organization', '@id':'https://tutorpal.io/#organization', name:'TutorPal', url:'https://tutorpal.io/', logo:'https://tutorpal.io/app-icon.png' },
+ { '@type':'WebSite', '@id':'https://tutorpal.io/#website', name:'TutorPal', url:'https://tutorpal.io/', inLanguage:['en','th'], publisher:{'@id':'https://tutorpal.io/#organization'} }
+] };
+---
+<!doctype html>
+<html lang={lang}>
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  {prepareMotion && <script is:inline>
+    (() => {
+      const root = document.documentElement;
+      const targets = '[data-hero-card],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const deadline = Date.now() + 2000;
+      let timer;
+      const listeners = [];
+      const listen = (target, name, handler) => { target.addEventListener(name, handler, true); listeners.push(() => target.removeEventListener(name, handler, true)); };
+      const clear = () => { clearTimeout(timer); listeners.splice(0).forEach(remove => remove()); };
+      const state = window.tutorpalRevealBoot = {
+        phase: 'preparing', deadline, reason: '',
+        release(reason) {
+          state.phase = 'expired'; state.reason = reason; clear();
+          root.classList.remove('reveal-preparing'); root.dataset.revealBoot = 'expired'; root.dataset.revealReason = reason;
+          document.querySelectorAll(targets).forEach(element => {
+            element.dataset.motionDone = 'true'; element.dataset.motionPhase = 'settled';
+            element.classList.remove('hero-motion-enter');
+            try { element.getAnimations?.().forEach(animation => animation.cancel()); } catch { /* Preparation still releases if an animation API fails. */ }
+          });
+        },
+        claim() {
+          if (state.phase !== 'preparing' || Date.now() >= deadline) { state.release(state.reason || 'deadline'); return false; }
+          state.phase = 'claimed'; clear(); root.classList.remove('reveal-preparing'); root.dataset.revealBoot = 'claimed'; delete root.dataset.revealReason; return true;
+        },
+      };
+      try {
+      const restored = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
+      if (reduced.matches || !('IntersectionObserver' in window) || typeof HTMLElement.prototype.animate !== 'function' || typeof window.requestAnimationFrame !== 'function' || typeof window.cancelAnimationFrame !== 'function' || location.hash || window.scrollY > 0 || restored || document.hidden) {
+        state.release(reduced.matches ? 'reduced' : 'initial-bypass'); return;
+      }
+      root.dataset.revealBoot = 'preparing'; delete root.dataset.revealReason; root.classList.add('reveal-preparing');
+      timer = setTimeout(() => state.release('deadline'), 2000);
+      const interaction = () => state.release('early-interaction');
+      listen(document, 'pointerdown', interaction); listen(document, 'keydown', interaction); listen(document, 'focusin', interaction);
+      listen(window, 'hashchange', () => state.release('hash'));
+      listen(window, 'scroll', () => { if (window.scrollY > 0) state.release('restored-or-early-scroll'); });
+      listen(document, 'visibilitychange', () => { if (document.hidden) state.release('hidden'); });
+      listen(window, 'pagehide', () => state.release('pagehide'));
+      listen(window, 'error', () => state.release('entry-error'));
+      listen(window, 'unhandledrejection', () => state.release('entry-error'));
+      listen(reduced, 'change', () => { if (reduced.matches) state.release('reduced'); });
+      } catch { state.release('setup-failure'); }
+    })();
+  </script>}
+  <meta name="theme-color" content="#FFFFFF" /><title>{title ?? c.title}</title>
+  <meta name="description" content={c.description} />
+  {noindex ? <meta name="robots" content="noindex, follow" /> : <>
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href="https://tutorpal.io/" />
+    <link rel="alternate" hreflang="th" href="https://tutorpal.io/th/" />
+    <link rel="alternate" hreflang="x-default" href="https://tutorpal.io/" />
+  </>}
+  <link rel="icon" href="/app-icon-small.png" type="image/png" />
+  <meta property="og:type" content="website" /><meta property="og:site_name" content="TutorPal" />
+  <meta property="og:title" content={title ?? c.title} /><meta property="og:description" content={c.description} />
+  <meta property="og:url" content={canonical} /><meta property="og:locale" content={lang === 'en' ? 'en_US' : 'th_TH'} />
+  <meta property="og:image" content="https://tutorpal.io/social.png" /><meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="TutorPal — Plan, manage, track all in one place." />
+  <meta name="twitter:card" content="summary_large_image" />
+  {!noindex && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+</head>
+<body><a class="skip-link" href="#main">{c.skip}</a><slot /></body>
+</html>

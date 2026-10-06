@@ -20,10 +20,10 @@ help:
 		'TutorPal repository commands' \
 		'' \
 		'Development:' \
-		'  make dev                              Start backend, user frontend, and admin frontend' \
+		'  make dev                              Start backend, user, admin, and marketing frontends' \
 		'  make frontend-dev                     Start the user frontend' \
 		'  make admin-dev                        Start the admin frontend' \
-		'  make marketing-dev                    Start the public marketing Worker app' \
+		'  make marketing-dev                    Start the public Astro marketing site' \
 		'  make backend-dev                      Start the Bun API server' \
 		'' \
 		'Build and scripts:' \
