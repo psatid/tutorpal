@@ -56,14 +56,14 @@ Before enabling the Cloudflare reminder Worker:
    empty cron list. From the repository root, the development deployment is:
 
    ```sh
-   make deploy APP=backend ENV=dev
+   make deploy-dev APP=backend
    ```
 
    For production, replace every
    `REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID` and `.invalid` value in
    `backend/wrangler/prod/wrangler.api.prod.jsonc` and
    `backend/wrangler/prod/wrangler.reminders.prod.jsonc`, provision production
-   secrets, then run `make deploy APP=backend ENV=prod`. The Makefile blocks
+   secrets, then run `make deploy APP=backend`. The Makefile blocks
    that deployment until the placeholders are removed.
 
 5. Verify the reminder Worker logs and delivery state after trigger

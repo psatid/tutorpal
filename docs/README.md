@@ -8,16 +8,23 @@ and operations. Run `make help` to see all targets. Common commands include:
 ```sh
 make dev
 make build
-make deploy APP=backend ENV=dev
-# After replacing the production Worker config placeholders:
-make deploy APP=backend ENV=prod
-make deploy APP=frontend PAGES_PROJECT=<project-name>
-make deploy APP=admin-frontend PAGES_PROJECT=<project-name>
+make build-dev
+make check
+make test
+make db-setup
+make -C backend db-migrate-deploy-dev
+make deploy-dev APP=backend
+make deploy-dev APP=tutor-portal
+make deploy-dev APP=admin-portal
+# After replacing production Worker placeholders and configuring Pages:
+make -C backend db-migrate-deploy-production
+make deploy APP=backend
+make deploy APP=tutor-portal PAGES_PROJECT=<production-project>
+make deploy APP=admin-portal PAGES_PROJECT=<production-project>
 make deploy APP=marketing-frontend
-make migrate ENV=dev
 ```
 
-Each application also has a local Makefile with the same core targets:
+Each application also has a local Makefile with targets suited to that app:
 
 - [User frontend Makefile](../frontend/Makefile)
 - [Admin frontend Makefile](../admin-frontend/Makefile)

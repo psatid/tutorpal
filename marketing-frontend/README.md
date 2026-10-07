@@ -17,7 +17,8 @@ bun run build
 bun run preview --port 4321
 ```
 
-The root Makefile also exposes `marketing-dev`, `marketing-build`, and
+The root Makefile also exposes `marketing-dev`, `marketing-build`,
+`marketing-build-dev`, `marketing-check`, `marketing-test`, and
 `marketing-run SCRIPT=preview ARGS="--port 4321"`.
 `make run SCRIPT=<script> ARGS="..."` works inside this directory.
 Build runs Astro's strict type check before generating `dist/`.

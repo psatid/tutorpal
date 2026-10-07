@@ -25,12 +25,17 @@ targets are:
 ```sh
 make dev
 make generate-api
+make check
 make build
-make deploy PAGES_PROJECT=<project-name>
+make build-dev
+make test
+make deploy-dev
+make deploy PAGES_PROJECT=<production-project>
 ```
 
-The deployment target requires the real Cloudflare Pages project name and does
-not provide a guessed default.
+The development deployment uses the fixed Pages project
+`tutorpal-admin-portal-dev`. Production deployments require the production
+Pages project name.
 
 ## Local development
 

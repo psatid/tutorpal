@@ -27,6 +27,9 @@
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
 		"db:migrate:prod": "prisma migrate deploy",
+		"db:migrate:deploy": "prisma migrate deploy",
+		"db:migrate:deploy:dev": "bun --env-file=.env.dev run db:migrate:deploy",
+		"db:migrate:deploy:production": "bun --env-file=.env.production run db:migrate:deploy",
 		"db:studio": "prisma studio",
 		"bootstrap-admin": "bun run scripts/bootstrap-admin.ts"
 	},

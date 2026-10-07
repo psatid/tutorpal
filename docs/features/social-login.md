@@ -66,7 +66,7 @@ Run the migration before enabling provider credentials in production:
 
 ```sh
 cd backend
-bun run db:migrate:prod
+make db-migrate-deploy-production
 ```
 
 Resolve any reported duplicate provider identities manually, then rerun the

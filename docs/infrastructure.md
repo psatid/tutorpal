@@ -10,7 +10,8 @@ The current environment documented here is <code>dev</code>:
 
 - Web application: <code>https://dev.app.tutorpal.io</code>
 - API: <code>https://dev.api.tutorpal.io</code>
-- Cloudflare Pages project: <code>tutorpal-dev</code>
+- User portal Pages project: <code>tutorpal-tutor-portal-dev</code>
+- Admin portal Pages project: <code>tutorpal-admin-portal-dev</code>
 - Cloudflare API Worker: <code>tutorpal-api-dev</code>
 - Cloudflare reminder Worker: <code>tutorpal-reminders-dev</code>
 - Cloudflare DNS zone: <code>tutorpal.io</code>
@@ -71,11 +72,11 @@ polling. Both use Hyperdrive for database access.
 | Resource | Current configuration | Responsibility |
 | --- | --- | --- |
 | DNS zone | <code>tutorpal.io</code> | Authoritative DNS, proxying, and TLS for application hostnames |
-| Pages project | <code>tutorpal-dev</code> | Static frontend deployment from <code>frontend/dist</code> |
+| User portal Pages project | <code>tutorpal-tutor-portal-dev</code> | Static frontend deployment from <code>frontend/dist</code> |
 | Marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
 | Marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
 | Pages custom domain | <code>dev.app.tutorpal.io</code> | Public web application origin |
-| Admin Pages project | Separate Pages project from <code>admin-frontend</code> | Restricted admin portal; its public origin is configured as <code>ADMIN_FRONTEND_URL</code> |
+| Admin Pages project | <code>tutorpal-admin-portal-dev</code> | Restricted admin portal; its public origin is configured as <code>ADMIN_FRONTEND_URL</code> |
 | API Worker | <code>tutorpal-api-dev</code> | Hono API, Better Auth, email, and LINE account linking |
 | Reminder Worker | <code>tutorpal-reminders-dev</code> | Scheduled reminder discovery, claiming, and LINE delivery; no public route |
 | Worker custom domain | <code>dev.api.tutorpal.io</code> | Public API and authentication origin attached to the API Worker |
@@ -93,9 +94,9 @@ origins, cookies, email links, and LINE OAuth callbacks stay stable.
 Cloudflare manages the <code>tutorpal.io</code> zone and the custom domain
 associations:
 
-- <code>dev.app.tutorpal.io</code> is attached to the <code>tutorpal-dev</code>
+- <code>dev.app.tutorpal.io</code> is attached to the <code>tutorpal-tutor-portal-dev</code>
   Pages project. Its Pages deployment target is
-  <code>tutorpal-dev.pages.dev</code>.
+  <code>tutorpal-tutor-portal-dev.pages.dev</code>.
 - <code>dev.api.tutorpal.io</code> is attached to the
   <code>tutorpal-api-dev</code> Worker through a Worker Custom Domain.
 - <code>tutorpal.io</code> is attached to the <code>tutorpal-marketing</code>
@@ -135,7 +136,7 @@ export VITE_API_URL="https://dev.api.tutorpal.io"
 export VITE_ADMIN_APP_URL="https://dev.admin.tutorpal.io"
 bun run generate:api
 bun run build --mode dev
-bunx wrangler pages deploy dist --project-name tutorpal-dev
+bunx wrangler pages deploy dist --project-name tutorpal-tutor-portal-dev
 ~~~
 
 The API URL is public because it is compiled into the browser bundle. Never
@@ -245,26 +246,34 @@ configuration is created.
 Validate and deploy development from the repository root:
 
 ~~~bash
-make backend-build ENV=dev
-make deploy APP=backend ENV=dev
+make backend-build-dev
+make deploy-dev APP=backend
 ~~~
 
 The aggregate backend deployment publishes the reminder Worker first and the
 API Worker second, removing the old API cron after the new schedule is active.
 For independent recovery operations, use
-<code>make deploy APP=backend-reminders ENV=dev</code> or run the explicit backend
-targets <code>make reminders-deploy</code> and <code>make deploy</code> from
-<code>backend</code>. <code>--keep-vars</code> preserves variables and secrets
+<code>make deploy-dev APP=backend-reminders</code> or run the explicit backend
+targets <code>make reminders-deploy-dev</code> and <code>make deploy-dev</code>
+from <code>backend</code>. <code>--keep-vars</code> preserves variables and secrets
 managed in the Cloudflare dashboard. Keep deployed configuration and dashboard
 values consistent; binding names and resource IDs must match both Wrangler
 files.
 
-`ENV` defaults to <code>dev</code> for backend Worker checks and deployments.
+Local database setup follows the repository workflow:
+<code>make db-setup</code> starts the Compose Postgres service and applies
+committed migrations. For remote dev migrations, run
+<code>make -C backend db-migrate-deploy-dev</code>; for production, prepare the
+ignored <code>backend/.env.production</code> file and run
+<code>make -C backend db-migrate-deploy-production</code>.
+
+Backend Worker checks default to <code>dev</code>; deployment environment is
+selected with the root <code>deploy-dev</code> or <code>deploy</code> target.
 For production, replace every
 <code>REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID</code> and <code>.invalid</code>
 placeholder in both production configs, provision the production secrets, then
-run <code>make backend-build ENV=prod</code> and
-<code>make deploy APP=backend ENV=prod</code>. The backend Makefile blocks a
+run <code>make backend-build</code> and
+<code>make deploy APP=backend</code>. The backend Makefile blocks a
 production deployment while any of those placeholders remain. Direct Wrangler
 package scripts remain explicit and must not be used for production until the
 placeholders have been replaced. Local Wrangler `.dev.vars` files are resolved

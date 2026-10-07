@@ -9,18 +9,32 @@ targets are:
 make dev
 make cf-dev
 make cf-reminders-dev
+make build
+make build-dev
 make check ENV=dev
 make test
-make deploy ENV=dev
-make reminders-deploy ENV=dev
+make db-migrate-local
+make db-migrate-deploy-dev
+make db-migrate-deploy-production
+make deploy-dev
+make deploy
+make reminders-deploy-dev
+make reminders-deploy
 ```
 
-The `deploy` target deploys the API Worker, while `reminders-deploy` deploys
-the scheduled reminder Worker. From the repository root,
-`make deploy APP=backend ENV=dev` deploys the reminder Worker first and then
-the API Worker so the cron cutover has no gap. `ENV` defaults to `dev`; use
-`ENV=prod` only after replacing the production configuration placeholders. The
-`do-deploy` target is available for the legacy DigitalOcean App Platform path.
+`db-migrate` creates and applies a local Prisma migration. `db-migrate-local`
+applies committed migrations to the local Compose database. The
+`db-migrate-deploy-*` targets use the matching environment file; keep
+`.env.production` local and untracked. From the repository root,
+`make db-setup` starts Postgres and applies local migrations.
+
+The backend `deploy` and `deploy-dev` targets deploy the API Worker to
+production and dev. The matching `reminders-deploy` targets deploy the
+scheduled reminder Worker. From the repository root,
+`make deploy-dev APP=backend` deploys the reminder Worker first and then the API
+Worker so the cron cutover has no gap. Production commands require the
+production configuration placeholders to be replaced. The `do-deploy` target
+is available for the legacy DigitalOcean App Platform path.
 
 ## Cloudflare Workers
 
@@ -64,6 +78,22 @@ configuration with query caching disabled. Do not add a direct `DATABASE_URL`
 variable: the Hyperdrive binding supplies the connection string at runtime.
 Wrangler loads `.dev.vars` from the selected config directory, so local Worker
 secrets belong in `wrangler/dev/.dev.vars` (ignored by Git).
+
+### Grafana logs and traces
+
+The API and reminder Workers export OpenTelemetry logs and traces to the
+account-level Cloudflare destinations `tutorpal-grafana-logs` and
+`tutorpal-grafana-traces` in dev and production. Configure these two destinations
+in the Cloudflare dashboard under **Observability → Destinations**. Create one
+Logs destination and one Traces destination, using the Grafana Cloud OTLP endpoint
+with `/v1/logs` and `/v1/traces` respectively, plus Grafana's `Authorization`
+header. Keep the endpoint credentials in Cloudflare; do not commit them here.
+
+The Workers currently sample 100% of logs and traces and persist them in
+Cloudflare as well as exporting them to Grafana, matching Chuayjum. Traces include
+the request URL and query attributes, so OAuth callback query values may be
+present in telemetry. Avoid putting long-lived secrets in URLs and review access
+and retention policies for both Grafana and Cloudflare telemetry.
 
 The API Worker validates its Hyperdrive binding, origins, and secrets before
 creating Prisma or Better Auth. The reminder Worker validates its Hyperdrive
@@ -123,9 +153,9 @@ reminder aliases continue to target `dev`.
 
 Before any production deployment, replace every
 `REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID` and `.invalid` value in both production
-configs and provision the production Worker secrets. `make deploy ENV=prod`
-and `make reminders-deploy ENV=prod` refuse to run while either placeholder is
-present. The direct `bun run cf:deploy:prod` and
+configs and provision the production Worker secrets. `make deploy` and
+`make reminders-deploy` refuse to run while either placeholder is present. The
+direct `bun run cf:deploy:prod` and
 `bun run cf:reminders:deploy:prod` scripts run the same placeholder guard before
 Wrangler. Production dry-run checks remain usable with placeholders; they do
 not deploy and do not run the deployment guard.
@@ -166,6 +196,6 @@ Register these exact provider callback URLs, using the deployed
 The user portal exposes social actions only when the server's `/v1/config`
 response enables them. Account settings uses the controlled LINE enrollment
 endpoint; the existing `/settings/line` page remains the separate LINE
-Messaging API credentials screen. Run `bun run db:migrate:prod` before first
-production enablement so the provider identity uniqueness migration has been
-applied.
+Messaging API credentials screen. Run `make db-migrate-deploy-production`
+before first production enablement so the provider identity uniqueness
+migration has been applied.
