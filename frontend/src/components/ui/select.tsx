@@ -239,17 +239,25 @@ type SelectInputProps<T> = SelectPrimitive.Root.Props<T> & {
   options: SelectInputOption<T>[];
   placeholder?: string;
   className?: string;
+  triggerProps?: {
+    id?: string;
+    "aria-labelledby"?: string;
+    "aria-describedby"?: string;
+    "aria-invalid"?: boolean;
+    "aria-errormessage"?: string;
+  };
 };
 
 const SelectInput = <T,>({
   options,
   placeholder,
   className,
+  triggerProps,
   ...props
 }: SelectInputProps<T>) => {
   return (
     <Select items={options} {...props}>
-      <SelectTrigger className={className}>
+      <SelectTrigger className={className} {...triggerProps}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

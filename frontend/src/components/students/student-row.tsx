@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Student } from "@/models/student";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 import {
   CheckCircle2,
   Eye,
@@ -53,7 +54,7 @@ export function StudentRow({
           type="button"
         >
           <Avatar size="lg">
-            <AvatarFallback className="bg-primary-container font-semibold text-primary">
+            <AvatarFallback className={`${nameToneAvatarClasses[getNameTone(data.name)]} font-semibold`}>
               {data.initials}
             </AvatarFallback>
           </Avatar>

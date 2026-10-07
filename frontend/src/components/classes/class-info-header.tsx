@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Class } from "@/models/class";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 
 interface ClassInfoHeaderProps {
 	classData: Class;
@@ -85,7 +86,7 @@ export function ClassInfoHeader({
 									key={student.getId()}
 								>
 									<Avatar size="sm">
-										<AvatarFallback className="bg-accent text-xs font-semibold text-on-primary-container">
+										<AvatarFallback className={`${nameToneAvatarClasses[getNameTone(student.getName())]} text-xs font-semibold`}>
 											{student.getInitials()}
 										</AvatarFallback>
 									</Avatar>

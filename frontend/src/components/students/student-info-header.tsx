@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Phone, CheckCircle2, TriangleAlert } from "lucide-react";
 import { Student } from "@/models/student";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 
 interface StudentInfoHeaderProps {
   studentData: Student;
@@ -32,7 +33,7 @@ export function StudentInfoHeader({
         </button>
 
         <Avatar size="lg">
-          <AvatarFallback className="bg-primary text-white font-semibold">
+          <AvatarFallback className={`${nameToneAvatarClasses[getNameTone(data.name)]} font-semibold`}>
             {data.initials}
           </AvatarFallback>
         </Avatar>

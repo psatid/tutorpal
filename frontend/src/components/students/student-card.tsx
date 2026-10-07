@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Student } from "@/models/student";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 
 interface StudentCardProps {
   student: Student;
@@ -29,7 +30,7 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
   return (
     <InfoCard onClick={onView}>
       <Avatar size="lg">
-        <AvatarFallback className="bg-primary text-white font-semibold">
+        <AvatarFallback className={`${nameToneAvatarClasses[getNameTone(data.name)]} font-semibold`}>
           {data.initials}
         </AvatarFallback>
       </Avatar>

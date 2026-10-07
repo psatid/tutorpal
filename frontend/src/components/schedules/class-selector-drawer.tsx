@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface ClassSelectorDrawerProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
+	onCloseAutoFocus?: () => void;
 	selectedClassId: string | null;
 	onSelect: (classId: string) => void;
 }
@@ -18,6 +19,7 @@ interface ClassSelectorDrawerProps {
 export function ClassSelectorDrawer({
 	isOpen,
 	onOpenChange,
+	onCloseAutoFocus,
 	selectedClassId,
 	onSelect,
 }: ClassSelectorDrawerProps) {
@@ -91,6 +93,7 @@ export function ClassSelectorDrawer({
 				/>
 			}
 			layer="nested"
+			onCloseAutoFocus={onCloseAutoFocus}
 			onOpenChange={(open) => {
 				if (!open) handleClose();
 			}}
@@ -135,40 +138,23 @@ export function ClassSelectorDrawer({
 								return (
 									<label
 										className={cn(
-											"flex w-full cursor-pointer items-center gap-3 rounded-xl p-3 text-left transition-all has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+											"flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
 											isSelected
-												? "bg-primary-container"
-												: "bg-surface-container-low hover:bg-surface-container",
+												? "border-primary bg-primary/5 text-primary"
+												: "border-outline-variant bg-card hover:bg-surface-container",
 										)}
 										htmlFor={optionId}
 										key={data.id}
 									>
 										<input
 											checked={isSelected}
-											className="sr-only"
+											className="h-4 w-4 shrink-0 accent-primary"
 											id={optionId}
 											name="class-selector"
 											onChange={() => handleSelect(data.id)}
 											type="radio"
 											value={data.id}
 										/>
-										<span
-											aria-hidden="true"
-											className={cn(
-												"flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors",
-												isSelected
-													? "border-primary bg-primary"
-													: "border-outline bg-surface",
-											)}
-										>
-											{isSelected ? (
-												<Check
-													aria-hidden="true"
-													className="h-4 w-4 text-on-primary"
-												/>
-											) : null}
-										</span>
-
 										<div className="min-w-0 flex-1">
 											<p className="truncate font-medium text-on-surface">
 												{data.displayName}

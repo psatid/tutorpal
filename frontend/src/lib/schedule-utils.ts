@@ -1,6 +1,10 @@
 import { AlertCircle, Check, X } from "lucide-react";
 import type { TFunction } from "i18next";
 
+export const SCHEDULE_DURATION_OPTIONS: readonly number[] = [
+  30, 60, 90, 120, 150, 180,
+];
+
 export function formatTime24Hour(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;

@@ -53,8 +53,8 @@ export default {
 		studentsDescription: "Optional. Add students now or later.",
 		addStudents: "Add students",
 		editStudents: "Edit students ({{count}})",
-		studentCount_one: "{{count}} student",
-		studentCount_other: "{{count}} students",
+		studentLoading: "Loading student…",
+		studentUnavailable: "Student unavailable",
 	},
 	balance: {
 		label: "Balance",

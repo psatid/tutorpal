@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import {
   AnimatePresence,
   motion,
@@ -74,9 +69,7 @@ function createWeekBuffer(selectedDate: Date): Date[] {
   const selectedWeekStart = DateTime.from(selectedDate).startOfWeek();
 
   return Array.from({ length: MAX_BUFFER_WEEKS }, (_, index) =>
-    selectedWeekStart
-      .addWeeks(index - BUFFER_WEEKS_BEFORE_SELECTED)
-      .toDate(),
+    selectedWeekStart.addWeeks(index - BUFFER_WEEKS_BEFORE_SELECTED).toDate(),
   );
 }
 
@@ -229,10 +222,10 @@ export function WeekDateSelector({
   });
   const weekEnd = getDateInWeek(railSelectedWeekStart, WEEK_DAYS - 1);
   const weekLabel = formatWeekRange(railSelectedWeekStart, weekEnd, true);
-  const shortWeekLabel = formatWeekRange(railSelectedWeekStart, weekEnd).replace(
-    /\s*–\s*/g,
-    "–",
-  );
+  const shortWeekLabel = formatWeekRange(
+    railSelectedWeekStart,
+    weekEnd,
+  ).replace(/\s*–\s*/g, "–");
   const periodLabel = viewMode === "week" ? weekLabel : monthLabel;
   const shortPeriodLabel =
     viewMode === "week" ? shortWeekLabel : shortMonthLabel;
@@ -256,7 +249,10 @@ export function WeekDateSelector({
     if (date) {
       const nextDate =
         viewMode === "week"
-          ? getDateInWeek(getWeekStart(date), getWeekdayOffset(railSelectedDate))
+          ? getDateInWeek(
+              getWeekStart(date),
+              getWeekdayOffset(railSelectedDate),
+            )
           : date;
 
       handleCalendarDateSelect(nextDate);
@@ -266,7 +262,7 @@ export function WeekDateSelector({
   return (
     <div className={cn("mb-4", className)}>
       <div className="px-3 pt-3 sm:px-4 lg:px-6">
-        <div className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <DateField
               value={DateTime.from(railSelectedDate).toDateOnlyString()}
@@ -284,7 +280,7 @@ export function WeekDateSelector({
               trigger={
                 <button
                   type="button"
-                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-full px-1.5 py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card sm:gap-1.5 sm:px-3"
+                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card"
                 >
                   <motion.span
                     className="relative block min-w-0"
@@ -305,8 +301,12 @@ export function WeekDateSelector({
                         transition={motionTransition}
                         className="block truncate"
                       >
-                        <span className="sm:hidden">{shortPeriodLabel}</span>
-                        <span className="hidden sm:inline">{periodLabel}</span>
+                        <span className="min-[480px]:hidden">
+                          {shortPeriodLabel}
+                        </span>
+                        <span className="hidden min-[480px]:inline">
+                          {periodLabel}
+                        </span>
                       </motion.span>
                     </AnimatePresence>
                   </motion.span>
@@ -318,20 +318,12 @@ export function WeekDateSelector({
               }
             />
           </div>
-          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleToday}
-              className="min-h-11 bg-card px-1.5 sm:px-3"
-            >
-              <CalendarDays aria-hidden="true" className="hidden size-4 sm:block" />
+          <div className="flex min-w-0 items-center justify-end gap-2 whitespace-nowrap min-[420px]:shrink-0">
+            <Button variant="outline" size="sm" onClick={handleToday}>
+              <CalendarDays aria-hidden="true" className="size-4" />
               {t("schedules:weekSelector.today")}
             </Button>
-            <ScheduleViewSwitch
-              value={viewMode}
-              onChange={onViewModeChange}
-            />
+            <ScheduleViewSwitch value={viewMode} onChange={onViewModeChange} />
           </div>
         </div>
       </div>

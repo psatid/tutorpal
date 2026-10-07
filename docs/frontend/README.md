@@ -38,6 +38,20 @@ primary. Calendar items and workspace avatars use indigo `#533AFD`, blue
 `#17B5F3`, and orange `#F79303`, with white text/initials; every hour fill is indigo.
 The requested white-on-blue/orange pairs are documented contrast exceptions
 (approximately 2.35:1/2.30:1), not WCAG AA text pairs.
+In the authenticated app, student initials and schedule class accents follow
+the same indigo/orange/cyan tones. `getNameTone` normalizes names to Unicode NFC,
+trims and collapses whitespace, lowercases without a locale, and hashes code
+points to keep a name's tone stable across views; an empty name uses indigo.
+Student avatars use indigo `#533AFD`, dark orange `#A85800`, or dark cyan
+`#08769B` with white initials; class-group count avatars use navy `#273951`
+with white text. Day-view schedules show the delivery icon inline beside its
+On-site or Online label, without an icon background. Weekly calendar blocks use
+darker orange and cyan fills with white labels and icons; historical status
+blocks use solid status fills with white content and a leading class-color dot.
+Toasts use a theme-aware card with a semantic left rail and filled status icon:
+green for success, red for errors, blue for info, and amber for warnings. Loading
+and plain confirmation toasts use indigo accents; existing messages and optional
+descriptions remain intact.
 The closing CTA has original filled SVG object tiles with guarded floating
 motion. Optional FAQ height/fade animation retains native multi-open details and
 reverses interrupted toggles. Disabled JavaScript and enhancement failure retain

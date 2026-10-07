@@ -60,7 +60,7 @@ export default function UserSetting({
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="h-8 w-8">
               <AvatarImage src="/unknow.png" alt={t("common:profile.avatarAlt")} />
-              <AvatarFallback>
+              <AvatarFallback className="bg-[#533AFD] font-semibold text-white">
                 {session?.user?.name
                   ?.split(" ")
                   .map((n) => n[0])

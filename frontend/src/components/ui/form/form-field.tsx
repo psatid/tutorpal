@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
   label?: string;
+  labelId?: string;
   htmlFor?: string;
   caption?: string;
   captionId?: string;
@@ -23,6 +24,7 @@ interface FormFieldProps {
 
 function FormField({
   label,
+  labelId,
   htmlFor,
   caption,
   captionId,
@@ -48,7 +50,7 @@ function FormField({
       className={cn("w-full", className)}
     >
       {label && (
-        <FieldLabel htmlFor={htmlFor}>
+        <FieldLabel htmlFor={htmlFor} id={labelId}>
           {label}
           {required && <span className="text-destructive">*</span>}
         </FieldLabel>

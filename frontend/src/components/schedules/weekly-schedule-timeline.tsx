@@ -5,6 +5,11 @@ import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedule
 import { DateTime } from "@/lib/date-time";
 import { formatTime24Hour, statusColors } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
+import {
+  getNameTone,
+  nameToneAccentClasses,
+  type NameTone,
+} from "@/lib/name-tone";
 
 const MINUTES_PER_DAY = 24 * 60;
 const DEFAULT_START_MINUTES = 6 * 60;
@@ -14,6 +19,19 @@ const HOUR_HEIGHT = 48;
 const MIN_EVENT_HEIGHT = 44;
 const DAY_COLUMN_MIN_WIDTH = 144;
 const TIME_COLUMN_WIDTH = 56;
+const scheduledBlockClasses: Record<NameTone, string> = {
+  indigo: "bg-[#533AFD]",
+  orange: "bg-[#A85800]",
+  cyan: "bg-[#08769B]",
+};
+const historicalStatusClasses: Record<
+  Exclude<GetV1Schedules200Item["status"], "SCHEDULED">,
+  string
+> = {
+  COMPLETED: "bg-[#087443]",
+  NO_SHOW: "bg-[#9A5B00]",
+  CANCELLED: "bg-[#B42318]",
+};
 
 interface WeeklyScheduleTimelineProps {
   selectedDate: Date;
@@ -133,9 +151,7 @@ function ScheduleBlock({
   );
   const width = 100 / item.laneCount;
   const left = item.lane * width;
-  const statusClassName =
-    statusColors[schedule.status]?.className ??
-    statusColors.SCHEDULED.className;
+  const classTone = getNameTone(schedule.className);
   const StatusIcon = statusColors[schedule.status]?.icon ?? CalendarCheck2;
   const dateLabel = DateTime.formatDate(schedule.date, {
     weekday: "long",
@@ -156,8 +172,10 @@ function ScheduleBlock({
         type: t(`schedules:type.${scheduleType}`),
       })}
       className={cn(
-        "absolute z-10 flex min-w-0 flex-col items-start overflow-hidden rounded-lg border border-current/20 px-2 py-1.5 text-left text-xs leading-tight transition-[filter,transform] hover:brightness-[0.97] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 active:translate-y-px motion-reduce:transition-none",
-        statusClassName,
+        "absolute z-10 flex min-w-0 flex-col items-start overflow-hidden rounded-lg border border-current/20 px-2 py-1.5 text-left text-xs leading-tight text-white transition-[filter,transform] hover:brightness-[0.97] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D253D] focus-visible:ring-offset-2 active:translate-y-px motion-reduce:transition-none",
+        schedule.status === "SCHEDULED"
+          ? scheduledBlockClasses[classTone]
+          : historicalStatusClasses[schedule.status],
       )}
       onClick={onView}
       style={{
@@ -169,11 +187,20 @@ function ScheduleBlock({
       type="button"
     >
       <span className="flex w-full min-w-0 items-center gap-1 font-semibold">
+        {schedule.status !== "SCHEDULED" ? (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-2 shrink-0 rounded-full",
+              nameToneAccentClasses[classTone],
+            )}
+          />
+        ) : null}
         <span className="min-w-0 truncate">{schedule.className}</span>
         <StatusIcon aria-hidden="true" className="size-3 shrink-0" />
         <ScheduleTypeIcon aria-hidden="true" className="size-3 shrink-0" />
       </span>
-      <span className="mt-0.5 truncate tabular-nums opacity-80">
+      <span className="mt-0.5 truncate tabular-nums">
         {startTime}–{endTime}
       </span>
     </button>

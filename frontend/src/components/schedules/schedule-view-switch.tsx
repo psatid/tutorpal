@@ -21,7 +21,7 @@ export function ScheduleViewSwitch({
   return (
     <fieldset
       aria-label={t("schedules:viewMode.label")}
-      className="inline-flex h-11 items-center rounded-full border border-border bg-card p-0 sm:p-0.5"
+      className="inline-flex items-center rounded-full border border-border bg-card p-0.5"
     >
       <legend className="sr-only">{t("schedules:viewMode.label")}</legend>
       {options.map((option) => {
@@ -31,7 +31,7 @@ export function ScheduleViewSwitch({
           <button
             aria-pressed={isSelected}
             className={cn(
-              "h-11 min-w-11 rounded-full px-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none sm:h-auto sm:min-h-9 sm:min-w-0 sm:px-3",
+              "min-h-8 min-w-11 rounded-full px-3 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none",
               isSelected
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",

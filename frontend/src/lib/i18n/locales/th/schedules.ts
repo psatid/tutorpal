@@ -146,9 +146,8 @@ const th = {
 			caption: "จำเป็น",
 		},
 		duration: {
-			label: "ระยะเวลา (นาที)",
+			label: "ระยะเวลา",
 			caption: "จำเป็น",
-			placeholder: "เช่น 60",
 		},
 		notes: {
 			label: "บันทึก",

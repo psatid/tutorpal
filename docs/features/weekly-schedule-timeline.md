@@ -9,7 +9,7 @@
 - In either rail, a touch tap commits immediately on `pointerup` before smooth centering. Horizontal swipes scroll without changing the committed day or week selection.
 - The timeline displays 06:00–22:00 by default and expands to include sessions outside that range.
 - Sessions are positioned by start time and duration. Overlapping sessions are split into separate lanes.
-- Timeline blocks reuse schedule status colors and delivery-type icons, and activate the existing schedule details drawer when clicked or focused with the keyboard.
+- Scheduled timeline blocks use stable class-name colors: indigo `#533AFD`, dark orange `#A85800`, or dark cyan `#08769B`. Completed, no-show, and cancelled blocks use solid status fills (`#087443`, `#9A5B00`, and `#B42318`) with a leading class-color dot. All block labels and icons are white. Delivery-type and status icons remain visible, and blocks activate the existing schedule details drawer when clicked or focused with the keyboard.
 - Search and status filters apply in both views. Empty timeline cells are display-only and never create schedules.
 - On narrow screens the seven-day grid scrolls horizontally while keeping a readable minimum width for each day.
 
@@ -18,7 +18,7 @@
 - Week mode uses the available viewport height and keeps page scrolling fixed while the timeline owns vertical and horizontal scrolling.
 - The shared selector header remains above the scrollport, while the weekday/date header stays sticky at the top and the time axis stays sticky on the left.
 - Day and Week share one compact switch and one date-selection footprint. The selector locally morphs its period label and selected rail item with restrained 200ms motion; reduced-motion users receive an immediate update.
-- `WeekDateSelector` owns the shared 44px header: its calendar period trigger remains on the left, with a non-wrapping Today then Day/Week control cluster on the right. At narrow widths it uses a localized short visible period label and 8px control spacing; at `sm` and wider it restores the full label and standard gutters.
+- `WeekDateSelector` shows an outlined Today control with a calendar icon and a bordered Day/Week switch with an indigo selected pill. At 480px and wider it shows the full period label; from 420px the period label, Today, and Day/Week controls share one row. Below 420px the compact period label sits above Today and Day/Week. The switch track stays 48px high and its buttons stay at least 44px high at every width, with no horizontal overflow.
 - Timeline labels fall back to on-site delivery data when a legacy schedule record omits its type, so accessible labels never expose `undefined`.
 
 ## API contract

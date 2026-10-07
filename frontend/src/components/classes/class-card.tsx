@@ -16,6 +16,7 @@ import {
 import { Clock, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Class } from "@/models/class";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 
 interface ClassCardProps {
 	classData: Class;
@@ -50,7 +51,7 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 					<AvatarGroup className="shrink-0">
 						{displayedStudents.map((student) => (
 							<Avatar key={student.getId()} size="sm">
-								<AvatarFallback className="bg-accent text-on-primary-container font-semibold">
+								<AvatarFallback className={`${nameToneAvatarClasses[getNameTone(student.getName())]} font-semibold`}>
 									{student.getInitials()}
 								</AvatarFallback>
 							</Avatar>

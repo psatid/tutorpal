@@ -84,6 +84,10 @@ shared `FormField`. Put native control properties inside `inputProps` or
 `RHFInputField` generates a stable input ID and connects its label,
 description, and validation error automatically. Pass an explicit `id` in
 `inputProps` only when another element must reference the control.
+The shared `Input` hides browser spinner controls on `type="number"` fields.
+Scrolling the wheel while a numeric field is focused blurs that field before
+the browser can step its value, leaving wheel scrolling available to the page
+or drawer. Keyboard arrows, `min`/`max`/`step`, and numeric input semantics remain.
 
 ```tsx
 <RHFInputField
@@ -98,9 +102,20 @@ Use the lower-level components such as `InputField`, `DateField`, and
 `FormField` only when a control is not owned by React Hook Form. Do not recreate
 label, description, error, or invalid-state markup in a feature component.
 
-`DateField` uses an anchored calendar on desktop. Below the `md` breakpoint it
-opens the calendar in a nested drawer, which avoids shifting the parent form
-drawer while keeping the same date-only form value.
+`DateField` uses a read-only shared `Input` with a leading calendar icon as its
+default trigger. The input opens an anchored calendar on desktop; below the
+`md` breakpoint it opens the calendar in a nested drawer, which avoids shifting
+the parent form drawer while keeping the same date-only form value. The default
+input opens with click, Enter, or Space and regains focus when the mobile drawer
+closes. Callers can provide a custom trigger for controls such as the schedule
+week selector.
+
+In Add New Schedule, one-time duration and each selected recurring weekday use
+numeric selects with 30-minute choices from 30 minutes through 3 hours; each
+weekday keeps its own duration, defaulting to 60 minutes. Edit mode also offers
+the stored duration when an older schedule falls outside those choices. The
+select trigger is linked to its visible label, caption, and error. Each
+recurring duration also includes its weekday in the accessible name.
 
 Its trigger exposes the controlled picker state as `data-state="open"` or
 `"closed"` in both presentations, so custom triggers can style their open

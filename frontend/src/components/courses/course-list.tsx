@@ -15,7 +15,7 @@ export function CourseList({
 	onEdit,
 }: CourseListProps) {
 	return (
-		<ul className="overflow-hidden rounded-lg border border-border bg-card">
+		<ul className="space-y-3">
 			{courses.map((course, index) => (
 				<CourseRow
 					actionTriggerRef={(node) => actionTriggerRef(course.getId(), node)}

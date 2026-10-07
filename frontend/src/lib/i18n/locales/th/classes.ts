@@ -57,8 +57,8 @@ const th = {
 		studentsDescription: "ไม่บังคับ เพิ่มนักเรียนตอนนี้หรือภายหลังก็ได้",
 		addStudents: "เพิ่มนักเรียน",
 		editStudents: "แก้ไขนักเรียน ({{count}})",
-		studentCount_one: "นักเรียน {{count}} คน",
-		studentCount_other: "นักเรียน {{count}} คน",
+		studentLoading: "กำลังโหลดนักเรียน…",
+		studentUnavailable: "ไม่พบข้อมูลนักเรียน",
 	},
 	balance: {
 		label: "ยอดคงเหลือ",

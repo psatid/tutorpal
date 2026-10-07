@@ -147,6 +147,7 @@ interface RHFSelectFieldProps<T extends FieldValues, O = string> {
   options: { value: O; label: string }[];
   selectProps?: {
     placeholder?: string;
+    ariaLabelledBy?: string;
   };
 }
 
@@ -170,6 +171,7 @@ function RHFSelectField<T extends FieldValues, O = string>({
           onValueChange={field.onChange}
           options={options}
           placeholder={selectProps?.placeholder}
+          ariaLabelledBy={selectProps?.ariaLabelledBy}
           label={label}
           caption={caption}
           error={fieldState.error?.message}

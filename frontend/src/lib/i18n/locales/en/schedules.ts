@@ -142,9 +142,8 @@ export default {
 			caption: "Required",
 		},
 		duration: {
-			label: "Duration (minutes)",
+			label: "Duration",
 			caption: "Required",
-			placeholder: "e.g., 60",
 		},
 		notes: {
 			label: "Notes",

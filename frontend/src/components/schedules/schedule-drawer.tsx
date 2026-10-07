@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert, Loader2, Pencil, Plus, Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { FormField } from "@/components/ui/form/form-field";
+import { Input } from "@/components/ui/input";
 import {
 	RHFDateField,
 	RHFInputField,
@@ -29,6 +30,7 @@ import {
 import { useClassDetails } from "@/hooks/queries/use-class-details";
 import { useGetSchedule } from "@/hooks/queries/use-get-schedule";
 import { DateTime } from "@/lib/date-time";
+import { formatDuration, SCHEDULE_DURATION_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 import {
 	minutesToTimeString,
@@ -40,7 +42,6 @@ import {
 export type { DrawerMode } from "@/components/ui/responsive-drawer";
 
 const SCHEDULE_DRAWER_FORM_ID = "schedule-drawer-form";
-
 function getScheduleDefaultValues(date: string): DefaultValues<ScheduleFormData> {
 	return {
 		classId: "",
@@ -75,6 +76,7 @@ export function ScheduleDrawer({
 }: ScheduleDrawerProps) {
 	const { t } = useTranslation(["schedules"]);
 	const navigate = useNavigate();
+	const classTriggerRef = useRef<HTMLInputElement>(null);
 	const statusOptions = [
 		{ value: "SCHEDULED", label: t("schedules:status.SCHEDULED") },
 		{ value: "COMPLETED", label: t("schedules:status.COMPLETED") },
@@ -97,7 +99,18 @@ export function ScheduleDrawer({
 	});
 	const classIdValue = useWatch({ control, name: "classId" });
 	const recurring = useWatch({ control, name: "recurring" });
+	const durationMinutes = useWatch({ control, name: "durationMinutes" });
 	const isRecurring = recurring !== undefined;
+	const durationOptions = [
+		...SCHEDULE_DURATION_OPTIONS,
+		...(mode !== "create" &&
+		typeof durationMinutes === "number" &&
+		!SCHEDULE_DURATION_OPTIONS.includes(durationMinutes)
+			? [durationMinutes]
+			: []),
+	]
+		.sort((a, b) => a - b)
+		.map((value) => ({ value, label: formatDuration(value, t) }));
 	const selectedClassQuery = useClassDetails(classIdValue || null);
 	const { data: selectedClass } = selectedClassQuery;
 	const { data: scheduleData } = useGetSchedule(
@@ -278,35 +291,46 @@ export function ScheduleDrawer({
 								? t("schedules:drawer.class.caption")
 								: undefined
 						}
+						captionId="schedule-class-description"
 						disabled={isDisabled}
 						error={errors.classId?.message}
+						errorId="schedule-class-error"
 						htmlFor="schedule-class"
 						label={t("schedules:drawer.class.label")}
 					>
-						<button
+						<Input
 							aria-haspopup="dialog"
+							aria-expanded={isClassDrawerOpen}
 							aria-invalid={!!errors.classId}
-							className={cn(
-								"flex h-9 w-full items-center rounded-4xl border border-input bg-input/30 px-3 py-1 text-left text-base transition-colors outline-none",
-								"hover:bg-input/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/40",
-								"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-								"aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20",
-							)}
+							aria-describedby={
+								[
+									mode === "create" ? "schedule-class-description" : null,
+									errors.classId ? "schedule-class-error" : null,
+								]
+									.filter(Boolean)
+									.join(" ") || undefined
+							}
+							className="cursor-pointer"
 							disabled={isDisabled}
 							id="schedule-class"
 							onClick={() => setIsClassDrawerOpen(true)}
-							type="button"
-						>
-							{selectedClassName || (
-								<span className="text-muted-foreground">
-									{t("schedules:drawer.class.placeholder")}
-								</span>
-							)}
-						</button>
+							onKeyDown={(event) => {
+								if (event.key === "Enter" || event.key === " ") {
+									event.preventDefault();
+									setIsClassDrawerOpen(true);
+								}
+							}}
+							placeholder={t("schedules:drawer.class.placeholder")}
+							readOnly
+							ref={classTriggerRef}
+							role="button"
+							value={selectedClassName}
+						/>
 					</FormField>
 
 					<ClassSelectorDrawer
 						isOpen={isClassDrawerOpen}
+						onCloseAutoFocus={() => classTriggerRef.current?.focus()}
 						onOpenChange={setIsClassDrawerOpen}
 						onSelect={(id) =>
 							setValue("classId", id, {
@@ -474,21 +498,17 @@ export function ScheduleDrawer({
 					)}
 
 					{!isRecurring && (
-						<RHFInputField
+						<RHFSelectField
 							control={control}
 							name="durationMinutes"
 							label={t("schedules:drawer.duration.label")}
+							options={durationOptions}
 							caption={
 								mode === "create"
 									? t("schedules:drawer.duration.caption")
 									: undefined
 							}
 							disabled={isDisabled}
-							inputProps={{
-								type: "number",
-								min: 1,
-								placeholder: t("schedules:drawer.duration.placeholder"),
-							}}
 						/>
 					)}
 

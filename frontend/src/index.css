@@ -196,6 +196,17 @@
   textarea {
     font-feature-settings: "ss01" 1;
   }
+
+  [data-slot="input"][type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  [data-slot="input"][type="number"]::-webkit-inner-spin-button,
+  [data-slot="input"][type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 @layer utilities {

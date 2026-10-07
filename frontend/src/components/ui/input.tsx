@@ -14,6 +14,7 @@ function Input({
   type,
   leftIcon: LeftIcon,
   rightAdornment,
+  onWheel,
   ...props
 }: InputProps) {
   const input = (
@@ -26,6 +27,16 @@ function Input({
         rightAdornment && "pr-14",
         className,
       )}
+      onWheel={
+        type === "number"
+          ? (event) => {
+              onWheel?.(event);
+              if (event.currentTarget.matches(":focus")) {
+                event.currentTarget.blur();
+              }
+            }
+          : onWheel
+      }
       {...props}
     />
   );

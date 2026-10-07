@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus } from "lucide-react";
+import { UserPlus, UserRound } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { StudentSelectorDrawer } from "@/components/classes/student-selector-drawer";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
 	Field,
@@ -15,6 +16,8 @@ import {
 import { RHFInputField } from "@/components/ui/form/rhf";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useUpdateClass } from "@/hooks/mutations/use-update-class";
+import { useStudents } from "@/hooks/queries/use-students";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 import type { Class } from "@/models/class";
 import {
 	createClassFormSchema,
@@ -67,6 +70,21 @@ export function ClassForm({
 		defaultValues: getClassFormDefaultValues(classData),
 	});
 	const studentIds = useWatch({ control, name: "studentIds" }) ?? [];
+	const {
+		data: studentsData,
+		isFetching: isStudentsFetching,
+		isLoading: isStudentsLoading,
+	} = useStudents({
+		limit: 100,
+		sortBy: "name",
+		sortOrder: "asc",
+	});
+	const studentsById = new Map(
+		[
+			...(classData?.getStudents() ?? []),
+			...(studentsData?.students ?? []),
+		].map((student) => [student.getId(), student]),
+	);
 	const isReadOnly = mode === "view";
 	const create = useCreateClass({ onSuccess });
 	const update = useUpdateClass({ onSuccess });
@@ -138,11 +156,45 @@ export function ClassForm({
 						</Button>
 					</div>
 					{studentIds.length > 0 ? (
-						<p className="text-sm text-muted-foreground">
-							{t("classes:createForm.studentCount", {
-								count: studentIds.length,
+						<ul
+							aria-label={t("classes:createForm.studentsLabel")}
+							className="flex flex-wrap gap-2"
+						>
+							{studentIds.map((studentId) => {
+								const student = studentsById.get(studentId);
+								const name = student?.getName() ?? t(
+									isStudentsLoading || isStudentsFetching
+										? "classes:createForm.studentLoading"
+										: "classes:createForm.studentUnavailable",
+								);
+
+								return (
+									<li
+										className="flex max-w-full min-w-0 items-center gap-2 rounded-lg bg-surface-container-low py-1 pr-3 pl-1"
+										key={studentId}
+									>
+										<Avatar size="sm">
+											<AvatarFallback
+												className={
+													student
+														? nameToneAvatarClasses[getNameTone(name)]
+														: "bg-[#273951] text-white"
+												}
+											>
+												{student ? (
+													student.getInitials()
+												) : (
+													<UserRound className="size-3" />
+												)}
+											</AvatarFallback>
+										</Avatar>
+										<span className="min-w-0 break-words text-sm text-on-surface">
+											{name}
+										</span>
+									</li>
+								);
 							})}
-						</p>
+						</ul>
 					) : null}
 					<StudentSelectorDrawer
 						isOpen={isStudentSelectorOpen}

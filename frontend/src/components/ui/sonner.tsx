@@ -1,52 +1,53 @@
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  CheckmarkCircle02Icon,
-  InformationCircleIcon,
-  Alert02Icon,
-  MultiplicationSignCircleIcon,
+  ExclamationMarkIcon,
+  MultiplicationSignIcon,
   Loading03Icon,
 } from "@hugeicons/core-free-icons";
+import "./sonner.css";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
+  const { t } = useTranslation("common");
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="system"
       className="toaster group"
+      closeButton
+      mobileOffset={12}
+      offset={16}
       icons={{
         success: (
-          <HugeiconsIcon
-            icon={CheckmarkCircle02Icon}
-            strokeWidth={2}
-            className="size-4"
-          />
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none">
+            <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         ),
         info: (
-          <HugeiconsIcon
-            icon={InformationCircleIcon}
-            strokeWidth={2}
-            className="size-4"
-          />
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none">
+            <path d="M12 11v5m0-8h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
         ),
         warning: (
           <HugeiconsIcon
-            icon={Alert02Icon}
-            strokeWidth={2}
+            aria-hidden="true"
+            icon={ExclamationMarkIcon}
+            strokeWidth={2.5}
             className="size-4"
           />
         ),
         error: (
           <HugeiconsIcon
-            icon={MultiplicationSignCircleIcon}
+            aria-hidden="true"
+            icon={MultiplicationSignIcon}
             strokeWidth={2}
             className="size-4"
           />
         ),
         loading: (
           <HugeiconsIcon
+            aria-hidden="true"
             icon={Loading03Icon}
             strokeWidth={2}
             className="size-4 animate-spin"
@@ -58,10 +59,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "0.75rem",
         } as React.CSSProperties
       }
       toastOptions={{
+        closeButtonAriaLabel: t("accessibility.close"),
         classNames: {
           toast: "cn-toast",
         },

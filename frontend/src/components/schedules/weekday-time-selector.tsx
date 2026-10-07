@@ -4,7 +4,11 @@ import { useFieldArray } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RHFInputField, RHFTimeField } from "@/components/ui/form/rhf";
+import { RHFSelectField, RHFTimeField } from "@/components/ui/form/rhf";
+import {
+	formatDuration,
+	SCHEDULE_DURATION_OPTIONS,
+} from "@/lib/schedule-utils";
 import type { ScheduleFormData, Weekday } from "@/types/schedule";
 
 interface WeekdayTimeSelectorProps {
@@ -29,6 +33,10 @@ export function WeekdayTimeSelector({
 	disabled,
 }: WeekdayTimeSelectorProps) {
 	const { t } = useTranslation(["schedules"]);
+	const durationOptions = SCHEDULE_DURATION_OPTIONS.map((value) => ({
+		value,
+		label: formatDuration(value, t),
+	}));
 	const { fields, append, remove } = useFieldArray({
 		control,
 		name,
@@ -110,6 +118,7 @@ export function WeekdayTimeSelector({
 								/>
 								<label
 									htmlFor={`weekday-${weekday}`}
+									id={`weekday-${weekday}-label`}
 									className="text-sm font-medium cursor-pointer"
 								>
 									{t(`schedules:drawer.weekdayTime.weekdays.${weekday}`)}
@@ -125,18 +134,15 @@ export function WeekdayTimeSelector({
 										caption={t("schedules:drawer.weekdayTime.timeCaption")}
 										disabled={disabled}
 									/>
-									<RHFInputField
+									<RHFSelectField
 										control={control}
 										name={durationFieldName}
-										label={t("schedules:drawer.weekdayTime.durationLabel")}
+										label={t("schedules:drawer.duration.label")}
 										caption={t("schedules:drawer.weekdayTime.durationCaption")}
 										disabled={disabled}
-										inputProps={{
-											type: "number",
-											min: 1,
-											placeholder: t(
-												"schedules:drawer.weekdayTime.durationPlaceholder",
-											),
+										options={durationOptions}
+										selectProps={{
+											ariaLabelledBy: `weekday-${weekday}-label`,
 										}}
 									/>
 								</div>

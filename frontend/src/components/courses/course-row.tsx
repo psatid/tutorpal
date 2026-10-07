@@ -46,7 +46,7 @@ export function CourseRow({
 
 	return (
 		<li className="scroll-mt-28 md:scroll-mt-32">
-			<div className="flex min-h-20 items-center gap-3 border-border bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-surface focus-within:bg-surface">
+			<div className="flex min-h-20 items-center gap-3 rounded-xl border border-border bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-surface focus-within:bg-surface">
 				<Link
 					className="min-w-0 flex-1 rounded-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
 					params={{ courseId: data.id }}

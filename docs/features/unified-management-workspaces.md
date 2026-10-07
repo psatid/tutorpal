@@ -24,6 +24,12 @@ Search refinement uses a shared two-level control pattern: a prominent search fi
 
 Regular authenticated screens provide the page-level gutters through `ScreenLayout`; these workspaces do not add a second horizontal content gutter. Cards retain their own internal padding so row content remains readable inside the card boundary.
 
+Course rows are separate bordered cards with 12px spacing. The class form shows
+every committed selected student as a wrapping name-and-avatar chip in selection
+order, while the selector button keeps the count. Unresolved names show a
+localized loading label while student data loads, then a localized unavailable
+label if still missing.
+
 Create and edit forms use the shared responsive drawer: an accessible bottom sheet below `md` and a right-side panel at `md` and above. A class requires only a name; student enrollment is optional and hours are added separately through the class hour-addition drawer.
 
 ## Visual and interaction rules

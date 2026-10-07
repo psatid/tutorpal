@@ -6,6 +6,7 @@ import {
   type MouseEventHandler,
   type ReactElement,
   type Ref,
+  useEffect,
   useId,
   useRef,
   useState,
@@ -21,6 +22,7 @@ import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { DateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import { FormField } from "./form-field";
 
 type DateFieldTriggerElement = ReactElement<ComponentProps<"button">>;
@@ -59,6 +61,7 @@ function DateField({
   const [isOpen, setIsOpen] = useState(false);
   const fieldId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const inputTriggerRef = useRef<HTMLInputElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const date = DateTime.tryFromDateOnlyString(value)?.toDate();
   const weekRange =
@@ -73,6 +76,19 @@ function DateField({
   const errorId = hasError ? `${fieldId}-error` : undefined;
   const describedBy =
     [captionId, errorId].filter(Boolean).join(" ") || undefined;
+
+  useEffect(() => {
+    if (trigger || !isDesktop || !isOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setIsOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape, true);
+    return () => window.removeEventListener("keydown", closeOnEscape, true);
+  }, [trigger, isDesktop, isOpen]);
 
   const handleSelect = (selected: Date | undefined) => {
     if (selected && onChange) {
@@ -114,7 +130,57 @@ function DateField({
       {isDesktop ? (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
-            <DateFieldTrigger
+            {trigger ? (
+              <CustomDateFieldTrigger
+                ref={triggerRef}
+                disabled={disabled}
+                className={className}
+                trigger={trigger}
+                id={fieldId}
+                aria-label={ariaLabel}
+                aria-describedby={describedBy}
+                aria-invalid={hasError || undefined}
+                data-state={isOpen ? "open" : "closed"}
+              />
+            ) : (
+              <DateInputTrigger
+                date={date}
+                id={fieldId}
+                aria-label={ariaLabel}
+                aria-describedby={describedBy}
+                aria-invalid={hasError || undefined}
+                aria-expanded={isOpen}
+                disabled={disabled}
+                placeholder={resolvedPlaceholder}
+                className={className}
+                data-state={isOpen ? "open" : "closed"}
+              />
+            )}
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            {calendar}
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <>
+          {trigger ? (
+            <CustomDateFieldTrigger
+              ref={triggerRef}
+              disabled={disabled}
+              className={className}
+              trigger={trigger}
+              id={fieldId}
+              aria-label={ariaLabel}
+              aria-describedby={describedBy}
+              aria-invalid={hasError || undefined}
+              aria-expanded={isOpen}
+              aria-haspopup="dialog"
+              data-state={isOpen ? "open" : "closed"}
+              onClick={() => setIsOpen(true)}
+            />
+          ) : (
+            <DateInputTrigger
+              ref={inputTriggerRef}
               date={date}
               id={fieldId}
               aria-label={ariaLabel}
@@ -123,36 +189,17 @@ function DateField({
               disabled={disabled}
               placeholder={resolvedPlaceholder}
               className={className}
-              trigger={trigger}
+              aria-expanded={isOpen}
               data-state={isOpen ? "open" : "closed"}
+              onClick={() => setIsOpen(true)}
             />
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            {calendar}
-          </PopoverContent>
-        </Popover>
-      ) : (
-        <>
-          <DateFieldTrigger
-            ref={triggerRef}
-            date={date}
-            id={fieldId}
-            aria-label={ariaLabel}
-            aria-describedby={describedBy}
-            aria-invalid={hasError || undefined}
-            disabled={disabled}
-            placeholder={resolvedPlaceholder}
-            className={className}
-            trigger={trigger}
-            aria-expanded={isOpen}
-            aria-haspopup="dialog"
-            data-state={isOpen ? "open" : "closed"}
-            onClick={() => setIsOpen(true)}
-          />
+          )}
           <ResponsiveDrawer
             open={isOpen}
             onOpenChange={setIsOpen}
-            onCloseAutoFocus={() => triggerRef.current?.focus()}
+            onCloseAutoFocus={() => {
+              (trigger ? triggerRef.current : inputTriggerRef.current)?.focus();
+            }}
             title={
               selectionMode === "week"
                 ? t("form.chooseWeek")
@@ -186,46 +233,42 @@ function DateField({
   );
 }
 
-const DateFieldTrigger = forwardRef<
-  HTMLButtonElement,
-  ComponentProps<"button"> & {
+const DateInputTrigger = forwardRef<
+  HTMLInputElement,
+  ComponentProps<"input"> & {
     date?: Date;
     placeholder: string;
-    trigger?: DateFieldTriggerElement;
   }
->(function DateFieldTrigger(
-  { date, disabled, placeholder, className, trigger, ...props },
+>(function DateInputTrigger(
+  { date, placeholder, className, onKeyDown, type: _type, ...props },
   ref,
 ) {
-  if (trigger) {
-    return (
-      <CustomDateFieldTrigger
-        ref={ref}
-        disabled={disabled}
-        className={className}
-        trigger={trigger}
-        {...props}
-      />
-    );
-  }
-
   return (
-    <button
+    <Input
+      {...props}
+      type="text"
       ref={ref}
-      type="button"
-      disabled={disabled}
+      readOnly
+      role="button"
+      aria-haspopup="dialog"
+      leftIcon={CalendarIcon}
+      value={date ? DateTime.formatDate(date) : ""}
+      placeholder={placeholder}
       className={cn(
-        "flex h-11 w-full min-w-0 items-center justify-start gap-2 rounded-lg border border-input bg-input/30 px-3 py-1 text-left text-base transition-colors outline-none hover:bg-input/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-[state=open]:border-ring data-[state=open]:ring-[3px] data-[state=open]:ring-primary/40 md:text-sm",
-        !date && "text-muted-foreground",
+        "cursor-pointer data-[state=open]:border-ring data-[state=open]:ring-[3px] data-[state=open]:ring-primary/35",
         className,
       )}
-      {...props}
-    >
-      <CalendarIcon className="size-4 shrink-0" />
-      <span className="min-w-0 truncate">
-        {date ? DateTime.formatDate(date) : placeholder}
-      </span>
-    </button>
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        if (
+          !event.defaultPrevented &&
+          (event.key === "Enter" || event.key === " ")
+        ) {
+          event.preventDefault();
+          event.currentTarget.click();
+        }
+      }}
+    />
   );
 });
 

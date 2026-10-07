@@ -79,10 +79,6 @@ export function ScheduleCard({
           </span>
         </span>
 
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary sm:size-10">
-          <ScheduleTypeIcon aria-hidden="true" className="size-4 sm:size-5" />
-        </span>
-
         <span className="min-w-0 flex-1 py-0.5">
           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span className="basis-full min-w-0 break-words text-sm font-semibold leading-5 text-on-surface sm:flex-1 sm:basis-0">
@@ -97,11 +93,16 @@ export function ScheduleCard({
             </Badge>
           </span>
 
-          <span className="mt-1 flex min-w-0 items-center gap-1 text-xs leading-4 text-on-surface-variant">
-            <span>{t(`schedules:type.${schedule.type}`)}</span>
-            <span aria-hidden="true">·</span>
-            <span className="tabular-nums">
-              {formatDuration(schedule.durationMinutes, t)}
+          <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-xs leading-4 text-on-surface-variant">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <ScheduleTypeIcon aria-hidden="true" className="size-3.5 shrink-0" />
+              {t(`schedules:type.${schedule.type}`)}
+            </span>
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <span aria-hidden="true">·</span>
+              <span className="tabular-nums">
+                {formatDuration(schedule.durationMinutes, t)}
+              </span>
             </span>
           </span>
 
