@@ -1,4 +1,5 @@
 import { AlertTriangle, ArrowLeft, Clock3, Pencil, UsersRound } from "lucide-react";
+import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 
 interface ClassInfoHeaderProps {
 	classData: Class;
+	addHoursButtonRef?: RefObject<HTMLButtonElement | null>;
 	onAddHours: () => void;
 	onBack: () => void;
 	onEdit: () => void;
@@ -15,6 +17,7 @@ interface ClassInfoHeaderProps {
 
 export function ClassInfoHeader({
 	classData,
+	addHoursButtonRef,
 	onAddHours,
 	onBack,
 	onEdit,
@@ -166,6 +169,7 @@ export function ClassInfoHeader({
 						className="mt-4 w-full sm:w-auto"
 						leftIcon={Clock3}
 						onClick={onAddHours}
+						ref={addHoursButtonRef}
 						type="button"
 					>
 						{t("classes:hourAdditions.addAction")}

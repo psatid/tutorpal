@@ -44,6 +44,7 @@ interface ClassHourAdditionsDrawerProps {
 	classData: Class | null;
 	onCloseAutoFocus?: () => void;
 	onOpenChange: (open: boolean) => void;
+	onSuccess?: () => void;
 	open: boolean;
 }
 
@@ -93,6 +94,7 @@ export function ClassHourAdditionsDrawer({
 	classData,
 	onCloseAutoFocus,
 	onOpenChange,
+	onSuccess,
 	open,
 }: ClassHourAdditionsDrawerProps) {
 	const { t } = useTranslation(["classes", "common"]);
@@ -169,19 +171,20 @@ export function ClassHourAdditionsDrawer({
 	}, [watchedPayloadKey]);
 
 	const addHours = useAddClassHours({
-			onSuccess: (result) => {
-				hourAdditionRequestRef.current = null;
-				setSubmitError(null);
-				toast.success(
-					t("classes:hourAdditions.success", {
-						hours: DateTime.formatDurationHours(result.addition.hours),
-						revenue:
-							result.addition.revenueAmount === null
-								? t("classes:revenue.notRecorded")
-								: DateTime.formatThaiBaht(result.addition.revenueAmount),
-					}),
-				);
+		onSuccess: (result) => {
+			hourAdditionRequestRef.current = null;
+			setSubmitError(null);
+			toast.success(
+				t("classes:hourAdditions.success", {
+					hours: DateTime.formatDurationHours(result.addition.hours),
+					revenue:
+						result.addition.revenueAmount === null
+							? t("classes:revenue.notRecorded")
+							: DateTime.formatThaiBaht(result.addition.revenueAmount),
+				}),
+			);
 			onOpenChange(false);
+			onSuccess?.();
 		},
 		onError: (error) => {
 			if (error.kind === "course-unavailable") {

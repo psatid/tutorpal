@@ -1,3 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 
-export const Route = createFileRoute("/_layout/classes/")({});
+const classesSearchSchema = z.object({
+  setup: z.literal("getting-started").optional(),
+});
+
+export const Route = createFileRoute("/_layout/classes/")({
+  validateSearch: classesSearchSchema,
+});

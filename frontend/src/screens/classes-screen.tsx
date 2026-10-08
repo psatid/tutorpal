@@ -59,7 +59,11 @@ function sortParams(
 	return { sortBy: "createdAt", sortOrder: "desc" };
 }
 
-export function ClassesScreen() {
+export function ClassesScreen({
+	setupIntent,
+}: {
+	setupIntent?: "getting-started";
+}) {
 	const { t } = useTranslation(["classes"]);
 	const navigate = useNavigate();
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -300,14 +304,28 @@ export function ClassesScreen() {
 						}}
 						item={item}
 						key={item.getId()}
-						onAddHours={(trigger) => openHourAdditions(item, trigger)}
+						onAddHours={(trigger) =>
+							setupIntent === "getting-started"
+								? navigate({
+										to: "/classes/$classId",
+										params: { classId: item.getId() },
+										search: { addHours: true, setup: "getting-started" },
+									})
+								: openHourAdditions(item, trigger)
+						}
 						onDelete={() => requestDelete(item, index)}
 						onEdit={() => openEdit(item)}
 						onOpen={() =>
-							navigate({
-								to: "/classes/$classId",
-								params: { classId: item.getId() },
-							})
+							setupIntent === "getting-started"
+								? navigate({
+										to: "/classes/$classId",
+										params: { classId: item.getId() },
+										search: { addHours: true, setup: "getting-started" },
+									})
+								: navigate({
+										to: "/classes/$classId",
+										params: { classId: item.getId() },
+									})
 						}
 					/>
 				))}

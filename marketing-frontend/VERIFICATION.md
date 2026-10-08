@@ -1,11 +1,86 @@
-# Local verification — 6 October 2026
+# Local verification — 8 October 2026
 
 This record tracks the approved light Concept A redesign. The user selected the
 airy perimeter hero and removed its bottom note and motion button, while requiring
 the existing logo. Changes remain local on `main`; no commit, push, deployment,
 backend contract, or authenticated-app change is part of this work.
 
-## Development startup reveal repair — current
+## Hero, calendar, and LINE refinement — current
+
+- At 1200px and above, the hero renders four perimeter cards for the featured
+  lesson, the `studentSummaries` count, remaining hours, and the LINE reminder. The
+  cards use white surfaces with subtle rims and shadows; there is no colored
+  field behind them. The lesson card has a `#FDF6DA` Scheduled tag with
+  `#CCA77B` text/icon (about 2.06:1 contrast at 12px). Other card text remains
+  dark plum `#4F3954`, while existing vivid icon accents remain. Entry motion comes
+  from the nearest page edge. Below 1200px the cards are hidden and six distinct lesson,
+  student, hours, LINE, pencil, and book icons remain on tablet; below 768px the
+  calendar icon is hidden and the group, hourglass, and LINE icons form an evenly
+  spaced top row. Pencil and book occupy a reserved lower band at every compact width.
+  Hero calendar and hourglass glyphs
+  use neutral gray, the student group uses navy, and the rounded three-dot LINE
+  chat uses LINE green; pencil uses yellow-orange `#F79303` and book uses cyan. Phone
+  tiles float 8px while tablet tiles float 10px. The five closing tiles are filled
+  graduation cap, lightbulb, ruler, folded document, and bookmark glyphs. The cap
+  is neutral gray, the bulb and ruler are yellow, the document cyan, and the bookmark
+  mint. Desktop and tablet show all five; mobile hides the
+  bookmark and retains the cap, bulb, ruler, and document.
+- With prepared motion on a normal first load and the hero in view, `.hero-copy`
+  enters once over 850ms from 24px below with 6px blur and no delay. Hash/restored-
+  scroll loads, reduced motion, no-JavaScript, setup failure, and an offscreen hero
+  leave it sharp; scrolling never starts or replays it. CTA links remain focusable
+  and clickable during the entrance. Desktop cards start at 900/960/1020/1080ms
+  after the copy entrance begins. The first card follows the 850ms copy reveal by
+  50ms; cards start 60ms apart and each enters over 850ms. Compact icon delays are
+  unchanged.
+- Scroll-triggered section, calendar, and LINE-check reveals begin when their
+  target's top reaches a point 200px above the viewport bottom, later than the
+  previous trigger near the bottom edge.
+- Calendar cards wait for the frame entrance, then reveal only while they are in
+  that same 200px viewport trigger zone. Cards entering together use a short,
+  top-to-bottom stagger of 90ms per card capped at 450ms; cards farther down the
+  week wait for scrolling. Scrolling during startup keeps section motion armed, so a slow module
+  load or a reload that resumes below the hero does not turn the whole page static.
+  Hash navigation, back/forward restoration, reduced motion, hidden pages, and
+  setup failures still settle content for immediate reading. Unrelated page errors
+  and body-only focus no longer cancel a prepared entrance.
+- A repeat refresh check on the local page showed the hero blur entrance on three
+  consecutive reloads. A later screenshot of the initial tab was already sharp,
+  after the short entrance had completed; capture timing can miss the motion.
+- Schedule events and matching workspace avatar roles use solid indigo `#533AFD`,
+  orange `#F79303`, and blue `#17B5F3`, with white labels and initials. White on
+  orange and blue is an explicitly approved contrast exception at about 2.30:1 and
+  2.35:1; white on indigo is 6.19:1. Quiet calendar gridlines use `#E8E8E8`.
+  The preserved light-coral reference token
+  `--schedule-orange-light` remains `#FC9A7A`.
+- The calendar renders all seven days at 1024px and above with the 5–11 label.
+  Compact layouts render Monday–Wednesday with the localized 5–7 label. The
+  former agenda disclosure/controller and its dedicated lifecycle test are gone.
+- The workspace keeps its supporting paragraph and last-lesson column while the
+  rendered lesson-record strip is removed. LINE list checks are decorative inline
+  SVGs that draw once with a light staggered pulse when the list enters view;
+  reduced motion, hidden documents, focus/hash navigation, unavailable observers,
+  blocked scripts, and setup failure leave their final static state.
+- `bun run build` passed on 8 October 2026: Astro reported **0 errors, 0 warnings,
+  and 0 hints** across 25 files and built `/`, `/th/`, and `/404.html`. The local
+  browser page was blocked by browser security policy, so rendered viewport
+  inspection was unavailable. No automated tests were run. No commit, push, or
+  deployment was performed.
+
+## Superseded hero icon and mobile composition — historical context
+
+- This superseded revision reused the six closing SVG tiles in the hero. They
+  entered from outward offsets with staggered one-second reveals, then floated
+  while the hero was onscreen. Below 768px, the three product cards were hidden
+  and six tiles framed the copy and actions.
+- Its direct local browser inspection covered English at 320, 390, 768, 1024,
+  and 1440px, and Thai at 320 and 390px. The results and build/test counts below
+  apply only to that earlier composition, not the current four-card/six-icon hero.
+- That revision's `bun run build` passed with zero diagnostics across 27 Astro
+  files and three generated routes. Focused reveal, hero lifecycle, and static
+  smoke checks passed: 28 tests, zero failures, 1,023 assertions.
+
+## Earlier development startup reveal repair
 
 The user reported that both section reveals and the hero's shared-origin entrance
 were absent on the actual Astro development page at `http://localhost:4321/`.
@@ -19,8 +94,8 @@ The preceding built-preview checks did not catch this development startup path.
 - The fix removes only that preclaim resize bailout. Targets keep their pending
   layout and are measured at the current viewport when controllers initialize.
   Postclaim resize still settles active effects. The original two-second deadline,
-  genuine input/focus/hash/scroll/hidden/failure protections and permanent
-  no-rehiding fallback remain. `data-reveal-reason` remains a nonvisual diagnostic.
+  interaction/focus/hash/hidden/failure protections and permanent no-rehiding
+  fallback remain. `data-reveal-reason` remains a nonvisual diagnostic.
 - A regression ran red before the fix:
   `bun test tests/reveal-boot.test.js -t 'ordinary startup viewport resize'`
   expected `preparing`, received `expired`. It now passes. Additional checks

@@ -144,7 +144,6 @@ function browserBootstrap(mode, scaleQuery) {
         overflow: document.documentElement.scrollWidth > viewportWidth, canvas: document.querySelectorAll('canvas').length,
         hiddenContent: [...document.querySelectorAll('[data-reveal], [data-calendar-event]')].filter(element => Number(getComputedStyle(element).opacity) < 1).length,
         boot: {phase: window.tutorpalRevealBoot?.phase || 'missing', root: document.documentElement.dataset.revealBoot || 'missing', reason: window.tutorpalRevealBoot?.reason || '', deadline: window.tutorpalRevealBoot?.deadline},
-        agenda: {open: document.querySelector('[data-agenda-remainder]')?.open, phase: document.querySelector('[data-agenda-remainder]')?.dataset.agendaPhase, compactExpanded: document.querySelector('[data-agenda-remainder]')?.dataset.compactExpanded},
         targets, reveals, faqs, closing: {ready: closing?.dataset.motionReady, running: closing?.dataset.motionRunning, tiles}});
     };
     sample(); setInterval(sample, 50);

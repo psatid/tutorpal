@@ -8,7 +8,15 @@
     "check": "astro check",
     "build": "astro check && astro build",
     "preview": "astro preview --host 127.0.0.1",
-    "deploy": "bun run build && wrangler deploy"
+    "cf:dev": "bun run build && wrangler dev --config wrangler/dev/wrangler.marketing.dev.jsonc",
+    "cf:check": "bun run cf:check:dev",
+    "cf:check:dev": "bun run build && wrangler deploy --config wrangler/dev/wrangler.marketing.dev.jsonc --dry-run --outdir .wrangler/deploy/dev",
+    "cf:check:prod": "bun run build && wrangler deploy --config wrangler/prod/wrangler.marketing.prod.jsonc --dry-run --outdir .wrangler/deploy/prod",
+    "cf:deploy": "bun run cf:deploy:dev",
+    "cf:deploy:dev": "bun run build && wrangler deploy --config wrangler/dev/wrangler.marketing.dev.jsonc",
+    "cf:deploy:prod": "bun run build && wrangler deploy --config wrangler/prod/wrangler.marketing.prod.jsonc",
+    "deploy": "bun run cf:deploy:prod",
+    "deploy:dev": "bun run cf:deploy:dev"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.3.0",

@@ -16,6 +16,7 @@ make -C backend db-migrate-deploy-dev
 make deploy-dev APP=backend
 make deploy-dev APP=tutor-portal
 make deploy-dev APP=admin-portal
+make deploy-dev APP=marketing-frontend
 # After replacing production Worker placeholders and configuring Pages:
 make -C backend db-migrate-deploy-production
 make deploy APP=backend

@@ -69,8 +69,9 @@ for (const [locale, path, canonical, otherLocale] of [
       expect((await select(html, '.reminder-window'))[0].text).toContain('SAT Math · 15:00');
       expect(normalize((await select(html, '.lesson-window h2'))[0].text)).toBe('SAT Math');
       expect(normalize((await select(html, '.lesson-details li:first-child'))[0].text)).toBe('Min Chantarat');
-      expect((await select(html, '[data-hero-card]')).map(node => node.attributes['data-hero-card'])).toEqual(['0', '1', '2']);
-      expect(await select(html, '[data-hero-card] > .hero-card-float > .product-card')).toHaveLength(3);
+      expect((await select(html, '[data-hero-card]')).map(node => node.attributes['data-hero-card'])).toEqual(['0', '1', '2', '3']);
+      expect(await select(html, '[data-hero-card] > .hero-card-float > .product-card')).toHaveLength(4);
+      expect(await select(html, '[data-line-check]')).toHaveLength(3);
       expect(await select(html, '.student-row')).toHaveLength(4);
       expect(await select(html, '.story-pin, .reschedule-scene, .schedule-original, .schedule-updated, .demo-caption, .scene-topline, .scene-index, .hero-baseline, .scroll-cue, .baseline-controls, .hero-light-control, #light-toggle, canvas, .light-field')).toHaveLength(0);
       expect(await select(html, '.hero button, .hero-note')).toHaveLength(0);
@@ -190,9 +191,10 @@ for (const [locale, path, canonical, otherLocale] of [
       expect(guards[0].text).toContain('2000');
       expect(guards[0].text).toContain('state.release');
       expect(html.indexOf('tutorpalRevealBoot')).toBeLessThan(html.indexOf('<body'));
-      expect(await select(html, '[data-agenda-remainder][open] > summary')).toHaveLength(1);
-      expect(await select(html, '[data-agenda-remainder] .calendar-day')).toHaveLength(4);
-      expect(normalize((await select(html, '.agenda-show-all'))[0].text)).toBe(locale === 'en' ? 'Show all 7 days' : 'ดูครบทั้ง 7 วัน');
+      expect(await select(html, '[data-agenda-remainder], .calendar-remainder')).toHaveLength(0);
+      expect(await select(html, '.calendar-day')).toHaveLength(7);
+      expect(normalize((await select(html, '.calendar-week-desktop'))[0].text)).toBe(locale === 'en' ? '5–11 October 2026' : '5–11 ตุลาคม 2026');
+      expect(normalize((await select(html, '.calendar-week-compact'))[0].text)).toBe(locale === 'en' ? '5–7 October 2026' : '5–7 ตุลาคม 2026');
       expect(html).not.toContain('motion-preparing');
       expect(html).not.toContain('tutorpalMotionBoot');
       for (const script of await select(html, 'script')) {

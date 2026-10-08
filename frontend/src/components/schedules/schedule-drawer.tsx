@@ -62,6 +62,8 @@ interface ScheduleDrawerProps {
 	scheduleId: string | null;
 	onModeChange: (mode: DrawerMode) => void;
 	onCloseAutoFocus?: () => void;
+	onCreateSuccess?: () => void;
+	oneTimeOnly?: boolean;
 	selectedDate?: Date;
 }
 
@@ -72,6 +74,8 @@ export function ScheduleDrawer({
 	scheduleId,
 	onModeChange,
 	onCloseAutoFocus,
+	onCreateSuccess,
+	oneTimeOnly = false,
 	selectedDate,
 }: ScheduleDrawerProps) {
 	const { t } = useTranslation(["schedules"]);
@@ -158,6 +162,7 @@ export function ScheduleDrawer({
 		onSuccess: () => {
 			reset(getScheduleDefaultValues(selectedDateValue));
 			onOpenChange(false);
+			onCreateSuccess?.();
 		},
 	});
 
@@ -437,7 +442,7 @@ export function ScheduleDrawer({
 						)}
 					/>
 
-					{mode === "create" && (
+					{mode === "create" && !oneTimeOnly && (
 						<Field orientation="horizontal">
 							<Checkbox
 								checked={isRecurring}

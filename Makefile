@@ -70,7 +70,8 @@ help:
 		'  make deploy-dev APP=admin-portal      Deploy to tutorpal-admin-portal-dev' \
 		'  make deploy APP=backend-reminders     Deploy only the production reminder Worker' \
 		'  make deploy-dev APP=backend-reminders Deploy only the dev reminder Worker' \
-		'  make deploy APP=marketing-frontend    Deploy the marketing Cloudflare Worker' \
+		'  make deploy APP=marketing-frontend    Deploy the production marketing Worker to tutorpal.io' \
+		'  make deploy-dev APP=marketing-frontend Deploy the dev marketing Worker to dev.tutorpal.io' \
 		'  make do-deploy COMPONENT=backend      Deploy through the legacy DigitalOcean script' \
 		'' \
 		'Operations:' \

@@ -1,4 +1,4 @@
-import { createLazyFileRoute } from "@tanstack/react-router";
+import { createLazyFileRoute, useSearch } from "@tanstack/react-router";
 import { ScreenLayout } from "@/components/layout/screen-layout";
 import { ClassesScreen } from "@/screens/classes-screen";
 
@@ -7,9 +7,12 @@ export const Route = createLazyFileRoute("/_layout/classes/")({
 });
 
 function ClassesRoute() {
+	const { setup } = useSearch({ strict: false }) as {
+		setup?: "getting-started";
+	};
 	return (
 		<ScreenLayout>
-			<ClassesScreen />
+			<ClassesScreen setupIntent={setup} />
 		</ScreenLayout>
 	);
 }

@@ -18,6 +18,7 @@ interface ClassDrawerProps {
   onCloseAutoFocus?: () => void;
   onModeChange?: (mode: DrawerMode) => void;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function ClassDrawer({
@@ -27,6 +28,7 @@ export function ClassDrawer({
   onCloseAutoFocus,
   onModeChange,
   onOpenChange,
+  onSuccess,
 }: ClassDrawerProps) {
   const { t } = useTranslation(["classes"]);
   const formId = `class-drawer-form-${useId()}`;
@@ -71,6 +73,7 @@ export function ClassDrawer({
     setIsPending(false);
     onOpenChange(false);
     if (mode === "edit") onModeChange?.("view");
+    onSuccess?.();
   };
 
   const footer =

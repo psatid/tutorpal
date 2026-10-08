@@ -16,33 +16,42 @@ examples are fictional; no customer outcomes, testimonials, or pricing are inven
 
 - White `#FFFFFF` and soft `#F6F9FC` backgrounds, navy `#0D253D` primary ink,
   `#273951` secondary text, `#61718A` muted text, and indigo `#533AFD` CTAs.
-  Yellow `#FFD447` echoes the logo in small decorative accents; green denotes
-  LINE. Schedule tone mappings are saturated: lavender `#533AFD` with white
-  text, bright orange `#F79303` and blue `#17B5F3` with white text. Workspace
-  avatars use the same indigo, orange, and blue, all with white initials; toolbar/sidebar tutor initials use indigo and white.
+  Yellow `#FFD447` echoes the logo in small decorative accents. Desktop hero
+  cards use opaque white surfaces with subtle rims and a soft shadow.
+  The lesson card has a `#FDF6DA` Scheduled tag with `#CCA77B` text and icon;
+  at 12px this exact requested pair has about 2.06:1 contrast. Other card text
+  retains dark plum `#4F3954`. These cards also render without
+  JavaScript or motion; compact screens show feature icons. Calendar events and
+  matching workspace avatars share solid indigo `#533AFD`, orange `#F79303`,
+  and blue `#17B5F3`; all use white labels or initials. White on orange and blue
+  is an explicitly approved contrast exception at about 2.30:1 and 2.35:1;
+  white on indigo is 6.19:1. Quiet calendar gridlines use `#E8E8E8`. The preserved
+  light-coral reference token `--schedule-orange-light` remains `#FC9A7A`.
+  Existing hourglass and LINE icon accents retain their vivid colors.
+  Toolbar/sidebar tutor initials use indigo and white.
   Remaining-hour fills use indigo for every student, independent of avatar tone.
-  Named tokens keep schedule, avatar, and decorative roles explicit. The user
-  explicitly approved the white-on-blue/orange contrast exception (approximately
-  2.35:1 and 2.30:1); those exact colors must not be darkened. Book-spine color
-  has its own deeper-blue token and does not inherit the avatar palette.
+  Named tokens keep schedule, avatar, and decorative roles explicit. Book-spine
+  color has its own deeper-blue token and does not inherit the avatar palette.
 - Keep the existing TutorPal app icon unmodified. Inter supplies Latin typography
   and Noto Sans Thai the Thai glyphs. Thai headings use zero negative tracking and
   at least 1.4 line height. English display typography tops out at 88px with
   tracking no tighter than −0.04em; body text is 16–20px and details at least 12px.
 - A 1240px content width contains the centered headline, supporting copy, and CTAs.
-  The lesson card floats at lower left, hours near bottom center, and reminder at
-  lower right, with a clear space around the text and actions. Cards use solid
-  white, 16px radii, subtle blue shadows, and restrained desktop tilts.
-- Below 1200px, cards move below the copy. Below 1024px, all three stack in a
-  readable composition. Phone cards below 768px retain gentle fixed tilts
-  of −3°, +2°, and −2° for lesson, hours, and reminder; tablet cards remain
-  straight. The phone composition reserves 16px inner side padding, 12px above,
-  16px below, a 48px gap after the CTAs, and 36px between cards. Mobile CTAs
-  precede cards. The weekly calendar becomes a day-grouped agenda below 1024px.
-  After successful early enhancement it starts with Monday–Wednesday; a native
-  disclosure immediately after Wednesday exposes Thursday–Sunday. Desktop
-  always opens the remainder into four nested columns. SSR defaults to all
-  seven days, and a closed native disclosure keeps a desktop recovery control. The semantic
+  At 1200px and above, four compact cards sit at the left and right perimeter:
+  featured lesson, a student count from `studentSummaries`, hours, and LINE reminder.
+  Lesson, student, hours, and LINE cards use subtle borders and shadows; their
+  existing colorful icon accents remain. All enter from their
+  nearest page edge. Cards never form a row below the hero copy.
+- Below 1200px cards are hidden. Four distinct feature icons remain for lesson,
+  students, hours, and LINE. The lesson calendar and hourglass use neutral gray,
+  the student group uses navy, and the rounded three-dot LINE chat uses LINE green.
+  At phone widths below 768px, hide the calendar and center the group, hourglass,
+  and LINE icons evenly across the top row. Tablet retains all four upper icons.
+  The brand pencil and book occupy lower-left and lower-right positions in a
+  reserved band at every compact width, in yellow-orange `#F79303` and cyan. The
+  mobile CTAs stay full width. At 1024px and above the calendar shows all
+  seven days with the 5–11 label. Below 1024px it shows Monday–Wednesday only
+  with the 5–7 label in English and Thai, without a disclosure. The semantic
   student table becomes readable stacked rows below 768px, retaining header
   associations and each student's last lesson.
 - Calendar, workspace, LINE, FAQ, closing CTA, and footer retain their order and
@@ -55,54 +64,65 @@ examples are fictional; no customer outcomes, testimonials, or pricing are inven
 ## Motion
 
 Content is visible static HTML by default. A tiny landing-only synchronous head
-guard may prepare hero cards, section reveals, calendar frame/events, and balance
-fills before paint. Pending targets keep their layout at zero opacity without
-blur; pending fills use scaleX(0). Hero copy, CTAs, navigation, and native FAQ
-controls remain immediately visible. The entry claims ownership only after
+guard may prepare the hero copy, cards, icons, section reveals, calendar frame/events,
+and balance fills before paint. Pending targets keep their layout at zero opacity
+without blur; pending fills use scaleX(0). The hero copy is the sole exception to
+immediate visibility and is prepared only for its one-shot entrance; its CTA links
+remain focusable and clickable. Navigation and native FAQ controls remain immediately
+visible. The entry claims ownership only after
 observers and release handlers initialize successfully. An unclaimed two-second
 deadline or setup failure permanently expires preparation and releases sharp
-content and full fills. Late entry cannot conceal targets or shorten the week.
+content and full fills. Late entry cannot conceal targets or change the responsive
+calendar range.
 Initial hashes, restored scroll, early interaction, unsupported APIs, and reduced
 motion bypass preparation. Ordinary viewport resize during preparation does not
 expire the guard: no entrance has started, and controllers measure the current
 viewport before claiming. Once initialized, resize settles active effects and
 reconciles rendered targets. The two-second deadline is never extended or reset.
 
-The script optionally brings cards
-from a shared origin below the CTA to their final positions over 900ms, staggered
-80ms. A brief 5px blur ends at zero. Separate outer entrance and inner floating
-wrappers avoid transform conflicts. After settling, cards float vertically by
-14px on desktop and 10px below 1024px over distinct 5.5, 6.3, and 7-second
-cycles; headline and CTA remain stationary.
+The desktop hero keeps the four cards white, with no colored field behind them.
+After the hero copy starts its 850ms entrance, visible cards begin entering from
+their nearest page edges at 900, 960, 1020, and 1080ms. The first card begins
+50ms after the copy finishes, and subsequent cards start 60ms apart. Each card
+entrance lasts 850ms with a brief 5px blur that ends at zero. The six hero icons
+reveal from outward offsets over one second. The pencil and book use lower outward
+offsets from the reserved bottom band at compact widths. Separate
+outer entrance and inner floating wrappers avoid transform conflicts. After
+settling, cards float vertically by 14px on desktop and 10px below 1024px;
+hero tiles float by 10px, or 8px on phones. On a normal first load with prepared
+motion and a visible hero, `.hero-copy` runs once over 850ms from 24px below with
+6px blur and no delay. It is excluded from scroll reveals and never replays; after
+it settles, the copy and CTA remain stationary. Initial hash/restored-scroll loads,
+reduced motion, no-JavaScript, setup failure, or a hero outside the viewport leave
+sharp final content. CTA links remain focusable and clickable during the entrance.
 
-Section headings and supporting copy reveal once on approach with 24px travel,
-6px blur, and an 850ms ease-out; paired copy follows headings by 100ms. The weekly
-calendar frame settles over 700ms before desktop events enter over 800ms with
-80ms chronological staggering. Agenda events below 1024px enter individually on
-approach after the frame settles. Children remain opacity-only pending while
-the frame blurs, so parent and child blur never animate together. Closed
-disclosure items stay eligible for later approach; expanding exposes the same
-lesson elements, and collapsing settles active effects inside it. Actual native
-summary activation records compact expansion intent independently of responsive
-open/close changes, without forced scrolling.
+Section headings and supporting copy reveal once when their top reaches a point
+200px above the viewport bottom, with 24px travel, 6px blur, and an 850ms ease-out;
+paired copy follows headings by 100ms. The weekly calendar frame uses the same
+trigger and settles over 700ms before desktop events enter over 800ms with 90ms
+chronological staggering capped at 450ms. Monday–Wednesday events below 1024px
+enter at that point after the frame settles. The LINE check list uses the same trigger.
+Children remain opacity-only pending while
+the frame blurs, so parent and child blur never animate together.
 Workspace balance fills animate with scaleX over 750ms and 80ms staggering after
 the workspace reveal. Their existing 48/72/36/60% widths remain decorative, are
 visible at all sizes, and carry no progress denominator or ARIA progress claim;
 numeric hours are authoritative.
 
-The closing CTA has six substantial white tiles with original, mostly filled
-SVG symbols, following the visual weight of the ChronoTask footer reference:
-neutral-gray calendar with white date dots and one darker selected day; navy
-clock with bold white hands; broad golden-orange pencil with a clear point;
-cyan book with a deeper same-hue spine; neutral-gray student; and neutral-gray
-chat bubble with white dots. Glyphs occupy approximately 55–65% of each tile face,
-with simple negative space and no thin multicolor line drawing. The dedicated
-closing shadow is `0 14px 36px rgb(13 37 61 / .09)`, without an outline.
-Desktop tiles retain fixed angles and float 12px over
-6–8-second cycles. Tablet reserves space above and below the copy; mobile has four
-tiles floating 8px in those reserved areas. Their maximum extents keep headline
-and action clear. Decorative wrappers are hidden from accessibility APIs and
-cannot intercept pointer input.
+The closing CTA uses five substantial white tiles with distinct filled learning
+symbols: graduation cap, lightbulb, simple ruler, folded document, and bookmark.
+The cap glyph is neutral gray, the bulb and ruler are yellow, the document is
+cyan, and the bookmark is mint. These glyphs occupy approximately 55–65% of each
+tile face, with simple negative space and no thin multicolor line
+drawing. The dedicated closing shadow is `0 14px 36px rgb(13 37 61 / .09)`,
+without an outline. Desktop closing tiles retain fixed angles and float 12px over
+6–8-second cycles. The closing CTA reserves space above and below the copy on
+tablet and retains the cap, bulb, ruler, and document tiles on mobile; bookmark
+remains hidden there. The hero
+keeps six distinct lesson, student, hours, LINE, pencil, and book icons below
+1200px. Their maximum extents keep
+headline and action clear. Decorative wrappers are hidden from accessibility APIs
+and cannot intercept pointer input.
 
 Hero and closing floating pause offscreen, in hidden documents, and while focus
 is inside their section. Interrupted entrances/reveals settle sharply; cleanup
@@ -111,10 +131,11 @@ and angles. Preference changes and BFCache restores preserve completed one-shot
 reveals. Pending and active targets settle on bailout, focus/hash navigation,
 visibility changes, and cleanup; resizing reconciles rendered targets while
 closed disclosure items are not mistaken for items above the viewport. Static
-content, a full native week, and filled bars remain the default on initialization
-failure, unavailable animation APIs, or disabled scripts. The bounded preparation
-guard has no WebGL dependency. No scroll pinning, decorative light trail, or
-visible motion control remains.
+content, the responsive native calendar range, and filled bars remain the default
+on initialization failure, unavailable animation APIs, or disabled scripts. The
+compact calendar therefore remains Monday–Wednesday below 1024px. The bounded
+preparation guard has no graphics dependency. No scroll pinning, decorative light
+trail, or visible motion control remains.
 
 FAQ uses native, independently openable details. An optional 320ms measured-height
 and opacity transition keeps details open until a close finishes. Rapid toggles
@@ -125,7 +146,8 @@ and unsupported APIs retain immediate native disclosure behavior.
 ## Acceptance
 
 Review English and Thai at 320, 390, 768, 1024, and 1440px, plus 200% zoom. Confirm
-no page overflow, clear hero actions, readable product details, intact Thai marks,
+no page overflow, clear hero actions, hidden phone cards, readable tablet/desktop
+product details, intact Thai marks,
 keyboard focus, 44px interactive touch targets, contrast, and complete static and
 reduced-motion states. Verify unchanged app/locale links and exact English LINE
 message in both locales. See [verification](VERIFICATION.md) for current evidence.

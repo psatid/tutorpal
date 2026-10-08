@@ -5,6 +5,7 @@ import { ClassDetailScreen } from "@/screens/class-detail-screen";
 
 const classDetailSearchSchema = z.object({
   addHours: z.boolean().optional(),
+  setup: z.literal("getting-started").optional(),
 });
 
 export const Route = createFileRoute("/_layout/classes/$classId")({
@@ -14,12 +15,13 @@ export const Route = createFileRoute("/_layout/classes/$classId")({
 
 function ClassDetailRoute() {
   const { classId } = Route.useParams();
-  const { addHours } = Route.useSearch();
+  const { addHours, setup } = Route.useSearch();
   return (
     <ScreenLayout>
       <ClassDetailScreen
         classId={classId}
         openHourAdditionsOnMount={addHours === true}
+        returnToDashboardOnHoursAdded={setup === "getting-started"}
       />
     </ScreenLayout>
   );

@@ -14,6 +14,8 @@ The current environment documented here is <code>dev</code>:
 - Admin portal Pages project: <code>tutorpal-admin-portal-dev</code>
 - Cloudflare API Worker: <code>tutorpal-api-dev</code>
 - Cloudflare reminder Worker: <code>tutorpal-reminders-dev</code>
+- Cloudflare marketing Worker: <code>tutorpal-marketing-dev</code>
+- Marketing Worker custom domain: <code>dev.tutorpal.io</code>
 - Cloudflare DNS zone: <code>tutorpal.io</code>
 
 The public TutorPal marketing site is a separate prerendered Astro site served
@@ -30,7 +32,7 @@ flowchart LR
     subgraph cf["Cloudflare"]
         dns["DNS + TLS<br/>Zone: tutorpal.io"]
         pages["Pages<br/>User Vite/React SPA<br/>dev.app.tutorpal.io"]
-        marketingWorker["Worker: tutorpal-marketing<br/>Astro static assets<br/>tutorpal.io"]
+        marketingWorker["Workers: tutorpal-marketing-dev / tutorpal-marketing<br/>Astro static assets<br/>dev.tutorpal.io / tutorpal.io"]
         adminPages["Pages<br/>Admin Vite/React SPA<br/>admin origin"]
         apiWorker["Worker: tutorpal-api-dev<br/>Hono API + Better Auth<br/>dev.api.tutorpal.io"]
         reminderWorker["Worker: tutorpal-reminders-dev<br/>Scheduled reminders"]
@@ -46,6 +48,7 @@ flowchart LR
 
     browser -->|"HTTPS: web app"| dns
     dns -->|"tutorpal.io"| marketingWorker
+    dns -->|"dev.tutorpal.io"| marketingWorker
     dns -->|"dev.app.tutorpal.io"| pages
     dns -->|"ADMIN_FRONTEND_URL"| adminPages
     dns -->|"dev.api.tutorpal.io"| apiWorker
@@ -73,8 +76,10 @@ polling. Both use Hyperdrive for database access.
 | --- | --- | --- |
 | DNS zone | <code>tutorpal.io</code> | Authoritative DNS, proxying, and TLS for application hostnames |
 | User portal Pages project | <code>tutorpal-tutor-portal-dev</code> | Static frontend deployment from <code>frontend/dist</code> |
-| Marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
-| Marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
+| Production marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
+| Production marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
+| Development marketing Worker | <code>tutorpal-marketing-dev</code> | Prerendered Astro marketing pages and public assets |
+| Development marketing Worker custom domain | <code>dev.tutorpal.io</code> | Development public marketing origin attached through a Worker Custom Domain |
 | Pages custom domain | <code>dev.app.tutorpal.io</code> | Public web application origin |
 | Admin Pages project | <code>tutorpal-admin-portal-dev</code> | Restricted admin portal; its public origin is configured as <code>ADMIN_FRONTEND_URL</code> |
 | API Worker | <code>tutorpal-api-dev</code> | Hono API, Better Auth, email, and LINE account linking |
@@ -103,6 +108,8 @@ associations:
   Worker through a Worker Custom Domain. Configure the apex as a Worker Custom
   Domain; do not point it at the authenticated Pages application or a
   <code>workers.dev</code> CNAME.
+- <code>dev.tutorpal.io</code> is attached to the <code>tutorpal-marketing-dev</code>
+  Worker through a Worker Custom Domain.
 
 Worker Custom Domains create the required Cloudflare DNS and certificate
 configuration. Do not replace the Worker Custom Domain with a regular CNAME to
@@ -180,9 +187,18 @@ a request-time Astro runtime or adapter. GSAP and a decorative Three.js light
 field enhance the HTML in the browser. No content or conversion depends on
 WebGL, and reduced-motion and mobile presentations remain in natural flow.
 
-Run <code>make marketing-dev</code> for development and
-<code>make marketing-build</code> to check and build. A future authorized publish
-uses <code>make deploy APP=marketing-frontend</code>. Build and preview do not
+Run <code>make marketing-dev</code> for Astro development with hot reload, and
+<code>make -C marketing-frontend cf-dev</code> to build assets then run the
+development Worker locally through Wrangler. Use
+<code>make marketing-build</code> to check and build. Publish production with
+<code>make deploy APP=marketing-frontend</code> and development with
+<code>make deploy-dev APP=marketing-frontend</code>. The configs are
+<code>marketing-frontend/wrangler/prod/wrangler.marketing.prod.jsonc</code>
+for <code>tutorpal-marketing</code> at <code>tutorpal.io</code> and
+<code>marketing-frontend/wrangler/dev/wrangler.marketing.dev.jsonc</code> for
+<code>tutorpal-marketing-dev</code> at <code>dev.tutorpal.io</code>. Both serve
+<code>marketing-frontend/dist</code> with the static 404-page handler. Build,
+preview, and <code>make -C marketing-frontend cf-check ENV=dev</code> do not
 publish or modify the Cloudflare account.
 
 Every primary CTA links to <code>https://app.tutorpal.io</code>. Public signup

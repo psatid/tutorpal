@@ -56,19 +56,20 @@ describe('before-paint reveal guard ownership', () => {
     env.document.dispatchEvent(new Event('keydown')); env.window.dispatchEvent(new Event('resize')); expect(env.state.phase).toBe('claimed');
     const late = boot(); late.setNow(3000); expect(late.state.claim()).toBe(false); settled(late);
   });
-  test('hash, restored scroll/navigation, hidden, reduced and unsupported APIs bypass preparation', () => {
-    for (const options of [{hash:'#workspace'},{scroll:10},{restored:true},{hidden:true},{reduced:true},{observer:false},{animate:false},{raf:false},{cancelFrame:false},{failListen:true}]) {
+  test('hash, restored navigation, hidden, reduced and unsupported APIs bypass preparation', () => {
+    for (const options of [{hash:'#workspace'},{restored:true},{hidden:true},{reduced:true},{observer:false},{animate:false},{raf:false},{cancelFrame:false},{failListen:true}]) {
       const env = boot(options); expect(env.state.phase).toBe('expired'); expect(env.timers.size).toBe(0); settled(env);
     }
   });
-  test('early pointer, keyboard, focus, scroll, hash, pagehide, entry errors and preference changes release permanently', () => {
-    for (const event of ['pointerdown','keydown','focusin','visibilitychange','scroll','hashchange','pagehide','error','unhandledrejection','change']) {
+  test('early click, focus, hash, pagehide and preference changes release permanently', () => {
+    for (const event of ['click','focusin','visibilitychange','hashchange','pagehide','change']) {
       const env = boot(); let target=env.document;
       if (event==='visibilitychange') env.document.hidden=true;
-      if (['scroll','hashchange','pagehide','error','unhandledrejection'].includes(event)) target=env.window;
-      if (event==='scroll') env.window.scrollY=20;
+      if (['hashchange','pagehide'].includes(event)) target=env.window;
       if (event==='change') {target=env.media; env.media.matches=true;}
-      target.dispatchEvent(new Event(event)); expect(env.state.phase).toBe('expired'); settled(env); expect(env.state.claim()).toBe(false);
+      const dispatched=new Event(event);
+      if (event==='focusin') Object.defineProperty(dispatched,'target',{value:new Element('BUTTON')});
+      target.dispatchEvent(dispatched); expect(env.state.phase).toBe('expired'); settled(env); expect(env.state.claim()).toBe(false);
     }
   });
 });

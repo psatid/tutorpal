@@ -1,33 +1,41 @@
 import { releaseReveals, revealTargets, settleTarget } from './reveal-state';
 
-/** Entrance and floating keep separate transforms. Copy and actions never move. */
+const SCROLL_REVEAL_INSET_PX = 200;
+
+/** Cards and icons enter separately; hero copy gets one prepared page-load entrance. */
 function setupHeroMotion(prepare: boolean): () => void {
   const hero = document.querySelector<HTMLElement>('.hero');
   const scene = document.querySelector<HTMLElement>('.hero-product');
+  const copy = document.querySelector<HTMLElement>('[data-hero-copy]');
   const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-hero-card]'));
-  if (!hero || !scene || !cards.length || !('IntersectionObserver' in window)) return () => {};
+  const icons = Array.from(document.querySelectorAll<HTMLElement>('[data-hero-icon]'));
+  if (!hero || !scene || (!cards.length && !icons.length && !copy) || !('IntersectionObserver' in window)) return () => {};
+  const targets = [...cards, ...icons, ...(copy ? [copy] : [])];
   let visible = false;
   let disposed = false;
-  const finishEntrance = (card: HTMLElement) => {
-    card.classList.remove('hero-motion-enter'); card.classList.add('hero-motion-ready'); settleTarget(card);
+  const finishEntrance = (target: HTMLElement) => {
+    target.classList.remove('hero-motion-enter', 'hero-icon-enter', 'hero-copy-enter');
+    if (cards.includes(target)) target.classList.add('hero-motion-ready');
+    else if (icons.includes(target)) target.classList.add('hero-icon-ready');
+    settleTarget(target);
   };
   const update = () => {
     const running = visible && !document.hidden && !disposed;
     hero.dataset.motionRunning = String(running);
-    if (!running) cards.forEach(finishEntrance);
+    if (!running) targets.forEach(finishEntrance);
   };
   const onAnimationEnd = (event: AnimationEvent) => {
-    if (event.animationName === 'hero-spread' && event.target instanceof HTMLElement) finishEntrance(event.target);
+    if ((event.animationName === 'hero-spread' || event.animationName === 'hero-icon-reveal' || event.animationName === 'hero-copy-reveal') && event.target instanceof HTMLElement && targets.includes(event.target)) finishEntrance(event.target);
   };
-  const onResize = () => { cards.forEach(finishEntrance); };
-  const onFocus = () => { cards.forEach(finishEntrance); };
+  const onResize = () => { targets.forEach(finishEntrance); };
+  const onFocus = () => { targets.forEach(finishEntrance); };
   const observer = new IntersectionObserver(entries => { visible = entries.some(entry => entry.isIntersecting); update(); });
   const cleanup = () => {
     disposed = true; observer.disconnect();
     document.removeEventListener('visibilitychange', update); window.removeEventListener('resize', onResize);
     hero.removeEventListener('animationend', onAnimationEnd); hero.removeEventListener('focusin', onFocus);
     delete hero.dataset.motionRunning;
-    cards.forEach(card => { finishEntrance(card); card.classList.remove('hero-motion-ready'); });
+    targets.forEach(target => { finishEntrance(target); target.classList.remove('hero-motion-ready'); target.classList.remove('hero-icon-ready'); });
   };
   try {
     const rect = hero.getBoundingClientRect(); visible = rect.bottom > 0 && rect.top < window.innerHeight;
@@ -35,17 +43,24 @@ function setupHeroMotion(prepare: boolean): () => void {
     document.addEventListener('visibilitychange', update); window.addEventListener('resize', onResize, { passive: true });
     observer.observe(hero);
     const sceneRect = scene.getBoundingClientRect();
-    const actions = hero.querySelector<HTMLElement>('.actions')?.getBoundingClientRect();
     const originX = sceneRect.left + sceneRect.width / 2;
-    const tallestCard = Math.max(...cards.map(card => card.getBoundingClientRect().height));
-    const originY = (actions?.bottom ?? sceneRect.top) + tallestCard / 2 + 24;
     cards.forEach((card, index) => {
-      if (!prepare || card.dataset.motionDone || !visible || document.hidden || window.scrollY > 0) { finishEntrance(card); return; }
+      if (card.getBoundingClientRect().height === 0 || !prepare || card.dataset.motionDone || !visible || document.hidden || window.scrollY > 0) { finishEntrance(card); return; }
       const cardRect = card.getBoundingClientRect();
-      card.style.setProperty('--from-x', `${originX - cardRect.left - cardRect.width / 2}px`);
-      card.style.setProperty('--from-y', `${originY - cardRect.top - cardRect.height / 2}px`);
-      card.style.setProperty('--enter-delay', `${index * 80}ms`);
+      card.style.setProperty('--from-x', `${cardRect.left + cardRect.width / 2 < originX ? -96 : 96}px`);
+      card.style.setProperty('--from-y', `${cardRect.top < sceneRect.top + sceneRect.height / 2 ? -20 : 20}px`);
+      card.style.setProperty('--enter-delay', `${900 + index * 60}ms`);
       card.dataset.motionPhase = 'revealing'; card.classList.add('hero-motion-enter');
+    });
+    if (copy) {
+      if (!prepare || copy.dataset.motionDone || !visible || document.hidden || window.scrollY > 0 || location.hash) finishEntrance(copy);
+      else { copy.dataset.motionPhase = 'revealing'; copy.classList.add('hero-copy-enter'); }
+    }
+    const iconDelays = [620, 580, 380, 460, 540, 700];
+    icons.forEach((icon, index) => {
+      if (icon.getBoundingClientRect().height === 0 || !prepare || icon.dataset.motionDone || !visible || document.hidden || window.scrollY > 0) { finishEntrance(icon); return; }
+      icon.style.setProperty('--enter-delay', `${iconDelays[index] ?? 0}ms`);
+      icon.dataset.motionPhase = 'revealing'; icon.classList.add('hero-icon-enter');
     });
     update();
   } catch (error) { cleanup(); throw error; }
@@ -70,6 +85,40 @@ function setupClosingMotion(): () => void {
   return cleanup;
 }
 
+/** LINE checks are decorative and only animate after the list is scrolled into view. */
+function setupLineCheckMotion(prepare: boolean): () => void {
+  const checks = Array.from(document.querySelectorAll<SVGSVGElement>('[data-line-check]'));
+  if (!prepare || !checks.length) return () => {};
+  if (!('IntersectionObserver' in window)) throw new Error('IntersectionObserver is unavailable');
+  const list = checks[0].closest<HTMLElement>('.line-notes');
+  if (!list) return () => {};
+  let disposed = false;
+  const settle = () => {
+    if (disposed) return;
+    disposed = true; observer.disconnect();
+    document.removeEventListener('visibilitychange', onVisibility); document.removeEventListener('focusin', settle);
+    window.removeEventListener('hashchange', settle);
+    checks.forEach(check => check.classList.remove('line-check-draw'));
+  };
+  const play = () => {
+    if (disposed) return;
+    checks.forEach((check, index) => { check.style.setProperty('--check-delay', `${index * 90}ms`); check.classList.add('line-check-draw'); });
+    observer.disconnect(); document.removeEventListener('visibilitychange', onVisibility); document.removeEventListener('focusin', settle);
+    window.removeEventListener('hashchange', settle);
+    disposed = true;
+  };
+  const onVisibility = () => { if (document.hidden) settle(); };
+  const observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) play();
+  }, { rootMargin: `0px 0px -${SCROLL_REVEAL_INSET_PX}px 0px` });
+  try {
+    if (document.hidden || location.hash || document.activeElement !== document.body) { settle(); return () => {}; }
+    observer.observe(list); document.addEventListener('visibilitychange', onVisibility); document.addEventListener('focusin', settle);
+    window.addEventListener('hashchange', settle);
+  } catch (error) { settle(); throw error; }
+  return settle;
+}
+
 type ActiveReveal = { animation: Animation; finish: (runAfter?: boolean) => void };
 function setupScrollMotion(prepare: boolean): () => void {
   const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]'));
@@ -81,21 +130,16 @@ function setupScrollMotion(prepare: boolean): () => void {
   const events = Array.from(document.querySelectorAll<HTMLElement>('[data-calendar-event]'));
   const workspace = document.querySelector<HTMLElement>('.workspace-frame');
   const bars = Array.from(document.querySelectorAll<HTMLElement>('[data-balance-fill]'));
-  const remainder = document.querySelector<HTMLDetailsElement>('[data-agenda-remainder]');
-  const wide = window.matchMedia('(min-width: 1024px)');
   let calendarReady = !calendar || calendar.dataset.motionDone === 'true';
   let disposed = false;
   let settling = false;
   let scrollFrame: number | undefined;
   const rendered = (element: HTMLElement) => {
-    // Chromium can retain positive geometry for closed details descendants.
-    // Native disclosure state determines whether these lessons are exposed.
-    if (element.closest('details:not([open])')) return false;
     return element.getClientRects().length > 0 && element.getBoundingClientRect().height > 0;
   };
   const passed = (element: HTMLElement) => rendered(element) && element.getBoundingClientRect().bottom <= 0;
   const inView = (element: HTMLElement) => {
-    const rect = element.getBoundingClientRect(); return rendered(element) && rect.bottom > 0 && rect.top < window.innerHeight * .9;
+    const rect = element.getBoundingClientRect(); return rendered(element) && rect.bottom > 0 && rect.top < window.innerHeight - SCROLL_REVEAL_INSET_PX;
   };
   const settleQueued = (element: HTMLElement) => {
     if (element === calendar) {
@@ -103,6 +147,15 @@ function setupScrollMotion(prepare: boolean): () => void {
       events.filter(rendered).forEach(event => { active.get(event)?.finish(false); settleTarget(event); });
     }
     if (element === workspace) bars.forEach(bar => { active.get(bar)?.finish(false); settleTarget(bar); });
+  };
+  const revealEvents = (candidates: HTMLElement[]) => {
+    const eligible = Array.from(new Set(candidates))
+      .filter(event => events.includes(event) && inView(event) && event.dataset.motionDone !== 'true' && !active.has(event))
+      .sort((a, b) => {
+        const first = a.getBoundingClientRect(); const second = b.getBoundingClientRect();
+        return first.top - second.top || first.left - second.left;
+      });
+    eligible.forEach((event, index) => play(event, 800, Math.min(index * 90, 450)));
   };
   const play = (element: HTMLElement, duration: number, delay = 0, bar = false, after?: () => void) => {
     if (disposed || active.has(element) || !rendered(element)) return;
@@ -131,9 +184,8 @@ function setupScrollMotion(prepare: boolean): () => void {
   const startEvents = () => {
     if (disposed) return;
     calendarReady = true;
-    events.forEach((event, index) => {
-      if (wide.matches || inView(event) || passed(event)) play(event, 800, wide.matches ? index * 80 : 0);
-    });
+    events.filter(passed).forEach(event => settleTarget(event));
+    revealEvents(events);
   };
   const settle = (elements: HTMLElement[], all = false) => {
     settling = true;
@@ -148,11 +200,13 @@ function setupScrollMotion(prepare: boolean): () => void {
   };
   const observer = new IntersectionObserver(entries => {
     if (disposed) return;
+    const enteredEvents = entries
+      .filter(entry => events.includes(entry.target as HTMLElement) && entry.isIntersecting)
+      .map(entry => entry.target as HTMLElement);
     for (const entry of entries) {
       const element = entry.target as HTMLElement;
       if (!entry.isIntersecting) {
-        if (!rendered(element)) continue; // Closed native details are still unseen.
-        if (events.includes(element) && wide.matches && !passed(element)) continue;
+        if (!rendered(element)) continue;
         if (active.has(element) || passed(element)) {
           if (element === calendar) settle(events);
           settle([element]);
@@ -160,13 +214,14 @@ function setupScrollMotion(prepare: boolean): () => void {
         continue;
       }
       if (element === calendar) play(element, 700, 0, false, startEvents);
-      else if (events.includes(element)) { if (calendarReady && !wide.matches) play(element, 800); }
+      else if (events.includes(element)) continue;
       else {
         const delay = element.tagName === 'P' && element.closest('.section-intro,.line-copy,.closing-copy') ? 100 : 0;
         play(element, 850, delay, false, element === workspace ? fillBars : undefined);
       }
     }
-  }, { rootMargin: '0px 0px -10% 0px' });
+    if (calendarReady) revealEvents(enteredEvents);
+  }, { rootMargin: `0px 0px -${SCROLL_REVEAL_INSET_PX}px 0px` });
   const onVisibility = () => { if (document.hidden) settle(targets, true); };
   const onScroll = () => {
     if (disposed || scrollFrame !== undefined) return;
@@ -196,20 +251,12 @@ function setupScrollMotion(prepare: boolean): () => void {
     const destination = document.getElementById(id);
     if (destination) settle(targets.filter(element => destination.contains(element) || element.closest('section') === destination.closest('section')));
   };
-  const onAgenda = () => {
-    if (!remainder?.open) {
-      settling = true;
-      events.filter(event => remainder?.contains(event)).forEach(event => active.get(event)?.finish(false));
-      settling = false;
-    } else if (calendarReady) startEvents();
-  };
   const cleanup = () => {
     disposed = true; observer.disconnect();
     document.removeEventListener('visibilitychange', onVisibility); document.removeEventListener('focusin', onFocus);
     window.removeEventListener('resize', onResize); window.removeEventListener('hashchange', onHash);
     window.removeEventListener('scroll', onScroll);
     if (scrollFrame !== undefined) { window.cancelAnimationFrame(scrollFrame); scrollFrame = undefined; }
-    remainder?.removeEventListener('toggle', onAgenda); remainder?.removeEventListener('tutorpal:agenda-change', onAgenda);
     Array.from(active.values()).forEach(item => item.finish(false)); targets.forEach(settleTarget);
   };
   try {
@@ -217,7 +264,6 @@ function setupScrollMotion(prepare: boolean): () => void {
     document.addEventListener('visibilitychange', onVisibility); document.addEventListener('focusin', onFocus);
     window.addEventListener('resize', onResize, { passive: true }); window.addEventListener('hashchange', onHash);
     window.addEventListener('scroll', onScroll, { passive: true });
-    remainder?.addEventListener('toggle', onAgenda); remainder?.addEventListener('tutorpal:agenda-change', onAgenda);
     generic.forEach(element => observer.observe(element)); if (calendar) observer.observe(calendar);
     events.forEach(element => observer.observe(element));
     if (calendarReady) startEvents(); if (workspace?.dataset.motionDone === 'true') fillBars();
@@ -229,9 +275,9 @@ export function setupMotion(): () => void {
   const cleanups: Array<() => void> = [];
   const boot = window.tutorpalRevealBoot;
   let prepare = boot?.phase === 'preparing';
-  if (prepare && (window.scrollY > 0 || location.hash || document.hidden)) { releaseReveals('initial-bypass'); prepare = false; }
+  if (prepare && (location.hash || document.hidden)) { releaseReveals('initial-bypass'); prepare = false; }
   try {
-    cleanups.push(setupHeroMotion(prepare)); cleanups.push(setupScrollMotion(prepare));
+    cleanups.push(setupHeroMotion(prepare)); cleanups.push(setupScrollMotion(prepare)); cleanups.push(setupLineCheckMotion(prepare));
     if (prepare && !boot?.claim()) { cleanups.splice(0).forEach(cleanup => cleanup()); releaseReveals('late-entry'); cleanups.push(setupHeroMotion(false)); }
   } catch {
     cleanups.splice(0).forEach(cleanup => cleanup()); releaseReveals('setup-failure');

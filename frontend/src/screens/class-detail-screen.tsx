@@ -33,6 +33,7 @@ import { DateTime } from "@/lib/date-time";
 interface ClassDetailScreenProps {
   classId: string;
   openHourAdditionsOnMount?: boolean;
+  returnToDashboardOnHoursAdded?: boolean;
 }
 
 function isClassNotFoundError(error: unknown): boolean {
@@ -47,6 +48,7 @@ function isClassNotFoundError(error: unknown): boolean {
 export function ClassDetailScreen({
   classId,
   openHourAdditionsOnMount = false,
+  returnToDashboardOnHoursAdded = false,
 }: ClassDetailScreenProps) {
   const { t } = useTranslation(["classes", "schedules", "common"]);
   const navigate = useNavigate();
@@ -74,7 +76,9 @@ export function ClassDetailScreen({
   const [classDrawerMode, setClassDrawerMode] = useState<DrawerMode>("edit");
   const classEditOriginRef = useRef<HTMLButtonElement | null>(null);
   const classHoursOriginRef = useRef<HTMLButtonElement | null>(null);
+  const classHoursButtonRef = useRef<HTMLButtonElement | null>(null);
   const addHoursIntentHandledRef = useRef(false);
+  const returnToDashboardOnHoursAddedRef = useRef(returnToDashboardOnHoursAdded);
   const [isClassHoursDrawerOpen, setIsClassHoursDrawerOpen] = useState(false);
 
   const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
@@ -119,8 +123,13 @@ export function ClassDetailScreen({
   }, []);
 
   const focusClassHoursOrigin = useCallback(() => {
-    classHoursOriginRef.current?.focus();
+    (classHoursOriginRef.current ?? classHoursButtonRef.current)?.focus();
   }, []);
+
+  const handleHoursAdded = useCallback(() => {
+    if (!returnToDashboardOnHoursAddedRef.current) return;
+    void navigate({ to: "/", search: { setup: "hours-added" } });
+  }, [navigate]);
 
   useEffect(() => {
     if (
@@ -133,6 +142,7 @@ export function ClassDetailScreen({
 
     addHoursIntentHandledRef.current = true;
     if (classData) {
+      classHoursOriginRef.current = classHoursButtonRef.current;
       setIsClassHoursDrawerOpen(true);
     }
     void navigate({
@@ -358,6 +368,7 @@ export function ClassDetailScreen({
   return (
     <div className="flex h-full flex-col gap-6 py-4">
       <ClassInfoHeader
+        addHoursButtonRef={classHoursButtonRef}
         classData={classData}
         onAddHours={handleAddHours}
         onBack={handleBack}
@@ -452,6 +463,7 @@ export function ClassDetailScreen({
         classData={classData}
         onCloseAutoFocus={focusClassHoursOrigin}
         onOpenChange={setIsClassHoursDrawerOpen}
+        onSuccess={handleHoursAdded}
         open={isClassHoursDrawerOpen}
       />
 

@@ -12,16 +12,15 @@ The public marketing app is separate from the authenticated frontend. See its
 [README](../../marketing-frontend/README.md) and
 [design direction](../../marketing-frontend/DESIGN.md). Astro prerenders complete
 English HTML at `/` and Thai HTML at `/th/`. The homepage uses a cool-white canvas, navy oversized typography, indigo CTAs,
-and three floating white hero cards. Its weekly calendar has twelve English
+and four floating white desktop hero cards. The lesson card has a peach Scheduled
+tag. Its weekly calendar has twelve English
 lessons and a separate four-student math workspace. IELTS, SAT, and Thai A-Level
 data are fictional examples; the copy serves independent tutors across subjects.
-The calendar uses one semantic data source for the desktop grid and mobile agenda,
+The calendar uses one semantic data source for the desktop grid and compact view,
 without scroll pinning. Min’s featured SAT Math hero/reminder lesson stays separate
-from the English schedule. Smaller layouts stack all three hero cards beneath the
-copy; phones below 768px use −3°/+2°/−2° tilts and tablets keep them straight.
-Below 1024px, successful early initialization shows Monday–Wednesday with a native
-disclosure for the remaining four days. Server-rendered HTML contains the full
-week, open by default. Compact expansion intent survives breakpoint changes.
+from the English schedule. Below 1200px, floating feature icons replace all four
+cards; phones hide the calendar icon. Below 1024px, the calendar shows only
+Monday–Wednesday with a matching date label and no disclosure.
 The original logo is unchanged; the bottom hero note and
 motion button are omitted by the approved direction. Lightweight optional CSS
 motion honors reduced motion and suspends floating offscreen or in hidden tabs.

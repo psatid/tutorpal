@@ -1,4 +1,4 @@
-export const revealTargets = '[data-hero-card],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
+export const revealTargets = '[data-hero-card],[data-hero-icon],[data-hero-copy],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
 export interface RevealBoot {
   phase: 'preparing' | 'claimed' | 'expired'; deadline: number; reason: string;
   claim: () => boolean; release: (reason: string) => void;

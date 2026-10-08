@@ -17,7 +17,7 @@ const schema = { '@context':'https://schema.org', '@graph': [
   {prepareMotion && <script is:inline>
     (() => {
       const root = document.documentElement;
-      const targets = '[data-hero-card],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
+      const targets = '[data-hero-card],[data-hero-icon],[data-hero-copy],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
       const deadline = Date.now() + 2000;
       let timer;
@@ -31,7 +31,7 @@ const schema = { '@context':'https://schema.org', '@graph': [
           root.classList.remove('reveal-preparing'); root.dataset.revealBoot = 'expired'; root.dataset.revealReason = reason;
           document.querySelectorAll(targets).forEach(element => {
             element.dataset.motionDone = 'true'; element.dataset.motionPhase = 'settled';
-            element.classList.remove('hero-motion-enter');
+            element.classList.remove('hero-motion-enter', 'hero-icon-enter', 'hero-copy-enter');
             try { element.getAnimations?.().forEach(animation => animation.cancel()); } catch { /* Preparation still releases if an animation API fails. */ }
           });
         },
@@ -42,19 +42,19 @@ const schema = { '@context':'https://schema.org', '@graph': [
       };
       try {
       const restored = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
-      if (reduced.matches || !('IntersectionObserver' in window) || typeof HTMLElement.prototype.animate !== 'function' || typeof window.requestAnimationFrame !== 'function' || typeof window.cancelAnimationFrame !== 'function' || location.hash || window.scrollY > 0 || restored || document.hidden) {
+      if (reduced.matches || !('IntersectionObserver' in window) || typeof HTMLElement.prototype.animate !== 'function' || typeof window.requestAnimationFrame !== 'function' || typeof window.cancelAnimationFrame !== 'function' || location.hash || restored || document.hidden) {
         state.release(reduced.matches ? 'reduced' : 'initial-bypass'); return;
       }
       root.dataset.revealBoot = 'preparing'; delete root.dataset.revealReason; root.classList.add('reveal-preparing');
       timer = setTimeout(() => state.release('deadline'), 2000);
       const interaction = () => state.release('early-interaction');
-      listen(document, 'pointerdown', interaction); listen(document, 'keydown', interaction); listen(document, 'focusin', interaction);
+      listen(document, 'click', interaction);
+      listen(document, 'focusin', event => {
+        if (event.target && event.target !== document.body && event.target !== document.documentElement) interaction();
+      });
       listen(window, 'hashchange', () => state.release('hash'));
-      listen(window, 'scroll', () => { if (window.scrollY > 0) state.release('restored-or-early-scroll'); });
       listen(document, 'visibilitychange', () => { if (document.hidden) state.release('hidden'); });
       listen(window, 'pagehide', () => state.release('pagehide'));
-      listen(window, 'error', () => state.release('entry-error'));
-      listen(window, 'unhandledrejection', () => state.release('entry-error'));
       listen(reduced, 'change', () => { if (reduced.matches) state.release('reduced'); });
       } catch { state.release('setup-failure'); }
     })();

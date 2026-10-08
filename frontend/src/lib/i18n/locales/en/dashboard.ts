@@ -28,4 +28,58 @@ export default {
     emptyDescription: "Your schedule is clear for today.",
     timezone: "Times shown in your local time",
   },
+  gettingStarted: {
+    title: "Getting started",
+    description: "Set up the essentials for your first tutoring session.",
+    completeDescription: "Your tutoring setup is ready.",
+    progress: "{{completed}} of {{total}} complete",
+    dismiss: "Dismiss getting started",
+    reopen: "Show getting started",
+    loading: "Loading your setup progress…",
+    loadError: "We couldn’t load your setup progress.",
+    retry: "Try again",
+    classesLoadError: "Classes couldn’t refresh. Your saved setup progress is still shown.",
+    schedulesLoadError: "Schedules couldn’t refresh. Your saved setup progress is still shown.",
+    classSuccess: "Class created. Add hours next.",
+    classRefreshRequired: "Class created. Refresh classes to update setup.",
+    hoursSuccess: "Class hours added. Create a one-time schedule next.",
+    hoursClassesRefreshRequired:
+      "Class hours were added. Refresh classes to update setup.",
+    hoursSchedulesRefreshRequired:
+      "Class hours were added. Refresh schedules to continue setup.",
+    scheduleSuccess: "One-time schedule created. Your setup is complete.",
+    scheduleRefreshRequired:
+      "One-time schedule created. Refresh schedules to update setup.",
+    states: {
+      complete: "Complete",
+      current: "Current step",
+      notStarted: "Not started",
+    },
+    classTitle: "Create a class",
+    classLoading: "Checking your class setup…",
+    classDescription: "Start with a class name. Students are optional.",
+    classDone: "Your first class is ready.",
+    createClass: "Create class",
+    hoursTitle: "Add class hours",
+    hoursDescription: "Add hours to a class before scheduling a session.",
+    hoursNeedsClass: "Create a class before adding hours.",
+    hoursDone: "A class has hours available to track.",
+    addHours: "Add hours",
+    scheduleTitle: "Create a one-time schedule",
+    scheduleDescription:
+      "Choose a class with available hours, then set the session details. Add more hours in Classes if they are all used.",
+    scheduleNeedsHours: "Add class hours before creating a schedule.",
+    scheduleLoading: "Checking whether you already have a schedule…",
+    scheduleDone: "Your first schedule is ready.",
+    createSchedule: "Create schedule",
+    manageSchedule: "Manage a schedule",
+    guide: {
+      quickActions:
+        "In the schedule Actions menu, choose Complete after a lesson to confirm it. Its hours stay counted against the class balance once because the scheduled session already reserves them. Choose No-show when the learner did not attend; its hours stay reserved.",
+      cancelled: "To mark a session cancelled, open Edit and choose Cancelled under Status.",
+      reservations:
+        "Cancelled restores the reserved hours and keeps the session in history.",
+      delete: "Delete removes the session record entirely.",
+    },
+  },
 } as const;
