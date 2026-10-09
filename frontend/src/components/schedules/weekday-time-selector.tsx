@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useWatch } from "react-hook-form";
 import type { Control, FieldArrayPath, FieldPath } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+	GroupedWeekdayEditor,
+	type GroupedWeekdayScheduleItem,
+} from "@/components/schedules/grouped-weekday-editor";
 import { RHFSelectField, RHFTimeField } from "@/components/ui/form/rhf";
 import {
 	formatDuration,
 	SCHEDULE_DURATION_OPTIONS,
 } from "@/lib/schedule-utils";
-import type { ScheduleFormData, Weekday } from "@/types/schedule";
+import {
+	timeStringToMinutes,
+	type ScheduleFormData,
+	type Weekday,
+} from "@/types/schedule";
 
 interface WeekdayTimeSelectorProps {
 	name: FieldArrayPath<ScheduleFormData>;
@@ -17,7 +23,7 @@ interface WeekdayTimeSelectorProps {
 	disabled?: boolean;
 }
 
-const WEEKDAY_ORDER: Weekday[] = [
+const WEEKDAYS: Weekday[] = [
 	"MONDAY",
 	"TUESDAY",
 	"WEDNESDAY",
@@ -26,6 +32,12 @@ const WEEKDAY_ORDER: Weekday[] = [
 	"SATURDAY",
 	"SUNDAY",
 ];
+
+function getTimeAtMinute(minute: number) {
+	return `${Math.floor(minute / 60)
+		.toString()
+		.padStart(2, "0")}:${(minute % 60).toString().padStart(2, "0")}`;
+}
 
 export function WeekdayTimeSelector({
 	name,
@@ -41,116 +53,117 @@ export function WeekdayTimeSelector({
 		control,
 		name,
 	});
+	const watchedItems = useWatch({ control, name }) ?? [];
+	const items: GroupedWeekdayScheduleItem[] = fields.map((field, index) => {
+		const watchedItem = watchedItems[index] ?? field;
+		return {
+			id: field.id,
+			index,
+			weekday: watchedItem.weekday,
+			time: watchedItem.time,
+			durationMinutes: watchedItem.durationMinutes,
+		};
+	});
 
-	const [selectAll, setSelectAll] = useState(false);
+	const toggleWeekday = (weekday: Weekday) => {
+		const indexes = items
+			.filter((item) => item.weekday === weekday)
+			.map((item) => item.index);
 
-	const selectedWeekdays = new Set(fields.map((f) => f.weekday as Weekday));
-
-	const handleToggleWeekday = (weekday: Weekday) => {
-		if (selectedWeekdays.has(weekday)) {
-			const index = fields.findIndex((f) => f.weekday === weekday);
-			if (index !== -1) {
-				remove(index);
-			}
-		} else {
-			append({ weekday, time: "09:00", durationMinutes: 60 });
+		if (indexes.length > 0) {
+			remove(indexes);
+			return;
 		}
-		setSelectAll(false);
+
+		append({ weekday, time: "09:00", durationMinutes: 60 });
 	};
 
-	const handleSelectAll = () => {
-		if (selectAll) {
-			remove();
-		} else {
-			WEEKDAY_ORDER.forEach((weekday) => {
-				if (!selectedWeekdays.has(weekday)) {
-					append({ weekday, time: "09:00", durationMinutes: 60 });
-				}
-			});
+	const addInterval = (weekday: Weekday) => {
+		const latestEnd = items
+			.filter((item) => item.weekday === weekday)
+			.reduce(
+				(latest, item) =>
+					Math.max(
+						latest,
+						timeStringToMinutes(item.time) + item.durationMinutes,
+					),
+				0,
+			);
+
+		if (latestEnd < 24 * 60) {
+			append({ weekday, time: getTimeAtMinute(latestEnd), durationMinutes: 60 });
 		}
-		setSelectAll(!selectAll);
 	};
 
 	return (
-		<div className="space-y-3">
-			<div className="flex items-center justify-between">
-				<div className="space-y-0.5">
-					<p className="text-sm font-medium">
-						{t("schedules:drawer.weekdayTime.label")}
-					</p>
-					<p className="text-xs text-muted-foreground">
-						{t("schedules:drawer.weekdayTime.caption")}
-					</p>
-				</div>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					onClick={handleSelectAll}
-					disabled={disabled}
-				>
-					{selectAll
-						? t("schedules:drawer.weekdayTime.clearAll")
-						: t("schedules:drawer.weekdayTime.selectAll")}
-				</Button>
-			</div>
+		<GroupedWeekdayEditor
+			disabled={disabled}
+			items={items}
+			onAddInterval={addInterval}
+			onRemoveInterval={remove}
+			onSelectAll={() => {
+				if (new Set(items.map((item) => item.weekday)).size === WEEKDAYS.length) {
+					remove();
+					return;
+				}
 
-			<div className="space-y-2">
-				{WEEKDAY_ORDER.map((weekday) => {
-					const isSelected = selectedWeekdays.has(weekday);
-					const fieldIndex = fields.findIndex((f) => f.weekday === weekday);
-					const timeFieldName =
-						`${name}.${fieldIndex}.time` as FieldPath<ScheduleFormData>;
-					const durationFieldName =
-						`${name}.${fieldIndex}.durationMinutes` as FieldPath<ScheduleFormData>;
+				append(
+					WEEKDAYS.filter(
+						(weekday) => !items.some((item) => item.weekday === weekday),
+					).map((weekday) => ({ weekday, time: "09:00", durationMinutes: 60 })),
+				);
+			}}
+			onToggleWeekday={toggleWeekday}
+			renderInterval={({
+				item,
+				intervalNumber,
+				weekdayLabel,
+				overlapDescriptionId,
+			}) => {
+				const timeFieldName = `${name}.${item.index}.time` as FieldPath<ScheduleFormData>;
+				const durationFieldName = `${name}.${item.index}.durationMinutes` as FieldPath<ScheduleFormData>;
+				const intervalLabel = t("schedules:drawer.weekdayTime.intervalLabel", {
+					weekday: weekdayLabel,
+					number: intervalNumber,
+				});
 
-					return (
-						<div
-							key={weekday}
-							className="rounded-2xl border border-border/60 p-3"
-						>
-							<div className="flex items-center gap-2">
-								<Checkbox
-									id={`weekday-${weekday}`}
-									checked={isSelected}
-									onCheckedChange={() => handleToggleWeekday(weekday)}
-									disabled={disabled}
-								/>
-								<label
-									htmlFor={`weekday-${weekday}`}
-									id={`weekday-${weekday}-label`}
-									className="text-sm font-medium cursor-pointer"
-								>
-									{t(`schedules:drawer.weekdayTime.weekdays.${weekday}`)}
-								</label>
-							</div>
-
-							{isSelected && fieldIndex !== -1 && (
-								<div className="mt-3 grid gap-3 sm:grid-cols-2">
-									<RHFTimeField
-										control={control}
-										name={timeFieldName}
-										label={t("schedules:drawer.weekdayTime.timeLabel")}
-										caption={t("schedules:drawer.weekdayTime.timeCaption")}
-										disabled={disabled}
-									/>
-									<RHFSelectField
-										control={control}
-										name={durationFieldName}
-										label={t("schedules:drawer.duration.label")}
-										caption={t("schedules:drawer.weekdayTime.durationCaption")}
-										disabled={disabled}
-										options={durationOptions}
-										selectProps={{
-											ariaLabelledBy: `weekday-${weekday}-label`,
-										}}
-									/>
-								</div>
-							)}
-						</div>
-					);
-				})}
-			</div>
-		</div>
+				return (
+					<div className="grid gap-3 sm:grid-cols-2">
+						<RHFTimeField
+							caption={t("schedules:drawer.weekdayTime.timeCaption")}
+							control={control}
+							disabled={disabled}
+							inputProps={{
+								"aria-describedby": overlapDescriptionId,
+								"aria-invalid": Boolean(overlapDescriptionId),
+								id: `weekday-time-${item.id}`,
+							}}
+							label={t("schedules:drawer.weekdayTime.timeLabel", {
+								interval: intervalLabel,
+							})}
+							name={timeFieldName}
+						/>
+						<RHFSelectField
+							caption={t("schedules:drawer.weekdayTime.durationCaption")}
+							control={control}
+							disabled={disabled}
+							label={t("schedules:drawer.weekdayTime.durationSelectLabel", {
+								interval: intervalLabel,
+							})}
+							name={durationFieldName}
+							options={durationOptions}
+							selectProps={{
+								ariaLabel: t(
+									"schedules:drawer.weekdayTime.durationSelectLabel",
+									{ interval: intervalLabel },
+								),
+								ariaDescribedBy: overlapDescriptionId,
+								ariaInvalid: Boolean(overlapDescriptionId),
+							}}
+						/>
+					</div>
+				);
+			}}
+		/>
 	);
 }

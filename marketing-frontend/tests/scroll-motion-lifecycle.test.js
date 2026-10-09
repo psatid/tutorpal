@@ -6,11 +6,18 @@ beforeEach(() => {
   calendar = new Element(); events = Array.from({length: 12}, () => new Element('LI'));
   workspace = new Element(); bars = Array.from({length: 4}, () => new Element('SPAN'));
   title = new Element('H2'); body = new Element('P'); body.intro = true;
-  env = installBoundary({preparing: true, queries: new Map([['[data-calendar-frame]', calendar], ['.workspace-frame', workspace]]),
+  for (const target of [calendar,workspace,title,body,...events,...bars]) target.rect={top:1200,bottom:1300,height:100,width:300,left:0};
+  env = installBoundary({queries: new Map([['[data-calendar-frame]', calendar], ['.workspace-frame', workspace]]),
     lists: new Map([['[data-calendar-frame]', [calendar]], ['[data-reveal]', [title, body, workspace]], ['[data-calendar-event]', events], ['[data-balance-fill]', bars]])});
 });
 afterEach(async () => { clean?.(); clean = undefined; await flush(); env.restore(); });
-const start = () => { clean = setupMotion(); return env.observers[0]; };
+const start = () => {
+  clean = setupMotion();
+  for (const target of [calendar,workspace,title,body,...events,...bars]) {
+    if (target.rect.top === 1200) target.rect={top:100,bottom:200,height:100,width:300,left:0};
+  }
+  return env.observers[0];
+};
 const final = element => { expect(element.dataset.motionDone).toBe('true'); expect(element.dataset.motionPhase).toBe('settled'); };
 
 describe('section motion sequencing and cancellation', () => {
@@ -53,10 +60,30 @@ describe('section motion sequencing and cancellation', () => {
     final(title); final(body); observer.approach(title); expect(title.animations).toHaveLength(1);
   });
   test('leaving a parent settles its descendants; disposal and cancel rejection cannot start queued animations', async () => {
-    const observer = start(); observer.approach(calendar,workspace); observer.leave(calendar,workspace); await flush();
+    const observer = start(); observer.approach(calendar,workspace);
+    calendar.rect = workspace.rect = {top: 950, bottom: 1050, height: 100, width: 300, left: 0};
+    observer.leave(calendar,workspace); await flush();
     for (const child of [...events,...bars]) { final(child); expect(child.animations).toHaveLength(0); }
     observer.approach(title); clean(); await flush(); expect(observer.disconnected).toBe(true); final(title);
     observer.approach(body); expect(body.animations).toHaveLength(0);
+  });
+  test('leaving the trigger band keeps a physically visible reveal in progress', async () => {
+    const observer = start(); observer.approach(title);
+    const animation = title.animations[0];
+    title.rect = {top: 760, bottom: 860, height: 100, width: 300, left: 0};
+    observer.leave(title);
+    env.window.dispatchEvent(new Event('scroll')); env.flushFrame(); await flush();
+    expect(animation.cancelCount).toBe(0);
+    expect(title.dataset.motionPhase).toBe('revealing');
+    animation.complete(); await flush(); final(title);
+    observer.approach(title); expect(title.animations).toHaveLength(1);
+
+    observer.approach(body);
+    body.rect = {top: 760, bottom: 860, height: 100, width: 300, left: 0};
+    observer.leave(body); expect(body.dataset.motionPhase).toBe('revealing');
+    body.rect = {top: 950, bottom: 1050, height: 100, width: 300, left: 0};
+    env.window.dispatchEvent(new Event('scroll')); env.flushFrame(); await flush();
+    final(body); expect(body.animations[0].cancelCount).toBe(1);
   });
   test('cleanup of an active parent cannot start queued descendants', async () => {
     const observer = start(); observer.approach(calendar,workspace);
@@ -81,7 +108,7 @@ describe('section motion sequencing and cancellation', () => {
     clean = setupMotion(); clean();
     const closing = new Element('SECTION',{top:1500,bottom:2200});
     env.restore(); env = installBoundary({queries:new Map([['.closing',closing]])});
-    clean = setupMotion(); const observer = env.observers[0];
+    clean = setupMotion(); const observer = env.observers.find(item => item.targets.includes(closing));
     expect(closing.dataset.motionReady).toBe('true'); expect(closing.dataset.motionRunning).toBe('false');
     observer.approach(closing); expect(closing.dataset.motionRunning).toBe('true');
     env.document.hidden = true; env.document.dispatchEvent(new Event('visibilitychange')); expect(closing.dataset.motionRunning).toBe('false');
@@ -90,46 +117,39 @@ describe('section motion sequencing and cancellation', () => {
   });
   test('missing WAAPI leaves section content static without installing a reveal observer', () => {
     const animate = Element.prototype.animate;
-    try { delete Element.prototype.animate; delete env.window.tutorpalRevealBoot; clean = setupMotion(); expect(env.observers).toHaveLength(0); expect(title.animations).toHaveLength(0); }
+    try { delete Element.prototype.animate; clean = setupMotion(); expect(env.observers).toHaveLength(0); expect(title.animations).toHaveLength(0); }
     finally { Element.prototype.animate = animate; }
   });
   test('API failure and unsupported enhancement preserve static content and do not prepare hidden elements', async () => {
     calendar.failAnimation = true; const observer = start(); observer.approach(calendar); await flush(); final(calendar);
     expect(events.every(event => event.animations.length === 1)).toBe(true);
-    clean(); delete env.window.IntersectionObserver; delete env.window.tutorpalRevealBoot;
+    clean(); delete env.window.IntersectionObserver;
     clean = setupMotion(); expect(env.observers).toHaveLength(1);
     expect(title.animations).toHaveLength(0); final(title);
   });
 });
 
-describe('prepared reveal ownership and unread-content safety', () => {
-  test('registration prepares all targets before claim; pending cleanup settles every target', () => {
+describe('offscreen preparation and unread-content safety', () => {
+  test('startup prepares only rendered targets wholly below viewport; pending cleanup settles them', () => {
     const targets=[title,body,workspace,calendar,...events,...bars];
-    env.window.tutorpalRevealBoot.claim=function() {
-      expect(env.observers[0].targets).toHaveLength(16);
-      for (const target of targets) expect(target.dataset.motionPhase).toBe('pending');
-      this.phase='claimed'; return true;
-    };
-    start(); expect(env.window.tutorpalRevealBoot.phase).toBe('claimed');
+    title.rect={top:100,bottom:200,height:100};
+    events[0].rect={top:0,bottom:0,height:0};
+    start(); expect(env.observers[0].targets).toHaveLength(targets.length-2);
+    final(title); expect(events[0].dataset.motionPhase).toBeUndefined();
+    for (const target of targets.filter(element => element!==title && element!==events[0])) expect(target.dataset.motionPhase).toBe('pending');
     clean(); for (const target of targets) {final(target); expect(target.animations).toHaveLength(0);}
   });
-  test('missing or expired boot never re-hides already readable section content', () => {
-    for (const boot of [undefined,{phase:'expired'}]) {
-      env.window.tutorpalRevealBoot=boot; clean=setupMotion(); expect(env.observers).toHaveLength(0);
-      for (const target of [title,body,workspace,calendar,...events,...bars]) {final(target); expect(target.animations).toHaveLength(0);}
-      clean();
-    }
-  });
-  test('deadline claim race releases pending targets and removes reveal observer', () => {
-    env.window.tutorpalRevealBoot.claim=() => false; clean=setupMotion();
-    expect(env.window.tutorpalRevealBoot.phase).toBe('expired'); expect(env.observers[0].disconnected).toBe(true);
-    for (const target of [title,body,workspace,calendar,...events,...bars]) final(target);
-    env.observers[0].approach(title,calendar,workspace); expect(title.animations).toHaveLength(0);
+  test('late entry leaves already visible and passed sections static while later sections remain eligible', () => {
+    title.rect={top:100,bottom:200,height:100}; body.rect={top:-300,bottom:-200,height:100};
+    const observer=start(); final(title); final(body);
+    expect(calendar.dataset.motionPhase).toBe('pending');
+    expect(title.animations).toHaveLength(0); expect(body.animations).toHaveLength(0);
+    observer.approach(calendar); expect(calendar.animations).toHaveLength(1);
   });
   test('partial observer registration failure releases all prepared descendants', () => {
     const observe=IntersectionObserver.prototype.observe;
     IntersectionObserver.prototype.observe=function(target) {if(target===calendar) throw new Error('Partial registration failure'); observe.call(this,target);};
-    try {clean=setupMotion(); expect(env.window.tutorpalRevealBoot.reason).toBe('setup-failure'); expect(env.observers[0].disconnected).toBe(true);
+    try {clean=setupMotion(); expect(env.observers[0].disconnected).toBe(true);
       for(const target of [title,body,workspace,calendar,...events,...bars]) final(target);
     } finally {IntersectionObserver.prototype.observe=observe;}
   });
@@ -138,6 +158,13 @@ describe('prepared reveal ownership and unread-content safety', () => {
     const observer=start(); env.document.hidden=true; env.document.dispatchEvent(new Event('visibilitychange'));
     for(const target of [title,body,workspace,calendar,...events,...bars]) final(target);
     env.document.hidden=false; observer.approach(title); expect(title.animations).toHaveLength(0);
+  });
+  test('resize keeps below-viewport sections pending and settles newly visible targets', () => {
+    title.rect={top:1500,bottom:1600,height:100};
+    const observer=start(); expect(title.dataset.motionPhase).toBe('pending');
+    env.window.dispatchEvent(new Event('resize')); expect(title.dataset.motionPhase).toBe('pending');
+    title.rect={top:400,bottom:500,height:100}; env.window.dispatchEvent(new Event('resize')); final(title);
+    observer.approach(title); expect(title.animations).toHaveLength(0);
   });
 });
 
@@ -177,7 +204,7 @@ test('cleanup cancels coalesced scroll work and stale frame callbacks cannot aff
 
 test('RAF availability lost after preparation releases the entire pending scene through static fallback', () => {
   delete env.window.requestAnimationFrame;
-  clean=setupMotion(); expect(env.window.tutorpalRevealBoot.reason).toBe('setup-failure');
+  clean=setupMotion();
   expect(env.observers).toHaveLength(0);
   for(const target of [title,body,calendar,workspace,...events,...bars]) {final(target); expect(target.animations).toHaveLength(0);}
 });

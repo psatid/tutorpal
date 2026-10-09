@@ -25,7 +25,7 @@ export class Element extends EventTarget {
     this.animations.push(animation); return animation;
   }
 }
-export function installBoundary({queries = new Map(), lists = new Map(), wide = true, preparing = false} = {}) {
+export function installBoundary({queries = new Map(), lists = new Map(), wide = true} = {}) {
   const keys = ['window', 'document', 'HTMLElement', 'IntersectionObserver', 'getComputedStyle', 'location', 'Element', 'requestAnimationFrame', 'cancelAnimationFrame'];
   const saved = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   const observers = [];
@@ -35,7 +35,6 @@ export function installBoundary({queries = new Map(), lists = new Map(), wide = 
   const media = Object.assign(new EventTarget(), {matches: wide});
   const document = Object.assign(new EventTarget(), {hidden: false, querySelector: selector => queries.get(selector) ?? null, querySelectorAll: selector => lists.get(selector) ?? [...new Set(selector.split(',').flatMap(part => lists.get(part.trim()) ?? []))]});
   const window = Object.assign(new EventTarget(), {innerHeight: 900, scrollY: 0, IntersectionObserver: true, requestAnimationFrame, cancelAnimationFrame, matchMedia: () => media});
-  if (preparing) window.tutorpalRevealBoot = createBoot();
   class Observer {
     constructor(callback) { this.callback = callback; this.targets = []; this.disconnected = false; observers.push(this); }
     observe(target) { this.targets.push(target); }
@@ -50,7 +49,3 @@ export function installBoundary({queries = new Map(), lists = new Map(), wide = 
   }};
 }
 export const flush = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); };
-
-export function createBoot({claim = true} = {}) {
-  return {phase: 'preparing', deadline: Date.now()+2000, reason: '', claim() { if (!claim) return false; this.phase='claimed'; return true; }, release(reason) { this.phase='expired'; this.reason=reason; }};
-}

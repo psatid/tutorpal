@@ -25,6 +25,7 @@ function TimeField({
   return (
     <FormField
       label={label}
+      htmlFor={inputProps.id}
       caption={caption}
       error={error}
       required={required}

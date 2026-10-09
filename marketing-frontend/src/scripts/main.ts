@@ -1,6 +1,6 @@
 import { setupMotion } from './motion';
 import { setupFAQ } from './faq';
-import { releaseReveals } from './reveal-state';
+import { releaseReveals, settleHero } from './reveal-state';
 const menu = document.querySelector<HTMLDetailsElement>('.mobile-menu');
 const closeMenu = () => { if (menu) menu.open = false; };
 menu?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
@@ -19,9 +19,10 @@ function reconcile() {
   cleanFAQ?.(); cleanFAQ = undefined;
   if (disposed) return;
   if (motionQuery.matches) {
-    releaseReveals('reduced'); return;
+    settleHero();
+    releaseReveals(); return;
   }
-  try { cleanMotion = setupMotion(); } catch { releaseReveals('setup-failure'); }
+  try { cleanMotion = setupMotion(); } catch { releaseReveals(); }
   try { cleanFAQ = setupFAQ(); } catch { /* Native disclosures remain available. */ }
 }
 motionQuery.addEventListener('change', reconcile);

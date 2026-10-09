@@ -11,7 +11,12 @@ import {
 } from "@/components/ui/accordion";
 import { DateTime } from "@/lib/date-time";
 import { formatDuration } from "@/lib/schedule-utils";
-import { minutesToTimeString, type RecurringScheduleSummary, type Weekday } from "@/types/schedule";
+import {
+	minutesToTimeString,
+	WEEKDAY_ORDER,
+	type RecurringScheduleSummary,
+	type Weekday,
+} from "@/types/schedule";
 
 interface RecurringScheduleSectionProps {
 	hasNoAvailableHours: boolean;
@@ -31,33 +36,46 @@ const WEEKDAY_LABEL_KEYS: Record<Weekday, string> = {
 	SUNDAY: "schedules:drawer.weekdayTime.weekdays.SUNDAY",
 };
 
-const WEEKDAY_ORDER: Record<Weekday, number> = {
-	MONDAY: 0,
-	TUESDAY: 1,
-	WEDNESDAY: 2,
-	THURSDAY: 3,
-	FRIDAY: 4,
-	SATURDAY: 5,
-	SUNDAY: 6,
-};
-
 function formatRecurringItems(
 	recurringSchedule: RecurringScheduleSummary,
 	t: TFunction,
 ) {
-	return recurringSchedule.scheduleItems
-		.map((item) => {
-			const weekday = t(WEEKDAY_LABEL_KEYS[item.weekday]);
-			const startTime = minutesToTimeString(item.time);
-			return {
-				id: item.id ?? `${item.weekday}-${item.time}-${item.durationMinutes}`,
-				weekdayKey: item.weekday,
-				weekday,
-				startTime,
-				durationLabel: formatDuration(item.durationMinutes, t),
-			};
-		})
-		.sort((left, right) => WEEKDAY_ORDER[left.weekdayKey] - WEEKDAY_ORDER[right.weekdayKey]);
+	const groupedItems = new Map<
+		Weekday,
+		{
+			weekday: string;
+			items: Array<{
+				id: string;
+				startTime: string;
+				durationLabel: string;
+				time: number;
+			}>;
+		}
+	>();
+
+	for (const item of recurringSchedule.scheduleItems) {
+		const group = groupedItems.get(item.weekday) ?? {
+			weekday: t(WEEKDAY_LABEL_KEYS[item.weekday]),
+			items: [],
+		};
+		group.items.push({
+			id: item.id ?? `${item.weekday}-${item.time}-${item.durationMinutes}`,
+			startTime: minutesToTimeString(item.time),
+			durationLabel: formatDuration(item.durationMinutes, t),
+			time: item.time,
+		});
+		groupedItems.set(item.weekday, group);
+	}
+
+	return [...groupedItems.entries()]
+		.map(([weekdayKey, group]) => ({
+			weekdayKey,
+			...group,
+			items: group.items.sort((left, right) => left.time - right.time),
+		}))
+		.sort(
+			(left, right) => WEEKDAY_ORDER[left.weekdayKey] - WEEKDAY_ORDER[right.weekdayKey],
+		);
 }
 
 export function RecurringScheduleSection({
@@ -76,7 +94,7 @@ export function RecurringScheduleSection({
 		return (
 			<section aria-labelledby="recurring-schedule-title" className="rounded-xl border border-border bg-card p-4">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div className="flex min-w-0 items-start gap-3">
+					<div className="flex min-w-0 items-start gap-3 sm:flex-1">
 						<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
 							<Repeat2 className="h-4 w-4 text-on-surface" />
 						</div>
@@ -92,7 +110,7 @@ export function RecurringScheduleSection({
 						</div>
 					</div>
 					<Button
-						className="w-full lg:w-auto"
+						className="w-full shrink-0 sm:w-auto"
 						onClick={hasNoAvailableHours ? onAddHours : onCreate}
 						size="md"
 						variant="outline"
@@ -155,15 +173,19 @@ export function RecurringScheduleSection({
 							</div>
 						</div>
 
-						<div className="flex flex-wrap gap-2">
+						<div className="space-y-1.5 text-sm leading-5 text-on-surface-variant">
 							{recurringItems.map((item) => (
-								<Badge
-									key={item.id}
-									variant="outline"
-									className="min-w-0 bg-surface-container-low px-2.5 py-1 text-xs font-medium text-on-surface"
+								<div
+									key={item.weekdayKey}
+									className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
 								>
-									{item.weekday}
-								</Badge>
+									<span className="font-medium text-on-surface">{item.weekday}</span>
+									{item.items.map((interval) => (
+										<span key={interval.id}>
+											{interval.startTime} · {interval.durationLabel}
+										</span>
+									))}
+								</div>
 							))}
 						</div>
 					</div>
@@ -173,20 +195,21 @@ export function RecurringScheduleSection({
 					<ul className="space-y-2">
 						{recurringItems.map((item) => (
 							<li
-								key={item.id}
+								key={item.weekdayKey}
 								className="flex items-start justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2"
 							>
 								<div className="min-w-0">
 									<p className="text-sm font-medium leading-5 text-on-surface">
 										{item.weekday}
 									</p>
-									<p className="text-sm leading-5 text-on-surface-variant">
-										{item.startTime}
-									</p>
+									<div className="mt-1 space-y-1 text-sm leading-5 text-on-surface-variant">
+										{item.items.map((interval) => (
+											<p key={interval.id}>
+												{interval.startTime} · {interval.durationLabel}
+											</p>
+										))}
+									</div>
 								</div>
-								<span className="shrink-0 text-sm font-medium leading-5 text-on-surface">
-									{item.durationLabel}
-								</span>
 							</li>
 						))}
 					</ul>

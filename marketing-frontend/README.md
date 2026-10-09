@@ -86,41 +86,34 @@ existing logo is reused unchanged. The hero's bottom note and visible motion
 control remain absent.
 
 All primary content is visible in static HTML, including when JavaScript is
-disabled; the compact calendar remains Monday–Wednesday below 1024px. A
-landing-only inline head guard prepares optional targets before paint using zero
-opacity (no pending blur or layout removal) and scaleX(0) for decorative fills.
-The entry must claim this preparation within two seconds after registering its
-observers and release handlers. A missed deadline or setup fault permanently
-releases sharp content and filled bars; late code never hides it again. Initial
-hash/restored-scroll navigation, early interaction, unsupported animation APIs,
-and reduced motion take the static path. Hero content is present in static HTML; its
-CTA links remain focusable and clickable. Navigation and FAQ controls stay immediately
-available.
+disabled or delayed; the compact calendar remains Monday–Wednesday below 1024px.
+Finite CSS animations reveal the hero on page load and finish visibly without
+JavaScript. The optional browser script prepares only rendered scroll targets
+wholly below the viewport when it starts. Content already visible or passed stays
+static, while unseen lower sections can still reveal after a delayed script load.
+Unsupported animation APIs, initial hash navigation, and reduced motion leave
+scroll content static. Hero CTA links remain focusable and clickable, and navigation
+and FAQ controls stay immediately available.
 
-Ordinary startup viewport resize does not expire preparation. Before an entrance
-starts, controllers measure the current viewport during initialization; after
-initialization, existing resize handlers settle active effects and reconcile
-rendered targets. Resizing never extends or resets the two-second deadline.
+After initialization, resize settles active or newly visible reveals and prepares
+newly rendered targets that remain below the viewport. Unseen pending targets stay
+eligible for their first entrance.
 
-The small bundled script reveals the hero copy over 850ms, then starts visible
-card entrances from their nearest edges at 900, 960, 1020, and 1080ms. The first
-card starts 50ms after the copy finishes, and subsequent cards start 60ms apart;
-each entrance lasts 850ms with transient opacity and blur. Six compact hero icons
+CSS reveals the hero copy and four desktop cards together without an entrance
+delay. Cards enter from their nearest edges over 850ms with transient opacity
+and blur. Six compact hero icons
 reveal from outward offsets over one second; the pencil and book use lower outward
 offsets from their reserved compact band. Separate wrappers then float: cards
 travel 14px on desktop and icons travel 10px, or 8px on phones. On a normal first
-load with prepared motion
-and a visible hero, `.hero-copy` enters once over 850ms from 24px below with transient
+load, `.hero-copy` enters once over 850ms from 24px below with transient
 6px blur and no delay. It is excluded from scroll reveals and never replays; after
 it settles, copy and CTAs stay stationary. CTA links remain focusable and clickable.
 Floating pauses while the hero is offscreen, the document is
-hidden, or keyboard focus is inside the hero. Leaving view during an entrance
-finishes it immediately.
+hidden, or keyboard focus is inside the hero. The finite CSS entrance completes
+without the browser script.
 Reduced motion disables motion and card rotation; changing that preference
 cleans up active effects. Returning from BFCache restores optional floating
-without repeating completed entrances. The preparation guard is bounded and
-independent of floating/FAQ enhancements;
-there is no GSAP or Three.js dependency.
+without starting new scroll entrances. There is no GSAP or Three.js dependency.
 
 Section headings and supporting copy reveal once when their top reaches a point
 200px above the viewport bottom, over 850ms with 24px travel, transient 6px blur,
@@ -159,16 +152,18 @@ and floating cycles remain in the closing section. Hero and closing loops suspen
 offscreen, in hidden tabs, and during keyboard focus within their sections. LINE list checks are inline SVGs:
 they draw once with a small staggered pulse when first scrolled into view, and stay
 static for reduced motion, unsupported setup, hidden documents, or focus/hash navigation.
-Animations enhance static HTML with the bounded preparation contract;
-unsupported APIs or setup faults leave readable content and filled bars. Interrupted reveals settle and completed effects do not replay after
+Scroll animations enhance static HTML only after browser setup; unsupported APIs or
+setup faults leave readable content and filled bars. An active scroll reveal
+continues through the edge of its trigger band while still visible, then settles
+when fully offscreen. Other interrupted reveals settle,
+and completed effects do not replay after
 preference changes or BFCache restores. Pending targets also release on
 bailouts, hidden documents, focus/hash navigation, and cleanup; rendered items
 skipped above the viewport settle, while closed native details are not marked
-seen. There is no pinned scrolling. For diagnostics, `window.tutorpalRevealBoot`
-and the root `data-reveal-boot` expose preparing/claimed/expired state. The root
-`data-reveal-reason` reports expiration and clears on preparation or claim. Targets
-expose `data-motion-phase` (pending/revealing/settled) and persistent
-`data-motion-done`.
+seen. There is no pinned scrolling. For diagnostics, scroll targets expose
+`data-motion-phase` (pending/revealing/settled) and persistent
+`data-motion-done`. Hero targets use `data-hero-done` to prevent replay after
+their entrance or a reduced-motion preference change.
 
 FAQ keeps native, multi-open details behavior with an optional 320ms measured
 height/opacity transition. Opening/closing can reverse mid-transition. Closing

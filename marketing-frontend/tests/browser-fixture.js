@@ -5,14 +5,14 @@ import { existsSync } from 'node:fs';
 import { scaleViewportQueries } from './support/viewport-scale.js';
 
 const root = resolve(import.meta.dir, '../dist');
-const modes = new Set(['nojs', 'reduced', 'reducedToggle', 'performance', 'diagnostic', 'zoom200', 'delayedMotion', 'failedMotion', 'missingBoot', 'blockedBoot', 'unsupportedObserver', 'unsupportedAnimation', 'unsupportedFrame']);
+const modes = new Set(['nojs', 'reduced', 'reducedToggle', 'performance', 'diagnostic', 'zoom200', 'delayedMotion', 'failedMotion', 'unsupportedObserver', 'unsupportedAnimation', 'unsupportedFrame']);
 // Runs before the site's bundled module. Instrumentation remains fixture-only.
 function browserBootstrap(mode, scaleQuery) {
   const state = window.__qa = {mode, lcp: 0, cls: 0, errors: [], motionRequest: null, preEntry: [], animationCalls: []};
-  const targetSelector = '[data-hero-card],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
+  const targetSelector = '[data-hero-card],[data-hero-icon],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
   const targetId = element => element.dataset.heroCard !== undefined ? 'hero-' + element.dataset.heroCard : element.id || element.dataset.lessonId || (element.hasAttribute('data-balance-fill') ? 'balance-' + [...document.querySelectorAll('[data-balance-fill]')].indexOf(element) : element.classList.contains('faq-answer') ? 'faq-' + [...document.querySelectorAll('.faq-answer')].indexOf(element) : (element.className || element.tagName) + '-' + [...document.querySelectorAll('[data-reveal], [data-calendar-frame]')].indexOf(element));
-  // Observe parser additions before the head guard/main entry. Also sample while
-  // a real delayed/failed entry is pending, including the two-second expiry.
+  // Observe parser additions before the site entry. Delayed and failed loads
+  // should leave scroll targets readable until any enhancement actually starts.
   let preEntryTimer, parserObserver;
   const stopPreEntry = () => {clearInterval(preEntryTimer); parserObserver?.disconnect();};
   const samplePreEntry = () => {
@@ -20,8 +20,7 @@ function browserBootstrap(mode, scaleQuery) {
     if (hero?.dataset.motionRunning !== undefined || state.preEntry.length >= 100) {stopPreEntry(); return;}
     const targets = [...document.querySelectorAll(targetSelector)];
     if (!targets.length) return;
-    const boot = window.tutorpalRevealBoot;
-    state.preEntry.push({ms: Math.round(performance.now()), boot: boot?.phase || 'missing', reason: boot?.reason || '', root: document.documentElement.dataset.revealBoot || 'missing', targets: targets.map(element => {
+    state.preEntry.push({ms: Math.round(performance.now()), targets: targets.map(element => {
       const style = getComputedStyle(element);
       return {id: targetId(element), phase: element.dataset.motionPhase || 'static', done: element.dataset.motionDone === 'true', opacity: Number(style.opacity), filter: style.filter, transform: style.transform, animation: style.animationName};
     })});
@@ -79,9 +78,8 @@ function browserBootstrap(mode, scaleQuery) {
   }).observe({type: 'resource', buffered: true}); } catch {}
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Reduced/unsupported setup has no hero running marker; DOMContentLoaded
-    // still bounds its parser samples. Failed entry keeps sampling to expiry.
-    if (mode !== 'delayedMotion' && mode !== 'failedMotion') stopPreEntry();
+    // Failed entry has no hero running marker, so DOMContentLoaded bounds it.
+    if (mode !== 'delayedMotion') stopPreEntry();
     const output = document.querySelector('#qa-status');
     const history = document.querySelector('#qa-transitions');
     const toggle = document.querySelector('#qa-reduced-toggle');
@@ -104,18 +102,20 @@ function browserBootstrap(mode, scaleQuery) {
       const now = performance.now();
       const hero = document.querySelector('.hero');
       const rect = hero?.getBoundingClientRect();
+      const copy = document.querySelector('.hero-copy');
+      const copyStyle = copy && getComputedStyle(copy);
       const targets = [...document.querySelectorAll('[data-hero-card]')].map(element => {
         const computed = getComputedStyle(element);
         const float = getComputedStyle(element.querySelector('.hero-card-float'));
         const id = element.dataset.heroCard;
-        const phase = element.classList.contains('hero-motion-enter') ? 'entering' : element.classList.contains('hero-motion-ready') ? 'ready' : 'static';
+        const phase = computed.animationName === 'hero-spread' && Number(computed.opacity) < 1 ? 'entering' : element.classList.contains('hero-motion-ready') ? 'ready' : 'static';
         if (lastPhase.get(id) !== phase) {
           lastPhase.set(id, phase);
           transitions.push({ms: Math.round(now), id, phase, opacity: Number(computed.opacity), transform: computed.transform, filter: computed.filter});
           if (transitions.length > 100) transitions.shift();
           history.textContent = JSON.stringify(transitions);
         }
-        return {id, phase, done: element.dataset.motionDone === 'true', opacity: Number(computed.opacity), filter: computed.filter,
+        return {id, phase, done: element.dataset.heroDone === 'true', opacity: Number(computed.opacity), filter: computed.filter,
           entrance: {name: computed.animationName, duration: computed.animationDuration, delay: computed.animationDelay},
           float: {name: float.animationName, duration: float.animationDuration, playState: float.animationPlayState, transform: float.transform}};
       });
@@ -127,6 +127,10 @@ function browserBootstrap(mode, scaleQuery) {
         }
         return {id, phase, done: element.dataset.motionDone === 'true', opacity: Number(computed.opacity), filter: computed.filter, transform: computed.transform,
           animations: element.getAnimations().map(animation => ({playState: animation.playState, currentTime: animation.currentTime, timing: animation.effect.getTiming()}))};
+      });
+      const icons = [...document.querySelectorAll('[data-hero-icon]')].map(element => {
+        const computed = getComputedStyle(element);
+        return {id: element.className, done: element.dataset.heroDone === 'true', opacity: Number(computed.opacity), entrance: computed.animationName};
       });
       const faqs = [...document.querySelectorAll('.faq-list details')].map((element,index) => {
         const answer = element.querySelector('.faq-answer'), style = getComputedStyle(answer);
@@ -141,10 +145,10 @@ function browserBootstrap(mode, scaleQuery) {
       output.textContent = JSON.stringify({...state, ms: Math.round(now), lcp: Math.round(state.lcp), cls: Number(state.cls.toFixed(4)),
         hidden: document.hidden, offscreen: !rect || rect.bottom <= 0 || rect.top >= innerHeight,
         focusWithinHero: hero?.contains(document.activeElement) || false, running: hero?.dataset.motionRunning ?? null,
+        heroCopy: copyStyle && {done: copy.dataset.heroDone === 'true', opacity: Number(copyStyle.opacity), animation: copyStyle.animationName},
         overflow: document.documentElement.scrollWidth > viewportWidth, canvas: document.querySelectorAll('canvas').length,
         hiddenContent: [...document.querySelectorAll('[data-reveal], [data-calendar-event]')].filter(element => Number(getComputedStyle(element).opacity) < 1).length,
-        boot: {phase: window.tutorpalRevealBoot?.phase || 'missing', root: document.documentElement.dataset.revealBoot || 'missing', reason: window.tutorpalRevealBoot?.reason || '', deadline: window.tutorpalRevealBoot?.deadline},
-        targets, reveals, faqs, closing: {ready: closing?.dataset.motionReady, running: closing?.dataset.motionRunning, tiles}});
+        targets, icons, reveals, faqs, closing: {ready: closing?.dataset.motionReady, running: closing?.dataset.motionRunning, tiles}});
     };
     sample(); setInterval(sample, 50);
   });
@@ -180,7 +184,6 @@ const server = Bun.serve({
     }
     if (!path.endsWith('.html')) return new Response(file, {status, headers: {'Cache-Control': 'no-store'}});
     let html = await file.text();
-    if (mode === 'missingBoot' || mode === 'blockedBoot') html = html.replace(/<script>([\s\S]*?tutorpalRevealBoot[\s\S]*?)<\/script>/, (_, source) => mode === 'missingBoot' ? '' : `<script type="application/x-qa-blocked">${source}</script>`);
     if (mode !== 'nojs') html = html.replace('<head>', '<head>' + qaScript(mode));
     if (['delayedMotion', 'failedMotion'].includes(mode)) {
       const locale = url.pathname.startsWith('/th/') ? 'th' : 'en';

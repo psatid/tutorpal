@@ -24,14 +24,14 @@ Monday–Wednesday with a matching date label and no disclosure.
 The original logo is unchanged; the bottom hero note and
 motion button are omitted by the approved direction. Lightweight optional CSS
 motion honors reduced motion and suspends floating offscreen or in hidden tabs.
-One-shot heading/product reveals sequence calendar frame and event motion. A
-landing-only head guard prepares optional targets before paint without blur,
-then hands ownership to initialized controllers. An unclaimed two-second deadline
-or setup failure permanently restores sharp content and full bars. Late entry,
-initial deep links, restored scroll, and early interaction cannot re-hide content.
-Ordinary viewport resize before initialization preserves preparation; controllers
-measure the current layout, while resize after initialization settles active
-effects. The root's `data-reveal-reason` identifies why a static fallback was used.
+One-shot heading/product reveals sequence calendar frame and event motion. Finite
+CSS hero entrances complete without JavaScript. The optional browser controller
+prepares only rendered scroll targets wholly below the viewport; a late entry leaves
+visible or passed content readable while unseen lower sections can still reveal.
+Initial deep links and reduced motion keep scroll content static. Resize settles
+active or newly visible effects and reconciles newly rendered lower targets.
+An active scroll reveal keeps fading when it leaves the observer trigger band
+but remains in the viewport, and settles after it moves fully offscreen.
 Decorative balance fills remain visible at all sizes; numeric hours remain
 primary. Calendar items and workspace avatars use indigo `#533AFD`, blue
 `#17B5F3`, and orange `#F79303`, with white text/initials; every hour fill is indigo.

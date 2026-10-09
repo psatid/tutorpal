@@ -63,38 +63,31 @@ examples are fictional; no customer outcomes, testimonials, or pricing are inven
 
 ## Motion
 
-Content is visible static HTML by default. A tiny landing-only synchronous head
-guard may prepare the hero copy, cards, icons, section reveals, calendar frame/events,
-and balance fills before paint. Pending targets keep their layout at zero opacity
-without blur; pending fills use scaleX(0). The hero copy is the sole exception to
-immediate visibility and is prepared only for its one-shot entrance; its CTA links
-remain focusable and clickable. Navigation and native FAQ controls remain immediately
-visible. The entry claims ownership only after
-observers and release handlers initialize successfully. An unclaimed two-second
-deadline or setup failure permanently expires preparation and releases sharp
-content and full fills. Late entry cannot conceal targets or change the responsive
-calendar range.
-Initial hashes, restored scroll, early interaction, unsupported APIs, and reduced
-motion bypass preparation. Ordinary viewport resize during preparation does not
-expire the guard: no entrance has started, and controllers measure the current
-viewport before claiming. Once initialized, resize settles active effects and
-reconciles rendered targets. The two-second deadline is never extended or reset.
+Content is present in static HTML. Finite CSS animations reveal hero copy, cards,
+and icons on page load and finish visibly without JavaScript. Their CTA links remain
+focusable and clickable; navigation and native FAQ controls are immediately available.
+The optional browser script prepares only rendered scroll targets wholly below the
+viewport. Pending targets retain layout at zero opacity without blur, and pending
+decorative fills use scaleX(0). Content already visible or passed stays static; a
+late script can still reveal unseen lower sections. Unsupported APIs, initial hashes,
+and reduced motion leave scroll content static. Once initialized, resize settles
+active or newly visible effects and prepares newly rendered targets still below the
+viewport without consuming unseen pending reveals.
 
 The desktop hero keeps the four cards white, with no colored field behind them.
-After the hero copy starts its 850ms entrance, visible cards begin entering from
-their nearest page edges at 900, 960, 1020, and 1080ms. The first card begins
-50ms after the copy finishes, and subsequent cards start 60ms apart. Each card
-entrance lasts 850ms with a brief 5px blur that ends at zero. The six hero icons
+The hero copy and four desktop cards begin their entrances together without
+delay. Cards enter from their nearest page edges over 850ms with a brief 5px blur
+that ends at zero. The six hero icons
 reveal from outward offsets over one second. The pencil and book use lower outward
 offsets from the reserved bottom band at compact widths. Separate
 outer entrance and inner floating wrappers avoid transform conflicts. After
 settling, cards float vertically by 14px on desktop and 10px below 1024px;
-hero tiles float by 10px, or 8px on phones. On a normal first load with prepared
-motion and a visible hero, `.hero-copy` runs once over 850ms from 24px below with
+hero tiles float by 10px, or 8px on phones. On a normal first load, `.hero-copy`
+runs once over 850ms from 24px below with
 6px blur and no delay. It is excluded from scroll reveals and never replays; after
-it settles, the copy and CTA remain stationary. Initial hash/restored-scroll loads,
-reduced motion, no-JavaScript, setup failure, or a hero outside the viewport leave
-sharp final content. CTA links remain focusable and clickable during the entrance.
+it settles, the copy and CTA remain stationary. Reduced motion leaves sharp final
+content; the CSS entrance finishes even when JavaScript is disabled or fails. CTA
+links remain focusable and clickable during the entrance.
 
 Section headings and supporting copy reveal once when their top reaches a point
 200px above the viewport bottom, with 24px travel, 6px blur, and an 850ms ease-out;
@@ -125,7 +118,9 @@ headline and action clear. Decorative wrappers are hidden from accessibility API
 and cannot intercept pointer input.
 
 Hero and closing floating pause offscreen, in hidden documents, and while focus
-is inside their section. Interrupted entrances/reveals settle sharply; cleanup
+is inside their section. Scroll reveals already in progress continue when they
+leave the 200px trigger band but remain visible in the viewport; they settle
+when fully offscreen. Other interrupted entrances/reveals settle sharply; cleanup
 cannot launch queued descendant animations. Reduced motion disables animations
 and angles. Preference changes and BFCache restores preserve completed one-shot
 reveals. Pending and active targets settle on bailout, focus/hash navigation,
@@ -133,8 +128,8 @@ visibility changes, and cleanup; resizing reconciles rendered targets while
 closed disclosure items are not mistaken for items above the viewport. Static
 content, the responsive native calendar range, and filled bars remain the default
 on initialization failure, unavailable animation APIs, or disabled scripts. The
-compact calendar therefore remains Monday–Wednesday below 1024px. The bounded
-preparation guard has no graphics dependency. No scroll pinning, decorative light
+compact calendar therefore remains Monday–Wednesday below 1024px. Scroll reveals
+do not require a page-head guard. No scroll pinning, decorative light
 trail, or visible motion control remains.
 
 FAQ uses native, independently openable details. An optional 320ms measured-height

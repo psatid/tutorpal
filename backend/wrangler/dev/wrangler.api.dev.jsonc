@@ -44,13 +44,13 @@
       "head_sampling_rate": 1,
       "persist": true,
       "invocation_logs": true,
-      "destinations": ["tutorpal-grafana-logs"],
+      "destinations": ["grafana-cloud-logs"],
     },
     "traces": {
       "enabled": true,
       "persist": true,
       "head_sampling_rate": 1,
-      "destinations": ["tutorpal-grafana-traces"],
+      "destinations": ["grafana-cloud-traces"],
     },
   },
   "secrets": {

@@ -27,6 +27,109 @@ export interface RecurringScheduleSummary {
 	}>;
 }
 
+export interface RecurringScheduleItemInput {
+	weekday: Weekday;
+	time: string;
+	durationMinutes: number;
+}
+
+export const WEEKDAY_ORDER: Record<Weekday, number> = {
+	MONDAY: 0,
+	TUESDAY: 1,
+	WEDNESDAY: 2,
+	THURSDAY: 3,
+	FRIDAY: 4,
+	SATURDAY: 5,
+	SUNDAY: 6,
+};
+
+const MINUTES_PER_DAY = 24 * 60;
+const MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY;
+
+function getWeeklyStart(item: RecurringScheduleItemInput) {
+	return WEEKDAY_ORDER[item.weekday] * MINUTES_PER_DAY + timeStringToMinutes(item.time);
+}
+
+function overlapsOnRepeatingWeek(
+	item: RecurringScheduleItemInput,
+	otherItem: RecurringScheduleItemInput,
+) {
+	const start = getWeeklyStart(item);
+	const end = start + item.durationMinutes;
+	const otherStart = getWeeklyStart(otherItem);
+	const otherEnd = otherStart + otherItem.durationMinutes;
+	const firstRelevantWeek = Math.floor(
+		(start - otherEnd) / MINUTES_PER_WEEK,
+	);
+	const lastRelevantWeek = Math.ceil(
+		(end - otherStart) / MINUTES_PER_WEEK,
+	);
+
+	for (let weekOffset = firstRelevantWeek; weekOffset <= lastRelevantWeek; weekOffset += 1) {
+		const shiftedOtherStart = otherStart + weekOffset * MINUTES_PER_WEEK;
+		const shiftedOtherEnd = otherEnd + weekOffset * MINUTES_PER_WEEK;
+
+		if (start < shiftedOtherEnd && shiftedOtherStart < end) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+export function getOverlappingRecurringScheduleItemIndexes(
+	items: readonly RecurringScheduleItemInput[],
+) {
+	const overlappingIndexes = new Set<number>();
+
+	items.forEach((item, index) => {
+		if (
+			Number.isFinite(item.durationMinutes) &&
+			item.durationMinutes > MINUTES_PER_WEEK
+		) {
+			overlappingIndexes.add(index);
+		}
+
+		items.forEach((otherItem, otherIndex) => {
+			if (
+				index === otherIndex ||
+				!Number.isFinite(item.durationMinutes) ||
+				!Number.isFinite(otherItem.durationMinutes)
+			) {
+				return;
+			}
+
+			if (
+				item.durationMinutes > MINUTES_PER_WEEK ||
+				otherItem.durationMinutes > MINUTES_PER_WEEK
+			) {
+				overlappingIndexes.add(index);
+				overlappingIndexes.add(otherIndex);
+				return;
+			}
+
+			if (overlapsOnRepeatingWeek(item, otherItem)) {
+				overlappingIndexes.add(index);
+			}
+		});
+	});
+
+	return overlappingIndexes;
+}
+
+export function sortRecurringScheduleItems<T extends RecurringScheduleItemInput>(
+	items: readonly T[],
+) {
+	return [...items].sort((left, right) => {
+		const weekdayDifference =
+			WEEKDAY_ORDER[left.weekday] - WEEKDAY_ORDER[right.weekday];
+		return (
+			weekdayDifference ||
+			timeStringToMinutes(left.time) - timeStringToMinutes(right.time)
+		);
+	});
+}
+
 // Schema for the form - uses HH:MM format for time
 export function createScheduleSchema(t: TFunction) {
 	return z
@@ -92,6 +195,19 @@ export function createScheduleSchema(t: TFunction) {
 						message: t("schedules:validation.durationRequired"),
 					});
 				}
+			}
+
+			if (
+				data.recurring &&
+				getOverlappingRecurringScheduleItemIndexes(
+					data.recurring.scheduleItems,
+				).size > 0
+			) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ["recurring", "scheduleItems"],
+					message: t("schedules:validation.overlappingWeekdayTimes"),
+				});
 			}
 		});
 }

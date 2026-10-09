@@ -33,7 +33,9 @@ import { DateTime } from "@/lib/date-time";
 import { formatDuration, SCHEDULE_DURATION_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 import {
+	getOverlappingRecurringScheduleItemIndexes,
 	minutesToTimeString,
+	sortRecurringScheduleItems,
 	type ScheduleFormData,
 	createScheduleSchema,
 	timeStringToMinutes,
@@ -94,8 +96,10 @@ export function ScheduleDrawer({
 	const {
 		control,
 		formState: { errors },
+		getValues,
 		handleSubmit,
 		reset,
+		setFocus,
 		setValue,
 	} = useForm<ScheduleFormData>({
 		resolver: zodResolver(createScheduleSchema(t)),
@@ -193,7 +197,9 @@ export function ScheduleDrawer({
 				recurring: data.recurring
 					? {
 							startDate: data.date,
-							scheduleItems: data.recurring.scheduleItems.map((item) => ({
+							scheduleItems: sortRecurringScheduleItems(
+								data.recurring.scheduleItems,
+							).map((item) => ({
 								weekday: item.weekday,
 								time: timeStringToMinutes(item.time),
 								durationMinutes: item.durationMinutes,
@@ -214,6 +220,21 @@ export function ScheduleDrawer({
 					status: data.status,
 				},
 			});
+		}
+	};
+
+	const focusFirstOverlappingRecurringTime = () => {
+		const scheduleItems = getValues("recurring.scheduleItems") ?? [];
+		const firstOverlappingIndex = [...getOverlappingRecurringScheduleItemIndexes(
+			scheduleItems,
+		)].sort(
+			(left, right) =>
+				timeStringToMinutes(scheduleItems[left]?.time ?? "") -
+				timeStringToMinutes(scheduleItems[right]?.time ?? ""),
+		)[0];
+
+		if (firstOverlappingIndex !== undefined) {
+			setFocus(`recurring.scheduleItems.${firstOverlappingIndex}.time`);
 		}
 	};
 
@@ -288,7 +309,10 @@ export function ScheduleDrawer({
 			open={isOpen}
 			title={getTitle()}
 		>
-			<form id={SCHEDULE_DRAWER_FORM_ID} onSubmit={handleSubmit(onSubmit)}>
+			<form
+				id={SCHEDULE_DRAWER_FORM_ID}
+				onSubmit={handleSubmit(onSubmit, focusFirstOverlappingRecurringTime)}
+			>
 				<FieldGroup className="gap-5">
 					<FormField
 						caption={

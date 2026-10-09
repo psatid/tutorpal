@@ -1,4 +1,4 @@
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import {
@@ -50,10 +50,10 @@ export function ResponsiveDrawer({
   onCloseAutoFocus,
 }: ResponsiveDrawerProps) {
   const { t } = useTranslation("common");
-  const drawerPopupRef = useRef<HTMLDivElement>(null);
+  const [drawerPopup, setDrawerPopup] = useState<HTMLDivElement | null>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-	const overlayPortalContextValue = {
-    portalContainer: drawerPopupRef,
+  const overlayPortalContextValue = {
+    portalContainer: drawerPopup,
     // On small screens the Select must participate in the drawer's modal
     // focus management. The desktop panel does not need that second trap.
     modal: !isDesktop,
@@ -85,11 +85,11 @@ export function ResponsiveDrawer({
           className={layer === "nested" ? "pointer-events-none" : undefined}
         >
           <DrawerPopup
-            ref={drawerPopupRef}
+            ref={setDrawerPopup}
             layer={layer}
             className="pointer-events-auto"
           >
-			<DrawerOverlayPortalContext.Provider value={overlayPortalContextValue}>
+            <DrawerOverlayPortalContext.Provider value={overlayPortalContextValue}>
               <DrawerHeader className="px-5 pt-5 pb-4 md:px-6 md:pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -121,7 +121,7 @@ export function ResponsiveDrawer({
                   {footer}
                 </DrawerFooter>
               ) : null}
-			</DrawerOverlayPortalContext.Provider>
+            </DrawerOverlayPortalContext.Provider>
           </DrawerPopup>
         </DrawerViewport>
       </DrawerPortal>

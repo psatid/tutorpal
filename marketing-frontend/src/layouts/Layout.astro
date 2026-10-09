@@ -1,8 +1,8 @@
 ---
 import '../styles/global.css';
 import { copy, type Locale } from '../content';
-interface Props { lang: Locale; noindex?: boolean; title?: string; prepareMotion?: boolean; }
-const { lang, noindex = false, title, prepareMotion = false } = Astro.props;
+interface Props { lang: Locale; noindex?: boolean; title?: string; }
+const { lang, noindex = false, title } = Astro.props;
 const c = copy[lang];
 const canonical = `https://tutorpal.io${lang === 'en' ? '/' : '/th/'}`;
 const schema = { '@context':'https://schema.org', '@graph': [
@@ -14,51 +14,6 @@ const schema = { '@context':'https://schema.org', '@graph': [
 <html lang={lang}>
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-  {prepareMotion && <script is:inline>
-    (() => {
-      const root = document.documentElement;
-      const targets = '[data-hero-card],[data-hero-icon],[data-hero-copy],[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]';
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-      const deadline = Date.now() + 2000;
-      let timer;
-      const listeners = [];
-      const listen = (target, name, handler) => { target.addEventListener(name, handler, true); listeners.push(() => target.removeEventListener(name, handler, true)); };
-      const clear = () => { clearTimeout(timer); listeners.splice(0).forEach(remove => remove()); };
-      const state = window.tutorpalRevealBoot = {
-        phase: 'preparing', deadline, reason: '',
-        release(reason) {
-          state.phase = 'expired'; state.reason = reason; clear();
-          root.classList.remove('reveal-preparing'); root.dataset.revealBoot = 'expired'; root.dataset.revealReason = reason;
-          document.querySelectorAll(targets).forEach(element => {
-            element.dataset.motionDone = 'true'; element.dataset.motionPhase = 'settled';
-            element.classList.remove('hero-motion-enter', 'hero-icon-enter', 'hero-copy-enter');
-            try { element.getAnimations?.().forEach(animation => animation.cancel()); } catch { /* Preparation still releases if an animation API fails. */ }
-          });
-        },
-        claim() {
-          if (state.phase !== 'preparing' || Date.now() >= deadline) { state.release(state.reason || 'deadline'); return false; }
-          state.phase = 'claimed'; clear(); root.classList.remove('reveal-preparing'); root.dataset.revealBoot = 'claimed'; delete root.dataset.revealReason; return true;
-        },
-      };
-      try {
-      const restored = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
-      if (reduced.matches || !('IntersectionObserver' in window) || typeof HTMLElement.prototype.animate !== 'function' || typeof window.requestAnimationFrame !== 'function' || typeof window.cancelAnimationFrame !== 'function' || location.hash || restored || document.hidden) {
-        state.release(reduced.matches ? 'reduced' : 'initial-bypass'); return;
-      }
-      root.dataset.revealBoot = 'preparing'; delete root.dataset.revealReason; root.classList.add('reveal-preparing');
-      timer = setTimeout(() => state.release('deadline'), 2000);
-      const interaction = () => state.release('early-interaction');
-      listen(document, 'click', interaction);
-      listen(document, 'focusin', event => {
-        if (event.target && event.target !== document.body && event.target !== document.documentElement) interaction();
-      });
-      listen(window, 'hashchange', () => state.release('hash'));
-      listen(document, 'visibilitychange', () => { if (document.hidden) state.release('hidden'); });
-      listen(window, 'pagehide', () => state.release('pagehide'));
-      listen(reduced, 'change', () => { if (reduced.matches) state.release('reduced'); });
-      } catch { state.release('setup-failure'); }
-    })();
-  </script>}
   <meta name="theme-color" content="#FFFFFF" /><title>{title ?? c.title}</title>
   <meta name="description" content={c.description} />
   {noindex ? <meta name="robots" content="noindex, follow" /> : <>

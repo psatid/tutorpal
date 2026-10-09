@@ -12,7 +12,10 @@ type SelectFieldProps<T = string> = SelectInputProps<T> & {
   required?: boolean;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
+  ariaLabel?: string;
   ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
 };
 
 function SelectField<T = string>({
@@ -22,7 +25,10 @@ function SelectField<T = string>({
   required,
   disabled,
   orientation,
+  ariaLabel,
   ariaLabelledBy,
+  ariaDescribedBy,
+  ariaInvalid,
   ...selectProps
 }: SelectFieldProps<T>) {
   const generatedId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
@@ -30,9 +36,19 @@ function SelectField<T = string>({
   const labelId = `${triggerId}-label`;
   const captionId = `${triggerId}-description`;
   const errorId = `${triggerId}-error`;
-  const describedBy = [caption ? captionId : null, error ? errorId : null]
+  const describedBy = [ariaDescribedBy, caption ? captionId : null, error ? errorId : null]
     .filter(Boolean)
     .join(" ") || undefined;
+  const triggerProps = {
+    id: triggerId,
+    "aria-label": ariaLabel,
+    "aria-labelledby": !ariaLabel && ariaLabelledBy
+      ? [label ? labelId : null, ariaLabelledBy].filter(Boolean).join(" ")
+      : undefined,
+    "aria-describedby": describedBy,
+    "aria-invalid": ariaInvalid,
+    "aria-errormessage": error ? errorId : undefined,
+  };
 
   return (
     <FormField
@@ -50,15 +66,7 @@ function SelectField<T = string>({
       <SelectInput
         disabled={disabled}
         {...selectProps}
-        triggerProps={{
-          id: triggerId,
-          "aria-labelledby": ariaLabelledBy
-            ? [label ? labelId : null, ariaLabelledBy].filter(Boolean).join(" ")
-            : undefined,
-          "aria-describedby": describedBy,
-          "aria-invalid": !!error,
-          "aria-errormessage": error ? errorId : undefined,
-        }}
+        triggerProps={triggerProps}
       />
     </FormField>
   );

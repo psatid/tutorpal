@@ -21,6 +21,28 @@ async function select(html, selector) {
   return nodes;
 }
 
+test('shipped CSS starts finite synchronized card entrances and staggered icons without a script', async () => {
+  const html = read('index.html');
+  const href = (await select(html, 'link[rel="stylesheet"]'))[0].attributes.href;
+  const css = read(href.slice(1));
+  expect(/\.hero-copy:not\(\[data-hero-done=true\]\)\{[^}]*animation:[^}]*hero-copy-reveal/.test(css)).toBe(true);
+  expect(/\.hero-card-slot:not\(\[data-hero-done=true\]\)\{[^}]*animation:[^}]*hero-spread/.test(css)).toBe(true);
+  expect(/\.hero-icon-slot:not\(\[data-hero-done=true\]\)\{[^}]*animation:[^}]*hero-icon-reveal/.test(css)).toBe(true);
+  const cardEntrance = css.match(/\.hero-card-slot:not\(\[data-hero-done=true\]\)\{([^}]*)\}/)?.[1];
+  expect(cardEntrance).toContain('hero-spread');
+  expect(cardEntrance).toContain('.85s');
+  expect(cardEntrance).not.toContain('animation-delay');
+  for (const [slot, x] of [['lesson', '-96'], ['student', '-96'], ['hours', '96'], ['reminder', '96']]) {
+    const desktopRule = [...css.matchAll(new RegExp(`\\.${slot}-slot\\{([^}]*)\\}`, 'g'))].find(([, rule]) => rule.includes('--from-x:'))?.[1];
+    expect(desktopRule).toContain(`--from-x:${x}px`);
+    expect(desktopRule).not.toContain('--enter-delay');
+  }
+  for (const [icon, delay] of [['calendar', '.62'], ['group', '.58'], ['hours', '.38'], ['line', '.46'], ['pencil', '.54'], ['book', '.7']])
+    expect(new RegExp(`\\.tile-${icon}\\{[^}]*--enter-delay:${delay.replace('.', '\\.')}s`).test(css)).toBe(true);
+  expect(/@media\s*\(prefers-reduced-motion:reduce\)\{[^}]*animation:none!important/.test(css)).toBe(true);
+  expect(css).not.toContain('.reveal-preparing');
+});
+
 for (const [locale, path, canonical, otherLocale] of [
   ['en', 'index.html', 'https://tutorpal.io/', '/th/'],
   ['th', 'th/index.html', 'https://tutorpal.io/th/', '/'],
@@ -185,12 +207,9 @@ for (const [locale, path, canonical, otherLocale] of [
 
     test('keeps content local and static, with no forms or remote executable dependencies', async () => {
       expect(await select(html, 'form, input, textarea, iframe, astro-island')).toHaveLength(0);
-      const guards = await select(html, 'head > script:not([type]):not([src])');
-      expect(guards).toHaveLength(1);
-      expect(guards[0].text).toContain('tutorpalRevealBoot');
-      expect(guards[0].text).toContain('2000');
-      expect(guards[0].text).toContain('state.release');
-      expect(html.indexOf('tutorpalRevealBoot')).toBeLessThan(html.indexOf('<body'));
+      expect(await select(html, 'head > script:not([type]):not([src])')).toHaveLength(0);
+      expect(html).not.toContain('tutorpalRevealBoot');
+      expect(html).not.toContain('reveal-preparing');
       expect(await select(html, '[data-agenda-remainder], .calendar-remainder')).toHaveLength(0);
       expect(await select(html, '.calendar-day')).toHaveLength(7);
       expect(normalize((await select(html, '.calendar-week-desktop'))[0].text)).toBe(locale === 'en' ? '5–11 October 2026' : '5–11 ตุลาคม 2026');
@@ -199,7 +218,6 @@ for (const [locale, path, canonical, otherLocale] of [
       expect(html).not.toContain('tutorpalMotionBoot');
       for (const script of await select(html, 'script')) {
         if (script.attributes.type) expect(['module', 'application/ld+json']).toContain(script.attributes.type);
-        else expect(script.text).toBe(guards[0].text);
         if (script.attributes.src) expect(script.attributes.src.startsWith('/_astro/')).toBe(true);
       }
       for (const asset of await select(html, 'img[src], script[src], link[rel="stylesheet"]')) {

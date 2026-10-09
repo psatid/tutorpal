@@ -20,13 +20,19 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RHFDateField, RHFInputField, RHFTimeField } from "@/components/ui/form/rhf";
+import {
+	GroupedWeekdayEditor,
+	type GroupedWeekdayScheduleItem,
+} from "@/components/schedules/grouped-weekday-editor";
+import { RHFDateField, RHFSelectField, RHFTimeField } from "@/components/ui/form/rhf";
 import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useCreateSchedule, useUpdateRecurringSchedule } from "@/hooks/mutations/use-schedules";
 import { DateTime } from "@/lib/date-time";
+import { formatDuration, SCHEDULE_DURATION_OPTIONS } from "@/lib/schedule-utils";
 import {
+	getOverlappingRecurringScheduleItemIndexes,
+	sortRecurringScheduleItems,
 	timeStringToMinutes,
 	type RecurringScheduleSummary,
 	scheduleTypeSchema,
@@ -67,6 +73,14 @@ function createRecurringScheduleFormSchema(t: TFunction) {
 				}),
 			)
 			.min(1, t("schedules:validation.weekdayRequired")),
+	}).superRefine((data, ctx) => {
+		if (getOverlappingRecurringScheduleItemIndexes(data.scheduleItems).size > 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["scheduleItems"],
+				message: t("schedules:validation.overlappingWeekdayTimes"),
+			});
+		}
 	});
 }
 
@@ -84,7 +98,7 @@ interface RecurringScheduleDrawerProps {
 	schedules: GetV1Schedules200Item[];
 }
 
-const WEEKDAY_ORDER: Weekday[] = [
+const WEEKDAYS: Weekday[] = [
 	"MONDAY",
 	"TUESDAY",
 	"WEDNESDAY",
@@ -167,6 +181,12 @@ function getDefaultValues(
 	};
 }
 
+function getTimeAtMinute(minute: number) {
+	return `${Math.floor(minute / 60)
+		.toString()
+		.padStart(2, "0")}:${(minute % 60).toString().padStart(2, "0")}`;
+}
+
 function RecurringWeekdayTimeSelector({
 	control,
 }: {
@@ -177,107 +197,124 @@ function RecurringWeekdayTimeSelector({
 		control,
 		name: "scheduleItems",
 	});
-	const [selectAll, setSelectAll] = useState(false);
-	const selectedWeekdays = new Set(fields.map((field) => field.weekday as Weekday));
+	const watchedItems = useWatch({ control, name: "scheduleItems" }) ?? [];
+	const items: GroupedWeekdayScheduleItem[] = fields.map((field, index) => {
+		const watchedItem = watchedItems[index] ?? field;
+		return {
+			id: field.id,
+			index,
+			weekday: watchedItem.weekday,
+			time: watchedItem.time,
+			durationMinutes: watchedItem.durationMinutes,
+		};
+	});
+	const durationOptions = [
+		...SCHEDULE_DURATION_OPTIONS,
+		...items
+			.map((item) => item.durationMinutes)
+			.filter((duration) => !SCHEDULE_DURATION_OPTIONS.includes(duration)),
+	]
+		.filter((duration, index, options) => options.indexOf(duration) === index)
+		.sort((left, right) => left - right)
+		.map((value) => ({ value, label: formatDuration(value, t) }));
 
 	const toggleWeekday = (weekday: Weekday) => {
-		if (selectedWeekdays.has(weekday)) {
-			const index = fields.findIndex((field) => field.weekday === weekday);
-			if (index !== -1) {
-				remove(index);
-			}
-		} else {
-			append({ weekday, time: "09:00", durationMinutes: 60 });
+		const indexes = items
+			.filter((item) => item.weekday === weekday)
+			.map((item) => item.index);
+
+		if (indexes.length > 0) {
+			remove(indexes);
+			return;
 		}
-		setSelectAll(false);
+
+		append({ weekday, time: "09:00", durationMinutes: 60 });
 	};
 
 	return (
-		<div className="space-y-3">
-			<div className="flex items-center justify-between">
-				<div className="space-y-0.5">
-					<p className="text-sm font-medium">
-						{t("schedules:drawer.weekdayTime.label")}
-					</p>
-					<p className="text-xs text-muted-foreground">
-						{t("schedules:drawer.weekdayTime.caption")}
-					</p>
-				</div>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					onClick={() => {
-						if (selectAll) {
-							remove();
-						} else {
-							WEEKDAY_ORDER.forEach((weekday) => {
-								if (!selectedWeekdays.has(weekday)) {
-									append({ weekday, time: "09:00", durationMinutes: 60 });
-								}
-							});
-						}
-						setSelectAll((current) => !current);
-					}}
-				>
-					{selectAll
-						? t("schedules:drawer.weekdayTime.clearAll")
-						: t("schedules:drawer.weekdayTime.selectAll")}
-				</Button>
-			</div>
-
-			<div className="space-y-2">
-				{WEEKDAY_ORDER.map((weekday) => {
-					const isSelected = selectedWeekdays.has(weekday);
-					const fieldIndex = fields.findIndex((field) => field.weekday === weekday);
-
-					return (
-						<div
-							key={weekday}
-							className="rounded-2xl border border-border/60 p-3"
-						>
-							<div className="flex items-center gap-2">
-								<Checkbox
-									id={`recurring-${weekday}`}
-									checked={isSelected}
-									onCheckedChange={() => toggleWeekday(weekday)}
-								/>
-								<label
-									htmlFor={`recurring-${weekday}`}
-									className="cursor-pointer text-sm font-medium"
-								>
-									{t(`schedules:drawer.weekdayTime.weekdays.${weekday}`)}
-								</label>
-							</div>
-
-							{isSelected && fieldIndex !== -1 ? (
-								<div className="mt-3 grid gap-3 sm:grid-cols-2">
-									<RHFTimeField
-										control={control}
-										name={`scheduleItems.${fieldIndex}.time`}
-										label={t("schedules:drawer.weekdayTime.timeLabel")}
-										caption={t("schedules:drawer.weekdayTime.timeCaption")}
-									/>
-									<RHFInputField
-										control={control}
-										name={`scheduleItems.${fieldIndex}.durationMinutes`}
-										label={t("schedules:drawer.weekdayTime.durationLabel")}
-										caption={t("schedules:drawer.weekdayTime.durationCaption")}
-										inputProps={{
-											type: "number",
-											min: 1,
-											placeholder: t(
-												"schedules:drawer.weekdayTime.durationPlaceholder",
-											),
-										}}
-									/>
-								</div>
-							) : null}
-						</div>
+		<GroupedWeekdayEditor
+			items={items}
+			onAddInterval={(weekday) => {
+				const latestEnd = items
+					.filter((item) => item.weekday === weekday)
+					.reduce(
+						(latest, item) =>
+							Math.max(
+								latest,
+								timeStringToMinutes(item.time) + item.durationMinutes,
+							),
+						0,
 					);
-				})}
-			</div>
-		</div>
+
+				if (latestEnd < 24 * 60) {
+					append({
+						weekday,
+						time: getTimeAtMinute(latestEnd),
+						durationMinutes: 60,
+					});
+				}
+			}}
+			onRemoveInterval={remove}
+			onSelectAll={() => {
+				if (new Set(items.map((item) => item.weekday)).size === WEEKDAYS.length) {
+					remove();
+					return;
+				}
+
+				append(
+					WEEKDAYS.filter(
+						(weekday) => !items.some((item) => item.weekday === weekday),
+					).map((weekday) => ({ weekday, time: "09:00", durationMinutes: 60 })),
+				);
+			}}
+			onToggleWeekday={toggleWeekday}
+			renderInterval={({
+				item,
+				intervalNumber,
+				weekdayLabel,
+				overlapDescriptionId,
+			}) => {
+				const intervalLabel = t("schedules:drawer.weekdayTime.intervalLabel", {
+					weekday: weekdayLabel,
+					number: intervalNumber,
+				});
+
+				return (
+					<div className="grid gap-3 sm:grid-cols-2">
+						<RHFTimeField
+							caption={t("schedules:drawer.weekdayTime.timeCaption")}
+							control={control}
+							inputProps={{
+								"aria-describedby": overlapDescriptionId,
+								"aria-invalid": Boolean(overlapDescriptionId),
+								id: `recurring-weekday-time-${item.id}`,
+							}}
+							label={t("schedules:drawer.weekdayTime.timeLabel", {
+								interval: intervalLabel,
+							})}
+							name={`scheduleItems.${item.index}.time`}
+						/>
+						<RHFSelectField
+							caption={t("schedules:drawer.weekdayTime.durationCaption")}
+							control={control}
+							label={t("schedules:drawer.weekdayTime.durationSelectLabel", {
+								interval: intervalLabel,
+							})}
+							name={`scheduleItems.${item.index}.durationMinutes`}
+							options={durationOptions}
+							selectProps={{
+								ariaLabel: t(
+									"schedules:drawer.weekdayTime.durationSelectLabel",
+									{ interval: intervalLabel },
+								),
+								ariaDescribedBy: overlapDescriptionId,
+								ariaInvalid: Boolean(overlapDescriptionId),
+							}}
+						/>
+					</div>
+				);
+			}}
+		/>
 	);
 }
 
@@ -312,8 +349,10 @@ export function RecurringScheduleDrawer({
 	const {
 		control,
 		formState: { errors },
+		getValues,
 		handleSubmit,
 		reset,
+		setFocus,
 	} = useForm<RecurringScheduleFormData>({
 		resolver: zodResolver(createRecurringScheduleFormSchema(t)),
 		defaultValues: getDefaultValues(recurringSchedule),
@@ -364,7 +403,9 @@ export function RecurringScheduleDrawer({
 				time: 0,
 				recurring: {
 					startDate: values.effectiveDate,
-					scheduleItems: values.scheduleItems.map((item) => ({
+					scheduleItems: sortRecurringScheduleItems(
+						values.scheduleItems,
+					).map((item) => ({
 						weekday: item.weekday,
 						time: timeStringToMinutes(item.time),
 						durationMinutes: item.durationMinutes,
@@ -378,6 +419,16 @@ export function RecurringScheduleDrawer({
 		setIsConfirmOpen(true);
 	};
 
+	const focusFirstOverlappingRecurringTime = () => {
+		const firstOverlappingIndex = [
+			...getOverlappingRecurringScheduleItemIndexes(getValues("scheduleItems")),
+		][0];
+
+		if (firstOverlappingIndex !== undefined) {
+			setFocus(`scheduleItems.${firstOverlappingIndex}.time`);
+		}
+	};
+
 	const handleConfirmEdit = () => {
 		if (!pendingValues || !recurringSchedule) {
 			return;
@@ -388,7 +439,9 @@ export function RecurringScheduleDrawer({
 			data: {
 				effectiveDate: pendingValues.effectiveDate,
 				type: pendingValues.type,
-				scheduleItems: pendingValues.scheduleItems.map((item) => ({
+				scheduleItems: sortRecurringScheduleItems(
+					pendingValues.scheduleItems,
+				).map((item) => ({
 					weekday: item.weekday,
 					time: timeStringToMinutes(item.time),
 					durationMinutes: item.durationMinutes,
@@ -428,7 +481,10 @@ export function RecurringScheduleDrawer({
 				<form
 					className="flex flex-col gap-5"
 					id={RECURRING_SCHEDULE_DRAWER_FORM_ID}
-					onSubmit={handleSubmit(submitValues)}
+					onSubmit={handleSubmit(
+						submitValues,
+						focusFirstOverlappingRecurringTime,
+					)}
 				>
 				{isCreateUnavailable ? (
 					<div className="rounded-lg border border-border bg-muted/50 p-4">

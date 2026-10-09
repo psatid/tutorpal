@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { PrismaClient } from "@prisma/client";
 import { prisma } from "../lib/db";
 import { ScheduleRepository } from "./schedule.repository";
 
@@ -7,6 +8,161 @@ const updatedAt = new Date("2026-08-01T00:30:00.000Z");
 const classContext = {
 	name: "Algebra",
 };
+
+type CreatedScheduleData = {
+	classId: string;
+	recurringScheduleId: string;
+	date: Date;
+	time: number;
+	durationMinutes: number;
+	notes: string | null;
+	status: "SCHEDULED";
+	type: "ON_SITE" | "ONLINE";
+};
+
+function makeCreatedScheduleRecord(data: CreatedScheduleData, index: number) {
+	return {
+		id: `generated-${index}`,
+		...data,
+		createdAt,
+		updatedAt,
+		class: classContext,
+	};
+}
+
+function makeCreateRepositoryFixture(remainingHours: number) {
+	let createdScheduleData: CreatedScheduleData[] = [];
+	let scheduleFindManyCalls = 0;
+	const recurringSchedule = {
+		id: "recurring-created",
+		classId: "class-1",
+		startDate: new Date("2026-08-10T00:00:00.000Z"),
+		notes: null,
+		type: "ON_SITE" as const,
+		createdAt,
+		updatedAt,
+		class: classContext,
+	};
+	const transaction = {
+		schedule: {
+			findMany: async () => {
+				scheduleFindManyCalls += 1;
+				if (scheduleFindManyCalls === 1) {
+					return [];
+				}
+				return createdScheduleData.map(makeCreatedScheduleRecord);
+			},
+			createMany: async ({ data }: { data: CreatedScheduleData[] }) => {
+				createdScheduleData = data;
+				return { count: data.length };
+			},
+		},
+		recurringSchedule: {
+			create: async () => recurringSchedule,
+		},
+		recurringScheduleItem: {
+			createMany: async () => ({ count: 0 }),
+		},
+	};
+	const client = {
+		class: {
+			findMany: async () => [{ id: "class-1", totalHours: remainingHours }],
+		},
+		schedule: {
+			groupBy: async () => {
+				const durationMinutes = createdScheduleData.reduce(
+					(total, schedule) => total + schedule.durationMinutes,
+					0,
+				);
+				return durationMinutes > 0
+					? [{ classId: "class-1", _sum: { durationMinutes } }]
+					: [];
+			},
+		},
+		$transaction: async (
+			callback: (tx: typeof transaction) => Promise<unknown>,
+		) => callback(transaction),
+	} as unknown as PrismaClient;
+
+	return {
+		repository: new ScheduleRepository(client),
+		getCreatedScheduleData: () => createdScheduleData,
+	};
+}
+
+function makeUpdateRepositoryFixture(remainingHours: number) {
+	let createdScheduleData: CreatedScheduleData[] = [];
+	let recurringItemData: Array<{
+		weekday: "MONDAY";
+		time: number;
+		durationMinutes: number;
+	}> = [];
+	const existingRecurringSchedule = {
+		id: "recurring-existing",
+		classId: "class-1",
+		startDate: new Date("2026-08-03T00:00:00.000Z"),
+		notes: null,
+		type: "ON_SITE" as const,
+		createdAt,
+		updatedAt,
+		class: classContext,
+		scheduleItems: [
+			{
+				id: "item-existing",
+				weekday: "MONDAY" as const,
+				time: 540,
+				durationMinutes: 60,
+			},
+		],
+	};
+	const newRecurringSchedule = {
+		...existingRecurringSchedule,
+		id: "recurring-updated",
+		startDate: new Date("2026-08-10T00:00:00.000Z"),
+	};
+	const transaction = {
+		schedule: {
+			findMany: async () => [],
+			deleteMany: async () => ({ count: 0 }),
+			createMany: async ({ data }: { data: CreatedScheduleData[] }) => {
+				createdScheduleData = data;
+				return { count: data.length };
+			},
+		},
+		class: {
+			findUnique: async () => ({ totalHours: remainingHours, schedules: [] }),
+		},
+		recurringSchedule: {
+			create: async () => newRecurringSchedule,
+			findUnique: async () => ({
+				...newRecurringSchedule,
+				scheduleItems: recurringItemData.map((item, index) => ({
+					id: `item-${index + 1}`,
+					...item,
+				})),
+			}),
+		},
+		recurringScheduleItem: {
+			createMany: async ({ data }: { data: typeof recurringItemData }) => {
+				recurringItemData = data;
+				return { count: data.length };
+			},
+		},
+	};
+	const client = {
+		recurringSchedule: {
+			findFirst: async () => existingRecurringSchedule,
+		},
+		$transaction: async (
+			callback: (tx: typeof transaction) => Promise<unknown>,
+		) => callback(transaction),
+	} as unknown as PrismaClient;
+
+	return {
+		repository: new ScheduleRepository(client),
+		getCreatedScheduleData: () => createdScheduleData,
+	};
+}
 
 describe("ScheduleRepository recurring schedule types", () => {
 	test("propagates type to regenerated sessions and leaves historical statuses outside replacement", async () => {
@@ -188,5 +344,165 @@ describe("ScheduleRepository recurring schedule types", () => {
 			scheduleDelegate.groupBy = originalGroupBy;
 			classDelegate.findMany = originalClassFindMany;
 		}
+	});
+});
+
+describe("ScheduleRepository repeated weekday schedules", () => {
+	test("creates repeated weekday sessions in chronological order", async () => {
+		const fixture = makeCreateRepositoryFixture(2);
+		const result = await fixture.repository.createRecurringSchedule({
+			classId: "class-1",
+			type: "ON_SITE",
+			recurring: {
+				startDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY", time: 660, durationMinutes: 60 },
+					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+				],
+			},
+		});
+
+		expect(fixture.getCreatedScheduleData()).toEqual([
+			{
+				classId: "class-1",
+				recurringScheduleId: "recurring-created",
+				date: new Date("2026-08-10T00:00:00.000Z"),
+				time: 540,
+				durationMinutes: 60,
+				notes: null,
+				status: "SCHEDULED",
+				type: "ON_SITE",
+			},
+			{
+				classId: "class-1",
+				recurringScheduleId: "recurring-created",
+				date: new Date("2026-08-10T00:00:00.000Z"),
+				time: 660,
+				durationMinutes: 60,
+				notes: null,
+				status: "SCHEDULED",
+				type: "ON_SITE",
+			},
+		]);
+		expect(result.toScheduleDTO()).toEqual({
+			id: "generated-0",
+			classId: "class-1",
+			className: "Algebra",
+			recurringScheduleId: "recurring-created",
+			date: "2026-08-10",
+			time: 540,
+			durationMinutes: 60,
+			notes: null,
+			status: "SCHEDULED",
+			type: "ON_SITE",
+			createdAt: createdAt.toISOString(),
+			updatedAt: updatedAt.toISOString(),
+			remainingHours: 0,
+		});
+	});
+
+	test("regenerates repeated weekday sessions when editing a recurrence", async () => {
+		const fixture = makeUpdateRepositoryFixture(2);
+		const result = await fixture.repository.updateRecurringSchedule(
+			"recurring-existing",
+			{
+				effectiveDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY", time: 660, durationMinutes: 60 },
+					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+				],
+			},
+			"tutor-1",
+		);
+
+		expect(
+			fixture
+				.getCreatedScheduleData()
+				.map(({ date, time, durationMinutes }) => ({
+					date,
+					time,
+					durationMinutes,
+				})),
+		).toEqual([
+			{
+				date: new Date("2026-08-10T00:00:00.000Z"),
+				time: 540,
+				durationMinutes: 60,
+			},
+			{
+				date: new Date("2026-08-10T00:00:00.000Z"),
+				time: 660,
+				durationMinutes: 60,
+			},
+		]);
+		expect(result.createdSchedulesCount).toBe(2);
+	});
+
+	test("stops at the first session that exceeds the remaining class hours", async () => {
+		const fixture = makeCreateRepositoryFixture(2.5);
+		await fixture.repository.createRecurringSchedule({
+			classId: "class-1",
+			type: "ON_SITE",
+			recurring: {
+				startDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+					{ weekday: "MONDAY", time: 600, durationMinutes: 120 },
+					{ weekday: "MONDAY", time: 720, durationMinutes: 30 },
+				],
+			},
+		});
+
+		expect(
+			fixture.getCreatedScheduleData().map(({ time, durationMinutes }) => ({
+				time,
+				durationMinutes,
+			})),
+		).toEqual([{ time: 540, durationMinutes: 60 }]);
+	});
+
+	test("rejects overlapping generated sessions", async () => {
+		const fixture = makeCreateRepositoryFixture(2);
+
+		await expect(
+			fixture.repository.createRecurringSchedule({
+				classId: "class-1",
+				type: "ON_SITE",
+				recurring: {
+					startDate: "2026-08-10",
+					scheduleItems: [
+						{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+						{ weekday: "MONDAY", time: 570, durationMinutes: 30 },
+					],
+				},
+			}),
+		).rejects.toMatchObject({ errorCode: "RECURRING_CONFLICT", status: 400 });
+
+		expect(fixture.getCreatedScheduleData()).toEqual([]);
+	});
+
+	test("accepts sessions whose endpoints touch", async () => {
+		const fixture = makeCreateRepositoryFixture(1.75);
+		await fixture.repository.createRecurringSchedule({
+			classId: "class-1",
+			type: "ON_SITE",
+			recurring: {
+				startDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+					{ weekday: "MONDAY", time: 600, durationMinutes: 45 },
+				],
+			},
+		});
+
+		expect(
+			fixture.getCreatedScheduleData().map(({ time, durationMinutes }) => ({
+				time,
+				durationMinutes,
+			})),
+		).toEqual([
+			{ time: 540, durationMinutes: 60 },
+			{ time: 600, durationMinutes: 45 },
+		]);
 	});
 });

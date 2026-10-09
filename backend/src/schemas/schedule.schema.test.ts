@@ -88,6 +88,31 @@ describe("schedule request contracts", () => {
 		).toBe(false);
 	});
 
+	test("accepts repeated weekday items for recurring creation and updates", () => {
+		const scheduleItems = [
+			{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+			{ weekday: "MONDAY", time: 660, durationMinutes: 60 },
+		];
+
+		expect(
+			CreateScheduleSchema.safeParse({
+				classId: "class-1",
+				date: "2026-07-01",
+				type: "ON_SITE",
+				recurring: {
+					startDate: "2026-07-06",
+					scheduleItems,
+				},
+			}).success,
+		).toBe(true);
+		expect(
+			UpdateRecurringScheduleSchema.safeParse({
+				effectiveDate: "2026-07-06",
+				scheduleItems,
+			}).success,
+		).toBe(true);
+	});
+
 	test("rejects dates outside the API date-only contract", () => {
 		expect(
 			CreateScheduleSchema.safeParse({

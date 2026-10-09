@@ -10,7 +10,7 @@ const c = copy[lang];
 const home = lang === 'en' ? '/' : '/th/';
 const app = 'https://app.tutorpal.io';
 ---
-<Layout lang={lang} prepareMotion>
+<Layout lang={lang}>
   <header class="site-header">
     <div class="nav-shell">
       <a class="brand" href={home} aria-label="TutorPal home"><img src="/app-icon-small.png" width="32" height="32" alt="" />TutorPal</a>
@@ -23,7 +23,7 @@ const app = 'https://app.tutorpal.io';
     <section class="hero" aria-labelledby="hero-heading">
       <FloatingTiles placement="hero" />
       <div class="container hero-grid">
-        <div class="hero-copy" data-hero-copy>
+        <div class="hero-copy">
           <h1 id="hero-heading">{c.hero[0]}<br/><span>{c.hero[1]}</span></h1>
           <p class="hero-description">{c.intro}</p>
           <div class="actions"><a class="button primary" href={app}>{c.open}</a><a class="button secondary" href="#how-it-works">{c.explore}</a></div>

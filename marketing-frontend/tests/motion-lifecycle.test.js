@@ -1,41 +1,36 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { createBoot } from './support/dom-boundary.js';
 import { setupMotion } from '../src/scripts/motion.ts';
 
-// Dependency-free DOM boundary doubles. Browser fixtures verify actual CSS,
-// geometry, preference changes, focus, and BFCache behavior separately.
+// CSS owns the entrance. These doubles only verify visibility-controlled floating.
 const globals = ['document', 'window', 'HTMLElement', 'IntersectionObserver', 'location'];
 const saved = new Map(globals.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
 class Element extends EventTarget {
-  constructor(rect) {
-    super(); this.rect = rect; this.dataset = {}; this.classes = new Set(); this.properties = new Map();
+  constructor(rect = {top: 0, bottom: 900, height: 100}) {
+    super(); this.rect = rect; this.dataset = {}; this.classes = new Set(); this.children = new Map();
     this.classList = {add: name => this.classes.add(name), remove: name => this.classes.delete(name), contains: name => this.classes.has(name)};
-    this.style = {setProperty: (name, value) => this.properties.set(name, value)};
-    this.children = new Map();
   }
   getBoundingClientRect() { return this.rect; }
+  getClientRects() { return this.rendered === false ? [] : [this.rect]; }
+  getAnimations() { return this.runningEntrance ? [{playState: 'running'}] : []; }
   querySelector(selector) { return this.children.get(selector) ?? null; }
 }
-let hero, scene, cards, documentMock, windowMock, observer;
+let hero, cards, icons, documentMock, windowMock, observers;
 beforeEach(() => {
-  observer = undefined;
-  hero = new Element({top: 0, bottom: 850});
-  scene = new Element({left: 50, top: 174, width: 1240});
-  hero.children.set('.actions', new Element({bottom: 470}));
-  cards = [
-    new Element({left: 64, top: 500, width: 300, height: 250}),
-    new Element({left: 511, top: 641, width: 318, height: 132}),
-    new Element({left: 960, top: 569, width: 330, height: 98}),
-  ];
+  observers = [];
+  hero = new Element({top: 0, bottom: 850, height: 850});
+  cards = Array.from({length: 4}, () => new Element());
+  icons = Array.from({length: 6}, () => new Element());
+  for (const target of [...cards, ...icons]) target.runningEntrance = true;
   documentMock = Object.assign(new EventTarget(), {hidden: false,
-    querySelector: selector => selector === '.hero' ? hero : selector === '.hero-product' ? scene : null,
-    querySelectorAll: selector => selector.includes('[data-hero-card]') ? cards : []});
-  windowMock = Object.assign(new EventTarget(), {innerHeight: 900, scrollY: 0, IntersectionObserver: true, requestAnimationFrame: () => 1, cancelAnimationFrame: () => {}, matchMedia: () => ({matches: true}), tutorpalRevealBoot: createBoot()});
+    querySelector: selector => selector === '.hero' ? hero : null,
+    querySelectorAll: selector => selector === '[data-hero-card]' ? cards : selector === '[data-hero-icon]' ? icons : []});
+  windowMock = Object.assign(new EventTarget(), {innerHeight: 900, IntersectionObserver: true,
+    requestAnimationFrame: () => 1, cancelAnimationFrame: () => {}, matchMedia: () => ({matches: true})});
   class Observer {
-    constructor(callback) { this.callback = callback; this.disconnected = false; observer ??= this; }
+    constructor(callback) { this.callback = callback; this.disconnected = false; observers.push(this); }
     observe(target) { this.target = target; }
     disconnect() { this.disconnected = true; }
-    change(visible) { this.callback([{isIntersecting: visible}]); }
+    change(visible) { this.callback([{target: this.target, isIntersecting: visible}]); }
   }
   for (const [key, value] of Object.entries({location: {hash: ''}, document: documentMock, window: windowMock, HTMLElement: Element, IntersectionObserver: Observer}))
     Object.defineProperty(globalThis, key, {configurable: true, writable: true, value});
@@ -46,80 +41,91 @@ afterEach(() => {
     if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
   }
 });
-const finish = card => {
+const finish = (target, animationName) => {
+  target.runningEntrance = false;
   const event = new Event('animationend');
-  Object.defineProperties(event, {animationName: {value: 'hero-spread'}, target: {value: card}});
+  Object.defineProperties(event, {animationName: {value: animationName}, target: {value: target}});
   hero.dispatchEvent(event);
 };
-const expectFinalCards = () => {
-  for (const card of cards) { expect(card.classList.contains('hero-motion-enter')).toBe(false); expect(card.dataset.motionDone).toBe('true'); expect(card.dataset.motionPhase).toBe('settled'); }
-};
 
-describe('optional hero motion lifecycle', () => {
-  test('spreads all three cards from a shared origin below the CTA, then floats after entrance', () => {
+describe('CSS hero entrance and optional floating lifecycle', () => {
+  test('animation completion enables floating for rendered cards and icons', () => {
     const cleanup = setupMotion();
-    expect(observer.target).toBe(hero);
+    expect(observers[0].target).toBe(hero);
     expect(hero.dataset.motionRunning).toBe('true');
-    const origins = cards.map(card => ({
-      x: card.rect.left + card.rect.width / 2 + parseFloat(card.properties.get('--from-x')),
-      y: card.rect.top + card.rect.height / 2 + parseFloat(card.properties.get('--from-y')),
-    }));
-    expect(origins).toEqual(Array(3).fill({x: 670, y: 619}));
-    expect(Math.min(...cards.map(card => 619 - card.rect.height / 2))).toBeGreaterThan(470);
-    expect(cards.map(card => card.properties.get('--enter-delay'))).toEqual(['0ms', '80ms', '160ms']);
-    for (const card of cards) { expect(card.classList.contains('hero-motion-enter')).toBe(true); finish(card); expect(card.classList.contains('hero-motion-ready')).toBe(true); }
-    expectFinalCards(); cleanup();
-  });
-
-  test('offscreen interruption restores fully settled cards and resumes without replay', () => {
-    const cleanup = setupMotion(); observer.change(false);
-    expect(hero.dataset.motionRunning).toBe('false'); expectFinalCards();
-    observer.change(true);
-    expect(hero.dataset.motionRunning).toBe('true'); expectFinalCards(); cleanup();
-  });
-
-  test('hidden document settles entrance and pauses, returning visibility resumes float state', () => {
-    const cleanup = setupMotion();
-    documentMock.hidden = true; documentMock.dispatchEvent(new Event('visibilitychange'));
-    expect(hero.dataset.motionRunning).toBe('false'); expectFinalCards();
-    documentMock.hidden = false; documentMock.dispatchEvent(new Event('visibilitychange'));
-    expect(hero.dataset.motionRunning).toBe('true'); expectFinalCards(); cleanup();
-  });
-
-  test('resize settles unfinished cards; disposal removes active state and event effects', () => {
-    const cleanup = setupMotion(); expect(windowMock.tutorpalRevealBoot.phase).toBe('claimed');
-    for (const card of cards) expect(card.dataset.motionPhase).toBe('revealing');
-    windowMock.dispatchEvent(new Event('resize')); expectFinalCards(); expect(windowMock.tutorpalRevealBoot.phase).toBe('claimed');
+    for (const card of cards) { finish(card, 'hero-spread'); expect(card.classList.contains('hero-motion-ready')).toBe(true); }
+    for (const icon of icons) { finish(icon, 'hero-icon-reveal'); expect(icon.classList.contains('hero-icon-ready')).toBe(true); }
     cleanup();
-    expect(observer.disconnected).toBe(true); expect(hero.dataset.motionRunning).toBeUndefined();
-    for (const card of cards) expect(card.classList.contains('hero-motion-ready')).toBe(false);
-    documentMock.dispatchEvent(new Event('visibilitychange'));
+  });
+
+  test('offscreen and hidden states pause floating without restarting entrance', () => {
+    const cleanup = setupMotion();
+    finish(cards[0], 'hero-spread'); observers[0].change(false);
+    expect(hero.dataset.motionRunning).toBe('false');
+    observers[0].change(true); expect(hero.dataset.motionRunning).toBe('true');
+    documentMock.hidden = true; documentMock.dispatchEvent(new Event('visibilitychange'));
+    expect(hero.dataset.motionRunning).toBe('false');
+    documentMock.hidden = false; documentMock.dispatchEvent(new Event('visibilitychange'));
+    expect(hero.dataset.motionRunning).toBe('true');
+    expect(cards[0].classList.contains('hero-motion-ready')).toBe(true);
+    cleanup();
+  });
+
+  test('resize recognizes entrances already finished and cleanup removes enhancement state', () => {
+    const cleanup = setupMotion();
+    cards[0].runningEntrance = false; icons[0].runningEntrance = false;
     windowMock.dispatchEvent(new Event('resize'));
+    expect(cards[0].classList.contains('hero-motion-ready')).toBe(true);
+    expect(icons[0].classList.contains('hero-icon-ready')).toBe(true);
+    expect(cards[1].classList.contains('hero-motion-ready')).toBe(false);
+    cleanup();
+    expect(observers[0].disconnected).toBe(true);
     expect(hero.dataset.motionRunning).toBeUndefined();
+    expect(cards[0].classList.contains('hero-motion-ready')).toBe(false);
+    windowMock.dispatchEvent(new Event('resize'));
+    expect(cards[0].classList.contains('hero-motion-ready')).toBe(false);
   });
 
-  test('already completed, initially hidden, or scrolled cards never replay an entrance', () => {
-    cards[0].dataset.motionDone = 'true';
-    let cleanup = setupMotion();
-    expect(cards[0].classList.contains('hero-motion-enter')).toBe(false); cleanup();
-    for (const card of cards) delete card.dataset.motionDone;
-    documentMock.hidden = true; cleanup = setupMotion(); expectFinalCards(); cleanup();
-    for (const card of cards) delete card.dataset.motionDone;
-    documentMock.hidden = false; windowMock.scrollY = 101;
-    cleanup = setupMotion(); expectFinalCards(); cleanup();
+  test('a target hidden from startup can animate on first display, while an interrupted entrance cannot replay', () => {
+    cards[0].rendered = false;
+    const cleanup = setupMotion();
+    expect(cards[0].dataset.heroDone).toBeUndefined();
+    windowMock.dispatchEvent(new Event('resize'));
+    expect(cards[0].dataset.heroDone).toBeUndefined();
+    cards[0].rendered = true;
+    windowMock.dispatchEvent(new Event('resize'));
+    expect(cards[0].dataset.heroDone).toBeUndefined();
+    finish(cards[0], 'hero-spread');
+    expect(cards[0].dataset.heroDone).toBe('true');
+
+    icons[0].rendered = false;
+    icons[0].runningEntrance = false;
+    windowMock.dispatchEvent(new Event('resize'));
+    expect(icons[0].dataset.heroDone).toBe('true');
+    icons[0].rendered = true;
+    icons[0].runningEntrance = true;
+    windowMock.dispatchEvent(new Event('resize'));
+    expect(icons[0].dataset.heroDone).toBe('true');
+    cleanup();
   });
 
-  test('unsupported observers leave content untouched; setup failure releases partial effects', () => {
-    delete windowMock.IntersectionObserver; delete windowMock.tutorpalRevealBoot;
+  test('cancelled entrance settles only a target previously rendered', () => {
+    cards[0].rendered = false;
+    const cleanup = setupMotion();
+    const cancel = target => {
+      const event = new Event('animationcancel');
+      Object.defineProperties(event, {animationName: {value: 'hero-spread'}, target: {value: target}});
+      hero.dispatchEvent(event);
+    };
+    cancel(cards[0]); expect(cards[0].dataset.heroDone).toBeUndefined();
+    cancel(cards[1]); expect(cards[1].dataset.heroDone).toBe('true');
+    cleanup();
+  });
+
+  test('unsupported observer leaves CSS entrance alone', () => {
+    delete windowMock.IntersectionObserver;
     const cleanup = setupMotion(); cleanup();
-    expect(observer).toBeUndefined();
-    for (const card of cards) expect(card.classes.size).toBe(0);
-    windowMock.IntersectionObserver = true; windowMock.tutorpalRevealBoot = createBoot();
-    cards.forEach(card => {delete card.dataset.motionDone;});
-    cards[1].style.setProperty = () => { throw new Error('Intentional setup failure'); };
-    setupMotion();
-    expectFinalCards();
-    for (const card of cards) expect(card.classList.contains('hero-motion-enter')).toBe(false);
-    expect(windowMock.tutorpalRevealBoot.phase).toBe('expired');
+    expect(observers).toHaveLength(0);
+    for (const target of [...cards, ...icons]) expect(target.classes.size).toBe(0);
   });
 });

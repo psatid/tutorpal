@@ -640,39 +640,37 @@ export class ScheduleRepository implements IScheduleRepository {
 		let currentDate = DateTime.fromDateOnlyString(startDate);
 		let remainingMinutes = Math.max(0, Math.round(remainingHours * 60));
 
+		if (items.length === 0) {
+			return scheduleData;
+		}
+
 		while (remainingMinutes > 0) {
-			const nextOccurrence = items
-				.map((item) => ({
-					item,
-					date: this.getNextDateForWeekday(currentDate, item.weekday),
-				}))
-				.sort((a, b) => {
-					const dateDiff = a.date.compareAsc(b.date);
-					if (dateDiff !== 0) {
-						return dateDiff;
-					}
+			const itemsForDate = items
+				.filter(
+					(item) =>
+						this.getNextDateForWeekday(currentDate, item.weekday).compareAsc(
+							currentDate,
+						) === 0,
+				)
+				.sort((a, b) => a.time - b.time);
 
-					return a.item.time - b.item.time;
-				})[0];
+			for (const item of itemsForDate) {
+				if (item.durationMinutes > remainingMinutes) {
+					return scheduleData;
+				}
 
-			if (!nextOccurrence) {
-				break;
+				scheduleData.push({
+					classId,
+					date: currentDate.toDateOnlyString(),
+					type,
+					time: item.time,
+					durationMinutes: item.durationMinutes,
+				});
+
+				remainingMinutes -= item.durationMinutes;
 			}
 
-			if (nextOccurrence.item.durationMinutes > remainingMinutes) {
-				return scheduleData;
-			}
-
-			scheduleData.push({
-				classId,
-				date: nextOccurrence.date.toDateOnlyString(),
-				type,
-				time: nextOccurrence.item.time,
-				durationMinutes: nextOccurrence.item.durationMinutes,
-			});
-
-			remainingMinutes -= nextOccurrence.item.durationMinutes;
-			currentDate = nextOccurrence.date.addDays(1);
+			currentDate = currentDate.addDays(1);
 		}
 
 		return scheduleData;

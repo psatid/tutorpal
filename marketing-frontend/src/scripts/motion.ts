@@ -2,66 +2,58 @@ import { releaseReveals, revealTargets, settleTarget } from './reveal-state';
 
 const SCROLL_REVEAL_INSET_PX = 200;
 
-/** Cards and icons enter separately; hero copy gets one prepared page-load entrance. */
-function setupHeroMotion(prepare: boolean): () => void {
+/** CSS owns the finite entrances; JavaScript only controls later floating. */
+function setupHeroMotion(): () => void {
   const hero = document.querySelector<HTMLElement>('.hero');
-  const scene = document.querySelector<HTMLElement>('.hero-product');
-  const copy = document.querySelector<HTMLElement>('[data-hero-copy]');
+  const copy = document.querySelector<HTMLElement>('.hero-copy');
   const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-hero-card]'));
   const icons = Array.from(document.querySelectorAll<HTMLElement>('[data-hero-icon]'));
-  if (!hero || !scene || (!cards.length && !icons.length && !copy) || !('IntersectionObserver' in window)) return () => {};
-  const targets = [...cards, ...icons, ...(copy ? [copy] : [])];
+  if (!hero || !('IntersectionObserver' in window)) return () => {};
+  const targets = [...cards, ...icons];
+  const entrances = [...targets, ...(copy ? [copy] : [])];
+  const seenRendered = new Set<HTMLElement>();
   let visible = false;
-  let disposed = false;
   const finishEntrance = (target: HTMLElement) => {
-    target.classList.remove('hero-motion-enter', 'hero-icon-enter', 'hero-copy-enter');
+    target.dataset.heroDone = 'true';
     if (cards.includes(target)) target.classList.add('hero-motion-ready');
     else if (icons.includes(target)) target.classList.add('hero-icon-ready');
-    settleTarget(target);
   };
   const update = () => {
-    const running = visible && !document.hidden && !disposed;
-    hero.dataset.motionRunning = String(running);
-    if (!running) targets.forEach(finishEntrance);
+    hero.dataset.motionRunning = String(visible && !document.hidden);
   };
   const onAnimationEnd = (event: AnimationEvent) => {
-    if ((event.animationName === 'hero-spread' || event.animationName === 'hero-icon-reveal' || event.animationName === 'hero-copy-reveal') && event.target instanceof HTMLElement && targets.includes(event.target)) finishEntrance(event.target);
+    if ((event.animationName === 'hero-spread' || event.animationName === 'hero-icon-reveal' || event.animationName === 'hero-copy-reveal') && event.target instanceof HTMLElement && entrances.includes(event.target)) finishEntrance(event.target);
   };
-  const onResize = () => { targets.forEach(finishEntrance); };
-  const onFocus = () => { targets.forEach(finishEntrance); };
+  const onAnimationCancel = (event: AnimationEvent) => {
+    if ((event.animationName === 'hero-spread' || event.animationName === 'hero-icon-reveal' || event.animationName === 'hero-copy-reveal') && event.target instanceof HTMLElement && seenRendered.has(event.target)) finishEntrance(event.target);
+  };
+  const markFinished = () => {
+    entrances.forEach(target => {
+      if (!target.getClientRects().length) {
+        if (seenRendered.has(target)) finishEntrance(target);
+        return;
+      }
+      seenRendered.add(target);
+      if (!target.getAnimations?.().some(animation => animation.playState === 'running')) finishEntrance(target);
+    });
+  };
   const observer = new IntersectionObserver(entries => { visible = entries.some(entry => entry.isIntersecting); update(); });
   const cleanup = () => {
-    disposed = true; observer.disconnect();
-    document.removeEventListener('visibilitychange', update); window.removeEventListener('resize', onResize);
-    hero.removeEventListener('animationend', onAnimationEnd); hero.removeEventListener('focusin', onFocus);
+    observer.disconnect(); document.removeEventListener('visibilitychange', update); window.removeEventListener('resize', markFinished);
+    hero.removeEventListener('animationend', onAnimationEnd);
+    hero.removeEventListener('animationcancel', onAnimationCancel);
     delete hero.dataset.motionRunning;
-    targets.forEach(target => { finishEntrance(target); target.classList.remove('hero-motion-ready'); target.classList.remove('hero-icon-ready'); });
+    entrances.forEach(target => { target.dataset.heroDone = 'true'; });
+    targets.forEach(target => { target.classList.remove('hero-motion-ready', 'hero-icon-ready'); });
   };
   try {
     const rect = hero.getBoundingClientRect(); visible = rect.bottom > 0 && rect.top < window.innerHeight;
-    hero.addEventListener('animationend', onAnimationEnd); hero.addEventListener('focusin', onFocus);
-    document.addEventListener('visibilitychange', update); window.addEventListener('resize', onResize, { passive: true });
+    hero.addEventListener('animationend', onAnimationEnd);
+    hero.addEventListener('animationcancel', onAnimationCancel);
+    document.addEventListener('visibilitychange', update);
+    window.addEventListener('resize', markFinished, { passive: true });
     observer.observe(hero);
-    const sceneRect = scene.getBoundingClientRect();
-    const originX = sceneRect.left + sceneRect.width / 2;
-    cards.forEach((card, index) => {
-      if (card.getBoundingClientRect().height === 0 || !prepare || card.dataset.motionDone || !visible || document.hidden || window.scrollY > 0) { finishEntrance(card); return; }
-      const cardRect = card.getBoundingClientRect();
-      card.style.setProperty('--from-x', `${cardRect.left + cardRect.width / 2 < originX ? -96 : 96}px`);
-      card.style.setProperty('--from-y', `${cardRect.top < sceneRect.top + sceneRect.height / 2 ? -20 : 20}px`);
-      card.style.setProperty('--enter-delay', `${900 + index * 60}ms`);
-      card.dataset.motionPhase = 'revealing'; card.classList.add('hero-motion-enter');
-    });
-    if (copy) {
-      if (!prepare || copy.dataset.motionDone || !visible || document.hidden || window.scrollY > 0 || location.hash) finishEntrance(copy);
-      else { copy.dataset.motionPhase = 'revealing'; copy.classList.add('hero-copy-enter'); }
-    }
-    const iconDelays = [620, 580, 380, 460, 540, 700];
-    icons.forEach((icon, index) => {
-      if (icon.getBoundingClientRect().height === 0 || !prepare || icon.dataset.motionDone || !visible || document.hidden || window.scrollY > 0) { finishEntrance(icon); return; }
-      icon.style.setProperty('--enter-delay', `${iconDelays[index] ?? 0}ms`);
-      icon.dataset.motionPhase = 'revealing'; icon.classList.add('hero-icon-enter');
-    });
+    markFinished();
     update();
   } catch (error) { cleanup(); throw error; }
   return cleanup;
@@ -86,9 +78,9 @@ function setupClosingMotion(): () => void {
 }
 
 /** LINE checks are decorative and only animate after the list is scrolled into view. */
-function setupLineCheckMotion(prepare: boolean): () => void {
+function setupLineCheckMotion(): () => void {
   const checks = Array.from(document.querySelectorAll<SVGSVGElement>('[data-line-check]'));
-  if (!prepare || !checks.length) return () => {};
+  if (!checks.length) return () => {};
   if (!('IntersectionObserver' in window)) throw new Error('IntersectionObserver is unavailable');
   const list = checks[0].closest<HTMLElement>('.line-notes');
   if (!list) return () => {};
@@ -112,7 +104,7 @@ function setupLineCheckMotion(prepare: boolean): () => void {
     if (entries.some(entry => entry.isIntersecting)) play();
   }, { rootMargin: `0px 0px -${SCROLL_REVEAL_INSET_PX}px 0px` });
   try {
-    if (document.hidden || location.hash || document.activeElement !== document.body) { settle(); return () => {}; }
+    if (document.hidden || location.hash || document.activeElement !== document.body || list.getBoundingClientRect().top < window.innerHeight) { settle(); return () => {}; }
     observer.observe(list); document.addEventListener('visibilitychange', onVisibility); document.addEventListener('focusin', settle);
     window.addEventListener('hashchange', settle);
   } catch (error) { settle(); throw error; }
@@ -120,12 +112,10 @@ function setupLineCheckMotion(prepare: boolean): () => void {
 }
 
 type ActiveReveal = { animation: Animation; finish: (runAfter?: boolean) => void };
-function setupScrollMotion(prepare: boolean): () => void {
+function setupScrollMotion(): () => void {
   const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal],[data-calendar-frame],[data-calendar-event],[data-balance-fill]'));
-  if (!prepare) { targets.forEach(settleTarget); return () => {}; }
   if (typeof window.requestAnimationFrame !== 'function' || typeof window.cancelAnimationFrame !== 'function') throw new Error('Scroll scheduling is unavailable');
   const active = new Map<HTMLElement, ActiveReveal>();
-  const generic = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
   const calendar = document.querySelector<HTMLElement>('[data-calendar-frame]');
   const events = Array.from(document.querySelectorAll<HTMLElement>('[data-calendar-event]'));
   const workspace = document.querySelector<HTMLElement>('.workspace-frame');
@@ -137,7 +127,12 @@ function setupScrollMotion(prepare: boolean): () => void {
   const rendered = (element: HTMLElement) => {
     return element.getClientRects().length > 0 && element.getBoundingClientRect().height > 0;
   };
+  const below = (element: HTMLElement) => rendered(element) && element.getBoundingClientRect().top >= window.innerHeight;
   const passed = (element: HTMLElement) => rendered(element) && element.getBoundingClientRect().bottom <= 0;
+  const physicallyVisible = (element: HTMLElement) => {
+    if (!rendered(element)) return false;
+    const rect = element.getBoundingClientRect(); return rect.bottom > 0 && rect.top < window.innerHeight;
+  };
   const inView = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect(); return rendered(element) && rect.bottom > 0 && rect.top < window.innerHeight - SCROLL_REVEAL_INSET_PX;
   };
@@ -146,11 +141,11 @@ function setupScrollMotion(prepare: boolean): () => void {
       calendarReady = true;
       events.filter(rendered).forEach(event => { active.get(event)?.finish(false); settleTarget(event); });
     }
-    if (element === workspace) bars.forEach(bar => { active.get(bar)?.finish(false); settleTarget(bar); });
+    if (element === workspace) bars.filter(rendered).forEach(bar => { active.get(bar)?.finish(false); settleTarget(bar); });
   };
   const revealEvents = (candidates: HTMLElement[]) => {
     const eligible = Array.from(new Set(candidates))
-      .filter(event => events.includes(event) && inView(event) && event.dataset.motionDone !== 'true' && !active.has(event))
+      .filter(event => events.includes(event) && inView(event) && event.dataset.motionPhase === 'pending' && !active.has(event))
       .sort((a, b) => {
         const first = a.getBoundingClientRect(); const second = b.getBoundingClientRect();
         return first.top - second.top || first.left - second.left;
@@ -159,7 +154,7 @@ function setupScrollMotion(prepare: boolean): () => void {
   };
   const play = (element: HTMLElement, duration: number, delay = 0, bar = false, after?: () => void) => {
     if (disposed || active.has(element) || !rendered(element)) return;
-    if (element.dataset.motionDone === 'true') { after?.(); return; }
+    if (element.dataset.motionPhase !== 'pending') { after?.(); return; }
     if (settling || document.hidden || passed(element)) { settleTarget(element); after?.(); return; }
     let animation: Animation;
     try {
@@ -180,11 +175,11 @@ function setupScrollMotion(prepare: boolean): () => void {
       if (active.get(element)?.animation === animation) finish(false);
     });
   };
-  const fillBars = () => { bars.forEach((bar, index) => play(bar, 750, index * 80, true)); };
+  const fillBars = () => { bars.forEach((bar, index) => { if (inView(bar)) play(bar, 750, index * 80, true); }); };
   const startEvents = () => {
     if (disposed) return;
     calendarReady = true;
-    events.filter(passed).forEach(event => settleTarget(event));
+    events.filter(event => event.dataset.motionPhase === 'pending' && passed(event)).forEach(event => settleTarget(event));
     revealEvents(events);
   };
   const settle = (elements: HTMLElement[], all = false) => {
@@ -193,7 +188,7 @@ function setupScrollMotion(prepare: boolean): () => void {
       if (all || rendered(element)) {
         active.get(element)?.finish(); settleTarget(element);
         if (element === calendar) startEvents();
-        if (element === workspace) bars.forEach(settleTarget);
+        if (element === workspace) bars.filter(bar => rendered(bar) && !below(bar)).forEach(settleTarget);
       }
     });
     settling = false;
@@ -207,14 +202,18 @@ function setupScrollMotion(prepare: boolean): () => void {
       const element = entry.target as HTMLElement;
       if (!entry.isIntersecting) {
         if (!rendered(element)) continue;
-        if (active.has(element) || passed(element)) {
-          if (element === calendar) settle(events);
-          settle([element]);
+        if (active.has(element)) {
+          if (!physicallyVisible(element)) active.get(element)?.finish(false);
+        }
+        else if (element.dataset.motionPhase === 'pending' && passed(element)) {
+          settleTarget(element); settleQueued(element);
         }
         continue;
       }
+      if (element.dataset.motionPhase !== 'pending') continue;
       if (element === calendar) play(element, 700, 0, false, startEvents);
       else if (events.includes(element)) continue;
+      else if (bars.includes(element)) { if (workspace?.dataset.motionDone === 'true') play(element, 750, bars.indexOf(element) * 80, true); }
       else {
         const delay = element.tagName === 'P' && element.closest('.section-intro,.line-copy,.closing-copy') ? 100 : 0;
         play(element, 850, delay, false, element === workspace ? fillBars : undefined);
@@ -228,16 +227,17 @@ function setupScrollMotion(prepare: boolean): () => void {
     scrollFrame = window.requestAnimationFrame(() => {
       scrollFrame = undefined;
       if (disposed) return;
-      // IO may miss a below-to-above jump whose intersection state stays false.
-      // This sweep only releases passed effects; it never starts an entrance.
-      targets.filter(element => (element.dataset.motionPhase === 'pending' || active.has(element)) && passed(element)).forEach(element => {
+      // IO may stay false as an active target moves from the trigger band offscreen.
+      // This sweep only releases offscreen effects; it never starts an entrance.
+      targets.filter(element => active.has(element) ? !physicallyVisible(element) : element.dataset.motionPhase === 'pending' && passed(element)).forEach(element => {
         active.get(element)?.finish(false); settleTarget(element); settleQueued(element);
       });
     });
   };
   const onResize = () => {
     settle(Array.from(active.keys()));
-    settle(targets.filter(element => inView(element) || passed(element)));
+    settle(targets.filter(element => element.dataset.motionPhase === 'pending' && rendered(element) && !below(element)));
+    prepareTargets();
     if (calendarReady) startEvents();
   };
   const onFocus = (event: FocusEvent) => {
@@ -259,13 +259,19 @@ function setupScrollMotion(prepare: boolean): () => void {
     if (scrollFrame !== undefined) { window.cancelAnimationFrame(scrollFrame); scrollFrame = undefined; }
     Array.from(active.values()).forEach(item => item.finish(false)); targets.forEach(settleTarget);
   };
+  const prepareTargets = () => {
+    targets.forEach(element => {
+      if (element.dataset.motionDone === 'true' || element.dataset.motionPhase === 'pending' || !rendered(element)) return;
+      if (below(element)) { element.dataset.motionPhase = 'pending'; observer.observe(element); }
+      else settleTarget(element);
+    });
+  };
   try {
-    targets.forEach(element => { if (!element.dataset.motionDone) element.dataset.motionPhase = 'pending'; });
+    prepareTargets();
+    if (calendar?.dataset.motionDone === 'true') calendarReady = true;
     document.addEventListener('visibilitychange', onVisibility); document.addEventListener('focusin', onFocus);
     window.addEventListener('resize', onResize, { passive: true }); window.addEventListener('hashchange', onHash);
     window.addEventListener('scroll', onScroll, { passive: true });
-    generic.forEach(element => observer.observe(element)); if (calendar) observer.observe(calendar);
-    events.forEach(element => observer.observe(element));
     if (calendarReady) startEvents(); if (workspace?.dataset.motionDone === 'true') fillBars();
   } catch (error) { cleanup(); throw error; }
   return cleanup;
@@ -273,15 +279,13 @@ function setupScrollMotion(prepare: boolean): () => void {
 
 export function setupMotion(): () => void {
   const cleanups: Array<() => void> = [];
-  const boot = window.tutorpalRevealBoot;
-  let prepare = boot?.phase === 'preparing';
-  if (prepare && (location.hash || document.hidden)) { releaseReveals('initial-bypass'); prepare = false; }
+  const canReveal = 'IntersectionObserver' in window && typeof HTMLElement.prototype.animate === 'function' && !document.hidden && !location.hash;
   try {
-    cleanups.push(setupHeroMotion(prepare)); cleanups.push(setupScrollMotion(prepare)); cleanups.push(setupLineCheckMotion(prepare));
-    if (prepare && !boot?.claim()) { cleanups.splice(0).forEach(cleanup => cleanup()); releaseReveals('late-entry'); cleanups.push(setupHeroMotion(false)); }
+    cleanups.push(setupHeroMotion());
+    if (canReveal) { cleanups.push(setupScrollMotion()); cleanups.push(setupLineCheckMotion()); }
+    else releaseReveals();
   } catch {
-    cleanups.splice(0).forEach(cleanup => cleanup()); releaseReveals('setup-failure');
-    try { cleanups.push(setupHeroMotion(false)); } catch { /* Static cards remain readable. */ }
+    cleanups.splice(0).forEach(cleanup => cleanup()); releaseReveals();
   }
   try { cleanups.push(setupClosingMotion()); } catch { /* Decorative tiles stay static. */ }
   return () => {

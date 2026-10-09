@@ -72,7 +72,9 @@ function RHFInputField<T extends FieldValues>({
             required={required}
             disabled={disabled}
             aria-describedby={describedBy}
-            aria-invalid={!!fieldState.error}
+            aria-invalid={
+              !!fieldState.error || inputProps?.["aria-invalid"] === true
+            }
             aria-errormessage={
               fieldState.error
                 ? resolvedErrorId
@@ -129,7 +131,9 @@ function RHFPasswordField<T extends FieldValues>({
           error={fieldState.error?.message}
           required={required}
           disabled={disabled}
-          aria-invalid={!!fieldState.error}
+          aria-invalid={
+            !!fieldState.error || inputProps?.["aria-invalid"] === true
+          }
           onChange={(e) => field.onChange(e.target.value)}
         />
       )}
@@ -147,7 +151,10 @@ interface RHFSelectFieldProps<T extends FieldValues, O = string> {
   options: { value: O; label: string }[];
   selectProps?: {
     placeholder?: string;
+    ariaLabel?: string;
     ariaLabelledBy?: string;
+    ariaDescribedBy?: string;
+    ariaInvalid?: boolean;
   };
 }
 
@@ -171,7 +178,10 @@ function RHFSelectField<T extends FieldValues, O = string>({
           onValueChange={field.onChange}
           options={options}
           placeholder={selectProps?.placeholder}
+          ariaLabel={selectProps?.ariaLabel}
           ariaLabelledBy={selectProps?.ariaLabelledBy}
+          ariaDescribedBy={selectProps?.ariaDescribedBy}
+          ariaInvalid={selectProps?.ariaInvalid || !!fieldState.error}
           label={label}
           caption={caption}
           error={fieldState.error?.message}
@@ -226,6 +236,7 @@ interface RHFTimeFieldProps<T extends FieldValues> {
   caption?: string;
   required?: boolean;
   disabled?: boolean;
+  inputProps?: Omit<InputProps, "name" | "type">;
 }
 
 function RHFTimeField<T extends FieldValues>({
@@ -235,6 +246,7 @@ function RHFTimeField<T extends FieldValues>({
   caption,
   required,
   disabled,
+  inputProps,
 }: RHFTimeFieldProps<T>) {
   return (
     <Controller
@@ -243,12 +255,15 @@ function RHFTimeField<T extends FieldValues>({
       render={({ field, fieldState }) => (
         <TimeField
           {...field}
+          {...inputProps}
           label={label}
           caption={caption}
           error={fieldState.error?.message}
           required={required}
           disabled={disabled}
-          aria-invalid={!!fieldState.error}
+          aria-invalid={
+            !!fieldState.error || inputProps?.["aria-invalid"] === true
+          }
         />
       )}
     />
