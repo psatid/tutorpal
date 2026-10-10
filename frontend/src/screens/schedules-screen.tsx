@@ -184,6 +184,11 @@ export function SchedulesScreen() {
 
   const hasActiveFilters =
     statusFilter !== "ALL" || Boolean(searchQuery.trim());
+  const isWeeklyTimelineVisible =
+    viewMode === "week" &&
+    !isLoading &&
+    !isError &&
+    filteredSchedules.length > 0;
 
   return (
     <div
@@ -201,7 +206,12 @@ export function SchedulesScreen() {
       />
 
       {/* Search */}
-      <div className="mb-4 shrink-0 px-3 sm:px-4 lg:px-6">
+      <div
+        className={cn(
+          "shrink-0 px-3 sm:px-4 lg:px-6",
+          viewMode === "week" ? "mb-2 sm:mb-4" : "mb-4",
+        )}
+      >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <Input
@@ -224,7 +234,12 @@ export function SchedulesScreen() {
 
       {/* Status Filter */}
       {schedules && schedules.length > 0 && (
-        <div className="mb-4 shrink-0 px-3 sm:px-4 lg:px-6">
+        <div
+          className={cn(
+            "shrink-0 px-3 sm:px-4 lg:px-6",
+            viewMode === "week" ? "mb-2 sm:mb-4" : "mb-4",
+          )}
+        >
           <div className="flex gap-2 overflow-x-auto">
             {(
               ["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const
@@ -259,7 +274,10 @@ export function SchedulesScreen() {
         className={cn(
           "px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6",
           viewMode === "week"
-            ? "flex min-h-0 flex-1 flex-col"
+            ? "flex min-h-0 flex-1 flex-col pb-0"
+            : "",
+          isWeeklyTimelineVisible
+            ? "relative left-1/2 w-screen max-w-none -translate-x-1/2 px-0 sm:static sm:left-auto sm:w-auto sm:translate-x-0 sm:px-4 lg:px-6"
             : "",
         )}
       >
@@ -340,11 +358,13 @@ export function SchedulesScreen() {
         )}
       </div>
 
-      <WorkspaceFab
-        label={t("schedules:addSchedule")}
-        onClick={() => handleAddSchedule(fabRef.current)}
-        triggerRef={fabRef}
-      />
+      {viewMode === "day" ? (
+        <WorkspaceFab
+          label={t("schedules:addSchedule")}
+          onClick={() => handleAddSchedule(fabRef.current)}
+          triggerRef={fabRef}
+        />
+      ) : null}
 
       {/* Schedule Drawer */}
       <ScheduleDrawer

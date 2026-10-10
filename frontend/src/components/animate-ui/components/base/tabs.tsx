@@ -34,11 +34,11 @@ function TabsList({ className, transition, ...props }: TabsListProps) {
   return (
     <TabsHighlightPrimitive
       transition={transition}
-      className="absolute inset-0 z-0 rounded-full bg-primary"
+      className="absolute inset-x-0 inset-y-1.5 z-0 rounded-full bg-primary"
     >
       <TabsListPrimitive
         className={cn(
-          "inline-flex h-12 w-fit items-center justify-center rounded-full border border-border bg-card p-0.5",
+          "relative isolate inline-flex h-11 w-fit items-center justify-center rounded-full before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1 before:z-[-1] before:rounded-full before:border before:border-border before:bg-card",
           className,
         )}
         {...props}
@@ -58,7 +58,7 @@ function TabsTab({ className, ...props }: TabsTabProps) {
     >
       <TabsTabPrimitive
         className={cn(
-          "data-[active]:text-primary-foreground inline-flex h-11 min-w-11 w-full flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground hover:bg-muted hover:text-foreground data-[active]:hover:bg-transparent focus-visible:outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+          "data-[active]:text-primary-foreground inline-flex h-11 min-w-11 w-full flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
           className,
         )}
         {...props}

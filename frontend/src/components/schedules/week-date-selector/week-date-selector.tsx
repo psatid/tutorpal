@@ -270,16 +270,26 @@ export function WeekDateSelector({
   };
 
   return (
-    <div className={cn("mb-4", className)}>
+    <div
+      className={cn(
+        viewMode === "week" ? "mb-2 sm:mb-4" : "mb-4",
+        className,
+      )}
+    >
       <MotionConfig reducedMotion="user">
         <Tabs
           className="gap-0"
           value={viewMode}
           onValueChange={handleViewModeChange}
         >
-          <div className="px-3 pt-3 sm:px-4 lg:px-6">
-            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 min-[420px]:flex-nowrap">
-              <div className="min-w-0 basis-full min-[420px]:basis-auto min-[420px]:flex-1">
+          <div
+            className={cn(
+              "px-3 sm:px-4 lg:px-6",
+              viewMode === "week" ? "pt-2 sm:pt-3" : "pt-3",
+            )}
+          >
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 min-[360px]:flex-nowrap">
+              <div className="min-w-0 basis-full min-[360px]:basis-auto min-[360px]:flex-1">
                 <DateField
                   value={DateTime.from(railSelectedDate).toDateOnlyString()}
                   onChange={handleDateFieldChange}
@@ -314,8 +324,13 @@ export function WeekDateSelector({
                   }
                 />
               </div>
-              <div className="flex min-w-0 items-center justify-end gap-2 whitespace-nowrap min-[420px]:shrink-0">
-                <Button variant="outline" size="sm" onClick={handleToday}>
+              <div className="ml-auto flex shrink-0 items-center justify-end gap-2 whitespace-nowrap">
+                <Button
+                  className="relative isolate h-11 border-transparent bg-transparent hover:bg-transparent aria-expanded:bg-transparent dark:bg-transparent dark:hover:bg-transparent dark:aria-expanded:bg-transparent before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1.5 before:z-[-1] before:rounded-full before:border before:border-input before:bg-white hover:before:bg-muted aria-expanded:before:bg-muted dark:before:bg-card"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToday}
+                >
                   <CalendarDays aria-hidden="true" className="size-4" />
                   {t("schedules:weekSelector.today")}
                 </Button>

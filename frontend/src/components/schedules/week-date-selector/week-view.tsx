@@ -605,7 +605,12 @@ export function WeekView({
   );
 
   return (
-    <div className={cn("min-w-0 max-w-full pb-3 pt-2 md:pb-4", className)}>
+    <div
+      className={cn(
+        "min-w-0 max-w-full pb-2 pt-1 sm:pb-3 sm:pt-2 md:pb-4",
+        className,
+      )}
+    >
       <p id={instructionsId} className="sr-only">
         {t("schedules:weekSelector.weekRailInstruction")}
       </p>
@@ -699,15 +704,6 @@ export function WeekView({
                   />
                 )}
                 <span className="relative z-10 truncate">{rangeLabel}</span>
-                {isCurrentWeek && (
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "absolute bottom-1 left-1 size-1 rounded-full",
-                      isSelected ? "bg-primary-foreground" : "bg-primary",
-                    )}
-                  />
-                )}
               </button>
             );
           })}

@@ -11,14 +11,15 @@
 - Sessions are positioned by start time and duration. Overlapping sessions are split into separate lanes.
 - Scheduled timeline blocks use stable class-name colors: indigo `#533AFD`, dark orange `#A85800`, or dark cyan `#08769B`. Completed, no-show, and cancelled blocks use solid status fills (`#087443`, `#9A5B00`, and `#B42318`) with a leading class-color dot. All block labels and icons are white. Delivery-type and status icons remain visible, and blocks activate the existing schedule details drawer when clicked or focused with the keyboard.
 - Search and status filters apply in both views. Empty timeline cells are display-only and never create schedules.
-- On narrow screens the seven-day grid scrolls horizontally while keeping a readable minimum width for each day.
+- On narrow screens the populated Week timeline spans the viewport width and fills the remaining screen height. The seven-day grid scrolls horizontally while keeping a readable minimum width for each day, and the sticky time axis stays fully visible at the left edge.
+- Week mode hides the mobile floating Add Schedule button and does not reserve its bottom spacing. Day mode keeps the FAB; the empty-week state keeps its inline Add Schedule action.
 
 ## Scroll and motion polish
 
-- Week mode uses the available viewport height and keeps page scrolling fixed while the timeline owns vertical and horizontal scrolling.
+- Week mode uses the available viewport height and keeps page scrolling fixed while the timeline owns vertical and horizontal scrolling. The populated mobile timeline is full bleed, with no FAB-sized bottom gap.
 - The shared selector header remains above the scrollport, while the weekday/date header stays sticky at the top and the time axis stays sticky on the left.
 - Day and Week share one compact tablist and one date-selection footprint. Animate UI Base Tabs supplies the indigo highlight and active-panel transition over 180ms; the period label and selected rail fill update directly, without a shared cross-mode tile morph. Reduced-motion users receive zero-duration tab and panel transitions plus instant centering.
-- `WeekDateSelector` shows an outlined Today control with a calendar icon and a bordered Day/Week tablist with an indigo active pill. At 480px and wider it shows the full period label; from 420px the period label, Today, and Day/Week controls share one row. Below 420px the compact period label sits above Today and Day/Week. The tab track stays 48px high and its tabs stay at least 44px high at every width, with no horizontal overflow.
+- `WeekDateSelector` shows an outlined Today control with a calendar icon and a bordered Day/Week tablist with an indigo active pill. At 480px and wider it shows the full period label; from 360px the compact period label, Today, and Day/Week controls share one row. Below 360px the period label may sit above while Today and Day/Week remain paired. The tab track has a 36px visible surface and 44px tab targets; Today has a 32px outlined surface inside a 44px target. The current week has a primary border and accessible “Contains today” label without a dot.
 - Timeline labels fall back to on-site delivery data when a legacy schedule record omits its type, so accessible labels never expose `undefined`.
 
 ## API contract
@@ -50,4 +51,4 @@ The existing tutor scoping, class filtering, search behavior, exact-date filteri
 
 - Backend schema, route, and repository tests pass for range validation and filtering.
 - The frontend TypeScript check and production build pass after regenerating the local OpenAPI client.
-- Browser verification passed at 320px, 393px, 768px, 1024px, and 1280px for compact shared controls, no page overflow, mode switching, rails, timeline, keyboard/date interactions, and Thai compact labels. Loading and error states were not naturally exercised, and no pixel-baseline visual regression was captured.
+- Browser verification passed at 320px and 390px for the responsive toolbar, 44px Today/tab targets, a full-width Week timeline, no page overflow, and fully visible sticky time labels after vertical and horizontal scrolling. Existing coverage also passed at 768px and 1280px for the desktop inline Add action. Loading and error states were not naturally exercised, and no pixel-baseline visual regression was captured.
