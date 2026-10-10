@@ -1,18 +1,16 @@
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  type Transition,
-} from "framer-motion";
+import { MotionConfig, useReducedMotion, type Transition } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  ScheduleViewSwitch,
-  type ScheduleViewMode,
-} from "@/components/schedules/schedule-view-switch";
+  Tabs,
+  TabsList,
+  TabsPanel,
+  TabsPanels,
+  TabsTab,
+} from "@/components/animate-ui/components/base/tabs";
 import { DateField } from "@/components/ui/form/date-field";
 import { DateTime } from "@/lib/date-time";
 import { WeekView } from "./week-view";
@@ -33,6 +31,8 @@ export interface WeekDateSelectorProps {
   className?: string;
 }
 
+export type ScheduleViewMode = "day" | "week";
+
 const MAX_BUFFER_DAYS = 56;
 const BUFFER_DAYS_BEFORE_SELECTED = 28;
 const MAX_BUFFER_WEEKS = 8;
@@ -40,6 +40,10 @@ const BUFFER_WEEKS_BEFORE_SELECTED = 4;
 const WEEK_DAYS = 7;
 const INSTANT_CENTER: ScrollBehavior = "auto";
 const SMOOTH_CENTER: ScrollBehavior = "smooth";
+
+function isScheduleViewMode(value: string): value is ScheduleViewMode {
+  return value === "day" || value === "week";
+}
 
 function getDateByDayOffset(date: Date, dayOffset: number): Date {
   const dateTime = DateTime.from(date);
@@ -81,7 +85,7 @@ export function WeekDateSelector({
   className,
 }: WeekDateSelectorProps) {
   const { t } = useTranslation(["schedules"]);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() === true;
   const railSelectedDate = selectedDate ?? DateTime.today().toDate();
   const railSelectedDateKey =
     DateTime.from(railSelectedDate).toDateOnlyString();
@@ -229,9 +233,9 @@ export function WeekDateSelector({
   const periodLabel = viewMode === "week" ? weekLabel : monthLabel;
   const shortPeriodLabel =
     viewMode === "week" ? shortWeekLabel : shortMonthLabel;
-  const motionTransition: Transition = prefersReducedMotion
+  const tabTransition: Transition = prefersReducedMotion
     ? { duration: 0 }
-    : { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
+    : { duration: 0.18, ease: [0.25, 1, 0.5, 1] };
 
   const handleToday = () => {
     requestCenter(SMOOTH_CENTER);
@@ -259,85 +263,80 @@ export function WeekDateSelector({
     }
   };
 
+  const handleViewModeChange = (value: string) => {
+    if (isScheduleViewMode(value)) {
+      onViewModeChange(value);
+    }
+  };
+
   return (
     <div className={cn("mb-4", className)}>
-      <div className="px-3 pt-3 sm:px-4 lg:px-6">
-        <div className="min-w-0 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <DateField
-              value={DateTime.from(railSelectedDate).toDateOnlyString()}
-              onChange={handleDateFieldChange}
-              selectionMode={viewMode === "week" ? "week" : "single"}
-              ariaLabel={
-                viewMode === "week"
-                  ? t("schedules:weekSelector.openWeekCalendar", {
-                      week: weekLabel,
-                    })
-                  : t("schedules:weekSelector.openCalendar", {
-                      month: monthLabel,
-                    })
-              }
-              trigger={
-                <button
-                  type="button"
-                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card"
-                >
-                  <motion.span
-                    className="relative block min-w-0"
-                    layout
-                    transition={motionTransition}
-                  >
-                    <AnimatePresence initial={false} mode="popLayout">
-                      <motion.span
-                        key={viewMode}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{
-                          opacity: prefersReducedMotion ? 1 : 0,
-                          y: 0,
-                        }}
-                        initial={
-                          prefersReducedMotion ? false : { opacity: 0, y: 2 }
-                        }
-                        transition={motionTransition}
-                        className="block truncate"
-                      >
+      <MotionConfig reducedMotion="user">
+        <Tabs
+          className="gap-0"
+          value={viewMode}
+          onValueChange={handleViewModeChange}
+        >
+          <div className="px-3 pt-3 sm:px-4 lg:px-6">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 min-[420px]:flex-nowrap">
+              <div className="min-w-0 basis-full min-[420px]:basis-auto min-[420px]:flex-1">
+                <DateField
+                  value={DateTime.from(railSelectedDate).toDateOnlyString()}
+                  onChange={handleDateFieldChange}
+                  selectionMode={viewMode === "week" ? "week" : "single"}
+                  ariaLabel={
+                    viewMode === "week"
+                      ? t("schedules:weekSelector.openWeekCalendar", {
+                          week: weekLabel,
+                        })
+                      : t("schedules:weekSelector.openCalendar", {
+                          month: monthLabel,
+                        })
+                  }
+                  trigger={
+                    <button
+                      type="button"
+                      className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card"
+                    >
+                      <span className="block min-w-0 truncate">
                         <span className="min-[480px]:hidden">
                           {shortPeriodLabel}
                         </span>
                         <span className="hidden min-[480px]:inline">
                           {periodLabel}
                         </span>
-                      </motion.span>
-                    </AnimatePresence>
-                  </motion.span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className="size-4 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180 group-aria-expanded:rotate-180 motion-reduce:transition-none"
-                  />
-                </button>
-              }
-            />
+                      </span>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className="size-4 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180 group-aria-expanded:rotate-180 motion-reduce:transition-none"
+                      />
+                    </button>
+                  }
+                />
+              </div>
+              <div className="flex min-w-0 items-center justify-end gap-2 whitespace-nowrap min-[420px]:shrink-0">
+                <Button variant="outline" size="sm" onClick={handleToday}>
+                  <CalendarDays aria-hidden="true" className="size-4" />
+                  {t("schedules:weekSelector.today")}
+                </Button>
+                <TabsList
+                  aria-label={t("schedules:viewMode.label")}
+                  activateOnFocus={false}
+                  transition={tabTransition}
+                >
+                  <TabsTab value="day">
+                    {t("schedules:viewMode.day")}
+                  </TabsTab>
+                  <TabsTab value="week">
+                    {t("schedules:viewMode.week")}
+                  </TabsTab>
+                </TabsList>
+              </div>
+            </div>
           </div>
-          <div className="flex min-w-0 items-center justify-end gap-2 whitespace-nowrap min-[420px]:shrink-0">
-            <Button variant="outline" size="sm" onClick={handleToday}>
-              <CalendarDays aria-hidden="true" className="size-4" />
-              {t("schedules:weekSelector.today")}
-            </Button>
-            <ScheduleViewSwitch value={viewMode} onChange={onViewModeChange} />
-          </div>
-        </div>
-      </div>
 
-      <div className="relative">
-        <AnimatePresence initial={false} mode="popLayout">
-          {viewMode === "day" ? (
-            <motion.div
-              key="day-rail"
-              animate={{ opacity: 1 }}
-              exit={{ opacity: prefersReducedMotion ? 1 : 0 }}
-              initial={prefersReducedMotion ? false : { opacity: 0 }}
-              transition={motionTransition}
-            >
+          <TabsPanels className="w-full" transition={tabTransition}>
+            <TabsPanel value="day" transition={tabTransition}>
               <WeekdayView
                 dates={dates}
                 selectedDate={railSelectedDate}
@@ -346,15 +345,8 @@ export function WeekDateSelector({
                 onRestoreSelectedDate={handleRestoreSelectedDate}
                 centerRequest={centerRequest}
               />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="week-rail"
-              animate={{ opacity: 1 }}
-              exit={{ opacity: prefersReducedMotion ? 1 : 0 }}
-              initial={prefersReducedMotion ? false : { opacity: 0 }}
-              transition={motionTransition}
-            >
+            </TabsPanel>
+            <TabsPanel value="week" transition={tabTransition}>
               <WeekView
                 weekStarts={weekStarts}
                 selectedDate={railSelectedDate}
@@ -363,10 +355,10 @@ export function WeekDateSelector({
                 onRestoreSelectedWeek={handleRestoreSelectedWeek}
                 centerRequest={centerRequest}
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+            </TabsPanel>
+          </TabsPanels>
+        </Tabs>
+      </MotionConfig>
     </div>
   );
 }

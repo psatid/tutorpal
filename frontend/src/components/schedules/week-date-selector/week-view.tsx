@@ -8,7 +8,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { motion, useReducedMotion, type Transition } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
@@ -101,7 +101,7 @@ export function WeekView({
   className,
 }: WeekViewProps) {
   const { t } = useTranslation(["schedules"]);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() === true;
   const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollLeftRef = useRef<number | null>(null);
@@ -149,10 +149,6 @@ export function WeekView({
           t("schedules:weekSelector.selectedWeek"),
         ].join(", ")
       : undefined;
-  const motionTransition: Transition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
-
   const clearSmoothCentering = useCallback(() => {
     smoothCenteringRef.current = false;
 
@@ -697,11 +693,9 @@ export function WeekView({
                 tabIndex={isSelected ? 0 : -1}
               >
                 {isSelected && (
-                  <motion.span
+                  <span
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 rounded-xl bg-primary"
-                    layoutId="schedule-selected-period"
-                    transition={motionTransition}
                   />
                 )}
                 <span className="relative z-10 truncate">{rangeLabel}</span>

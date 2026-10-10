@@ -17,9 +17,11 @@ import {
   ScheduleDrawer,
   type DrawerMode,
 } from "@/components/schedules/schedule-drawer";
-import { WeekDateSelector } from "@/components/schedules/week-date-selector";
+import {
+  type ScheduleViewMode,
+  WeekDateSelector,
+} from "@/components/schedules/week-date-selector";
 import { WeeklyScheduleTimeline } from "@/components/schedules/weekly-schedule-timeline";
-import { type ScheduleViewMode } from "@/components/schedules/schedule-view-switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";

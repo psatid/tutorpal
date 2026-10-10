@@ -8,7 +8,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { motion, useReducedMotion, type Transition } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
@@ -100,7 +100,7 @@ export function WeekdayView({
   className,
 }: WeekdayViewProps) {
   const { t } = useTranslation(["schedules"]);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() === true;
   const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingPrependTrackWidthRef = useRef<number | null>(null);
@@ -119,9 +119,6 @@ export function WeekdayView({
     null,
   );
   const touchClickSuppressionTimeoutRef = useRef<number | null>(null);
-  const motionTransition: Transition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
   const isSelectedDateInBuffer = selectedDate
     ? dates.some((date) => DateTime.from(date).isSameDay(selectedDate))
     : false;
@@ -634,11 +631,9 @@ export function WeekdayView({
                 tabIndex={isSelected ? 0 : -1}
               >
                 {isSelected && (
-                  <motion.span
+                  <span
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 rounded-xl bg-primary"
-                    layoutId="schedule-selected-period"
-                    transition={motionTransition}
                   />
                 )}
                 <span
