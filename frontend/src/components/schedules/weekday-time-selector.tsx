@@ -75,7 +75,10 @@ export function WeekdayTimeSelector({
 			return;
 		}
 
-		append({ weekday, time: "09:00", durationMinutes: 60 });
+		append(
+			{ weekday, time: "09:00", durationMinutes: 60 },
+			{ shouldFocus: false },
+		);
 	};
 
 	const addInterval = (weekday: Weekday) => {
@@ -111,6 +114,7 @@ export function WeekdayTimeSelector({
 					WEEKDAYS.filter(
 						(weekday) => !items.some((item) => item.weekday === weekday),
 					).map((weekday) => ({ weekday, time: "09:00", durationMinutes: 60 })),
+					{ shouldFocus: false },
 				);
 			}}
 			onToggleWeekday={toggleWeekday}

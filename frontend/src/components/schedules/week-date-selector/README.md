@@ -43,7 +43,7 @@ interface WeekDateSelectorProps {
 - Today and calendar selections call `onDateSelect`; a date outside the current buffer rebuilds the bounded range around that date.
 - Clicking/tapping a tile, ArrowLeft/ArrowRight, PageUp/PageDown, Today, and date-picker selections smoothly center the selected tile by default. Reduced-motion users receive instant positioning.
 - A touch tap commits on Pointer Events `pointerup` immediately before smooth centering begins. Horizontal swipes only scroll the rails and never change the committed selection; the following compatibility click is ignored so a tap commits once.
-- Selected dates use the primary tile treatment. Unselected today has a primary outline and dot; month boundaries show a compact month marker.
+- Selected dates use the primary tile treatment. Unselected today has a primary outline only; month boundaries show a compact month marker.
 
 ### Week mode
 

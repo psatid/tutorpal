@@ -671,12 +671,6 @@ export function WeekdayView({
                     {monthName}
                   </span>
                 )}
-                {!isSelected && isDateToday && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-1 left-1 size-1 rounded-full bg-primary"
-                  />
-                )}
               </button>
             );
           })}

@@ -63,6 +63,33 @@ describe("WeekdayTimeSelector", () => {
     expect(getScheduleItems()).toEqual([]);
   });
 
+  it("keeps focus on a weekday checkbox after revealing its session fields", async () => {
+    const user = userEvent.setup();
+    render(<WeekdaySelectorFixture />);
+
+    const monday = screen.getByRole("checkbox", { name: "Monday" });
+    await user.click(monday);
+
+    expect(monday).toHaveFocus();
+    expect(
+      screen.getByLabelText("Time — Monday, session 1"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps focus on Select All after revealing every weekday's session fields", async () => {
+    const user = userEvent.setup();
+    render(<WeekdaySelectorFixture />);
+
+    const selectAll = screen.getByRole("button", { name: "Select All" });
+    await user.click(selectAll);
+
+    expect(screen.getByRole("button", { name: "Clear All" })).toHaveFocus();
+    expect(getScheduleItems()).toHaveLength(7);
+    expect(
+      screen.getByLabelText("Time — Sunday, session 1"),
+    ).toBeInTheDocument();
+  });
+
   it("groups existing repeated weekday intervals chronologically", () => {
     render(
       <WeekdaySelectorFixture
