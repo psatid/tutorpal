@@ -168,6 +168,13 @@ Disable or show loading state on the submit action while its mutation is
 pending. View mode should disable its controls and use a separate `type="button"`
 action to enter edit mode.
 
+Drawer actions for data-entry forms are full width at every breakpoint. Keep
+their text-only labels free of icons; field icons and labelled icon-only drawer
+close controls remain appropriate. Shared `Button` loading replaces the visible
+label and icons with three centered decorative dots, keeps an accessible label
+and busy state, preserves the button width, and uses static dots when reduced
+motion is preferred.
+
 ## Checklist
 
 - Schema and inferred types live outside the component.

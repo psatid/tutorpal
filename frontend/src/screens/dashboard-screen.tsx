@@ -555,7 +555,6 @@ function GettingStartedChecklist() {
           onCreateSuccess={() => handleSuccess("schedule")}
           onModeChange={() => {}}
           onOpenChange={setIsCreateScheduleOpen}
-          oneTimeOnly
           scheduleId={null}
           selectedDate={DateTime.today().toDate()}
         />
@@ -766,7 +765,6 @@ function GettingStartedChecklist() {
         onCreateSuccess={() => handleSuccess("schedule")}
         onModeChange={() => {}}
         onOpenChange={setIsCreateScheduleOpen}
-        oneTimeOnly
         scheduleId={null}
         selectedDate={DateTime.today().toDate()}
       />

@@ -245,12 +245,11 @@ export function ClassesScreen({
 	);
 	const submitButton = (
 		<Button
-			className="w-full md:w-fit"
+			className="w-full"
 			form="class-form"
 			loading={isCreatePending}
 			type="submit"
 		>
-			<Plus data-icon="inline-start" />
 			{t("classes:createClass")}
 		</Button>
 	);

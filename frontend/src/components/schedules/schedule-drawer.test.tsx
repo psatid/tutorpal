@@ -70,6 +70,39 @@ describe("ScheduleDrawer", () => {
 		mutations.update.mockReset();
 	});
 
+	it("allows recurring schedules by default and keeps the selected date", async () => {
+		const user = userEvent.setup();
+		render(
+			<ScheduleDrawer
+				isOpen
+				mode="create"
+				onModeChange={vi.fn()}
+				onOpenChange={vi.fn()}
+				scheduleId={null}
+				selectedDate={new Date(2026, 9, 8)}
+			/>,
+		);
+
+		await user.click(screen.getByRole("button", { name: "Class" }));
+		await user.click(screen.getByRole("button", { name: "Choose class one" }));
+		await user.click(screen.getByRole("radio", { name: "Online" }));
+		await user.click(screen.getByRole("checkbox", { name: "Make this recurring" }));
+		await user.click(screen.getByRole("checkbox", { name: "Monday" }));
+		await user.click(screen.getByRole("button", { name: "Add Schedule" }));
+
+		expect(mutations.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				date: "2026-10-08",
+				recurring: {
+					startDate: "2026-10-08",
+					scheduleItems: [
+						{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+					],
+				},
+			}),
+		);
+	});
+
 	it("focuses the first conflicting recurring time when overlap validation fails", async () => {
 		const user = userEvent.setup();
 		render(

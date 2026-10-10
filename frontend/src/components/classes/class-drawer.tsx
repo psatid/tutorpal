@@ -1,4 +1,3 @@
-import { Pencil, Plus, Save } from "lucide-react";
 import { type ComponentProps, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -79,8 +78,7 @@ export function ClassDrawer({
   const footer =
     mode === "view" ? (
       <Button
-        className="w-full md:w-fit"
-        leftIcon={Pencil}
+        className="w-full"
         onClick={() => onModeChange?.("edit")}
         type="button"
       >
@@ -88,9 +86,8 @@ export function ClassDrawer({
       </Button>
     ) : (
       <Button
-        className="w-full md:w-fit"
+        className="w-full"
         form={formId}
-        leftIcon={mode === "create" ? Plus : Save}
         loading={isPending}
         type="submit"
       >

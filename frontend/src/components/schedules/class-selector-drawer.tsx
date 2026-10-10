@@ -1,4 +1,4 @@
-import { BookOpen, Check, Clock, Loader2, Search } from "lucide-react";
+import { BookOpen, Clock, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -78,7 +78,6 @@ export function ClassSelectorDrawer({
 				<Button
 					className="w-full"
 					disabled={!localSelectedId}
-					leftIcon={Check}
 					onClick={handleConfirm}
 				>
 					{t("schedules:classSelector.selectButton")}

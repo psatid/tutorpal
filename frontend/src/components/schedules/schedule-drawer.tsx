@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert, Loader2, Pencil, Plus, Save } from "lucide-react";
+import { CircleAlert, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
@@ -277,8 +277,7 @@ export function ScheduleDrawer({
 	const footer =
 		mode === "view" ? (
 			<Button
-				className="w-full md:w-fit"
-				leftIcon={Pencil}
+				className="w-full"
 				onClick={(event) => {
 					event.preventDefault();
 					event.stopPropagation();
@@ -290,9 +289,8 @@ export function ScheduleDrawer({
 			</Button>
 		) : (
 			<Button
-				className="w-full md:w-fit"
+				className="w-full"
 				form={SCHEDULE_DRAWER_FORM_ID}
-				leftIcon={mode === "create" ? Plus : Save}
 				loading={createMutation.isPending || updateMutation.isPending}
 				disabled={isCreateSubmissionBlocked}
 				type="submit"

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
@@ -143,7 +143,6 @@ export function ClassForm({
 							aria-haspopup="dialog"
 							disabled={isReadOnly}
 							id={studentsId}
-							leftIcon={UserPlus}
 							onClick={() => setIsStudentSelectorOpen(true)}
 							type="button"
 							variant="outline"

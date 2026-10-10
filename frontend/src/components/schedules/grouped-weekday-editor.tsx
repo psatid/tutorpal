@@ -1,4 +1,3 @@
-import { Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -150,7 +149,6 @@ export function GroupedWeekdayEditor({
 														)}
 														disabled={disabled}
 														className="min-h-11"
-														leftIcon={Trash2}
 														onClick={() => onRemoveInterval(item.index)}
 														size="sm"
 														type="button"
@@ -196,7 +194,6 @@ export function GroupedWeekdayEditor({
 											})}
 											disabled={disabled || cannotAddInterval}
 											className="min-h-11"
-											leftIcon={Plus}
 											onClick={() => onAddInterval(weekday)}
 											size="sm"
 											type="button"

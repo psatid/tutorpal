@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert, Plus } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { type ComponentProps, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -317,9 +317,8 @@ export function ClassHourAdditionsDrawer({
 			description={t("classes:hourAdditions.description")}
 			footer={
 				<Button
-					className="w-full md:w-fit"
+					className="w-full"
 					form={formId}
-					leftIcon={Plus}
 					loading={addHours.isPending}
 					disabled={
 						source === "course" &&

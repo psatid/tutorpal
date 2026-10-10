@@ -452,7 +452,7 @@ export function RecurringScheduleDrawer({
 
 	const footer = (
 		<Button
-			className="w-full md:w-fit"
+			className="w-full"
 			disabled={isCreateUnavailable}
 			form={RECURRING_SCHEDULE_DRAWER_FORM_ID}
 			loading={createMutation.isPending || updateRecurringMutation.isPending}

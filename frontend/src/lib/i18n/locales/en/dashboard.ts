@@ -42,14 +42,14 @@ export default {
     schedulesLoadError: "Schedules couldn’t refresh. Your saved setup progress is still shown.",
     classSuccess: "Class created. Add hours next.",
     classRefreshRequired: "Class created. Refresh classes to update setup.",
-    hoursSuccess: "Class hours added. Create a one-time schedule next.",
+    hoursSuccess: "Class hours added. Create a schedule next.",
     hoursClassesRefreshRequired:
       "Class hours were added. Refresh classes to update setup.",
     hoursSchedulesRefreshRequired:
       "Class hours were added. Refresh schedules to continue setup.",
-    scheduleSuccess: "One-time schedule created. Your setup is complete.",
+    scheduleSuccess: "Schedule created. Your setup is complete.",
     scheduleRefreshRequired:
-      "One-time schedule created. Refresh schedules to update setup.",
+      "Schedule created. Refresh schedules to update setup.",
     states: {
       complete: "Complete",
       current: "Current step",
@@ -65,7 +65,7 @@ export default {
     hoursNeedsClass: "Create a class before adding hours.",
     hoursDone: "A class has hours available to track.",
     addHours: "Add hours",
-    scheduleTitle: "Create a one-time schedule",
+    scheduleTitle: "Create a schedule",
     scheduleDescription:
       "Choose a class with available hours, then set the session details. Add more hours in Classes if they are all used.",
     scheduleNeedsHours: "Add class hours before creating a schedule.",

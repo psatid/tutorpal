@@ -85,8 +85,7 @@ export function StudentSelectorDrawer({
 		<ResponsiveDrawer
 			footer={
 				<Button
-					className="w-full md:w-fit"
-					leftIcon={Check}
+					className="w-full"
 					onClick={() => {
 						onChange(localSelectedIds);
 						close();

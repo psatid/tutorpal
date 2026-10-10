@@ -28,7 +28,7 @@ export function CourseFormDrawer({
 		<ResponsiveDrawer
 			description={t("courses:formDescription")}
 			footer={
-				<Button className="w-full md:w-fit" form="course-form" type="submit">
+				<Button className="w-full" form="course-form" type="submit">
 					{course
 						? t("courses:saveChanges")
 						: t("courses:createCourse")}

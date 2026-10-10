@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Save, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
 import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-drawer";
@@ -121,8 +120,7 @@ export function StudentDrawer({
   const footer =
     mode === "view" ? (
       <Button
-        className="w-full md:w-fit"
-        leftIcon={Pencil}
+        className="w-full"
         onClick={() => onModeChange("edit")}
         type="button"
       >
@@ -130,9 +128,8 @@ export function StudentDrawer({
       </Button>
     ) : (
       <Button
-        className="w-full md:w-fit"
+        className="w-full"
         form={STUDENT_DRAWER_FORM_ID}
-        leftIcon={mode === "create" ? User : Save}
         loading={createMutation.isPending || updateMutation.isPending}
         type="submit"
       >

@@ -97,8 +97,7 @@ export function StudentScreen() {
     <StudentForm key={String(formOpen)} onCreated={() => setFormOpen(false)} />
   );
   const submitButton = (
-    <Button className="w-full md:w-fit" form="student-form" type="submit">
-      <Plus data-icon="inline-start" />
+    <Button className="w-full" form="student-form" type="submit">
       {t("students:createStudent")}
     </Button>
   );
