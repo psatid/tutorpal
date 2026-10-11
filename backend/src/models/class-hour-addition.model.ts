@@ -1,4 +1,5 @@
 import { DateTime } from "../lib/date-time";
+import { secondsToHours } from "../lib/teaching-time";
 import type {
 	ClassHourAdditionDTO,
 	ClassHourAdditionSource,
@@ -10,7 +11,7 @@ type ClassHourAdditionPrismaRecord = {
 	id: string;
 	classId: string;
 	source: "COURSE" | "CUSTOM";
-	hours: DecimalLike | number;
+	secondsAdded: bigint;
 	revenueAmount: DecimalLike | number | null;
 	sourceCourseId: string | null;
 	sourceCourseName: string | null;
@@ -58,10 +59,7 @@ export class ClassHourAdditionModel {
 			id: addition.id,
 			classId: addition.classId,
 			source: addition.source === "COURSE" ? "course" : "custom",
-			hours:
-				typeof addition.hours === "number"
-					? addition.hours
-					: addition.hours.toNumber(),
+			hours: secondsToHours(addition.secondsAdded),
 			revenueAmount:
 				addition.revenueAmount === null
 					? null

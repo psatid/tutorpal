@@ -1,6 +1,7 @@
 import type { ScheduleStatus } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import { AppError } from "../lib/error";
+import { minutesToSeconds } from "../lib/teaching-time";
 import type {
 	RecurringScheduleUpdateResultModel,
 	ScheduleModel,
@@ -10,6 +11,7 @@ import type {
 	CreateScheduleDTO,
 	IClassRepository,
 	IScheduleRepository,
+	NoShowScheduleDTO,
 	UpdateRecurringScheduleDTO,
 	UpdateScheduleDTO,
 } from "../types";
@@ -43,17 +45,17 @@ export class ScheduleService {
 			return true;
 		}
 
-		let remainingHours = await this.repository.getRemainingHours(classId);
+		let remainingSeconds = await this.repository.getRemainingSeconds(classId);
 
 		if (
 			existingSchedule &&
 			existingSchedule.classId === classId &&
 			this.isActiveStatus(existingSchedule.status)
 		) {
-			remainingHours += existingSchedule.durationMinutes / 60;
+			remainingSeconds += minutesToSeconds(existingSchedule.durationMinutes);
 		}
 
-		return remainingHours >= durationMinutes / 60;
+		return remainingSeconds >= minutesToSeconds(durationMinutes);
 	}
 
 	async createSchedule(
@@ -174,19 +176,11 @@ export class ScheduleService {
 		const targetClassId = data.classId ?? existingSchedule.classId;
 		const targetDurationMinutes =
 			data.durationMinutes ?? existingSchedule.durationMinutes;
-		const targetStatus = data.status ?? existingSchedule.status;
-		const hasNonStatusUpdates =
-			data.classId !== undefined ||
-			data.date !== undefined ||
-			data.time !== undefined ||
-			data.durationMinutes !== undefined ||
-			data.type !== undefined ||
-			data.notes !== undefined;
 
 		const hasEnoughHours = await this.validateScheduleCapacity(
 			targetClassId,
 			targetDurationMinutes,
-			targetStatus,
+			existingSchedule.status,
 			existingSchedule,
 		);
 
@@ -195,48 +189,6 @@ export class ScheduleService {
 				"INSUFFICIENT_HOURS",
 				"The class does not have enough remaining hours for this schedule",
 			);
-		}
-
-		if (
-			data.status === "COMPLETED" &&
-			existingSchedule.status === "SCHEDULED"
-		) {
-			if (hasNonStatusUpdates) {
-				const updatedSchedule = await this.repository.update(id, {
-					...data,
-					status: "SCHEDULED",
-				});
-				return this.repository.completeSchedule(updatedSchedule.id);
-			}
-
-			return this.repository.completeSchedule(id);
-		}
-
-		if (data.status === "NO_SHOW" && existingSchedule.status !== "NO_SHOW") {
-			if (
-				existingSchedule.status !== "SCHEDULED" &&
-				existingSchedule.status !== "COMPLETED"
-			) {
-				throw AppError.badRequest(
-					"INVALID_STATUS_TRANSITION",
-					"Only scheduled or completed schedules can be marked as no-show",
-				);
-			}
-		}
-
-		if (
-			(existingSchedule.status === "COMPLETED" ||
-				existingSchedule.status === "NO_SHOW") &&
-			data.status === "CANCELLED"
-		) {
-			if (hasNonStatusUpdates) {
-				await this.repository.update(id, {
-					...data,
-					status: existingSchedule.status,
-				});
-			}
-
-			return this.repository.restoreHours(id);
 		}
 
 		return this.repository.update(id, data);
@@ -288,13 +240,19 @@ export class ScheduleService {
 	}
 
 	async completeSchedule(id: string, tutorId: string): Promise<ScheduleModel> {
-		await this.getScheduleById(id, tutorId);
-		return this.repository.completeSchedule(id);
+		return this.repository.completeSchedule(id, tutorId);
+	}
+
+	async markNoShow(
+		id: string,
+		data: NoShowScheduleDTO,
+		tutorId: string,
+	): Promise<ScheduleModel> {
+		return this.repository.markNoShow(id, tutorId, data);
 	}
 
 	async restoreHours(id: string, tutorId: string): Promise<ScheduleModel> {
-		await this.getScheduleById(id, tutorId);
-		return this.repository.restoreHours(id);
+		return this.repository.restoreHours(id, tutorId);
 	}
 
 	async getRemainingHours(classId: string, tutorId: string): Promise<number> {

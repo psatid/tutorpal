@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { MAX_CLASS_HOURS } from "../lib/class-hour-addition";
+import { MAX_CLASS_HOURS, MAX_CLASS_SECONDS } from "../lib/class-hour-addition";
 import { prisma as defaultPrisma } from "../lib/db";
 import { AppError } from "../lib/error";
 import {
@@ -7,6 +7,7 @@ import {
 	MAX_CURRENCY_AMOUNT,
 	normalizeCurrencyAmount,
 } from "../lib/money";
+import { hoursToSeconds, secondsToHours } from "../lib/teaching-time";
 import { ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
 import type {
@@ -37,10 +38,14 @@ const classInclude = {
 } as const;
 
 type DecimalLike = { toNumber(): number };
-type HoursValue = DecimalLike | number;
+type SecondsValue = bigint;
 type MoneyValue = DecimalLike | number;
 
-function toHoursNumber(value: HoursValue): number {
+function toHoursNumber(value: SecondsValue): number {
+	return secondsToHours(value);
+}
+
+function toDecimalNumber(value: DecimalLike | number): number {
 	return typeof value === "number" ? value : value.toNumber();
 }
 
@@ -48,26 +53,26 @@ function hourAdditionLimitExceeded(message: string) {
 	return AppError.badRequest("HOUR_ADDITION_LIMIT_EXCEEDED", message);
 }
 
-function normalizePositiveHours(hours: number): number {
-	const scaledHours = hours * 100;
-	const hasAtMostTwoDecimalPlaces =
-		Math.abs(scaledHours - Math.round(scaledHours)) <=
-		Number.EPSILON * Math.max(1, Math.abs(scaledHours)) * 4;
-	if (!Number.isFinite(hours) || hours <= 0 || !hasAtMostTwoDecimalPlaces) {
+function normalizePositiveHoursToSeconds(hours: number): bigint {
+	if (
+		!Number.isFinite(hours) ||
+		hours <= 0 ||
+		!hasAtMostTwoDecimalPlaces(hours)
+	) {
 		throw AppError.badRequest(
 			"INVALID_HOUR_ADDITION",
 			"Hours must be a positive value with at most two decimal places",
 		);
 	}
 
-	const normalizedHours = Math.round(scaledHours) / 100;
-	if (normalizedHours <= 0) {
+	const seconds = hoursToSeconds(hours);
+	if (seconds <= 0n) {
 		throw AppError.badRequest(
 			"INVALID_HOUR_ADDITION",
 			"Hours must be at least 0.01",
 		);
 	}
-	return normalizedHours;
+	return seconds;
 }
 
 function normalizeRevenueAmount(
@@ -90,8 +95,8 @@ function normalizeRevenueAmount(
 	return normalizeCurrencyAmount(revenueAmount);
 }
 
-function assertHoursFitClassTotal(hours: number) {
-	if (hours > MAX_CLASS_HOURS) {
+function assertHoursFitClassTotal(seconds: bigint) {
+	if (seconds > MAX_CLASS_SECONDS) {
 		throw hourAdditionLimitExceeded(
 			`Hours must not exceed ${MAX_CLASS_HOURS.toFixed(2)}`,
 		);
@@ -118,7 +123,7 @@ async function assertStudentsBelongToTutor(
 function isMatchingHourAddition(
 	existing: {
 		source: "COURSE" | "CUSTOM";
-		hours: HoursValue;
+		secondsAdded: bigint;
 		revenueAmount: MoneyValue | null;
 		sourceCourseId: string | null;
 	},
@@ -128,7 +133,7 @@ function isMatchingHourAddition(
 		normalizeRevenueAmount(
 			existing.revenueAmount === null
 				? null
-				: toHoursNumber(existing.revenueAmount),
+				: toDecimalNumber(existing.revenueAmount),
 		) !== normalizeRevenueAmount(data.revenueAmount)
 	) {
 		return false;
@@ -142,15 +147,14 @@ function isMatchingHourAddition(
 
 	return (
 		existing.source === "CUSTOM" &&
-		normalizePositiveHours(toHoursNumber(existing.hours)) ===
-			normalizePositiveHours(data.hours)
+		existing.secondsAdded === normalizePositiveHoursToSeconds(data.hours)
 	);
 }
 
 function assertMatchingHourAddition(
 	existing: {
 		source: "COURSE" | "CUSTOM";
-		hours: HoursValue;
+		secondsAdded: bigint;
 		revenueAmount: MoneyValue | null;
 		sourceCourseId: string | null;
 	},
@@ -167,13 +171,13 @@ function assertMatchingHourAddition(
 async function getRemainingHoursInTransaction(
 	tx: Prisma.TransactionClient,
 	classId: string,
-	totalHours: HoursValue,
+	totalSeconds: bigint,
 ): Promise<number> {
 	const reserved = await tx.schedule.aggregate({
 		where: { classId, status: { in: ACTIVE_SCHEDULE_STATUSES } },
-		_sum: { durationMinutes: true },
+		_sum: { durationSeconds: true },
 	});
-	return toHoursNumber(totalHours) - (reserved._sum.durationMinutes ?? 0) / 60;
+	return secondsToHours(totalSeconds - (reserved._sum.durationSeconds ?? 0n));
 }
 
 export class ClassRepository implements IClassRepository {
@@ -195,7 +199,7 @@ export class ClassRepository implements IClassRepository {
 				data: {
 					tutorId: data.tutorId,
 					name,
-					totalHours: 0,
+					totalSeconds: 0n,
 					...(studentIds.length > 0
 						? {
 								students: {
@@ -221,7 +225,10 @@ export class ClassRepository implements IClassRepository {
 		const limit = params?.limit ?? 10;
 		const skip = (page - 1) * limit;
 		const search = params?.search?.trim();
-		const sortBy = params?.sortBy ?? "createdAt";
+		const sortBy =
+			params?.sortBy === "totalHours"
+				? "totalSeconds"
+				: (params?.sortBy ?? "createdAt");
 		const sortOrder = params?.sortOrder ?? "desc";
 		const where: Prisma.ClassWhereInput = {
 			tutorId,
@@ -370,7 +377,7 @@ export class ClassRepository implements IClassRepository {
 			data.source === "custom"
 				? {
 						...data,
-						hours: normalizePositiveHours(data.hours),
+						hours: secondsToHours(normalizePositiveHoursToSeconds(data.hours)),
 						revenueAmount: normalizeRevenueAmount(data.revenueAmount),
 					}
 				: {
@@ -382,7 +389,7 @@ export class ClassRepository implements IClassRepository {
 			return await this.prisma.$transaction(async (tx) => {
 				const classData = await tx.class.findFirst({
 					where: { id, tutorId },
-					select: { id: true, totalHours: true },
+					select: { id: true, totalSeconds: true },
 				});
 				if (!classData) {
 					throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
@@ -397,22 +404,22 @@ export class ClassRepository implements IClassRepository {
 					assertMatchingHourAddition(existing, normalizedData);
 					return {
 						addition: ClassHourAdditionModel.fromPrisma(existing),
-						totalHours: toHoursNumber(classData.totalHours),
+						totalHours: toHoursNumber(classData.totalSeconds),
 						remainingHours: await getRemainingHoursInTransaction(
 							tx,
 							id,
-							classData.totalHours,
+							classData.totalSeconds,
 						),
 					};
 				}
 
-				let hours: number;
+				let secondsAdded: bigint;
 				let sourceCourseId: string | null = null;
 				let sourceCourseName: string | null = null;
 				if (normalizedData.source === "course") {
 					const course = await tx.course.findFirst({
 						where: { id: normalizedData.courseId, tutorId },
-						select: { id: true, name: true, defaultTotalHours: true },
+						select: { id: true, name: true, defaultTotalSeconds: true },
 					});
 					if (!course) {
 						throw AppError.badRequest(
@@ -420,33 +427,35 @@ export class ClassRepository implements IClassRepository {
 							"The selected course is unavailable",
 						);
 					}
-					hours = normalizePositiveHours(
-						toHoursNumber(course.defaultTotalHours),
-					);
+					secondsAdded = course.defaultTotalSeconds;
+					if (secondsAdded <= 0n) {
+						throw AppError.badRequest(
+							"INVALID_HOUR_ADDITION",
+							"Course hours must be greater than 0",
+						);
+					}
 					sourceCourseId = course.id;
 					sourceCourseName = course.name;
 				} else {
-					hours = normalizedData.hours;
+					secondsAdded = normalizePositiveHoursToSeconds(normalizedData.hours);
 				}
-				assertHoursFitClassTotal(hours);
+				assertHoursFitClassTotal(secondsAdded);
 
 				const updateResult = await tx.class.updateMany({
 					where: {
 						id,
 						tutorId,
-						totalHours: {
-							lte: new Prisma.Decimal(MAX_CLASS_HOURS.toFixed(2)).minus(
-								hours.toFixed(2),
-							),
+						totalSeconds: {
+							lte: MAX_CLASS_SECONDS - secondsAdded,
 						},
 					},
-					data: { totalHours: { increment: hours } },
+					data: { totalSeconds: { increment: secondsAdded } },
 				});
 				if (updateResult.count !== 1) {
 					const [currentClass, concurrentAddition] = await Promise.all([
 						tx.class.findFirst({
 							where: { id, tutorId },
-							select: { totalHours: true },
+							select: { totalSeconds: true },
 						}),
 						tx.classHourAddition.findUnique({
 							where: {
@@ -464,11 +473,11 @@ export class ClassRepository implements IClassRepository {
 						assertMatchingHourAddition(concurrentAddition, normalizedData);
 						return {
 							addition: ClassHourAdditionModel.fromPrisma(concurrentAddition),
-							totalHours: toHoursNumber(currentClass.totalHours),
+							totalHours: toHoursNumber(currentClass.totalSeconds),
 							remainingHours: await getRemainingHoursInTransaction(
 								tx,
 								id,
-								currentClass.totalHours,
+								currentClass.totalSeconds,
 							),
 						};
 					}
@@ -479,7 +488,7 @@ export class ClassRepository implements IClassRepository {
 
 				const updatedClass = await tx.class.findUnique({
 					where: { id },
-					select: { totalHours: true },
+					select: { totalSeconds: true },
 				});
 				if (!updatedClass) {
 					throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
@@ -489,7 +498,7 @@ export class ClassRepository implements IClassRepository {
 					data: {
 						classId: id,
 						source: normalizedData.source === "course" ? "COURSE" : "CUSTOM",
-						hours,
+						secondsAdded,
 						revenueAmount: normalizedData.revenueAmount,
 						sourceCourseId,
 						sourceCourseName,
@@ -499,11 +508,11 @@ export class ClassRepository implements IClassRepository {
 
 				return {
 					addition: ClassHourAdditionModel.fromPrisma(addition),
-					totalHours: toHoursNumber(updatedClass.totalHours),
+					totalHours: toHoursNumber(updatedClass.totalSeconds),
 					remainingHours: await getRemainingHoursInTransaction(
 						tx,
 						id,
-						updatedClass.totalHours,
+						updatedClass.totalSeconds,
 					),
 				};
 			});
@@ -580,7 +589,7 @@ export class ClassRepository implements IClassRepository {
 		const [classData, existing] = await Promise.all([
 			this.prisma.class.findFirst({
 				where: { id, tutorId },
-				select: { totalHours: true },
+				select: { totalSeconds: true },
 			}),
 			this.prisma.classHourAddition.findUnique({
 				where: {
@@ -600,7 +609,7 @@ export class ClassRepository implements IClassRepository {
 		assertMatchingHourAddition(existing, data);
 		return {
 			addition: ClassHourAdditionModel.fromPrisma(existing),
-			totalHours: toHoursNumber(classData.totalHours),
+			totalHours: toHoursNumber(classData.totalSeconds),
 			remainingHours: await getRemainingHoursForClass(this.prisma, id),
 		};
 	}

@@ -36,7 +36,7 @@ function courseRecord() {
 		id: "course-1",
 		tutorId: "tutor-1",
 		name: "Mathematics",
-		defaultTotalHours: { toNumber: () => 20 },
+		defaultTotalSeconds: 72_000n,
 		pricingMode: "FIXED_PRICE" as const,
 		priceAmount: { toNumber: () => 9_999 },
 		createdAt: new Date("2026-08-13T00:00:00.000Z"),
@@ -101,7 +101,7 @@ describe("CourseRepository.create", () => {
 			data: {
 				tutorId: "tutor-1",
 				name: "Mathematics",
-				defaultTotalHours: 20,
+				defaultTotalSeconds: 72_000n,
 				pricingMode: "HOURLY_RATE",
 				priceAmount: null,
 			},
@@ -119,7 +119,7 @@ describe("CourseRepository.findDetailById", () => {
 		};
 		classHourAdditionAggregate = async (args) => {
 			aggregateQuery = args;
-			return { _sum: { hours: null, revenueAmount: null } };
+			return { _sum: { secondsAdded: null, revenueAmount: null } };
 		};
 
 		const result = await new CourseRepository().findDetailById(
@@ -136,7 +136,7 @@ describe("CourseRepository.findDetailById", () => {
 				sourceCourseId: "course-1",
 				class: { tutorId: "tutor-1" },
 			},
-			_sum: { hours: true, revenueAmount: true },
+			_sum: { secondsAdded: true, revenueAmount: true },
 		});
 		expect(result?.recordedHours).toBe(0);
 		expect(result?.recordedRevenue).toBe(0);
@@ -160,7 +160,7 @@ describe("CourseRepository.findDetailById", () => {
 		courseFindFirst = async () => courseRecord();
 		classHourAdditionAggregate = async () => ({
 			_sum: {
-				hours: { toNumber: () => 12 },
+				secondsAdded: 43_200n,
 				revenueAmount: { toNumber: () => 1_250 },
 			},
 		});
@@ -179,7 +179,7 @@ describe("CourseRepository.findDetailById", () => {
 		courseFindFirst = async () => courseRecord();
 		classHourAdditionAggregate = async () => ({
 			_sum: {
-				hours: { toNumber: () => 8.5 },
+				secondsAdded: 30_600n,
 				revenueAmount: null,
 			},
 		});

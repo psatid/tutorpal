@@ -1,5 +1,6 @@
 import type { ScheduleStatus, ScheduleType, Weekday } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
+import { secondsToMinutes } from "../lib/teaching-time";
 import type {
 	RecurringScheduleDTO,
 	RecurringScheduleUpdateResultDTO,
@@ -16,8 +17,9 @@ type SchedulePrismaRecord = {
 	recurringScheduleId?: string | null;
 	date: Date;
 	time: number;
-	durationMinutes: number;
+	durationSeconds: bigint;
 	notes: string | null;
+	noShowNote: string | null;
 	status: ScheduleStatus;
 	type: ScheduleType;
 	createdAt: Date;
@@ -38,7 +40,7 @@ type RecurringSchedulePrismaRecord = {
 		id: string;
 		weekday: Weekday;
 		time: number;
-		durationMinutes: number;
+		durationSeconds: bigint;
 	}>;
 };
 
@@ -57,6 +59,7 @@ export class ScheduleModel {
 	readonly time!: number;
 	readonly durationMinutes!: number;
 	readonly notes!: string | null;
+	readonly noShowNote!: string | null;
 	readonly status!: ScheduleStatus;
 	readonly type!: ScheduleType;
 	readonly createdAt!: Date;
@@ -78,8 +81,9 @@ export class ScheduleModel {
 			recurringScheduleId: schedule.recurringScheduleId ?? null,
 			date: schedule.date,
 			time: schedule.time,
-			durationMinutes: schedule.durationMinutes,
+			durationMinutes: secondsToMinutes(schedule.durationSeconds),
 			notes: schedule.notes,
+			noShowNote: schedule.noShowNote,
 			status: schedule.status,
 			type: schedule.type,
 			createdAt: schedule.createdAt,
@@ -98,6 +102,7 @@ export class ScheduleModel {
 			time: this.time,
 			durationMinutes: this.durationMinutes,
 			notes: this.notes,
+			noShowNote: this.noShowNote,
 			status: this.status,
 			type: this.type,
 			createdAt: DateTime.from(this.createdAt).toISOString(),
@@ -152,7 +157,7 @@ export class RecurringScheduleModel {
 				id: item.id,
 				weekday: item.weekday,
 				time: item.time,
-				durationMinutes: item.durationMinutes,
+				durationMinutes: secondsToMinutes(item.durationSeconds),
 			})),
 		};
 	}

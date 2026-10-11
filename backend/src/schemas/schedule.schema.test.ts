@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	CreateScheduleSchema,
+	NoShowScheduleSchema,
 	ScheduleListQuerySchema,
 	UpdateRecurringScheduleSchema,
 	UpdateScheduleSchema,
@@ -50,6 +51,18 @@ describe("schedule request contracts", () => {
 		).toBe(false);
 	});
 
+	test("rejects fractional one-time schedule durations", () => {
+		expect(
+			CreateScheduleSchema.safeParse({
+				classId: "class-1",
+				date: "2026-07-01",
+				type: "ON_SITE",
+				time: 540,
+				durationMinutes: 1.5,
+			}).success,
+		).toBe(false);
+	});
+
 	test("accepts independent date and time updates", () => {
 		expect(
 			UpdateScheduleSchema.safeParse({
@@ -63,6 +76,24 @@ describe("schedule request contracts", () => {
 		expect(UpdateScheduleSchema.safeParse({ type: "HYBRID" }).success).toBe(
 			false,
 		);
+	});
+
+	test("rejects status changes through the generic update contract", () => {
+		expect(
+			UpdateScheduleSchema.safeParse({ status: "COMPLETED" }).success,
+		).toBe(false);
+	});
+
+	test("requires a no-show deduction choice and trims an optional note", () => {
+		expect(NoShowScheduleSchema.safeParse({ note: "Absent" }).success).toBe(
+			false,
+		);
+		expect(
+			NoShowScheduleSchema.parse({
+				deductHours: false,
+				note: "  Student cancelled  ",
+			}),
+		).toEqual({ deductHours: false, note: "Student cancelled" });
 	});
 
 	test("accepts optional recurring type updates", () => {

@@ -73,6 +73,7 @@ export const ScheduleSchema = z.object({
 	time: z.number().int().min(0).max(1439), // Minutes since midnight (0-1439)
 	durationMinutes: z.number().int().min(1), // At least 1 minute
 	notes: z.string().nullable(),
+	noShowNote: z.string().nullable(),
 	status: ScheduleStatusSchema,
 	type: ScheduleTypeSchema,
 	createdAt: z.string().datetime(),
@@ -94,6 +95,7 @@ export const CreateScheduleSchema = z
 			.optional(),
 		durationMinutes: z
 			.number()
+			.int()
 			.min(1, "Duration must be at least 1 minute")
 			.optional(),
 		notes: z.string().optional(),
@@ -121,26 +123,32 @@ export const CreateScheduleSchema = z
 		}
 	});
 
-export const UpdateScheduleSchema = z.object({
-	classId: z.string().min(1, "Class is required").optional(),
-	date: z
-		.string()
-		.regex(DATE_REGEX, "Date must be in YYYY-MM-DD format")
-		.optional(),
-	type: ScheduleTypeSchema.optional(),
-	time: z
-		.number()
-		.int()
-		.min(0)
-		.max(1439, "Time must be between 0 and 1439 minutes")
-		.optional(),
-	durationMinutes: z
-		.number()
-		.int()
-		.min(1, "Duration must be at least 1 minute")
-		.optional(),
-	notes: z.string().optional(),
-	status: ScheduleStatusSchema.optional(),
+export const UpdateScheduleSchema = z
+	.object({
+		classId: z.string().min(1, "Class is required").optional(),
+		date: z
+			.string()
+			.regex(DATE_REGEX, "Date must be in YYYY-MM-DD format")
+			.optional(),
+		type: ScheduleTypeSchema.optional(),
+		time: z
+			.number()
+			.int()
+			.min(0)
+			.max(1439, "Time must be between 0 and 1439 minutes")
+			.optional(),
+		durationMinutes: z
+			.number()
+			.int()
+			.min(1, "Duration must be at least 1 minute")
+			.optional(),
+		notes: z.string().optional(),
+	})
+	.strict();
+
+export const NoShowScheduleSchema = z.object({
+	deductHours: z.boolean(),
+	note: z.string().trim().optional(),
 });
 
 // Query schema for listing schedules
@@ -236,6 +244,7 @@ export const RecurringScheduleUpdateResultSchema = z.object({
 export const ScheduleSchemaResolver = resolver(ScheduleSchema);
 export const CreateScheduleSchemaResolver = resolver(CreateScheduleSchema);
 export const UpdateScheduleSchemaResolver = resolver(UpdateScheduleSchema);
+export const NoShowScheduleSchemaResolver = resolver(NoShowScheduleSchema);
 export const ScheduleListSchemaResolver = resolver(z.array(ScheduleSchema));
 export const ScheduleListQuerySchemaResolver = resolver(
 	ScheduleListQuerySchema,
@@ -254,6 +263,7 @@ export const RecurringScheduleUpdateResultSchemaResolver = resolver(
 export type ScheduleSchemaType = z.infer<typeof ScheduleSchema>;
 export type CreateScheduleSchemaType = z.infer<typeof CreateScheduleSchema>;
 export type UpdateScheduleSchemaType = z.infer<typeof UpdateScheduleSchema>;
+export type NoShowScheduleSchemaType = z.infer<typeof NoShowScheduleSchema>;
 export type ScheduleStatusSchemaType = z.infer<typeof ScheduleStatusSchema>;
 export type ScheduleTypeSchemaType = z.infer<typeof ScheduleTypeSchema>;
 export type WeekdaySchemaType = z.infer<typeof WeekdaySchema>;

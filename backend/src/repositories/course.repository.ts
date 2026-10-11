@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "../lib/db";
+import { hoursToSeconds, secondsToHours } from "../lib/teaching-time";
 import { CourseModel } from "../models/course.model";
 import type {
 	CourseDeleteOutcome,
@@ -28,7 +29,7 @@ export class CourseRepository implements ICourseRepository {
 			data: {
 				tutorId: data.tutorId,
 				name: data.name.trim(),
-				defaultTotalHours: data.defaultTotalHours,
+				defaultTotalSeconds: hoursToSeconds(data.defaultTotalHours),
 				pricingMode:
 					data.pricingMode === "hourly_rate" ? "HOURLY_RATE" : "FIXED_PRICE",
 				priceAmount: data.priceAmount ?? null,
@@ -45,7 +46,10 @@ export class CourseRepository implements ICourseRepository {
 		const limit = params?.limit ?? 100;
 		const skip = (page - 1) * limit;
 		const search = params?.search?.trim();
-		const sortBy = params?.sortBy ?? "name";
+		const sortBy =
+			params?.sortBy === "defaultTotalHours"
+				? "defaultTotalSeconds"
+				: (params?.sortBy ?? "name");
 		const sortOrder = params?.sortOrder ?? "asc";
 		const where: Prisma.CourseWhereInput = {
 			tutorId,
@@ -97,11 +101,11 @@ export class CourseRepository implements ICourseRepository {
 				sourceCourseId: id,
 				class: { tutorId },
 			},
-			_sum: { hours: true, revenueAmount: true },
+			_sum: { secondsAdded: true, revenueAmount: true },
 		});
 		return {
 			course: CourseModel.fromPrisma(course),
-			recordedHours: toAggregateNumber(aggregate._sum.hours),
+			recordedHours: secondsToHours(aggregate._sum.secondsAdded ?? 0n),
 			recordedRevenue: toAggregateNumber(aggregate._sum.revenueAmount),
 		};
 	}
@@ -116,7 +120,9 @@ export class CourseRepository implements ICourseRepository {
 			data: {
 				...(data.name !== undefined ? { name: data.name.trim() } : {}),
 				...(data.defaultTotalHours !== undefined
-					? { defaultTotalHours: data.defaultTotalHours }
+					? {
+							defaultTotalSeconds: hoursToSeconds(data.defaultTotalHours),
+						}
 					: {}),
 				...(data.pricingMode !== undefined
 					? {

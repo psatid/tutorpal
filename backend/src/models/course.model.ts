@@ -1,4 +1,5 @@
 import { DateTime } from "../lib/date-time";
+import { secondsToHours } from "../lib/teaching-time";
 import type {
 	CourseDetailDTO,
 	CourseDTO,
@@ -37,7 +38,7 @@ export class CourseModel {
 		id: string;
 		tutorId: string;
 		name: string;
-		defaultTotalHours: DecimalLike | number;
+		defaultTotalSeconds: bigint;
 		pricingMode: "HOURLY_RATE" | "FIXED_PRICE";
 		priceAmount: DecimalLike | number | null;
 		createdAt: Date;
@@ -47,10 +48,7 @@ export class CourseModel {
 			id: course.id,
 			tutorId: course.tutorId,
 			name: course.name,
-			defaultTotalHours:
-				typeof course.defaultTotalHours === "number"
-					? course.defaultTotalHours
-					: course.defaultTotalHours.toNumber(),
+			defaultTotalHours: secondsToHours(course.defaultTotalSeconds),
 			pricingMode:
 				course.pricingMode === "HOURLY_RATE" ? "hourly_rate" : "fixed_price",
 			priceAmount:

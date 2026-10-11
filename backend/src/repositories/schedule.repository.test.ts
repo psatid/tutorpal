@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "../lib/db";
+import { hoursToSeconds, minutesToSeconds } from "../lib/teaching-time";
 import { ScheduleRepository } from "./schedule.repository";
 
 const createdAt = new Date("2026-08-01T00:00:00.000Z");
@@ -14,7 +15,7 @@ type CreatedScheduleData = {
 	recurringScheduleId: string;
 	date: Date;
 	time: number;
-	durationMinutes: number;
+	durationSeconds: bigint;
 	notes: string | null;
 	status: "SCHEDULED";
 	type: "ON_SITE" | "ONLINE";
@@ -23,6 +24,7 @@ type CreatedScheduleData = {
 function makeCreatedScheduleRecord(data: CreatedScheduleData, index: number) {
 	return {
 		id: `generated-${index}`,
+		noShowNote: null,
 		...data,
 		createdAt,
 		updatedAt,
@@ -66,16 +68,18 @@ function makeCreateRepositoryFixture(remainingHours: number) {
 	};
 	const client = {
 		class: {
-			findMany: async () => [{ id: "class-1", totalHours: remainingHours }],
+			findMany: async () => [
+				{ id: "class-1", totalSeconds: hoursToSeconds(remainingHours) },
+			],
 		},
 		schedule: {
 			groupBy: async () => {
-				const durationMinutes = createdScheduleData.reduce(
-					(total, schedule) => total + schedule.durationMinutes,
-					0,
+				const durationSeconds = createdScheduleData.reduce(
+					(total, schedule) => total + schedule.durationSeconds,
+					0n,
 				);
-				return durationMinutes > 0
-					? [{ classId: "class-1", _sum: { durationMinutes } }]
+				return durationSeconds > 0n
+					? [{ classId: "class-1", _sum: { durationSeconds } }]
 					: [];
 			},
 		},
@@ -95,7 +99,7 @@ function makeUpdateRepositoryFixture(remainingHours: number) {
 	let recurringItemData: Array<{
 		weekday: "MONDAY";
 		time: number;
-		durationMinutes: number;
+		durationSeconds: bigint;
 	}> = [];
 	const existingRecurringSchedule = {
 		id: "recurring-existing",
@@ -111,7 +115,7 @@ function makeUpdateRepositoryFixture(remainingHours: number) {
 				id: "item-existing",
 				weekday: "MONDAY" as const,
 				time: 540,
-				durationMinutes: 60,
+				durationSeconds: 3_600n,
 			},
 		],
 	};
@@ -130,7 +134,10 @@ function makeUpdateRepositoryFixture(remainingHours: number) {
 			},
 		},
 		class: {
-			findUnique: async () => ({ totalHours: remainingHours, schedules: [] }),
+			findUnique: async () => ({
+				totalSeconds: hoursToSeconds(remainingHours),
+				schedules: [],
+			}),
 		},
 		recurringSchedule: {
 			create: async () => newRecurringSchedule,
@@ -180,7 +187,7 @@ describe("ScheduleRepository recurring schedule types", () => {
 					id: "item-1",
 					weekday: "MONDAY" as const,
 					time: 600,
-					durationMinutes: 60,
+					durationSeconds: 3_600n,
 				},
 			],
 		};
@@ -194,7 +201,7 @@ describe("ScheduleRepository recurring schedule types", () => {
 			id: "scheduled-1",
 			date: new Date("2026-08-10T00:00:00.000Z"),
 			time: 600,
-			durationMinutes: 60,
+			durationSeconds: 3_600n,
 			recurringScheduleId: "recurring-1",
 		};
 
@@ -223,7 +230,7 @@ describe("ScheduleRepository recurring schedule types", () => {
 				},
 			},
 			class: {
-				findUnique: async () => ({ totalHours: 10, schedules: [] }),
+				findUnique: async () => ({ totalSeconds: 36_000n, schedules: [] }),
 			},
 			recurringSchedule: {
 				create: async () => newRecurringSchedule,
@@ -293,8 +300,9 @@ describe("ScheduleRepository recurring schedule types", () => {
 			classId: "class-1",
 			date: new Date("2026-08-16T00:00:00.000Z"),
 			time: 600,
-			durationMinutes: 60,
+			durationSeconds: 3_600n,
 			notes: null,
+			noShowNote: null,
 			status: "SCHEDULED" as const,
 			type: "ON_SITE" as const,
 			createdAt,
@@ -319,9 +327,11 @@ describe("ScheduleRepository recurring schedule types", () => {
 			return [schedule];
 		};
 		scheduleDelegate.groupBy = async () => [
-			{ classId: "class-1", _sum: { durationMinutes: 60 } },
+			{ classId: "class-1", _sum: { durationSeconds: 3_600n } },
 		];
-		classDelegate.findMany = async () => [{ id: "class-1", totalHours: 10 }];
+		classDelegate.findMany = async () => [
+			{ id: "class-1", totalSeconds: 36_000n },
+		];
 
 		try {
 			const schedules = await new ScheduleRepository().findAll("tutor-1", {
@@ -368,7 +378,7 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 				recurringScheduleId: "recurring-created",
 				date: new Date("2026-08-10T00:00:00.000Z"),
 				time: 540,
-				durationMinutes: 60,
+				durationSeconds: 3_600n,
 				notes: null,
 				status: "SCHEDULED",
 				type: "ON_SITE",
@@ -378,7 +388,7 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 				recurringScheduleId: "recurring-created",
 				date: new Date("2026-08-10T00:00:00.000Z"),
 				time: 660,
-				durationMinutes: 60,
+				durationSeconds: 3_600n,
 				notes: null,
 				status: "SCHEDULED",
 				type: "ON_SITE",
@@ -393,6 +403,7 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 			time: 540,
 			durationMinutes: 60,
 			notes: null,
+			noShowNote: null,
 			status: "SCHEDULED",
 			type: "ON_SITE",
 			createdAt: createdAt.toISOString(),
@@ -418,21 +429,21 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 		expect(
 			fixture
 				.getCreatedScheduleData()
-				.map(({ date, time, durationMinutes }) => ({
+				.map(({ date, time, durationSeconds }) => ({
 					date,
 					time,
-					durationMinutes,
+					durationSeconds,
 				})),
 		).toEqual([
 			{
 				date: new Date("2026-08-10T00:00:00.000Z"),
 				time: 540,
-				durationMinutes: 60,
+				durationSeconds: 3_600n,
 			},
 			{
 				date: new Date("2026-08-10T00:00:00.000Z"),
 				time: 660,
-				durationMinutes: 60,
+				durationSeconds: 3_600n,
 			},
 		]);
 		expect(result.createdSchedulesCount).toBe(2);
@@ -454,11 +465,56 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 		});
 
 		expect(
-			fixture.getCreatedScheduleData().map(({ time, durationMinutes }) => ({
+			fixture.getCreatedScheduleData().map(({ time, durationSeconds }) => ({
 				time,
-				durationMinutes,
+				durationSeconds,
 			})),
-		).toEqual([{ time: 540, durationMinutes: 60 }]);
+		).toEqual([{ time: 540, durationSeconds: 3_600n }]);
+	});
+
+	test("uses exact seconds for an exact recurring balance and a one-hundredth-hour short balance", async () => {
+		const exactFixture = makeCreateRepositoryFixture(1.5);
+		await exactFixture.repository.createRecurringSchedule({
+			classId: "class-1",
+			type: "ON_SITE",
+			recurring: {
+				startDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+					{ weekday: "MONDAY", time: 600, durationMinutes: 30 },
+				],
+			},
+		});
+
+		expect(
+			exactFixture
+				.getCreatedScheduleData()
+				.reduce((total, schedule) => total + schedule.durationSeconds, 0n),
+		).toBe(5_400n);
+		expect(
+			exactFixture
+				.getCreatedScheduleData()
+				.map((schedule) => schedule.durationSeconds),
+		).toEqual([minutesToSeconds(60), minutesToSeconds(30)]);
+
+		const shortFixture = makeCreateRepositoryFixture(1.49);
+		await shortFixture.repository.createRecurringSchedule({
+			classId: "class-1",
+			type: "ON_SITE",
+			recurring: {
+				startDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+					{ weekday: "MONDAY", time: 600, durationMinutes: 30 },
+				],
+			},
+		});
+
+		expect(
+			shortFixture
+				.getCreatedScheduleData()
+				.map((schedule) => schedule.durationSeconds),
+		).toEqual([minutesToSeconds(60)]);
 	});
 
 	test("rejects overlapping generated sessions", async () => {
@@ -496,13 +552,291 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 		});
 
 		expect(
-			fixture.getCreatedScheduleData().map(({ time, durationMinutes }) => ({
+			fixture.getCreatedScheduleData().map(({ time, durationSeconds }) => ({
 				time,
-				durationMinutes,
+				durationSeconds,
 			})),
 		).toEqual([
-			{ time: 540, durationMinutes: 60 },
-			{ time: 600, durationMinutes: 45 },
+			{ time: 540, durationSeconds: 3_600n },
+			{ time: 600, durationSeconds: 2_700n },
 		]);
+	});
+});
+
+type TransitionStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
+
+function makeTransitionRepositoryFixture({
+	status = "SCHEDULED" as TransitionStatus,
+	ownerId = "tutor-1",
+	transitionCount = 1,
+	deductionUpdateCount = 1,
+	concurrentScheduleChange,
+}: {
+	status?: TransitionStatus;
+	ownerId?: string;
+	transitionCount?: number;
+	deductionUpdateCount?: number;
+	concurrentScheduleChange?: {
+		classId?: string;
+		durationSeconds?: bigint;
+	};
+} = {}) {
+	let schedule: {
+		id: string;
+		classId: string;
+		recurringScheduleId: null;
+		date: Date;
+		time: number;
+		durationSeconds: bigint;
+		notes: string | null;
+		noShowNote: string | null;
+		status: TransitionStatus;
+		type: "ON_SITE";
+		createdAt: Date;
+		updatedAt: Date;
+		class: typeof classContext;
+	} = {
+		id: "schedule-1",
+		classId: "class-1",
+		recurringScheduleId: null,
+		date: new Date("2026-08-10T00:00:00.000Z"),
+		time: 540,
+		durationSeconds: 1_800n,
+		notes: null,
+		noShowNote: null,
+		status,
+		type: "ON_SITE",
+		createdAt,
+		updatedAt,
+		class: classContext,
+	};
+	const transitionCalls: unknown[] = [];
+	const deductionUpserts: unknown[] = [];
+	const deductionUpdates: unknown[] = [];
+	let pendingConcurrentScheduleChange = concurrentScheduleChange;
+
+	const transaction = {
+		schedule: {
+			findFirst: async ({
+				where,
+			}: {
+				where: { id: string; class: { tutorId: string } };
+			}) => {
+				if (where.id !== schedule.id || where.class.tutorId !== ownerId) {
+					return null;
+				}
+
+				const snapshot = { ...schedule };
+				if (pendingConcurrentScheduleChange) {
+					schedule = { ...schedule, ...pendingConcurrentScheduleChange };
+					pendingConcurrentScheduleChange = undefined;
+				}
+				return snapshot;
+			},
+			updateMany: async ({
+				where,
+				data,
+			}: {
+				where: {
+					id: string;
+					classId: string;
+					durationSeconds: bigint;
+					status: TransitionStatus | { in: TransitionStatus[] };
+					class: { tutorId: string };
+				};
+				data: { status: TransitionStatus; noShowNote?: string | null };
+			}) => {
+				transitionCalls.push({ where, data });
+				const matchingStatus =
+					typeof where.status === "string"
+						? schedule.status === where.status
+						: where.status.in.includes(schedule.status);
+				if (
+					transitionCount !== 1 ||
+					where.id !== schedule.id ||
+					where.classId !== schedule.classId ||
+					where.durationSeconds !== schedule.durationSeconds ||
+					where.class.tutorId !== ownerId ||
+					!matchingStatus
+				) {
+					return { count: 0 };
+				}
+				schedule = { ...schedule, ...data };
+				return { count: 1 };
+			},
+			findUnique: async () => schedule,
+		},
+		classHourDeduction: {
+			upsert: async (args: unknown) => {
+				deductionUpserts.push(args);
+				return {};
+			},
+			updateMany: async (args: unknown) => {
+				deductionUpdates.push(args);
+				return { count: deductionUpdateCount };
+			},
+		},
+	};
+	const client = {
+		class: {
+			findMany: async () => [{ id: "class-1", totalSeconds: 3_600n }],
+		},
+		schedule: {
+			groupBy: async () =>
+				["SCHEDULED", "COMPLETED", "NO_SHOW"].includes(schedule.status)
+					? [
+							{
+								classId: "class-1",
+								_sum: { durationSeconds: schedule.durationSeconds },
+							},
+						]
+					: [],
+		},
+		$transaction: async (
+			callback: (tx: typeof transaction) => Promise<unknown>,
+		) => {
+			const before = { ...schedule };
+			try {
+				return await callback(transaction);
+			} catch (error) {
+				schedule = before;
+				throw error;
+			}
+		},
+	} as unknown as PrismaClient;
+
+	return {
+		repository: new ScheduleRepository(client),
+		getSchedule: () => schedule,
+		transitionCalls,
+		deductionUpserts,
+		deductionUpdates,
+	};
+}
+
+describe("ScheduleRepository status transitions", () => {
+	test("marks a charged no-show or a no-deduction cancellation with its note", async () => {
+		const charged = makeTransitionRepositoryFixture();
+		const chargedResult = await charged.repository.markNoShow(
+			"schedule-1",
+			"tutor-1",
+			{ deductHours: true, note: "  Absent  " },
+		);
+
+		expect(charged.getSchedule()).toMatchObject({
+			status: "NO_SHOW",
+			noShowNote: "Absent",
+		});
+		expect(chargedResult.toScheduleDTO()).toMatchObject({
+			status: "NO_SHOW",
+			noShowNote: "Absent",
+			durationMinutes: 30,
+		});
+		expect(charged.deductionUpserts).toEqual([
+			expect.objectContaining({
+				create: expect.objectContaining({ secondsDeducted: 1_800n }),
+				update: expect.objectContaining({ secondsDeducted: 1_800n }),
+			}),
+		]);
+
+		const cancelled = makeTransitionRepositoryFixture();
+		await cancelled.repository.markNoShow("schedule-1", "tutor-1", {
+			deductHours: false,
+			note: "Student cancelled",
+		});
+
+		expect(cancelled.getSchedule()).toMatchObject({
+			status: "CANCELLED",
+			noShowNote: "Student cancelled",
+		});
+		expect(cancelled.deductionUpserts).toEqual([]);
+	});
+
+	test("creates or restores the hour deduction for complete and restore transitions", async () => {
+		const completed = makeTransitionRepositoryFixture();
+		await completed.repository.completeSchedule("schedule-1", "tutor-1");
+
+		expect(completed.getSchedule().status).toBe("COMPLETED");
+		expect(completed.deductionUpserts).toHaveLength(1);
+
+		const restored = makeTransitionRepositoryFixture({ status: "COMPLETED" });
+		const restoredResult = await restored.repository.restoreHours(
+			"schedule-1",
+			"tutor-1",
+		);
+
+		expect(restored.getSchedule().status).toBe("CANCELLED");
+		expect(restored.deductionUpdates).toEqual([
+			expect.objectContaining({
+				where: expect.objectContaining({ restoredAt: null }),
+			}),
+		]);
+		expect(restoredResult.toScheduleDTO().remainingHours).toBe(1);
+	});
+
+	test("keeps foreign and raced transitions from writing deductions", async () => {
+		const foreign = makeTransitionRepositoryFixture();
+		await expect(
+			foreign.repository.completeSchedule("schedule-1", "tutor-2"),
+		).rejects.toMatchObject({ errorCode: "SCHEDULE_NOT_FOUND", status: 404 });
+		expect(foreign.transitionCalls).toEqual([]);
+		expect(foreign.deductionUpserts).toEqual([]);
+
+		const raced = makeTransitionRepositoryFixture({ transitionCount: 0 });
+		await expect(
+			raced.repository.markNoShow("schedule-1", "tutor-1", {
+				deductHours: true,
+			}),
+		).rejects.toMatchObject({
+			errorCode: "SCHEDULE_STATUS_CONFLICT",
+			status: 409,
+		});
+		expect(raced.transitionCalls).toHaveLength(1);
+		expect(raced.deductionUpserts).toEqual([]);
+	});
+
+	test("rejects a stale class or duration snapshot before writing a no-show deduction", async () => {
+		for (const concurrentScheduleChange of [
+			{ classId: "class-2" },
+			{ durationSeconds: 3_600n },
+		]) {
+			const fixture = makeTransitionRepositoryFixture({
+				concurrentScheduleChange,
+			});
+
+			await expect(
+				fixture.repository.markNoShow("schedule-1", "tutor-1", {
+					deductHours: true,
+				}),
+			).rejects.toMatchObject({
+				errorCode: "SCHEDULE_STATUS_CONFLICT",
+				status: 409,
+			});
+			expect(fixture.transitionCalls).toEqual([
+				expect.objectContaining({
+					where: expect.objectContaining({
+						classId: "class-1",
+						durationSeconds: 1_800n,
+					}),
+				}),
+			]);
+			expect(fixture.deductionUpserts).toEqual([]);
+		}
+	});
+
+	test("rolls back a restore when its active deduction is gone", async () => {
+		const fixture = makeTransitionRepositoryFixture({
+			status: "COMPLETED",
+			deductionUpdateCount: 0,
+		});
+
+		await expect(
+			fixture.repository.restoreHours("schedule-1", "tutor-1"),
+		).rejects.toMatchObject({
+			errorCode: "SCHEDULE_STATUS_CONFLICT",
+			status: 409,
+		});
+		expect(fixture.getSchedule().status).toBe("COMPLETED");
+		expect(fixture.deductionUpdates).toHaveLength(1);
 	});
 });

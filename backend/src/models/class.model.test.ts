@@ -8,9 +8,7 @@ const prismaClass = {
 	id: "class-1",
 	tutorId: "tutor-1",
 	name: "Algebra",
-	totalHours: {
-		toNumber: () => 12.5,
-	},
+	totalSeconds: 45_000n,
 	createdAt,
 	updatedAt,
 	students: [
@@ -101,7 +99,7 @@ describe("ClassModel", () => {
 								id: "item-1",
 								weekday: "MONDAY",
 								time: 540,
-								durationMinutes: 90,
+								durationSeconds: 5_400n,
 							},
 						],
 					},

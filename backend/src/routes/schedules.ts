@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth";
 import { scheduleRepository } from "../repositories";
 import {
 	CreateScheduleSchema,
+	NoShowScheduleSchema,
 	RecurringScheduleUpdateResultSchemaResolver,
 	ScheduleListQuerySchema,
 	ScheduleListSchemaResolver,
@@ -185,6 +186,49 @@ export function createScheduleRoutes({
 				},
 			)
 
+			// Mark a scheduled session as a no-show or cancel it without a deduction
+			.patch(
+				"/:id/no-show",
+				describeRoute({
+					tags: ["schedules"],
+					description:
+						"Mark a scheduled session as a no-show with an optional deduction, or cancel it without a deduction",
+					responses: {
+						200: {
+							description: "Schedule status updated successfully",
+							content: {
+								"application/json": {
+									schema: ScheduleSchemaResolver,
+								},
+							},
+						},
+						400: {
+							description: "Validation error",
+						},
+						401: {
+							description: "Unauthorized - Authentication required",
+						},
+						404: {
+							description: "Schedule not found",
+						},
+						409: {
+							description: "Schedule status changed before this action",
+						},
+					},
+				}),
+				validator("json", NoShowScheduleSchema),
+				async (c) => {
+					const id = c.req.param("id");
+					const data = c.req.valid("json");
+					const schedule = await scheduleService.markNoShow(
+						id,
+						data,
+						c.get("tutorId"),
+					);
+					return c.json(schedule.toScheduleDTO());
+				},
+			)
+
 			// Get single schedule
 			.get(
 				"/:id",
@@ -299,8 +343,8 @@ export function createScheduleRoutes({
 								},
 							},
 						},
-						400: {
-							description: "Invalid status transition or insufficient hours",
+						409: {
+							description: "Schedule status changed before this action",
 						},
 						401: {
 							description: "Unauthorized - Authentication required",
@@ -336,9 +380,9 @@ export function createScheduleRoutes({
 								},
 							},
 						},
-						400: {
+						409: {
 							description:
-								"Invalid operation - schedule not completed/no-show or hours already restored",
+								"Schedule status changed before this action or hours were already restored",
 						},
 						401: {
 							description: "Unauthorized - Authentication required",

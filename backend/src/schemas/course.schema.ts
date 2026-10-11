@@ -1,5 +1,6 @@
 import { resolver } from "hono-openapi";
 import { z } from "zod";
+import { MAX_CLASS_HOURS } from "../lib/class-hour-addition";
 import { hasAtMostTwoDecimalPlaces, MAX_CURRENCY_AMOUNT } from "../lib/money";
 
 export const CourseSchema = z.object({
@@ -35,7 +36,16 @@ export const CreateCourseSchema = z.object({
 	name: z.string().trim().min(1, "Course name is required"),
 	defaultTotalHours: z
 		.number()
-		.positive("Default total hours must be greater than 0"),
+		.finite()
+		.positive("Default total hours must be greater than 0")
+		.max(
+			MAX_CLASS_HOURS,
+			`Default total hours must not exceed ${MAX_CLASS_HOURS.toFixed(2)}`,
+		)
+		.refine(
+			hasAtMostTwoDecimalPlaces,
+			"Default total hours may have at most two decimal places",
+		),
 	pricingMode: z.enum(["hourly_rate", "fixed_price"]),
 	priceAmount: priceAmountSchema.nullable().optional(),
 });

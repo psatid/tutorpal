@@ -36,14 +36,12 @@ describe("ScheduleService ownership", () => {
 		expect(deleted).toBe(false);
 	});
 
-	test("completes only after tutor-scoped lookup succeeds", async () => {
-		let completed = false;
+	test("delegates completion and tutor ownership to the atomic repository action", async () => {
+		let completedArgs: [string, string] | undefined;
 		const schedule = { id: "schedule-1" } as ScheduleModel;
 		const repository = {
-			findById: async (_id: string, tutorId: string) =>
-				tutorId === "tutor-1" ? schedule : null,
-			completeSchedule: async () => {
-				completed = true;
+			completeSchedule: async (id: string, tutorId: string) => {
+				completedArgs = [id, tutorId];
 				return schedule;
 			},
 		} as unknown as IScheduleRepository;
@@ -51,8 +49,8 @@ describe("ScheduleService ownership", () => {
 
 		await expect(
 			service.completeSchedule("schedule-1", "tutor-2"),
-		).rejects.toMatchObject({ errorCode: "SCHEDULE_NOT_FOUND", status: 404 });
-		expect(completed).toBe(false);
+		).resolves.toBe(schedule);
+		expect(completedArgs).toEqual(["schedule-1", "tutor-2"]);
 	});
 
 	test("passes the selected type when creating a recurring schedule", async () => {
@@ -105,7 +103,7 @@ describe("ScheduleService ownership", () => {
 
 		try {
 			const repository = {
-				getRemainingHours: async () => 0,
+				getRemainingSeconds: async () => 0n,
 				create: async () => {
 					createCalls += 1;
 					return {} as ScheduleModel;

@@ -1,5 +1,6 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "../lib/db";
+import { secondsToHours } from "../lib/teaching-time";
 import {
 	type ClassInStudent,
 	Student,
@@ -13,11 +14,6 @@ import type {
 	UpdateStudentDTO,
 } from "../types";
 import { getRemainingHoursMap } from "./class-hours";
-
-// Helper to convert Prisma Date to ISO string
-function toHoursNumber(value: Prisma.Decimal | number): number {
-	return typeof value === "number" ? value : value.toNumber();
-}
 
 export class StudentRepository implements IStudentRepository {
 	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
@@ -111,7 +107,7 @@ export class StudentRepository implements IStudentRepository {
 			id: enrollment.class.id,
 			name: enrollment.class.name,
 			displayName: enrollment.class.name,
-			totalHours: toHoursNumber(enrollment.class.totalHours),
+			totalHours: secondsToHours(enrollment.class.totalSeconds),
 			remainingHours: remainingHoursMap.get(enrollment.classId),
 		}));
 

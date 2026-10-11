@@ -9,7 +9,7 @@ const courseModel = CourseModel.fromPrisma({
 	id: "course-1",
 	tutorId: "tutor-1",
 	name: "Mathematics",
-	defaultTotalHours: 20,
+	defaultTotalSeconds: 72_000n,
 	pricingMode: "HOURLY_RATE",
 	priceAmount: 850,
 	createdAt,

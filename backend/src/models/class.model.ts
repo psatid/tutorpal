@@ -1,4 +1,5 @@
 import { DateTime } from "../lib/date-time";
+import { secondsToHours, secondsToMinutes } from "../lib/teaching-time";
 import type {
 	ClassDetailDTO,
 	ClassDTO,
@@ -6,14 +7,11 @@ import type {
 } from "../types/class.types";
 import type { RecurringScheduleDTO } from "../types/schedule.types";
 
-type DecimalLike = { toNumber(): number };
-type HoursValue = DecimalLike | number;
-
 type ClassPrismaRecord = {
 	id: string;
 	tutorId: string;
 	name: string;
-	totalHours: HoursValue;
+	totalSeconds: bigint;
 	createdAt: Date;
 	updatedAt: Date;
 	students: Array<{ student: StudentInClassDTO }>;
@@ -29,7 +27,7 @@ type ClassPrismaRecord = {
 			id: string;
 			weekday: RecurringScheduleDTO["scheduleItems"][number]["weekday"];
 			time: number;
-			durationMinutes: number;
+			durationSeconds: bigint;
 		}>;
 	}>;
 };
@@ -73,14 +71,14 @@ export class ClassModel {
 
 	static fromClassPrisma(
 		classData: ClassPrismaRecord,
-		remainingHours = toHoursNumber(classData.totalHours),
+		remainingHours = secondsToHours(classData.totalSeconds),
 	): ClassModel {
 		const students = classData.students.map((enrollment) => enrollment.student);
 		return new ClassModel({
 			id: classData.id,
 			tutorId: classData.tutorId,
 			name: classData.name,
-			totalHours: toHoursNumber(classData.totalHours),
+			totalHours: secondsToHours(classData.totalSeconds),
 			students,
 			createdAt: classData.createdAt,
 			updatedAt: classData.updatedAt,
@@ -115,10 +113,6 @@ export class ClassModel {
 	}
 }
 
-function toHoursNumber(value: HoursValue): number {
-	return typeof value === "number" ? value : value.toNumber();
-}
-
 function toLatestRecurringScheduleDTO(
 	classData: ClassPrismaRecord,
 	displayName: string,
@@ -139,7 +133,7 @@ function toLatestRecurringScheduleDTO(
 			id: item.id,
 			weekday: item.weekday,
 			time: item.time,
-			durationMinutes: item.durationMinutes,
+			durationMinutes: secondsToMinutes(item.durationSeconds),
 		})),
 	};
 }

@@ -15,6 +15,7 @@ export interface ScheduleDTO {
 	time: number; // Minutes since midnight
 	durationMinutes: number;
 	notes: string | null;
+	noShowNote: string | null;
 	status: ScheduleStatus;
 	type: ScheduleType;
 	createdAt: string;
@@ -48,7 +49,11 @@ export interface UpdateScheduleDTO {
 	time?: number; // Minutes since midnight
 	durationMinutes?: number;
 	notes?: string;
-	status?: ScheduleStatus;
+}
+
+export interface NoShowScheduleDTO {
+	deductHours: boolean;
+	note?: string;
 }
 
 export interface ScheduleListQueryDTO {
@@ -123,8 +128,14 @@ export interface IScheduleRepository {
 	findById(id: string, tutorId?: string): Promise<ScheduleModel | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel>;
 	delete(id: string): Promise<void>;
-	completeSchedule(id: string): Promise<ScheduleModel>;
-	restoreHours(id: string): Promise<ScheduleModel>;
+	completeSchedule(id: string, tutorId: string): Promise<ScheduleModel>;
+	restoreHours(id: string, tutorId: string): Promise<ScheduleModel>;
+	markNoShow(
+		id: string,
+		tutorId: string,
+		data: NoShowScheduleDTO,
+	): Promise<ScheduleModel>;
+	getRemainingSeconds(classId: string): Promise<bigint>;
 	getRemainingHours(classId: string): Promise<number>;
 	createRecurringSchedule(
 		data: RecurringScheduleCreationData,

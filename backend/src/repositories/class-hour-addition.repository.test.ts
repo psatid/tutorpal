@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import { Prisma } from "@prisma/client";
+import { hoursToSeconds } from "../lib/teaching-time";
 
 type Delegate = (args: unknown) => Promise<unknown>;
 
@@ -41,7 +42,7 @@ const requestId = "0cfd69ef-6b4b-4a57-9f4a-c5ac83c2494c";
 const createdAt = new Date("2026-08-11T03:00:00.000Z");
 
 function classWithHours(totalHours: number) {
-	return { id: "class-1", totalHours };
+	return { id: "class-1", totalSeconds: hoursToSeconds(totalHours) };
 }
 
 function customAddition(hours = 2.5, revenueAmount: number | null = 500) {
@@ -49,7 +50,7 @@ function customAddition(hours = 2.5, revenueAmount: number | null = 500) {
 		id: "addition-1",
 		classId: "class-1",
 		source: "CUSTOM" as const,
-		hours,
+		secondsAdded: hoursToSeconds(hours),
 		revenueAmount,
 		sourceCourseId: null,
 		sourceCourseName: null,
@@ -94,7 +95,7 @@ describe("ClassRepository hour additions", () => {
 			expect(createdData).toEqual({
 				tutorId: "tutor-1",
 				name: "Algebra",
-				totalHours: 0,
+				totalSeconds: 0n,
 			});
 		} finally {
 			ClassRepository.prototype.findById = originalFindById;
@@ -111,7 +112,7 @@ describe("ClassRepository hour additions", () => {
 					incrementData = args.data;
 					return { count: 1 };
 				},
-				findUnique: async () => ({ totalHours: 0.3 }),
+				findUnique: async () => ({ totalSeconds: 1_080n }),
 			},
 			classHourAddition: {
 				findUnique: async () => null,
@@ -122,7 +123,7 @@ describe("ClassRepository hour additions", () => {
 			},
 			course: { findFirst: async () => null },
 			schedule: {
-				aggregate: async () => ({ _sum: { durationMinutes: 0 } }),
+				aggregate: async () => ({ _sum: { durationSeconds: 0n } }),
 			},
 		};
 
@@ -140,13 +141,13 @@ describe("ClassRepository hour additions", () => {
 		expect(createdData).toEqual({
 			classId: "class-1",
 			source: "CUSTOM",
-			hours: 0.3,
+			secondsAdded: 1_080n,
 			revenueAmount: 0.3,
 			sourceCourseId: null,
 			sourceCourseName: null,
 			requestId,
 		});
-		expect(incrementData).toEqual({ totalHours: { increment: 0.3 } });
+		expect(incrementData).toEqual({ totalSeconds: { increment: 1_080n } });
 		expect(result.addition.toClassHourAdditionDTO()).toMatchObject({
 			source: "custom",
 			hours: 0.3,
@@ -162,7 +163,7 @@ describe("ClassRepository hour additions", () => {
 			class: {
 				findFirst: async () => classWithHours(0),
 				updateMany: async () => ({ count: 1 }),
-				findUnique: async () => ({ totalHours: 2.5 }),
+				findUnique: async () => ({ totalSeconds: 9_000n }),
 			},
 			classHourAddition: {
 				findUnique: async () => null,
@@ -173,7 +174,7 @@ describe("ClassRepository hour additions", () => {
 			},
 			course: { findFirst: async () => null },
 			schedule: {
-				aggregate: async () => ({ _sum: { durationMinutes: 0 } }),
+				aggregate: async () => ({ _sum: { durationSeconds: 0n } }),
 			},
 		};
 
@@ -193,7 +194,7 @@ describe("ClassRepository hour additions", () => {
 			class: {
 				findFirst: async () => classWithHours(1),
 				updateMany: async () => ({ count: 1 }),
-				findUnique: async () => ({ totalHours: 13 }),
+				findUnique: async () => ({ totalSeconds: 46_800n }),
 			},
 			classHourAddition: {
 				findUnique: async () => null,
@@ -211,10 +212,10 @@ describe("ClassRepository hour additions", () => {
 				findFirst: async () => ({
 					id: "course-1",
 					name: "Mathematics",
-					defaultTotalHours: { toNumber: () => 12 },
+					defaultTotalSeconds: 43_200n,
 				}),
 			},
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await new ClassRepository().addHourAddition("class-1", "tutor-1", {
@@ -227,7 +228,7 @@ describe("ClassRepository hour additions", () => {
 		expect(createdData).toEqual({
 			classId: "class-1",
 			source: "COURSE",
-			hours: 12,
+			secondsAdded: 43_200n,
 			revenueAmount: 1_250,
 			sourceCourseId: "course-1",
 			sourceCourseName: "Mathematics",
@@ -254,7 +255,9 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 120 } }) },
+			schedule: {
+				aggregate: async () => ({ _sum: { durationSeconds: 7_200n } }),
+			},
 		};
 
 		const result = await new ClassRepository().addHourAddition(
@@ -295,7 +298,7 @@ describe("ClassRepository hour additions", () => {
 					throw new Error("matching retry must not load mutable course data");
 				},
 			},
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		const result = await new ClassRepository().addHourAddition(
@@ -331,7 +334,7 @@ describe("ClassRepository hour additions", () => {
 			classHourAddition: {
 				findUnique: async () => ({
 					...customAddition(0.3, 0.3),
-					hours: { toNumber: () => 0.3 },
+					secondsAdded: 1_080n,
 					revenueAmount: { toNumber: () => 0.3 },
 				}),
 				create: async () => {
@@ -340,7 +343,7 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		const result = await new ClassRepository().addHourAddition(
@@ -371,7 +374,7 @@ describe("ClassRepository hour additions", () => {
 				create: async () => customAddition(),
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await expect(
@@ -398,7 +401,7 @@ describe("ClassRepository hour additions", () => {
 				create: async () => customAddition(2.5, null),
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await expect(
@@ -428,7 +431,7 @@ describe("ClassRepository hour additions", () => {
 			class: {
 				findFirst: async () => classWithHours(5),
 				updateMany: async () => ({ count: 1 }),
-				findUnique: async () => ({ totalHours: 7.5 }),
+				findUnique: async () => ({ totalSeconds: 27_000n }),
 			},
 			classHourAddition: {
 				findUnique: async () => null,
@@ -438,16 +441,16 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 		classFindFirst = async () => classWithHours(7.5);
 		classFindMany = async () => [classWithHours(7.5)];
 		classHourAdditionFindUnique = async () => ({
 			...customAddition(2.5, 0.3),
-			hours: { toNumber: () => 2.5 },
+			secondsAdded: 9_000n,
 			revenueAmount: { toNumber: () => 0.3 },
 		});
-		scheduleAggregate = async () => ({ _sum: { durationMinutes: 0 } });
+		scheduleAggregate = async () => ({ _sum: { durationSeconds: 0n } });
 		scheduleGroupBy = async () => [];
 
 		const result = await new ClassRepository().addHourAddition(
@@ -471,7 +474,7 @@ describe("ClassRepository hour additions", () => {
 			class: {
 				findFirst: async () => classWithHours(5),
 				updateMany: async () => ({ count: 1 }),
-				findUnique: async () => ({ totalHours: 7.5 }),
+				findUnique: async () => ({ totalSeconds: 27_000n }),
 			},
 			classHourAddition: {
 				findUnique: async () => null,
@@ -480,11 +483,11 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 		classFindFirst = async () => classWithHours(7.5);
 		classHourAdditionFindUnique = async () => customAddition(2.5, 0.31);
-		scheduleAggregate = async () => ({ _sum: { durationMinutes: 0 } });
+		scheduleAggregate = async () => ({ _sum: { durationSeconds: 0n } });
 
 		await expect(
 			new ClassRepository().addHourAddition("class-1", "tutor-1", {
@@ -524,7 +527,7 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		const result = await new ClassRepository().addHourAddition(
@@ -559,7 +562,7 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await expect(
@@ -596,7 +599,7 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await expect(
@@ -614,7 +617,7 @@ describe("ClassRepository hour additions", () => {
 		expect(updateQuery).toMatchObject({
 			id: "class-1",
 			tutorId: "tutor-1",
-			totalHours: { lte: expect.anything() },
+			totalSeconds: { lte: expect.anything() },
 		});
 
 		transactionClient = {
@@ -623,7 +626,7 @@ describe("ClassRepository hour additions", () => {
 			},
 			classHourAddition: { findUnique: async () => null },
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await expect(
@@ -653,7 +656,7 @@ describe("ClassRepository hour additions", () => {
 				},
 			},
 			course: { findFirst: async () => null },
-			schedule: { aggregate: async () => ({ _sum: { durationMinutes: 0 } }) },
+			schedule: { aggregate: async () => ({ _sum: { durationSeconds: 0n } }) },
 		};
 
 		await expect(

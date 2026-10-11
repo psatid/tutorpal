@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import { prisma as defaultPrisma } from "../lib/db";
+import { secondsToMilliseconds } from "../lib/teaching-time";
 
 export type ClaimedReminder = {
 	id: string;
@@ -54,7 +55,7 @@ export class ClassReminderRepository {
 				if (!student.lineUserId || student.lineConnectionId !== connection.id)
 					continue;
 				const end = new Date(
-					startsAt.getTime() + schedule.durationMinutes * 60_000,
+					startsAt.getTime() + secondsToMilliseconds(schedule.durationSeconds),
 				);
 				const message = `Class reminder\n\nHi ${student.name}, your ${schedule.class.name} class starts in 1 hour.\n\nDate: ${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", dateStyle: "medium" }).format(startsAt)}\nTime: ${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(startsAt)}–${new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", timeStyle: "short" }).format(end)}\nTime zone: Asia/Bangkok`;
 				await this.prisma.classReminderDelivery.upsert({

@@ -14,8 +14,9 @@ const prismaSchedule = {
 	recurringScheduleId: "recurring-1",
 	date: new Date("2026-07-01T00:00:00.000Z"),
 	time: 540,
-	durationMinutes: 90,
+	durationSeconds: 5_400n,
 	notes: "Bring workbook",
+	noShowNote: null,
 	status: "SCHEDULED" as const,
 	type: "ONLINE" as const,
 	createdAt,
@@ -41,7 +42,7 @@ const prismaRecurringSchedule = {
 			id: "item-1",
 			weekday: "MONDAY" as const,
 			time: 540,
-			durationMinutes: 90,
+			durationSeconds: 5_400n,
 		},
 	],
 };
@@ -70,12 +71,16 @@ describe("ScheduleModel", () => {
 			time: 540,
 			durationMinutes: 90,
 			notes: "Bring workbook",
+			noShowNote: null,
 			status: "SCHEDULED",
 			type: "ONLINE",
 			createdAt: "2026-06-28T10:00:00.000Z",
 			updatedAt: "2026-06-28T10:30:00.000Z",
 			remainingHours: 7.5,
 		});
+		expect(JSON.stringify(schedule.toScheduleDTO())).toContain(
+			'"durationMinutes":90',
+		);
 	});
 });
 

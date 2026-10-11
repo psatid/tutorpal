@@ -2777,7 +2777,8 @@
                   },
                   "defaultTotalHours": {
                     "type": "number",
-                    "exclusiveMinimum": 0
+                    "exclusiveMinimum": 0,
+                    "maximum": 99999999.99
                   },
                   "pricingMode": {
                     "type": "string",
@@ -3131,7 +3132,8 @@
                   },
                   "defaultTotalHours": {
                     "type": "number",
-                    "exclusiveMinimum": 0
+                    "exclusiveMinimum": 0,
+                    "maximum": 99999999.99
                   },
                   "pricingMode": {
                     "type": "string",
@@ -3279,6 +3281,12 @@
                         "null"
                       ]
                     },
+                    "noShowNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -3315,6 +3323,7 @@
                     "time",
                     "durationMinutes",
                     "notes",
+                    "noShowNote",
                     "status",
                     "type",
                     "createdAt",
@@ -3359,7 +3368,7 @@
                     "maximum": 1439
                   },
                   "durationMinutes": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1
                   },
                   "notes": {
@@ -3513,6 +3522,12 @@
                           "null"
                         ]
                       },
+                      "noShowNote": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
                       "status": {
                         "type": "string",
                         "enum": [
@@ -3549,6 +3564,7 @@
                       "time",
                       "durationMinutes",
                       "notes",
+                      "noShowNote",
                       "status",
                       "type",
                       "createdAt",
@@ -3776,6 +3792,152 @@
         ]
       }
     },
+    "/v1/schedules/{id}/no-show": {
+      "patch": {
+        "operationId": "patchV1SchedulesByIdNoShow",
+        "tags": [
+          "schedules"
+        ],
+        "description": "Mark a scheduled session as a no-show with an optional deduction, or cancel it without a deduction",
+        "responses": {
+          "200": {
+            "description": "Schedule status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "classId": {
+                      "type": "string"
+                    },
+                    "className": {
+                      "type": "string"
+                    },
+                    "recurringScheduleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "time": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1439
+                    },
+                    "durationMinutes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "noShowNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "COMPLETED",
+                        "NO_SHOW",
+                        "CANCELLED"
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "ON_SITE",
+                        "ONLINE"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingHours": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "classId",
+                    "className",
+                    "date",
+                    "time",
+                    "durationMinutes",
+                    "notes",
+                    "noShowNote",
+                    "status",
+                    "type",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "404": {
+            "description": "Schedule not found"
+          },
+          "409": {
+            "description": "Schedule status changed before this action"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deductHours": {
+                    "type": "boolean"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "deductHours"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ]
+      }
+    },
     "/v1/schedules/{id}": {
       "get": {
         "operationId": "getV1SchedulesById",
@@ -3824,6 +3986,12 @@
                         "null"
                       ]
                     },
+                    "noShowNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -3860,6 +4028,7 @@
                     "time",
                     "durationMinutes",
                     "notes",
+                    "noShowNote",
                     "status",
                     "type",
                     "createdAt",
@@ -3934,6 +4103,12 @@
                         "null"
                       ]
                     },
+                    "noShowNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -3970,6 +4145,7 @@
                     "time",
                     "durationMinutes",
                     "notes",
+                    "noShowNote",
                     "status",
                     "type",
                     "createdAt",
@@ -4022,17 +4198,9 @@
                   },
                   "notes": {
                     "type": "string"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "SCHEDULED",
-                      "COMPLETED",
-                      "NO_SHOW",
-                      "CANCELLED"
-                    ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -4125,6 +4293,12 @@
                         "null"
                       ]
                     },
+                    "noShowNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -4161,6 +4335,7 @@
                     "time",
                     "durationMinutes",
                     "notes",
+                    "noShowNote",
                     "status",
                     "type",
                     "createdAt",
@@ -4170,14 +4345,14 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid status transition or insufficient hours"
-          },
           "401": {
             "description": "Unauthorized - Authentication required"
           },
           "404": {
             "description": "Schedule not found"
+          },
+          "409": {
+            "description": "Schedule status changed before this action"
           }
         },
         "parameters": [
@@ -4240,6 +4415,12 @@
                         "null"
                       ]
                     },
+                    "noShowNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -4276,6 +4457,7 @@
                     "time",
                     "durationMinutes",
                     "notes",
+                    "noShowNote",
                     "status",
                     "type",
                     "createdAt",
@@ -4285,14 +4467,14 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid operation - schedule not completed/no-show or hours already restored"
-          },
           "401": {
             "description": "Unauthorized - Authentication required"
           },
           "404": {
             "description": "Schedule not found"
+          },
+          "409": {
+            "description": "Schedule status changed before this action or hours were already restored"
           }
         },
         "parameters": [
