@@ -1,5 +1,11 @@
 # Decimal Class Hours (June 26, 2026)
 
+> Current storage update (October 11, 2026): hour amounts and schedule
+> durations are now persisted as 64-bit integer seconds through
+> `20261011000000_store_teaching_time_as_seconds`. The API and forms still use
+> decimal hours and whole-minute durations. This page records the earlier
+> fractional-hour API and UI behavior.
+
 **Overview**: Updated classes to support fractional `totalHours`, allowing tutors to enter decimal hour values such as `1.5` or `12.75` and use them in schedule availability checks.
 
 **Database Changes**:

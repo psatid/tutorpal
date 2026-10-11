@@ -1,15 +1,24 @@
-# Schedule No-Show Status (June 21, 2026)
+# Schedule No-Show Status
 
-**Overview**: Added `NO_SHOW` as a schedule status across Prisma, backend validation, and frontend schedule management.
+**Overview**: Tutors can record a no-show with an explicit choice about deducting class hours, plus an optional note.
 
-**Behavior**:
-- `NO_SHOW` is treated as reserved class time, alongside `SCHEDULED` and `COMPLETED`
-- Remaining hours exclude `NO_SHOW` schedules the same way they exclude completed ones
-- New schedules are always created in `SCHEDULED` status
-- Tutors can mark a scheduled session as no-show from schedule action menus or by editing the schedule after creation
-- `NO_SHOW` schedules can have hours restored by moving them to `CANCELLED`
+## Current behavior (October 11, 2026)
 
-**Files Modified**:
+- `PATCH /v1/schedules/:id/no-show` requires `deductHours` and accepts an optional `note`.
+- Deducting hours sets the schedule to `NO_SHOW` and records the active hour deduction. The session continues to count against class capacity.
+- Choosing not to deduct sets the schedule to `CANCELLED`, releases its reservation, and does not create a deduction.
+- The dialog starts with neither choice selected. Its note is stored as `noShowNote`, separately from general schedule notes.
+- The same dialog is available from the schedule drawer, Schedule list, Home, and class detail.
+- The drawer's view-mode actions are Complete, No Show, and Delete for scheduled sessions; Restore and Delete for completed or no-show sessions; and Delete for cancelled sessions. The action row and editable status are hidden in edit mode.
+- Complete and Restore remain dedicated lifecycle actions. Generic schedule updates cannot change status.
+- Completed and deducted no-show sessions can be restored to `CANCELLED`; the active deduction is marked restored.
+- Existing `NO_SHOW` sessions are treated as deducted during the seconds-storage migration.
+
+## Original implementation (June 21, 2026)
+
+The initial release added `NO_SHOW` as a schedule status across Prisma, backend validation, and frontend schedule management. At that time, tutors could mark a session no-show from schedule actions or by editing the schedule; lifecycle status is now changed through dedicated actions.
+
+Original files modified:
 - `backend/prisma/schema.prisma` - Added `NO_SHOW` to `ScheduleStatus`
 - `backend/src/schemas/schedule.schema.ts` - Added `NO_SHOW` to API validation
 - `backend/src/repositories/class-hours.ts` - Counted `NO_SHOW` as reserved time

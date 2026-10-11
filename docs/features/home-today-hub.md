@@ -14,15 +14,18 @@ query and does not introduce a separate dashboard API.
 - The first `SCHEDULED` API item is shown as the session to confirm. On smaller
   screens its confirmation controls appear before the rail; on desktop they
   appear in a narrow contextual panel beside it.
-- Completing a session uses the existing completion flow and deducts its class
-  hours. Marking a session as no-show keeps its hours reserved.
+- Completing a session uses the existing completion flow; its hours remain
+  counted once because the scheduled session already reserved them. Marking a
+  session no-show opens a required deduct/no-deduct choice and an optional note.
+  A deducted no-show keeps the hours reserved; a no-deduct outcome cancels the
+  reservation.
 
 ## Confirmation and data updates
 
-Both session-outcome actions retain the schedule confirmation-toast flow before a
-mutation is sent. Completion uses `useCompleteSchedule`; no-show uses
-`useUpdateSchedule` with `NO_SHOW`. Those existing mutation hooks remain the
-source of cache invalidation and success/error feedback. Opening either
+Completion retains the schedule confirmation-toast flow. No-show opens the
+shared dialog before its mutation is sent. Completion uses
+`useCompleteSchedule`; no-show uses `useNoShowSchedule`. The mutation hooks
+remain the source of cache invalidation and success/error feedback. Opening a
 confirmation disables both outcomes until it is dismissed or the chosen
 mutation settles. After a successful outcome, Home immediately removes that
 session from its scheduled summary and triage until the date query reports its

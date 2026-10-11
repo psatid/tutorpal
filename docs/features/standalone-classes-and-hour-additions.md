@@ -14,8 +14,8 @@ Courses remain reusable hour presets rather than class associations.
 - Hours can only be added through an immutable `ClassHourAddition` ledger. An
   addition is either a course preset, resolved from the course's server-current
   default hours, or a custom decimal value from `0.01` with at most two decimal
-  places. Each addition and each class total is limited to the `DECIMAL(10,2)`
-  maximum of `99,999,999.99`.
+  places. Each addition and class total retains the prior `DECIMAL(10,2)` API
+  limit of `99,999,999.99`; persisted amounts are 64-bit integer seconds.
 - Course additions snapshot the course id, name, and selected hours without a
   Course relation. Renaming or deleting a course never changes the history.
 - Addition request IDs are idempotent per class. Replaying the same source and
@@ -53,3 +53,12 @@ semantics: existing class name, enrolled student label, course name, then
 `Unnamed class`. It then removes the class-course foreign key, index, and
 column, sets the class-hour default to zero for future rows, and adds the
 class-owned ledger. It does not truncate or backfill data.
+
+## Teaching-time storage (October 11, 2026)
+
+Course defaults, class totals, hour additions, and deductions are persisted as
+integer seconds. Schedule and recurring-item durations are also persisted as
+seconds; wall-clock time-of-day values remain minutes. API and form units stay
+compatible: hour amounts are still decimal numbers and schedule durations are
+still whole minutes. For example, `0.01 h = 36 s`, `1.5 h = 5,400 s`, and
+`30 min = 1,800 s`.

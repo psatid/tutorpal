@@ -9,10 +9,10 @@
 - **Repository Layer** (`class.repository.ts`):
   - Modified `toDTO()` helper to accept optional `remainingHours` parameter
   - Updated `create()` method: Sets `remainingHours = totalHours` for new classes
-  - Updated `findAll()` method: Calculates remaining hours from schedules in `SCHEDULED` or `COMPLETED` status
+  - Updated `findAll()` method: Calculates remaining hours from schedules in `SCHEDULED`, `COMPLETED`, or deducted `NO_SHOW` status
   - Updated `findById()` method: Calculates remaining hours from active scheduled time
   - Updated `update()` method: Recalculates remaining hours after updates
-  - Hour calculation: `remainingHours = totalHours - sum(schedule.durationMinutes for SCHEDULED/COMPLETED schedules)/60`
+  - Original hour calculation: `remainingHours = totalHours - sum(schedule.durationMinutes for SCHEDULED/COMPLETED schedules)/60`
 
 - **Schemas Layer** (`class.schema.ts`):
   - Added `remainingHours: z.number().optional()` to `ClassSchema`
@@ -46,3 +46,14 @@
 - `frontend/src/types/class.ts` - Added remainingHours to Class interface
 - `frontend/src/components/classes/class-card.tsx` - Updated badge display
 - `frontend/src/lib/i18n/locales/en/classes.ts` - Added hoursWithRemaining translation
+
+## Current calculation (October 11, 2026)
+
+The persisted values use integer seconds:
+
+```text
+remainingSeconds = totalSeconds - sum(durationSeconds for SCHEDULED, COMPLETED, and NO_SHOW)
+remainingHours = remainingSeconds / 3600
+```
+
+`CANCELLED` sessions do not reserve hours. A no-show with no deduction becomes `CANCELLED`; a deducted no-show remains `NO_SHOW`. Class and student API responses continue to expose `totalHours` and `remainingHours` as numbers.

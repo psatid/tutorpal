@@ -4,7 +4,7 @@
 
 **Backend Changes**:
 - **Types** (`student.types.ts`): Added `ClassInStudentDTO` (id, name, totalHours, remainingHours) and `StudentDetailDTO` (extends StudentDTO with classes array)
-- **Repository** (`student.repository.ts`): Updated `findById` to include enrolled classes with remaining hours calculation based on `SCHEDULED` / `COMPLETED` schedules
+- **Repository** (`student.repository.ts`): Updated `findById` to include enrolled classes with remaining hours calculation based on `SCHEDULED`, `COMPLETED`, and deducted `NO_SHOW` schedules
 - **Service** (`student.service.ts`): Updated return type to `StudentDetailDTO`
 - **Schema** (`student.schema.ts`): Added `ClassInStudentSchema` and `StudentDetailSchema`
 - **Routes** (`routes/students.ts`): GET /:id now returns `StudentDetailSchema` with classes
