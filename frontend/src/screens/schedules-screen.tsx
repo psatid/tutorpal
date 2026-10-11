@@ -127,9 +127,9 @@ export function SchedulesScreen() {
 
   const filteredSchedules = useMemo(() => {
     if (!schedules) return [];
-    if (statusFilter === "ALL") return schedules;
+    if (viewMode === "week" || statusFilter === "ALL") return schedules;
     return schedules.filter((s) => s.status === statusFilter);
-  }, [schedules, statusFilter]);
+  }, [schedules, statusFilter, viewMode]);
 
   const handleAddSchedule = (trigger: HTMLButtonElement | null) => {
     activeTriggerRef.current =
@@ -235,8 +235,9 @@ export function SchedulesScreen() {
     }
   };
 
-  const hasActiveFilters =
-    statusFilter !== "ALL" || Boolean(searchQuery.trim());
+  const hasActiveFilters = (mode: ScheduleViewMode) =>
+    Boolean(searchQuery.trim()) ||
+    (mode === "day" && statusFilter !== "ALL");
   const isWeeklyTimelineVisible =
     viewMode === "week" &&
     !isLoading &&
@@ -245,6 +246,7 @@ export function SchedulesScreen() {
 
   const renderScheduleContent = (mode: ScheduleViewMode) => {
     const isWeekMode = mode === "week";
+    const hasFilters = hasActiveFilters(mode);
 
     if (isLoading) {
       return (
@@ -276,7 +278,7 @@ export function SchedulesScreen() {
             <CalendarDays className="size-10 text-primary" />
           </div>
           <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
-            {hasActiveFilters
+            {hasFilters
               ? isWeekMode
                 ? t("schedules:weekNoResults")
                 : t("schedules:noResults")
@@ -284,7 +286,7 @@ export function SchedulesScreen() {
                 ? t("schedules:weekNoSchedules")
                 : t("schedules:noSchedules")}
           </h2>
-          {!hasActiveFilters ? (
+          {!hasFilters ? (
             <>
               <p className="mb-6 max-w-xs font-body text-muted-foreground">
                 {isWeekMode
@@ -408,7 +410,7 @@ export function SchedulesScreen() {
                   </div>
                 </div>
 
-                {schedules && schedules.length > 0 ? (
+                {viewMode === "day" && schedules && schedules.length > 0 ? (
                   <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
                     <div className="flex gap-2 overflow-x-auto">
                       {(
