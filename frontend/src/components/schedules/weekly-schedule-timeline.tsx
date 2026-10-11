@@ -17,7 +17,6 @@ const DEFAULT_END_MINUTES = 22 * 60;
 const MINUTES_PER_HOUR = 60;
 const HOUR_HEIGHT = 48;
 const MIN_EVENT_HEIGHT = 44;
-const DAY_COLUMN_MIN_WIDTH = 144;
 const TIME_COLUMN_WIDTH = 56;
 const scheduledBlockClasses: Record<NameTone, string> = {
   indigo: "bg-[#533AFD]",
@@ -245,15 +244,15 @@ export function WeeklyScheduleTimeline({
     >
       <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain border-y border-border bg-card touch-pan-x touch-pan-y">
         <div
-          className="min-w-266"
+          className="min-w-[784px] [--day-column-min-width:104px] [--timeline-min-width:784px] sm:min-w-[1064px] sm:[--day-column-min-width:144px] sm:[--timeline-min-width:1064px]"
           style={{
-            width: `max(100%, ${TIME_COLUMN_WIDTH + DAY_COLUMN_MIN_WIDTH * 7}px)`,
+            width: "max(100%, var(--timeline-min-width))",
           }}
         >
           <div
             className="sticky top-0 z-30 grid border-b border-border bg-card"
             style={{
-              gridTemplateColumns: `${TIME_COLUMN_WIDTH}px repeat(7, minmax(${DAY_COLUMN_MIN_WIDTH}px, 1fr))`,
+              gridTemplateColumns: `${TIME_COLUMN_WIDTH}px repeat(7, minmax(var(--day-column-min-width), 1fr))`,
             }}
           >
             <div className="sticky left-0 top-0 z-40 border-r border-border bg-card" />
@@ -295,7 +294,7 @@ export function WeeklyScheduleTimeline({
           <div
             className="grid"
             style={{
-              gridTemplateColumns: `${TIME_COLUMN_WIDTH}px repeat(7, minmax(${DAY_COLUMN_MIN_WIDTH}px, 1fr))`,
+              gridTemplateColumns: `${TIME_COLUMN_WIDTH}px repeat(7, minmax(var(--day-column-min-width), 1fr))`,
             }}
           >
             <div

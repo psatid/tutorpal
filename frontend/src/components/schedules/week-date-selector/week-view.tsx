@@ -607,7 +607,7 @@ export function WeekView({
   return (
     <div
       className={cn(
-        "min-w-0 max-w-full pb-2 pt-1 sm:pb-3 sm:pt-2 md:pb-4",
+        "min-w-0 max-w-full pb-2 pt-1",
         className,
       )}
     >
@@ -685,9 +685,9 @@ export function WeekView({
                 onKeyDown={(event) => handleKeyDown(event, weekStart)}
                 data-week-key={weekKey}
                 className={cn(
-                  "relative flex h-14 min-w-32 flex-1 items-center justify-center overflow-hidden rounded-xl border px-3 py-1.5 text-center text-sm font-medium tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
+                  "flex h-14 min-w-32 flex-1 items-center justify-center rounded-xl border px-3 py-1.5 text-center text-sm font-medium tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected
-                    ? "border-primary text-primary-foreground"
+                    ? "border-primary bg-primary text-primary-foreground"
                     : isCurrentWeek
                       ? "border-primary bg-card text-foreground hover:bg-muted"
                       : "border-border bg-card text-foreground hover:border-primary hover:bg-muted",
@@ -697,13 +697,7 @@ export function WeekView({
                 aria-checked={isSelected}
                 tabIndex={isSelected ? 0 : -1}
               >
-                {isSelected && (
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 rounded-xl bg-primary"
-                  />
-                )}
-                <span className="relative z-10 truncate">{rangeLabel}</span>
+                <span className="truncate">{rangeLabel}</span>
               </button>
             );
           })}

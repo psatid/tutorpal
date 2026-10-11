@@ -1,4 +1,10 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { MotionConfig, useReducedMotion, type Transition } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -23,15 +29,34 @@ import {
   isSameWeek,
 } from "./week-utils";
 
-export interface WeekDateSelectorProps {
+export type ScheduleViewMode = "day" | "week";
+
+type WeekDateSelectorRails = {
+  day: ReactNode;
+  week: ReactNode;
+};
+
+type WeekDateSelectorCommonProps = {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
-  viewMode?: ScheduleViewMode;
-  onViewModeChange: (viewMode: ScheduleViewMode) => void;
   className?: string;
-}
+};
 
-export type ScheduleViewMode = "day" | "week";
+type WeekDateSelectorStandaloneProps = WeekDateSelectorCommonProps & {
+  viewMode: ScheduleViewMode;
+  onViewModeChange: (viewMode: ScheduleViewMode) => void;
+  children?: never;
+};
+
+type WeekDateSelectorExternalRootProps = WeekDateSelectorCommonProps & {
+  viewMode: ScheduleViewMode;
+  children: (rails: WeekDateSelectorRails) => ReactNode;
+  onViewModeChange?: never;
+};
+
+export type WeekDateSelectorProps =
+  | WeekDateSelectorStandaloneProps
+  | WeekDateSelectorExternalRootProps;
 
 const MAX_BUFFER_DAYS = 56;
 const BUFFER_DAYS_BEFORE_SELECTED = 28;
@@ -43,6 +68,12 @@ const SMOOTH_CENTER: ScrollBehavior = "smooth";
 
 function isScheduleViewMode(value: string): value is ScheduleViewMode {
   return value === "day" || value === "week";
+}
+
+function isExternalRootMode(
+  props: WeekDateSelectorProps,
+): props is WeekDateSelectorExternalRootProps {
+  return props.children !== undefined;
 }
 
 function getDateByDayOffset(date: Date, dayOffset: number): Date {
@@ -77,13 +108,8 @@ function createWeekBuffer(selectedDate: Date): Date[] {
   );
 }
 
-export function WeekDateSelector({
-  selectedDate,
-  onDateSelect,
-  viewMode = "day",
-  onViewModeChange,
-  className,
-}: WeekDateSelectorProps) {
+export function WeekDateSelector(props: WeekDateSelectorProps) {
+  const { selectedDate, onDateSelect, viewMode, className } = props;
   const { t } = useTranslation(["schedules"]);
   const prefersReducedMotion = useReducedMotion() === true;
   const railSelectedDate = selectedDate ?? DateTime.today().toDate();
@@ -263,117 +289,126 @@ export function WeekDateSelector({
     }
   };
 
-  const handleViewModeChange = (value: string) => {
-    if (isScheduleViewMode(value)) {
-      onViewModeChange(value);
-    }
+  const rails = {
+    day: (
+      <WeekdayView
+        className="pb-2 pt-1"
+        dates={dates}
+        selectedDate={railSelectedDate}
+        onDateSelect={handleCalendarDateSelect}
+        onExtendDateBuffer={handleExtendDateBuffer}
+        onRestoreSelectedDate={handleRestoreSelectedDate}
+        centerRequest={centerRequest}
+      />
+    ),
+    week: (
+      <WeekView
+        weekStarts={weekStarts}
+        selectedDate={railSelectedDate}
+        onDateSelect={handleCalendarDateSelect}
+        onExtendWeekBuffer={handleExtendWeekBuffer}
+        onRestoreSelectedWeek={handleRestoreSelectedWeek}
+        centerRequest={centerRequest}
+      />
+    ),
   };
 
-  return (
-    <div
-      className={cn(
-        viewMode === "week" ? "mb-2 sm:mb-4" : "mb-4",
-        className,
-      )}
-    >
-      <MotionConfig reducedMotion="user">
-        <Tabs
-          className="gap-0"
-          value={viewMode}
-          onValueChange={handleViewModeChange}
-        >
-          <div
-            className={cn(
-              "px-3 sm:px-4 lg:px-6",
-              viewMode === "week" ? "pt-2 sm:pt-3" : "pt-3",
-            )}
-          >
-            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 min-[360px]:flex-nowrap">
-              <div className="min-w-0 basis-full min-[360px]:basis-auto min-[360px]:flex-1">
-                <DateField
-                  value={DateTime.from(railSelectedDate).toDateOnlyString()}
-                  onChange={handleDateFieldChange}
-                  selectionMode={viewMode === "week" ? "week" : "single"}
-                  ariaLabel={
-                    viewMode === "week"
-                      ? t("schedules:weekSelector.openWeekCalendar", {
-                          week: weekLabel,
-                        })
-                      : t("schedules:weekSelector.openCalendar", {
-                          month: monthLabel,
-                        })
-                  }
-                  trigger={
-                    <button
-                      type="button"
-                      className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card"
-                    >
-                      <span className="block min-w-0 truncate">
-                        <span className="min-[480px]:hidden">
-                          {shortPeriodLabel}
-                        </span>
-                        <span className="hidden min-[480px]:inline">
-                          {periodLabel}
-                        </span>
-                      </span>
-                      <ChevronDown
-                        aria-hidden="true"
-                        className="size-4 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180 group-aria-expanded:rotate-180 motion-reduce:transition-none"
-                      />
-                    </button>
-                  }
-                />
-              </div>
-              <div className="ml-auto flex shrink-0 items-center justify-end gap-2 whitespace-nowrap">
-                <Button
-                  className="relative isolate h-11 border-transparent bg-transparent hover:bg-transparent aria-expanded:bg-transparent dark:bg-transparent dark:hover:bg-transparent dark:aria-expanded:bg-transparent before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1.5 before:z-[-1] before:rounded-full before:border before:border-input before:bg-white hover:before:bg-muted aria-expanded:before:bg-muted dark:before:bg-card"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleToday}
+  const selector = (
+    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
+      <div className="shrink-0 px-3 pt-2 sm:px-4 lg:px-6">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 min-[360px]:flex-nowrap">
+          <div className="min-w-0 basis-full min-[360px]:basis-auto min-[360px]:flex-1">
+            <DateField
+              value={DateTime.from(railSelectedDate).toDateOnlyString()}
+              onChange={handleDateFieldChange}
+              selectionMode={viewMode === "week" ? "week" : "single"}
+              ariaLabel={
+                viewMode === "week"
+                  ? t("schedules:weekSelector.openWeekCalendar", {
+                      week: weekLabel,
+                    })
+                  : t("schedules:weekSelector.openCalendar", {
+                      month: monthLabel,
+                    })
+              }
+              trigger={
+                <button
+                  type="button"
+                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card"
                 >
-                  <CalendarDays aria-hidden="true" className="size-4" />
-                  {t("schedules:weekSelector.today")}
-                </Button>
-                <TabsList
-                  aria-label={t("schedules:viewMode.label")}
-                  activateOnFocus={false}
-                  transition={tabTransition}
-                >
-                  <TabsTab value="day">
-                    {t("schedules:viewMode.day")}
-                  </TabsTab>
-                  <TabsTab value="week">
-                    {t("schedules:viewMode.week")}
-                  </TabsTab>
-                </TabsList>
-              </div>
-            </div>
+                  <span className="block min-w-0 truncate">
+                    <span className="min-[480px]:hidden">
+                      {shortPeriodLabel}
+                    </span>
+                    <span className="hidden min-[480px]:inline">
+                      {periodLabel}
+                    </span>
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="size-4 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180 group-aria-expanded:rotate-180 motion-reduce:transition-none"
+                  />
+                </button>
+              }
+            />
           </div>
+          <div className="ml-auto flex shrink-0 items-center justify-end gap-2 whitespace-nowrap">
+            <Button
+              className="relative isolate h-11 border-transparent bg-transparent hover:bg-transparent aria-expanded:bg-transparent dark:bg-transparent dark:hover:bg-transparent dark:aria-expanded:bg-transparent before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1.5 before:z-[-1] before:rounded-full before:border before:border-input before:bg-white hover:before:bg-muted aria-expanded:before:bg-muted dark:before:bg-card"
+              variant="outline"
+              size="sm"
+              onClick={handleToday}
+            >
+              <CalendarDays aria-hidden="true" className="size-4" />
+              {t("schedules:weekSelector.today")}
+            </Button>
+            <TabsList
+              aria-label={t("schedules:viewMode.label")}
+              activateOnFocus={false}
+              transition={tabTransition}
+            >
+              <TabsTab value="day">{t("schedules:viewMode.day")}</TabsTab>
+              <TabsTab value="week">
+                {t("schedules:viewMode.week")}
+              </TabsTab>
+            </TabsList>
+          </div>
+        </div>
+      </div>
 
-          <TabsPanels className="w-full" transition={tabTransition}>
-            <TabsPanel value="day" transition={tabTransition}>
-              <WeekdayView
-                dates={dates}
-                selectedDate={railSelectedDate}
-                onDateSelect={handleCalendarDateSelect}
-                onExtendDateBuffer={handleExtendDateBuffer}
-                onRestoreSelectedDate={handleRestoreSelectedDate}
-                centerRequest={centerRequest}
-              />
-            </TabsPanel>
-            <TabsPanel value="week" transition={tabTransition}>
-              <WeekView
-                weekStarts={weekStarts}
-                selectedDate={railSelectedDate}
-                onDateSelect={handleCalendarDateSelect}
-                onExtendWeekBuffer={handleExtendWeekBuffer}
-                onRestoreSelectedWeek={handleRestoreSelectedWeek}
-                centerRequest={centerRequest}
-              />
-            </TabsPanel>
-          </TabsPanels>
-        </Tabs>
-      </MotionConfig>
+      {isExternalRootMode(props) ? props.children(rails) : (
+        <TabsPanels
+          className="mb-2 w-full shrink-0"
+          transition={tabTransition}
+        >
+          <TabsPanel transition={tabTransition} value="day">
+            {rails.day}
+          </TabsPanel>
+          <TabsPanel transition={tabTransition} value="week">
+            {rails.week}
+          </TabsPanel>
+        </TabsPanels>
+      )}
     </div>
+  );
+
+  if (isExternalRootMode(props)) {
+    return selector;
+  }
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <Tabs
+        className="gap-0"
+        value={viewMode}
+        onValueChange={(value) => {
+          if (isScheduleViewMode(value)) {
+            props.onViewModeChange(value);
+          }
+        }}
+      >
+        {selector}
+      </Tabs>
+    </MotionConfig>
   );
 }

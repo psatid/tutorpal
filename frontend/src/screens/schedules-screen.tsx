@@ -1,5 +1,13 @@
 import { CalendarDays, Plus, Search } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  AnimatePresence,
+  MotionConfig,
+  motion,
+  useIsPresent,
+  useReducedMotion,
+  type Transition,
+} from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
@@ -22,18 +30,51 @@ import {
   WeekDateSelector,
 } from "@/components/schedules/week-date-selector";
 import { WeeklyScheduleTimeline } from "@/components/schedules/weekly-schedule-timeline";
+import {
+  Tabs,
+  TabsPanel,
+  TabsPanels,
+} from "@/components/animate-ui/components/base/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
 import { DateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
 
+function isScheduleViewMode(value: string): value is ScheduleViewMode {
+  return value === "day" || value === "week";
+}
+
+function AnimatedDateRail({
+  children,
+  transition,
+}: {
+  children: ReactNode;
+  transition: Transition;
+}) {
+  const isPresent = useIsPresent();
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      aria-hidden={isPresent ? undefined : true}
+      className="mb-2 w-full shrink-0"
+      exit={{ opacity: 0, filter: "blur(4px)" }}
+      inert={!isPresent}
+      initial={{ opacity: 0, filter: "blur(4px)" }}
+      transition={transition}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
+  const weekAddRef = useRef<HTMLButtonElement>(null);
   const activeTriggerRef = useRef<HTMLButtonElement>(null);
-  const emptyActionRef = useRef<HTMLButtonElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedDate, setSelectedDate] = useState<Date>(
@@ -46,6 +87,10 @@ export function SchedulesScreen() {
   );
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
+  const prefersReducedMotion = useReducedMotion() === true;
+  const tabTransition: Transition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.18, ease: [0.25, 1, 0.5, 1] };
 
   const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
   const weekDates = useMemo(
@@ -87,7 +132,8 @@ export function SchedulesScreen() {
   }, [schedules, statusFilter]);
 
   const handleAddSchedule = (trigger: HTMLButtonElement | null) => {
-    activeTriggerRef.current = trigger ?? fabRef.current ?? triggerRef.current;
+    activeTriggerRef.current =
+      trigger ?? fabRef.current ?? weekAddRef.current ?? triggerRef.current;
     setSelectedScheduleId(null);
     setDrawerMode("create");
     setIsDrawerOpen(true);
@@ -97,6 +143,7 @@ export function SchedulesScreen() {
     const trigger = [
       activeTriggerRef.current,
       fabRef.current,
+      weekAddRef.current,
       triggerRef.current,
     ].find(
       (candidate) =>
@@ -174,6 +221,12 @@ export function SchedulesScreen() {
     setDrawerMode(mode);
   };
 
+  const handleViewModeChange = (value: string) => {
+    if (isScheduleViewMode(value)) {
+      setViewMode(value);
+    }
+  };
+
   const handleDrawerOpenChange = (open: boolean) => {
     setIsDrawerOpen(open);
     if (!open) {
@@ -190,6 +243,105 @@ export function SchedulesScreen() {
     !isError &&
     filteredSchedules.length > 0;
 
+  const renderScheduleContent = (mode: ScheduleViewMode) => {
+    const isWeekMode = mode === "week";
+
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center space-y-4 py-16">
+          <div className="h-16 w-16 animate-pulse rounded-full bg-muted" />
+          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+          <p className="text-sm text-muted-foreground">
+            {t("schedules:loading")}
+          </p>
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <WorkspaceErrorState
+          description={t("schedules:error.description")}
+          onRetry={() => refetch()}
+          retryLabel={t("schedules:error.retry")}
+          title={t("schedules:error.title")}
+        />
+      );
+    }
+
+    if (!schedules || schedules.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-6 flex size-20 items-center justify-center rounded-xl bg-primary-container">
+            <CalendarDays className="size-10 text-primary" />
+          </div>
+          <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
+            {hasActiveFilters
+              ? isWeekMode
+                ? t("schedules:weekNoResults")
+                : t("schedules:noResults")
+              : isWeekMode
+                ? t("schedules:weekNoSchedules")
+                : t("schedules:noSchedules")}
+          </h2>
+          {!hasActiveFilters ? (
+            <>
+              <p className="mb-6 max-w-xs font-body text-muted-foreground">
+                {isWeekMode
+                  ? t("schedules:weekNoSchedulesDescription")
+                  : t("schedules:noSchedulesDescription")}
+              </p>
+              <Button
+                leftIcon={Plus}
+                onClick={(event) => handleAddSchedule(event.currentTarget)}
+              >
+                {t("schedules:addSchedule")}
+              </Button>
+            </>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (filteredSchedules.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-muted-foreground">
+            {isWeekMode
+              ? t("schedules:weekNoResults")
+              : t("schedules:noResults")}
+          </p>
+        </div>
+      );
+    }
+
+    if (isWeekMode) {
+      return (
+        <WeeklyScheduleTimeline
+          onViewSchedule={handleViewSchedule}
+          schedules={filteredSchedules}
+          selectedDate={selectedDate}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {filteredSchedules.map((schedule) => (
+          <ScheduleCard
+            key={schedule.id}
+            schedule={schedule}
+            onView={() => handleViewSchedule(schedule)}
+            onDelete={() => handleDeleteSchedule(schedule)}
+            onComplete={() => handleCompleteSchedule(schedule)}
+            onNoShow={() => handleNoShowSchedule(schedule)}
+            onRestore={() => handleRestoreHours(schedule)}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div
       className={
@@ -198,165 +350,136 @@ export function SchedulesScreen() {
           : "flex min-h-[calc(100vh-200px)] flex-col"
       }
     >
-      <WeekDateSelector
-        selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
-
-      {/* Search */}
-      <div
-        className={cn(
-          "shrink-0 px-3 sm:px-4 lg:px-6",
-          viewMode === "week" ? "mb-2 sm:mb-4" : "mb-4",
-        )}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="min-w-0 flex-1">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("schedules:searchPlaceholder")}
-              leftIcon={Search}
-            />
-          </div>
-          <Button
-            className="hidden sm:inline-flex"
-            onClick={() => handleAddSchedule(triggerRef.current)}
-            ref={triggerRef}
-            leftIcon={Plus}
-          >
-            {t("schedules:addSchedule")}
-          </Button>
-        </div>
-      </div>
-
-      {/* Status Filter */}
-      {schedules && schedules.length > 0 && (
-        <div
-          className={cn(
-            "shrink-0 px-3 sm:px-4 lg:px-6",
-            viewMode === "week" ? "mb-2 sm:mb-4" : "mb-4",
-          )}
+      <MotionConfig reducedMotion="user">
+        <Tabs
+          className="flex min-h-0 flex-1 flex-col gap-0"
+          value={viewMode}
+          onValueChange={handleViewModeChange}
         >
-          <div className="flex gap-2 overflow-x-auto">
-            {(
-              ["ALL", "SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"] as const
-            ).map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                aria-pressed={statusFilter === status}
-                className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <span
-                  className={cn(
-                    "rounded-full px-3 py-1.5 leading-5 transition-colors",
-                    statusFilter === status
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground group-hover:bg-accent",
-                  )}
-                >
-                  {status === "ALL"
-                    ? t("schedules:filter.all")
-                    : t(`schedules:status.${status}`)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Content */}
-      <div
-        className={cn(
-          "px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6",
-          viewMode === "week"
-            ? "flex min-h-0 flex-1 flex-col pb-0"
-            : "",
-          isWeeklyTimelineVisible
-            ? "relative left-1/2 w-screen max-w-none -translate-x-1/2 px-0 sm:static sm:left-auto sm:w-auto sm:translate-x-0 sm:px-4 lg:px-6"
-            : "",
-        )}
-      >
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 space-y-4">
-            <div className="animate-pulse w-16 h-16 rounded-full bg-muted" />
-            <div className="animate-pulse h-4 w-40 bg-muted rounded" />
-            <p className="text-sm text-muted-foreground">
-              {t("schedules:loading")}
-            </p>
-          </div>
-        ) : isError ? (
-          <WorkspaceErrorState
-            description={t("schedules:error.description")}
-            onRetry={() => refetch()}
-            retryLabel={t("schedules:error.retry")}
-            title={t("schedules:error.title")}
-          />
-        ) : !schedules || schedules.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-6 flex size-20 items-center justify-center rounded-xl bg-primary-container">
-              <CalendarDays className="size-10 text-primary" />
-            </div>
-            <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
-              {hasActiveFilters
-                ? viewMode === "week"
-                  ? t("schedules:weekNoResults")
-                  : t("schedules:noResults")
-                : viewMode === "week"
-                  ? t("schedules:weekNoSchedules")
-                  : t("schedules:noSchedules")}
-            </h2>
-            {!hasActiveFilters ? (
-              <>
-                <p className="font-body text-muted-foreground max-w-xs mb-6">
-                  {viewMode === "week"
-                    ? t("schedules:weekNoSchedulesDescription")
-                    : t("schedules:noSchedulesDescription")}
-                </p>
-                <Button
-                  onClick={() => handleAddSchedule(emptyActionRef.current)}
-                  ref={emptyActionRef}
-                  leftIcon={Plus}
-                >
-                  {t("schedules:addSchedule")}
-                </Button>
-              </>
-            ) : null}
-          </div>
-        ) : filteredSchedules.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">
-              {viewMode === "week"
-                ? t("schedules:weekNoResults")
-                : t("schedules:noResults")}
-            </p>
-          </div>
-        ) : viewMode === "week" ? (
-          <WeeklyScheduleTimeline
-            onViewSchedule={handleViewSchedule}
-            schedules={filteredSchedules}
+          <WeekDateSelector
             selectedDate={selectedDate}
-          />
-        ) : (
-          <div className="space-y-2">
-            {filteredSchedules.map((schedule) => (
-              <ScheduleCard
-                key={schedule.id}
-                schedule={schedule}
-                onView={() => handleViewSchedule(schedule)}
-                onDelete={() => handleDeleteSchedule(schedule)}
-                onComplete={() => handleCompleteSchedule(schedule)}
-                onNoShow={() => handleNoShowSchedule(schedule)}
-                onRestore={() => handleRestoreHours(schedule)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+            onDateSelect={setSelectedDate}
+            viewMode={viewMode}
+          >
+            {({ day, week }) => (
+              <>
+                <AnimatePresence initial={false} mode="wait">
+                  <AnimatedDateRail key={viewMode} transition={tabTransition}>
+                    {viewMode === "day" ? day : week}
+                  </AnimatedDateRail>
+                </AnimatePresence>
+
+                <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
+                  <div
+                    className={cn(
+                      "flex flex-col gap-3 sm:flex-row sm:items-center",
+                      viewMode === "week" && "flex-row items-center gap-2",
+                    )}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <Input
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder={t("schedules:searchPlaceholder")}
+                        leftIcon={Search}
+                      />
+                    </div>
+                    {viewMode === "week" ? (
+                      <Button
+                        aria-haspopup="dialog"
+                        aria-label={t("schedules:addSchedule")}
+                        className="sm:hidden"
+                        onClick={() => handleAddSchedule(weekAddRef.current)}
+                        ref={weekAddRef}
+                        size="icon"
+                        type="button"
+                      >
+                        <Plus aria-hidden="true" className="size-5" />
+                      </Button>
+                    ) : null}
+                    <Button
+                      className="hidden sm:inline-flex"
+                      leftIcon={Plus}
+                      onClick={() => handleAddSchedule(triggerRef.current)}
+                      ref={triggerRef}
+                    >
+                      {t("schedules:addSchedule")}
+                    </Button>
+                  </div>
+                </div>
+
+                {schedules && schedules.length > 0 ? (
+                  <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
+                    <div className="flex gap-2 overflow-x-auto">
+                      {(
+                        [
+                          "ALL",
+                          "SCHEDULED",
+                          "COMPLETED",
+                          "NO_SHOW",
+                          "CANCELLED",
+                        ] as const
+                      ).map((status) => (
+                        <button
+                          aria-pressed={statusFilter === status}
+                          className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          key={status}
+                          onClick={() => setStatusFilter(status)}
+                          type="button"
+                        >
+                          <span
+                            className={cn(
+                              "rounded-full px-3 py-1.5 leading-5 transition-colors",
+                              statusFilter === status
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-foreground group-hover:bg-accent",
+                            )}
+                          >
+                            {status === "ALL"
+                              ? t("schedules:filter.all")
+                              : t(`schedules:status.${status}`)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <TabsPanels
+                  className="flex min-h-0 flex-1 flex-col"
+                  mode="layout"
+                  transition={tabTransition}
+                >
+                  <TabsPanel
+                    className="flex min-h-0 flex-1 flex-col"
+                    transition={tabTransition}
+                    value="day"
+                  >
+                    <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
+                      {renderScheduleContent("day")}
+                    </div>
+                  </TabsPanel>
+                  <TabsPanel
+                    className="flex min-h-0 flex-1 flex-col"
+                    transition={tabTransition}
+                    value="week"
+                  >
+                    <div
+                      className={cn(
+                        "flex min-h-0 flex-1 flex-col px-3 pb-0 sm:px-4 lg:px-6",
+                        isWeeklyTimelineVisible &&
+                          "relative left-1/2 w-screen max-w-none -translate-x-1/2 px-0 sm:static sm:left-auto sm:w-auto sm:translate-x-0 sm:px-0 lg:px-0",
+                      )}
+                    >
+                      {renderScheduleContent("week")}
+                    </div>
+                  </TabsPanel>
+                </TabsPanels>
+              </>
+            )}
+          </WeekDateSelector>
+        </Tabs>
+      </MotionConfig>
 
       {viewMode === "day" ? (
         <WorkspaceFab

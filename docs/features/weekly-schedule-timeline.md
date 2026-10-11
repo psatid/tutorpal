@@ -4,21 +4,21 @@
 
 ## Behavior
 
-- Day and Week use one persistent date selector. A controlled Day/Week tablist mounts only the active rail: Day shows date buttons and Week shows complete Monday–Sunday range buttons.
+- Day and Week use one persistent date selector. A screen-owned controlled Day/Week tablist drives the active date rail and the matching schedule result panel: Day shows date buttons and the schedule list; Week shows complete Monday–Sunday range buttons and the timeline.
 - Selecting a week preserves the active weekday in the target week. The week calendar highlights the full Monday–Sunday range and a clicked calendar day identifies its containing week.
 - In either rail, a touch tap commits immediately on `pointerup` before smooth centering. Horizontal swipes scroll without changing the committed day or week selection.
 - The timeline displays 06:00–22:00 by default and expands to include sessions outside that range.
 - Sessions are positioned by start time and duration. Overlapping sessions are split into separate lanes.
 - Scheduled timeline blocks use stable class-name colors: indigo `#533AFD`, dark orange `#A85800`, or dark cyan `#08769B`. Completed, no-show, and cancelled blocks use solid status fills (`#087443`, `#9A5B00`, and `#B42318`) with a leading class-color dot. All block labels and icons are white. Delivery-type and status icons remain visible, and blocks activate the existing schedule details drawer when clicked or focused with the keyboard.
 - Search and status filters apply in both views. Empty timeline cells are display-only and never create schedules.
-- On narrow screens the populated Week timeline spans the viewport width and fills the remaining screen height. The seven-day grid scrolls horizontally while keeping a readable minimum width for each day, and the sticky time axis stays fully visible at the left edge.
-- Week mode hides the mobile floating Add Schedule button and does not reserve its bottom spacing. Day mode keeps the FAB; the empty-week state keeps its inline Add Schedule action.
+- The populated Week timeline fills the available content width and remaining screen height at every viewport. On phones it spans the viewport width. The seven-day grid scrolls horizontally with 104px minimum day columns below `sm` and 144px columns from `sm` upward; the sticky time axis stays fully visible at the left edge.
+- Week mode hides the mobile floating Add Schedule button and places a labeled icon-only Add action beside search. It does not reserve FAB bottom spacing. Day mode keeps the FAB; the empty-week state keeps its inline Add Schedule action.
 
 ## Scroll and motion polish
 
 - Week mode uses the available viewport height and keeps page scrolling fixed while the timeline owns vertical and horizontal scrolling. The populated mobile timeline is full bleed, with no FAB-sized bottom gap.
 - The shared selector header remains above the scrollport, while the weekday/date header stays sticky at the top and the time axis stays sticky on the left.
-- Day and Week share one compact tablist and one date-selection footprint. Animate UI Base Tabs supplies the indigo highlight and active-panel transition over 180ms; the period label and selected rail fill update directly, without a shared cross-mode tile morph. Reduced-motion users receive zero-duration tab and panel transitions plus instant centering.
+- Day and Week use the same compact vertical spacing at every breakpoint. Animate UI Base Tabs supplies the indigo highlight; the screen applies the matching 180ms transition to the active date rail and result panel, including the list, timeline, and mode-specific loading/error/empty states. The period label, Today control, tablist, search, and filters stay in place. Reduced-motion users receive zero-duration tab and panel transitions plus instant centering.
 - `WeekDateSelector` shows an outlined Today control with a calendar icon and a bordered Day/Week tablist with an indigo active pill. At 480px and wider it shows the full period label; from 360px the compact period label, Today, and Day/Week controls share one row. Below 360px the period label may sit above while Today and Day/Week remain paired. The tab track has a 36px visible surface and 44px tab targets; Today has a 32px outlined surface inside a 44px target. The current week has a primary border and accessible “Contains today” label without a dot.
 - Timeline labels fall back to on-site delivery data when a legacy schedule record omits its type, so accessible labels never expose `undefined`.
 
@@ -30,7 +30,7 @@ The existing tutor scoping, class filtering, search behavior, exact-date filteri
 
 ## Accessibility and states
 
-- Day/Week controls expose real tab, tabpanel, and association semantics. ArrowLeft/ArrowRight/Home/End move focus without changing the query; Enter and Space activate the focused mode. Only the active rail is exposed to assistive technology.
+- Day/Week controls expose real tab, tabpanel, and association semantics. ArrowLeft/ArrowRight/Home/End move focus without changing the query; Enter and Space activate the focused mode. The selector shows only the active date rail, and the screen exposes the active mode's semantic result panel.
 - Each session is a labeled button that announces class, date, time, status, and delivery type before opening the details drawer.
 - Existing loading, error, empty, and filtered-empty patterns remain in use, with week-specific empty-state copy.
 - Timeline motion uses the existing reduced-motion utilities.
@@ -52,3 +52,4 @@ The existing tutor scoping, class filtering, search behavior, exact-date filteri
 - Backend schema, route, and repository tests pass for range validation and filtering.
 - The frontend TypeScript check and production build pass after regenerating the local OpenAPI client.
 - Browser verification passed at 320px and 390px for the responsive toolbar, 44px Today/tab targets, a full-width Week timeline, no page overflow, and fully visible sticky time labels after vertical and horizontal scrolling. Existing coverage also passed at 768px and 1280px for the desktop inline Add action. Loading and error states were not naturally exercised, and no pixel-baseline visual regression was captured.
+- In the latest refinement, manual browser checks at 320px, 390px, 768px, and 1440px confirmed no page overflow, the mobile Week search/Add row, the desktop text Add action, the selected-week fill, consistent compact vertical spacing, and panel alignment to the viewport bottom. The local dataset was empty, so populated timeline scrolling and event layout were not re-exercised; the 104px/144px grid sizing was verified from source.

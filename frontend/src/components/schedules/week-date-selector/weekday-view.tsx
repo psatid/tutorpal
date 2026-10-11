@@ -550,7 +550,7 @@ export function WeekdayView({
   );
 
   return (
-    <div className={cn("min-w-0 max-w-full pb-3 pt-2 md:pb-4", className)}>
+    <div className={cn("min-w-0 max-w-full pb-2 pt-1", className)}>
       <p id={instructionsId} className="sr-only">
         {t("schedules:weekSelector.dateRailInstruction")}
       </p>
