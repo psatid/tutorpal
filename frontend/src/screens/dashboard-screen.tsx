@@ -15,12 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClassDrawer } from "@/components/classes/class-drawer";
+import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { ScheduleDrawer } from "@/components/schedules/schedule-drawer";
 import { APP_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/auth-context";
 import {
   useCompleteSchedule,
-  useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useClasses } from "@/hooks/queries/use-classes";
@@ -42,10 +42,7 @@ type ScheduledSummary = {
   nextSession: DashboardSchedule | null;
 };
 
-type ConfirmationAction = "complete" | "no-show";
-
 type ConfirmationLock = {
-  action: ConfirmationAction;
   id: number;
 };
 
@@ -96,18 +93,19 @@ export function DashboardScreen() {
     date: today,
   });
   const completeMutation = useCompleteSchedule();
-  const updateMutation = useUpdateSchedule();
   const confirmationLockIdRef = useRef(0);
   const confirmationLockRef = useRef<ConfirmationLock | null>(null);
   const resolvedScheduleIdsRef = useRef(new Set<string>());
+  const schedulesLinkRef = useRef<HTMLAnchorElement>(null);
   const [confirmationLock, setConfirmationLock] =
     useState<ConfirmationLock | null>(null);
   const [resolvedScheduleIds, setResolvedScheduleIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [noShowSchedule, setNoShowSchedule] =
+    useState<DashboardSchedule | null>(null);
   const scheduledSummary = getScheduledSummary(schedules, resolvedScheduleIds);
-  const isMutationPending =
-    completeMutation.isPending || updateMutation.isPending;
+  const isMutationPending = completeMutation.isPending;
   const isAwaitingConfirmation = confirmationLock !== null;
   const isTriageBusy = isMutationPending || isAwaitingConfirmation;
 
@@ -143,10 +141,7 @@ export function DashboardScreen() {
     setResolvedScheduleIds(nextResolvedIds);
   };
 
-  const acquireConfirmationLock = (
-    scheduleId: string,
-    action: ConfirmationAction,
-  ) => {
+  const acquireConfirmationLock = (scheduleId: string) => {
     if (
       confirmationLockRef.current ||
       isMutationPending ||
@@ -156,7 +151,6 @@ export function DashboardScreen() {
     }
 
     const lock = {
-      action,
       id: confirmationLockIdRef.current + 1,
     };
 
@@ -178,7 +172,7 @@ export function DashboardScreen() {
   };
 
   const handleCompleteSchedule = (schedule: DashboardSchedule) => {
-    const lock = acquireConfirmationLock(schedule.id, "complete");
+    const lock = acquireConfirmationLock(schedule.id);
     if (!lock) {
       return;
     }
@@ -218,49 +212,15 @@ export function DashboardScreen() {
   };
 
   const handleNoShowSchedule = (schedule: DashboardSchedule) => {
-    const lock = acquireConfirmationLock(schedule.id, "no-show");
-    if (!lock) {
+    if (
+      confirmationLockRef.current ||
+      isMutationPending ||
+      resolvedScheduleIdsRef.current.has(schedule.id)
+    ) {
       return;
     }
 
-    const reservedHours = (schedule.durationMinutes / 60).toFixed(1);
-    let wasConfirmed = false;
-    let isConfirmationClosed = false;
-    const releaseIfUnconfirmed = () => {
-      if (!wasConfirmed) {
-        isConfirmationClosed = true;
-        releaseConfirmationLock(lock);
-      }
-    };
-
-    toast(t("schedules:noShow.confirm", { hours: reservedHours }), {
-      action: {
-        label: t("schedules:noShow.confirmButton"),
-        onClick: () => {
-          if (wasConfirmed || isConfirmationClosed) {
-            return;
-          }
-
-          wasConfirmed = true;
-          updateMutation.mutate(
-            {
-              id: schedule.id,
-              data: { status: "NO_SHOW" },
-            },
-            {
-              onSuccess: () => markScheduleResolved(schedule.id),
-              onSettled: () => releaseConfirmationLock(lock),
-            },
-          );
-        },
-      },
-      cancel: {
-        label: t("schedules:noShow.cancelButton"),
-        onClick: releaseIfUnconfirmed,
-      },
-      onAutoClose: releaseIfUnconfirmed,
-      onDismiss: releaseIfUnconfirmed,
-    });
+    setNoShowSchedule(schedule);
   };
 
   return (
@@ -296,6 +256,7 @@ export function DashboardScreen() {
         </div>
 
         <Link
+          ref={schedulesLinkRef}
           to={APP_ROUTES.SCHEDULES}
           className={buttonVariants({
             variant: "outline",
@@ -321,7 +282,6 @@ export function DashboardScreen() {
             <SessionToConfirmTriage
               isCompleting={completeMutation.isPending}
               isBusy={isTriageBusy}
-              isUpdating={updateMutation.isPending}
               busyLabel={t(
                 isAwaitingConfirmation
                   ? "dashboard:today.waitingForConfirmation"
@@ -340,6 +300,15 @@ export function DashboardScreen() {
       </div>
 
       <GettingStartedChecklist />
+      <NoShowScheduleDialog
+        finalFocus={schedulesLinkRef}
+        onOpenChange={(open) => {
+          if (!open) setNoShowSchedule(null);
+        }}
+        onSuccess={(schedule) => markScheduleResolved(schedule.id)}
+        open={noShowSchedule !== null}
+        schedule={noShowSchedule}
+      />
     </section>
   );
 }
@@ -877,7 +846,6 @@ function SessionToConfirmTriage({
   schedule,
   isBusy,
   isCompleting,
-  isUpdating,
   onComplete,
   onNoShow,
   noShowLabel,
@@ -886,7 +854,6 @@ function SessionToConfirmTriage({
   schedule: DashboardSchedule | null;
   isBusy: boolean;
   isCompleting: boolean;
-  isUpdating: boolean;
   onComplete: (schedule: DashboardSchedule) => void;
   onNoShow: (schedule: DashboardSchedule) => void;
   noShowLabel: string;
@@ -975,7 +942,6 @@ function SessionToConfirmTriage({
         <Button
           className="w-full"
           disabled={isBusy}
-          loading={isUpdating}
           onClick={() => onNoShow(schedule)}
           type="button"
           variant="outline"

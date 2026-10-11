@@ -98,7 +98,6 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 				time: number;
 				durationMinutes: number;
 				notes?: string;
-				status?: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 			}>;
 		}) => {
 			const response = await apiClient.putV1SchedulesById(id, data);
@@ -168,6 +167,50 @@ export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
 			toast.error(
 				error.message || t("toast.completeError"),
 			);
+		},
+	});
+};
+
+export const useNoShowSchedule = (options?: { onSuccess?: () => void }) => {
+	const { t } = useTranslation("schedules");
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			id,
+			deductHours,
+			note,
+		}: {
+			id: string;
+			deductHours: boolean;
+			note?: string;
+		}) => {
+			const response = await apiClient.patchV1SchedulesByIdNoShow(id, {
+				deductHours,
+				note,
+			});
+			return response.data;
+		},
+		onSuccess: async (_, variables) => {
+			toast.success(
+				t(
+					variables.deductHours
+						? "toast.noShowDeductSuccess"
+						: "toast.noShowReleaseSuccess",
+				),
+			);
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() }),
+				queryClient.invalidateQueries({
+					queryKey: schedulesKeys.detail(variables.id),
+				}),
+				queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
+				queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
+			]);
+			options?.onSuccess?.();
+		},
+		onError: (error: Error) => {
+			toast.error(error.message || t("toast.noShowError"));
 		},
 	});
 };

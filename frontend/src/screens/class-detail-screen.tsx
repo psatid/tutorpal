@@ -9,7 +9,6 @@ import {
   useDeleteSchedule,
   useCompleteSchedule,
   useRestoreHours,
-  useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { ClassInfoHeader } from "@/components/classes/class-info-header";
 import { ClassHourAdditionsDrawer } from "@/components/classes/class-hour-additions-drawer";
@@ -25,6 +24,7 @@ import {
   ScheduleDrawer,
   type DrawerMode as ScheduleDrawerMode,
 } from "@/components/schedules/schedule-drawer";
+import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
@@ -69,7 +69,6 @@ export function ClassDetailScreen({
 
   const deleteScheduleMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
-  const updateMutation = useUpdateSchedule();
   const restoreMutation = useRestoreHours();
 
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
@@ -87,6 +86,8 @@ export function ClassDetailScreen({
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
+  const [noShowSchedule, setNoShowSchedule] =
+    useState<GetV1Schedules200Item | null>(null);
   const [isRecurringDrawerOpen, setIsRecurringDrawerOpen] = useState(false);
   const [scheduleReferenceTime, setScheduleReferenceTime] = useState(DateTime.now);
   const isClassNotFound = isClassNotFoundError(classError);
@@ -244,29 +245,9 @@ export function ClassDetailScreen({
 
   const handleNoShowSchedule = useCallback(
     (schedule: GetV1Schedules200Item) => {
-      const reservedHours = (schedule.durationMinutes / 60).toFixed(1);
-      toast(
-        t("schedules:noShow.confirm", {
-          hours: reservedHours,
-          ns: "schedules",
-        }),
-        {
-          action: {
-            label: t("schedules:noShow.confirmButton", { ns: "schedules" }),
-            onClick: () =>
-              updateMutation.mutate({
-                id: schedule.id,
-                data: { status: "NO_SHOW" },
-              }),
-          },
-          cancel: {
-            label: t("schedules:noShow.cancelButton", { ns: "schedules" }),
-            onClick: () => {},
-          },
-        },
-      );
+      setNoShowSchedule(schedule);
     },
-    [t, updateMutation],
+    [],
   );
 
   const handleScheduleDrawerOpenChange = useCallback((open: boolean) => {
@@ -473,6 +454,15 @@ export function ClassDetailScreen({
         mode={scheduleDrawerMode}
         scheduleId={selectedScheduleId}
         onModeChange={setScheduleDrawerMode}
+      />
+
+      <NoShowScheduleDialog
+        finalFocus={classHoursButtonRef}
+        onOpenChange={(open) => {
+          if (!open) setNoShowSchedule(null);
+        }}
+        open={noShowSchedule !== null}
+        schedule={noShowSchedule}
       />
 
       <RecurringScheduleDrawer

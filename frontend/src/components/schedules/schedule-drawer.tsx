@@ -5,9 +5,12 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
+import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -24,13 +27,20 @@ import {
 	ResponsiveDrawer,
 } from "@/components/ui/responsive-drawer";
 import {
+	useCompleteSchedule,
 	useCreateSchedule,
+	useDeleteSchedule,
+	useRestoreHours,
 	useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { useClassDetails } from "@/hooks/queries/use-class-details";
 import { useGetSchedule } from "@/hooks/queries/use-get-schedule";
 import { DateTime } from "@/lib/date-time";
-import { formatDuration, SCHEDULE_DURATION_OPTIONS } from "@/lib/schedule-utils";
+import {
+	formatDuration,
+	SCHEDULE_DURATION_OPTIONS,
+	statusColors,
+} from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 import {
 	getOverlappingRecurringScheduleItemIndexes,
@@ -52,7 +62,6 @@ function getScheduleDefaultValues(date: string): DefaultValues<ScheduleFormData>
 		time: "09:00",
 		durationMinutes: 60,
 		notes: "",
-		status: "SCHEDULED",
 		recurring: undefined,
 	};
 }
@@ -83,13 +92,9 @@ export function ScheduleDrawer({
 	const { t } = useTranslation(["schedules"]);
 	const navigate = useNavigate();
 	const classTriggerRef = useRef<HTMLInputElement>(null);
-	const statusOptions = [
-		{ value: "SCHEDULED", label: t("schedules:status.SCHEDULED") },
-		{ value: "COMPLETED", label: t("schedules:status.COMPLETED") },
-		{ value: "NO_SHOW", label: t("schedules:status.NO_SHOW") },
-		{ value: "CANCELLED", label: t("schedules:status.CANCELLED") },
-	];
+	const editButtonRef = useRef<HTMLButtonElement>(null);
 	const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
+	const [isNoShowDialogOpen, setIsNoShowDialogOpen] = useState(false);
 	const selectedDateValue = selectedDate
 		? DateTime.from(selectedDate).toDateOnlyString()
 		: "";
@@ -144,7 +149,10 @@ export function ScheduleDrawer({
 	useEffect(() => {
 		if (!isOpen || mode === "create") {
 			reset(getScheduleDefaultValues(selectedDateValue));
-			if (!isOpen) setIsClassDrawerOpen(false);
+			if (!isOpen) {
+				setIsClassDrawerOpen(false);
+				setIsNoShowDialogOpen(false);
+			}
 			return;
 		}
 
@@ -156,7 +164,6 @@ export function ScheduleDrawer({
 				time: minutesToTimeString(scheduleData.time),
 				durationMinutes: scheduleData.durationMinutes,
 				notes: scheduleData.notes || "",
-				status: scheduleData.status,
 				recurring: undefined,
 			});
 		}
@@ -175,6 +182,11 @@ export function ScheduleDrawer({
 			onOpenChange(false);
 			onModeChange("view");
 		},
+	});
+	const completeMutation = useCompleteSchedule();
+	const restoreMutation = useRestoreHours();
+	const deleteMutation = useDeleteSchedule({
+		onSuccess: () => onOpenChange(false),
 	});
 
 	const onSubmit = (data: ScheduleFormData) => {
@@ -217,7 +229,6 @@ export function ScheduleDrawer({
 					time: timeInMinutes,
 					durationMinutes: data.durationMinutes,
 					notes: data.notes,
-					status: data.status,
 				},
 			});
 		}
@@ -274,19 +285,134 @@ export function ScheduleDrawer({
 		});
 	};
 
+	const isScheduleActionPending =
+		completeMutation.isPending ||
+		restoreMutation.isPending ||
+		deleteMutation.isPending;
+	const noShowNote = scheduleData?.noShowNote?.trim();
+	const scheduleStatus = scheduleData
+		? statusColors[scheduleData.status]
+		: undefined;
+	const ScheduleStatusIcon = scheduleStatus?.icon;
+
+	const handleDelete = () => {
+		if (!scheduleData || isScheduleActionPending) return;
+
+		toast(t("schedules:delete.confirm"), {
+			action: {
+				label: t("schedules:delete.confirmButton"),
+				onClick: () => deleteMutation.mutate(scheduleData.id),
+			},
+			cancel: {
+				label: t("schedules:delete.cancelButton"),
+				onClick: () => {},
+			},
+		});
+	};
+
+	const handleComplete = () => {
+		if (!scheduleData || isScheduleActionPending) return;
+
+		const hoursToDeduct = (scheduleData.durationMinutes / 60).toFixed(1);
+		toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
+			action: {
+				label: t("schedules:complete.confirmButton"),
+				onClick: () => completeMutation.mutate(scheduleData.id),
+			},
+			cancel: {
+				label: t("schedules:complete.cancelButton"),
+				onClick: () => {},
+			},
+		});
+	};
+
+	const handleRestore = () => {
+		if (!scheduleData || isScheduleActionPending) return;
+
+		const hoursToRestore = (scheduleData.durationMinutes / 60).toFixed(1);
+		toast(t("schedules:restore.confirm", { hours: hoursToRestore }), {
+			action: {
+				label: t("schedules:restore.confirmButton"),
+				onClick: () => restoreMutation.mutate(scheduleData.id),
+			},
+			cancel: {
+				label: t("schedules:restore.cancelButton"),
+				onClick: () => {},
+			},
+		});
+	};
+
+	const scheduleActionGroup =
+		mode === "view" && scheduleData ? (
+			<div
+				aria-label={t("schedules:drawer.actions.label")}
+				className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+				role="group"
+			>
+				{scheduleData.status === "SCHEDULED" ? (
+					<>
+						<Button
+							disabled={isScheduleActionPending}
+							loading={completeMutation.isPending}
+							onClick={handleComplete}
+							type="button"
+						>
+							{t("schedules:complete.action")}
+						</Button>
+						<Button
+							disabled={isScheduleActionPending}
+							onClick={() => setIsNoShowDialogOpen(true)}
+							type="button"
+							variant="outline"
+						>
+							{t("schedules:noShow.action")}
+						</Button>
+					</>
+				) : null}
+				{(scheduleData.status === "COMPLETED" ||
+					scheduleData.status === "NO_SHOW") && (
+					<Button
+						disabled={isScheduleActionPending}
+						loading={restoreMutation.isPending}
+						onClick={handleRestore}
+						type="button"
+						variant="outline"
+					>
+						{t("schedules:restore.action")}
+					</Button>
+				)}
+				<Button
+					className="sm:col-span-2"
+					disabled={isScheduleActionPending}
+					loading={deleteMutation.isPending}
+					onClick={handleDelete}
+					type="button"
+					variant="destructive"
+				>
+					{t("schedules:delete.confirmButton")}
+				</Button>
+			</div>
+		) : null;
+
 	const footer =
 		mode === "view" ? (
-			<Button
-				className="w-full"
-				onClick={(event) => {
-					event.preventDefault();
-					event.stopPropagation();
-					onModeChange("edit");
-				}}
-				type="button"
-			>
-				{t("schedules:drawer.editButton")}
-			</Button>
+			<>
+				<Button
+					className="w-full"
+					disabled={isScheduleActionPending}
+					onClick={(event) => {
+						event.preventDefault();
+						event.stopPropagation();
+						onModeChange("edit");
+					}}
+					ref={editButtonRef}
+					type="button"
+					variant="outline"
+				>
+					{t("schedules:drawer.editButton")}
+				</Button>
+				{scheduleActionGroup}
+			</>
 		) : (
 			<Button
 				className="w-full"
@@ -312,6 +438,21 @@ export function ScheduleDrawer({
 				onSubmit={handleSubmit(onSubmit, focusFirstOverlappingRecurringTime)}
 			>
 				<FieldGroup className="gap-5">
+					{mode === "view" && scheduleData && scheduleStatus ? (
+						<Field>
+							<FieldLabel>{t("schedules:drawer.status.label")}</FieldLabel>
+							<Badge
+								className={cn("w-fit gap-1", scheduleStatus.className)}
+								variant="outline"
+							>
+								{ScheduleStatusIcon ? (
+									<ScheduleStatusIcon aria-hidden="true" className="size-3" />
+								) : null}
+								{t(`schedules:status.${scheduleData.status}`)}
+							</Badge>
+						</Field>
+					) : null}
+
 					<FormField
 						caption={
 							mode === "create"
@@ -551,20 +692,22 @@ export function ScheduleDrawer({
 						}}
 					/>
 
-					{mode !== "create" && (
-						<RHFSelectField
-							control={control}
-							name="status"
-							label={t("schedules:drawer.status.label")}
-							options={statusOptions}
-							disabled={isDisabled}
-							selectProps={{
-								placeholder: t("schedules:drawer.status.placeholder"),
-							}}
-						/>
-					)}
+					{mode === "view" && noShowNote ? (
+						<Field>
+							<FieldLabel>{t("schedules:noShow.note.displayLabel")}</FieldLabel>
+							<p className="rounded-md border border-input bg-surface-container-low px-3 py-2.5 text-sm whitespace-pre-wrap text-on-surface">
+								{noShowNote}
+							</p>
+						</Field>
+					) : null}
 				</FieldGroup>
 			</form>
+			<NoShowScheduleDialog
+				finalFocus={editButtonRef}
+				onOpenChange={setIsNoShowDialogOpen}
+				open={isNoShowDialogOpen}
+				schedule={scheduleData ?? null}
+			/>
 		</ResponsiveDrawer>
 	);
 }

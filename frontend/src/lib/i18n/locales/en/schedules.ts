@@ -32,6 +32,9 @@ export default {
 		deleteError: "Failed to delete schedule. Please try again.",
 		completeSuccess: "Schedule completed successfully. Hours deducted.",
 		completeError: "Failed to complete schedule. Please try again.",
+		noShowDeductSuccess: "No show recorded. Hours remain reserved.",
+		noShowReleaseSuccess: "Session cancelled and hours released.",
+		noShowError: "Failed to record the no show. Please try again.",
 		restoreSuccess: "Hours restored successfully.",
 		restoreError: "Failed to restore hours. Please try again.",
 		recurringUpdateSuccess: "Recurring schedule updated successfully.",
@@ -67,13 +70,41 @@ export default {
 		cancelButton: "Cancel",
 	},
 	noShow: {
-		action: "Mark No Show",
+		action: "No Show",
 		confirm: "Mark this schedule as no show? {{hours}} hours will remain reserved.",
 		confirmButton: "Mark No Show",
 		cancelButton: "Cancel",
+		title: "Record no show",
+		description:
+			"Choose what to do with this session's reserved hours. You can add a separate no-show note.",
+		session: {
+			date: "Date",
+			time: "Time",
+			duration: "Duration",
+		},
+		outcome: {
+			label: "What should happen to the reserved hours?",
+			deduct: {
+				title: "Keep hours reserved",
+				description: "Mark as no show and deduct {{hours}} hours.",
+			},
+			release: {
+				title: "Release the hours",
+				description: "Cancel this session and release {{hours}} hours.",
+			},
+		},
+		note: {
+			label: "No-show note",
+			caption: "Optional. This is separate from the schedule notes.",
+			placeholder: "Add a note about the no-show...",
+			displayLabel: "No-show note",
+		},
+		submitDeduct: "Mark no show and deduct {{hours}} h",
+		submitRelease: "Cancel session and release {{hours}} h",
+		submitChooseOutcome: "Choose an outcome",
 	},
 	restore: {
-		action: "Restore Hours",
+		action: "Restore",
 		confirm: "Restore {{hours}} hours for this schedule?",
 		confirmButton: "Restore",
 		cancelButton: "Cancel",
@@ -127,6 +158,9 @@ export default {
 		updateButton: "Update Schedule",
 		closeButton: "Close",
 		cancelButton: "Cancel",
+		actions: {
+			label: "Schedule actions",
+		},
 		class: {
 			label: "Class",
 			caption: "Required",

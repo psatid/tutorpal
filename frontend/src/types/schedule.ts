@@ -148,7 +148,6 @@ export function createScheduleSchema(t: TFunction) {
 				.min(1, t("schedules:validation.durationRequired"))
 				.optional(),
 			notes: z.string().optional(),
-			status: z.enum(["SCHEDULED", "COMPLETED", "NO_SHOW", "CANCELLED"]),
 			recurring: z
 				.object({
 					scheduleItems: z

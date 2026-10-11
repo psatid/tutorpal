@@ -12,14 +12,14 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import {
-  useDeleteSchedule,
   useCompleteSchedule,
+  useDeleteSchedule,
   useRestoreHours,
-  useUpdateSchedule,
 } from "@/hooks/mutations/use-schedules";
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
+import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import {
   ScheduleDrawer,
@@ -75,6 +75,7 @@ export function SchedulesScreen() {
   const fabRef = useRef<HTMLButtonElement>(null);
   const weekAddRef = useRef<HTMLButtonElement>(null);
   const activeTriggerRef = useRef<HTMLButtonElement>(null);
+  const scheduleSearchRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedDate, setSelectedDate] = useState<Date>(
@@ -85,6 +86,8 @@ export function SchedulesScreen() {
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
+  const [noShowSchedule, setNoShowSchedule] =
+    useState<GetV1Schedules200Item | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
   const prefersReducedMotion = useReducedMotion() === true;
@@ -122,7 +125,6 @@ export function SchedulesScreen() {
 
   const deleteMutation = useDeleteSchedule();
   const completeMutation = useCompleteSchedule();
-  const updateMutation = useUpdateSchedule();
   const restoreMutation = useRestoreHours();
 
   const filteredSchedules = useMemo(() => {
@@ -200,21 +202,7 @@ export function SchedulesScreen() {
   };
 
   const handleNoShowSchedule = (schedule: GetV1Schedules200Item) => {
-    const reservedHours = (schedule.durationMinutes / 60).toFixed(1);
-    toast(t("schedules:noShow.confirm", { hours: reservedHours }), {
-      action: {
-        label: t("schedules:noShow.confirmButton"),
-        onClick: () =>
-          updateMutation.mutate({
-            id: schedule.id,
-            data: { status: "NO_SHOW" },
-          }),
-      },
-      cancel: {
-        label: t("schedules:noShow.cancelButton"),
-        onClick: () => {},
-      },
-    });
+    setNoShowSchedule(schedule);
   };
 
   const handleModeChange = (mode: DrawerMode) => {
@@ -380,6 +368,7 @@ export function SchedulesScreen() {
                   >
                     <div className="min-w-0 flex-1">
                       <Input
+                        ref={scheduleSearchRef}
                         value={searchQuery}
                         onChange={(event) => setSearchQuery(event.target.value)}
                         placeholder={t("schedules:searchPlaceholder")}
@@ -500,6 +489,14 @@ export function SchedulesScreen() {
         onModeChange={handleModeChange}
         onCloseAutoFocus={focusTrigger}
         selectedDate={selectedDate}
+      />
+      <NoShowScheduleDialog
+        finalFocus={scheduleSearchRef}
+        onOpenChange={(open) => {
+          if (!open) setNoShowSchedule(null);
+        }}
+        open={noShowSchedule !== null}
+        schedule={noShowSchedule}
       />
     </div>
   );
