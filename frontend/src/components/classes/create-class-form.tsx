@@ -122,7 +122,6 @@ export function ClassForm({
 					control={control}
 					disabled={isReadOnly}
 					inputProps={{
-						autoFocus: isOpen && mode === "create",
 						placeholder: t("classes:createForm.namePlaceholder"),
 					}}
 					label={t("classes:createForm.nameLabel")}

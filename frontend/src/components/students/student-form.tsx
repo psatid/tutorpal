@@ -25,7 +25,6 @@ export function StudentForm({ onCreated }: { onCreated: () => void }) {
 			<RHFInputField
 				control={control}
 				inputProps={{
-					autoFocus: true,
 					placeholder: t("students:drawer.name.placeholder"),
 				}}
 				label={t("students:drawer.name.label")}

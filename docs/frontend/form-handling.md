@@ -157,6 +157,11 @@ Use `setValue` for a targeted update from a custom selector. Pass
 `{ shouldValidate: true }` when the user action should immediately revalidate
 that field. Prefer `reset` when replacing the whole form with fetched data.
 
+Form drawers do not autofocus their first field when opened. The shared drawer
+focuses its panel, keeping the modal context active without placing a caret in a
+field or opening the mobile keyboard; users can move through controls with Tab.
+Keep the existing focus return to the invoking control when the drawer closes.
+
 Use `useWatch` when form values control conditional UI. Do not mirror a form
 value in `useState`; duplicated state can make the rendered fields disagree
 with the values validated and submitted by React Hook Form.

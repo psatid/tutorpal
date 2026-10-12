@@ -94,7 +94,6 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
 			<RHFInputField
 				control={control}
 				inputProps={{
-					autoFocus: true,
 					placeholder: t("courses:form.namePlaceholder"),
 				}}
 				label={t("courses:form.nameLabel")}
