@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GetV1SchedulesById200 } from "@/api/generated/models/getV1SchedulesById200";
@@ -249,6 +249,30 @@ describe("ScheduleDrawer", () => {
 			"type",
 			"time",
 		);
+	});
+
+	it("prefills duration when schedule details arrive after the drawer opens", async () => {
+		drawerState.schedule = null;
+		const props = {
+			isOpen: true,
+			mode: "view" as const,
+			onModeChange: vi.fn(),
+			onOpenChange: vi.fn(),
+			scheduleId: "schedule-1",
+		};
+		const { rerender } = render(<ScheduleDrawer {...props} />);
+
+		const duration = screen.getByRole("combobox", { name: "Duration" });
+		expect(duration).toHaveTextContent("Select duration");
+
+		drawerState.schedule = { ...makeSchedule("SCHEDULED"), durationMinutes: 90 };
+		rerender(<ScheduleDrawer {...props} />);
+
+		await waitFor(() => {
+			expect(
+				screen.getByRole("combobox", { name: "Duration" }),
+			).toHaveTextContent("1 h 30 min");
+		});
 	});
 
 	it("focuses the first conflicting recurring time when overlap validation fails", async () => {

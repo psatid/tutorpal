@@ -81,6 +81,10 @@ They connect a control to React Hook Form and pass validation errors to the
 shared `FormField`. Put native control properties inside `inputProps` or
 `selectProps`.
 
+`RHFSelectField` keeps an unset value controlled as `null`. When a form resets
+after asynchronously loaded data arrives, this lets the selected label update
+without switching the Select from uncontrolled to controlled.
+
 `RHFInputField` generates a stable input ID and connects its label,
 description, and validation error automatically. Pass an explicit `id` in
 `inputProps` only when another element must reference the control.

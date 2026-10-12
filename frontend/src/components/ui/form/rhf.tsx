@@ -174,7 +174,7 @@ function RHFSelectField<T extends FieldValues, O = string>({
       name={name}
       render={({ field, fieldState }) => (
         <SelectField
-          value={field.value}
+          value={field.value ?? null}
           onValueChange={field.onChange}
           options={options}
           placeholder={selectProps?.placeholder}
