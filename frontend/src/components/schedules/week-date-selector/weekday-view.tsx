@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type TouchEvent as ReactTouchEvent,
 } from "react";
 import { useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -49,6 +50,7 @@ type NativeClickEvent = globalThis.MouseEvent & {
 
 const EDGE_THRESHOLD = 128;
 const SMOOTH_SCROLL_SETTLE_DELAY = 150;
+const SCROLL_SETTLE_DELAY = 150;
 const TOUCH_SWIPE_THRESHOLD = 8;
 const TOUCH_CLICK_SUPPRESSION_DELAY = 500;
 const WEEK_DAYS = 7;
@@ -108,6 +110,7 @@ export function WeekdayView({
   const pendingAppendTrackWidthRef = useRef<number | null>(null);
   const pendingExtensionRef = useRef<"previous" | "next" | null>(null);
   const pendingFocusDateRef = useRef<string | null>(null);
+  const forcedCenteredDateRef = useRef<string | null>(null);
   const lastCenteredDateRef = useRef<string | null>(null);
   const lastCenterRequestRef = useRef<number | null>(null);
   const smoothCenteringRef = useRef(false);
@@ -115,8 +118,16 @@ export function WeekdayView({
   const centerSelectedDateRef = useRef<
     (behavior?: ScrollBehavior) => void
   >(() => undefined);
+  const extendAtSettledEdgeRef = useRef<() => boolean>(() => false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
+  const scrollSettlementTimeoutRef = useRef<number | null>(null);
+  const scrollSessionActiveRef = useRef(false);
+  const scrollSessionStartIndexRef = useRef<number | null>(null);
+  const didExtendScrollSessionRef = useRef(false);
+  const touchScrollPointerActiveRef = useRef(false);
+  const activeTouchIdentifierRef = useRef<number | null>(null);
+  const settleRailScrollRef = useRef<() => void>(() => undefined);
   const lastMousePointerDownAtRef = useRef<number | null>(null);
   const touchGestureRef = useRef<TouchSelectionGesture | null>(null);
   const touchClickSuppressionRef = useRef<TouchClickSuppression | null>(
@@ -165,6 +176,93 @@ export function WeekdayView({
     touchClickSuppressionRef.current = null;
   }, []);
 
+  const discardScrollSession = useCallback(() => {
+    scrollSessionActiveRef.current = false;
+    scrollSessionStartIndexRef.current = null;
+    didExtendScrollSessionRef.current = false;
+
+    if (scrollSettlementTimeoutRef.current !== null) {
+      window.clearTimeout(scrollSettlementTimeoutRef.current);
+      scrollSettlementTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleRailScrollEnd = useCallback(() => {
+    if (touchScrollPointerActiveRef.current) return;
+
+    settleRailScrollRef.current();
+  }, []);
+
+  const scheduleRailScrollSettlement = useCallback(() => {
+    if (
+      !scrollSessionActiveRef.current ||
+      touchScrollPointerActiveRef.current
+    ) {
+      return;
+    }
+
+    if (scrollSettlementTimeoutRef.current !== null) {
+      window.clearTimeout(scrollSettlementTimeoutRef.current);
+    }
+
+    scrollSettlementTimeoutRef.current = window.setTimeout(
+      () => settleRailScrollRef.current(),
+      SCROLL_SETTLE_DELAY,
+    );
+  }, []);
+
+  const finishTouchScroll = useCallback(() => {
+    if (!touchScrollPointerActiveRef.current) return;
+
+    touchScrollPointerActiveRef.current = false;
+    activeTouchIdentifierRef.current = null;
+    scheduleRailScrollSettlement();
+  }, [scheduleRailScrollSettlement]);
+
+  useLayoutEffect(() => {
+    const didTrackedTouchEnd = (event: TouchEvent) => {
+      const activeTouchIdentifier = activeTouchIdentifierRef.current;
+
+      return activeTouchIdentifier === null
+        ? event.touches.length === 0
+        : Array.from(event.changedTouches).some(
+            (touch) => touch.identifier === activeTouchIdentifier,
+          );
+    };
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (didTrackedTouchEnd(event)) {
+        finishTouchScroll();
+      }
+    };
+    const handleTouchCancel = (event: TouchEvent) => {
+      if (didTrackedTouchEnd(event)) {
+        touchGestureRef.current = null;
+        touchScrollPointerActiveRef.current = false;
+        activeTouchIdentifierRef.current = null;
+        discardScrollSession();
+      }
+    };
+    const discardInterruptedTouch = () => {
+      touchGestureRef.current = null;
+      clearTouchClickSuppression();
+      touchScrollPointerActiveRef.current = false;
+      activeTouchIdentifierRef.current = null;
+      discardScrollSession();
+    };
+
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchCancel, { passive: true });
+    window.addEventListener("pagehide", discardInterruptedTouch);
+    window.addEventListener("blur", discardInterruptedTouch);
+
+    return () => {
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchCancel);
+      window.removeEventListener("pagehide", discardInterruptedTouch);
+      window.removeEventListener("blur", discardInterruptedTouch);
+    };
+  }, [clearTouchClickSuppression, discardScrollSession, finishTouchScroll]);
+
   const armTouchClickSuppression = useCallback(
     (key: string) => {
       clearTouchClickSuppression();
@@ -192,7 +290,9 @@ export function WeekdayView({
     resizeDuringSmoothCenteringRef.current = false;
     clearSmoothCentering();
 
-    if (shouldRecenterAfterResize) {
+    const didRotateBuffer = extendAtSettledEdgeRef.current();
+
+    if (!didRotateBuffer && shouldRecenterAfterResize) {
       centerSelectedDateRef.current();
     }
   }, [clearSmoothCentering]);
@@ -229,9 +329,24 @@ export function WeekdayView({
       clearSmoothCentering();
       resizeDuringSmoothCenteringRef.current = false;
       clearTouchClickSuppression();
+      discardScrollSession();
+      touchScrollPointerActiveRef.current = false;
+      activeTouchIdentifierRef.current = null;
       touchGestureRef.current = null;
     };
-  }, [clearSmoothCentering, clearTouchClickSuppression]);
+  }, [clearSmoothCentering, clearTouchClickSuppression, discardScrollSession]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    container.addEventListener("scrollend", handleRailScrollEnd);
+
+    return () => {
+      container.removeEventListener("scrollend", handleRailScrollEnd);
+    };
+  }, [handleRailScrollEnd]);
 
   const centerSelectedDate = useCallback(
     (behavior: ScrollBehavior = "auto") => {
@@ -299,7 +414,16 @@ export function WeekdayView({
     if (!selectedDate) return;
 
     const selectedDateKey = DateTime.from(selectedDate).toDateOnlyString();
+
+    if (pendingExtensionRef.current !== null) {
+      lastCenteredDateRef.current = selectedDateKey;
+      lastCenterRequestRef.current = centerRequest.id;
+      return;
+    }
+
+    const shouldForceCenter = forcedCenteredDateRef.current === selectedDateKey;
     const shouldCenter =
+      shouldForceCenter ||
       lastCenteredDateRef.current !== selectedDateKey ||
       lastCenterRequestRef.current !== centerRequest.id;
 
@@ -319,13 +443,16 @@ export function WeekdayView({
       lastCenterRequestRef.current !== centerRequest.id;
     const behavior = isInitialCenter
       ? "auto"
-      : centerRequestChanged
+      : shouldForceCenter
+        ? "smooth"
+        : centerRequestChanged
         ? centerRequest.behavior
         : selectedDateChanged
           ? "smooth"
           : "auto";
 
     centerSelectedDate(behavior);
+    forcedCenteredDateRef.current = null;
     lastCenteredDateRef.current = selectedDateKey;
     lastCenterRequestRef.current = centerRequest.id;
   }, [centerRequest, centerSelectedDate, dates, selectedDate]);
@@ -388,6 +515,144 @@ export function WeekdayView({
     };
   }, []);
 
+  const extendAtSettledEdge = useCallback(() => {
+    const container = containerRef.current;
+
+    if (!container || pendingExtensionRef.current !== null) return false;
+
+    const firstDateButton = container.querySelector<HTMLButtonElement>(
+      "button[data-date-key]",
+    );
+    const track = firstDateButton?.parentElement;
+    const gap = track
+      ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
+      : 0;
+    const itemWidth = firstDateButton
+      ? firstDateButton.getBoundingClientRect().width + gap
+      : null;
+
+    if (itemWidth === null) return false;
+
+    const maxScrollLeft = Math.max(
+      container.scrollWidth - container.clientWidth,
+      0,
+    );
+    const edgeThreshold = Math.min(
+      EDGE_THRESHOLD,
+      Math.max(maxScrollLeft - itemWidth, 0),
+    );
+    const direction =
+      maxScrollLeft > 0 && container.scrollLeft <= edgeThreshold
+        ? "previous"
+        : maxScrollLeft > 0 &&
+            container.scrollLeft >= maxScrollLeft - edgeThreshold
+          ? "next"
+          : null;
+
+    if (!direction) return false;
+
+    pendingExtensionRef.current = direction;
+
+    if (direction === "previous") {
+      pendingPrependTrackWidthRef.current = itemWidth * WEEK_DAYS;
+    } else {
+      pendingAppendStartDateRef.current = dates[0]?.getTime() ?? null;
+      pendingAppendTrackWidthRef.current = itemWidth * WEEK_DAYS;
+    }
+
+    onExtendDateBuffer(direction);
+    return true;
+  }, [dates, onExtendDateBuffer]);
+
+  useLayoutEffect(() => {
+    extendAtSettledEdgeRef.current = extendAtSettledEdge;
+  }, [extendAtSettledEdge]);
+
+  const settleRailScroll = useCallback(() => {
+    if (smoothCenteringRef.current) {
+      settleSmoothCentering();
+      return;
+    }
+
+    if (touchScrollPointerActiveRef.current) return;
+
+    if (!scrollSessionActiveRef.current) return;
+
+    scrollSessionActiveRef.current = false;
+
+    if (scrollSettlementTimeoutRef.current !== null) {
+      window.clearTimeout(scrollSettlementTimeoutRef.current);
+      scrollSettlementTimeoutRef.current = null;
+    }
+
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const buttons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button[data-date-key]"),
+    );
+
+    if (buttons.length === 0) return;
+
+    const centers = buttons.map(
+      (button) => button.offsetLeft + button.offsetWidth / 2,
+    );
+
+    if (new Set(centers).size < 2) return;
+
+    const viewportCenter = container.scrollLeft + container.clientWidth / 2;
+    const centeredIndex = centers.reduce(
+      (closestIndex, center, index) =>
+        Math.abs(center - viewportCenter) <
+        Math.abs(centers[closestIndex]! - viewportCenter)
+          ? index
+          : closestIndex,
+      0,
+    );
+    const selectedIndex = selectedDate
+      ? dates.findIndex((date) => DateTime.from(date).isSameDay(selectedDate))
+      : -1;
+    const startIndex =
+      scrollSessionStartIndexRef.current ??
+      (selectedIndex >= 0 ? selectedIndex : centeredIndex);
+    const targetIndex = Math.min(
+      Math.max(centeredIndex, startIndex - 1),
+      startIndex + 1,
+    );
+    const targetDate = dates[targetIndex];
+    const wasLimitedToOneStep = targetIndex !== centeredIndex;
+
+    scrollSessionStartIndexRef.current = null;
+
+    if (!targetDate) return;
+
+    if (!selectedDate || !DateTime.from(targetDate).isSameDay(selectedDate)) {
+      if (wasLimitedToOneStep) {
+        forcedCenteredDateRef.current = DateTime.from(
+          targetDate,
+        ).toDateOnlyString();
+      }
+      onDateSelect(targetDate);
+    }
+
+    if (wasLimitedToOneStep) return;
+
+    if (!didExtendScrollSessionRef.current) {
+      didExtendScrollSessionRef.current = extendAtSettledEdge();
+    }
+  }, [
+    dates,
+    extendAtSettledEdge,
+    onDateSelect,
+    selectedDate,
+    settleSmoothCentering,
+  ]);
+
+  useLayoutEffect(() => {
+    settleRailScrollRef.current = settleRailScroll;
+  }, [settleRailScroll]);
+
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
 
@@ -398,44 +663,25 @@ export function WeekdayView({
       return;
     }
 
-    if (pendingExtensionRef.current) return;
+    if (!scrollSessionActiveRef.current) {
+      const selectedIndex = selectedDate
+        ? dates.findIndex((date) => DateTime.from(date).isSameDay(selectedDate))
+        : -1;
 
-    const isNearStart = container.scrollLeft <= EDGE_THRESHOLD;
-    const isNearEnd =
-      container.scrollLeft + container.clientWidth >=
-      container.scrollWidth - EDGE_THRESHOLD;
-
-    if (isNearStart) {
-      const firstDateButton = container.querySelector<HTMLButtonElement>(
-        "button[data-date-key]",
-      );
-      const track = firstDateButton?.parentElement;
-      const gap = track
-        ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
-        : 0;
-
-      pendingExtensionRef.current = "previous";
-      pendingPrependTrackWidthRef.current = firstDateButton
-        ? (firstDateButton.getBoundingClientRect().width + gap) * 7
-        : null;
-      onExtendDateBuffer("previous");
-    } else if (isNearEnd) {
-      const firstDateButton = container.querySelector<HTMLButtonElement>(
-        "button[data-date-key]",
-      );
-      const track = firstDateButton?.parentElement;
-      const gap = track
-        ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
-        : 0;
-
-      pendingExtensionRef.current = "next";
-      pendingAppendStartDateRef.current = dates[0]?.getTime() ?? null;
-      pendingAppendTrackWidthRef.current = firstDateButton
-        ? (firstDateButton.getBoundingClientRect().width + gap) * 7
-        : null;
-      onExtendDateBuffer("next");
+      scrollSessionActiveRef.current = true;
+      scrollSessionStartIndexRef.current = selectedIndex >= 0 ? selectedIndex : null;
+      didExtendScrollSessionRef.current = false;
     }
-  }, [dates, onExtendDateBuffer, scheduleSmoothCenterFallback]);
+
+    scheduleRailScrollSettlement();
+
+    if (pendingExtensionRef.current) return;
+  }, [
+    dates,
+    scheduleRailScrollSettlement,
+    scheduleSmoothCenterFallback,
+    selectedDate,
+  ]);
 
   const handleRailFocus = useCallback(
     (event: FocusEvent<HTMLDivElement>) => {
@@ -465,6 +711,7 @@ export function WeekdayView({
 
       event.preventDefault();
       cancelSmoothCentering();
+      discardScrollSession();
 
       const nextDate = getDateByDayOffset(date, dayOffset);
       const firstDate = dates[0];
@@ -479,19 +726,65 @@ export function WeekdayView({
       pendingFocusDateRef.current = DateTime.from(nextDate).toDateOnlyString();
       onDateSelect(nextDate);
     },
-    [cancelSmoothCentering, dates, onDateSelect, onExtendDateBuffer],
+    [
+      cancelSmoothCentering,
+      dates,
+      discardScrollSession,
+      onDateSelect,
+      onExtendDateBuffer,
+    ],
   );
 
   const handleRailPointerDownCapture = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       cancelSmoothCentering();
 
-      if (event.pointerType === "mouse") {
+      const selectedIndex = selectedDate
+        ? dates.findIndex((date) => DateTime.from(date).isSameDay(selectedDate))
+        : -1;
+
+      scrollSessionActiveRef.current = true;
+      scrollSessionStartIndexRef.current = selectedIndex >= 0 ? selectedIndex : null;
+      didExtendScrollSessionRef.current = false;
+
+      if (event.pointerType === "touch" && event.isPrimary) {
+        touchScrollPointerActiveRef.current = true;
+      } else if (event.pointerType === "mouse") {
         lastMousePointerDownAtRef.current = Date.now();
       }
     },
-    [cancelSmoothCentering],
+    [cancelSmoothCentering, dates, selectedDate],
   );
+
+  const handleRailTouchStart = useCallback(
+    (event: ReactTouchEvent<HTMLDivElement>) => {
+      if (activeTouchIdentifierRef.current !== null) {
+        return;
+      }
+
+      const touch = event.changedTouches[0];
+
+      if (!touch) return;
+
+      touchScrollPointerActiveRef.current = true;
+      activeTouchIdentifierRef.current = touch.identifier;
+    },
+    [],
+  );
+
+  const handleRailWheel = useCallback(() => {
+    cancelSmoothCentering();
+
+    if (!scrollSessionActiveRef.current) {
+      const selectedIndex = selectedDate
+        ? dates.findIndex((date) => DateTime.from(date).isSameDay(selectedDate))
+        : -1;
+
+      scrollSessionActiveRef.current = true;
+      scrollSessionStartIndexRef.current = selectedIndex >= 0 ? selectedIndex : null;
+      didExtendScrollSessionRef.current = false;
+    }
+  }, [cancelSmoothCentering, dates, selectedDate]);
 
   const handleTouchPointerDown = useCallback(
     (
@@ -532,6 +825,10 @@ export function WeekdayView({
 
   const handleTouchPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "touch" && event.isPrimary) {
+        finishTouchScroll();
+      }
+
       const gesture = touchGestureRef.current;
 
       if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -540,10 +837,15 @@ export function WeekdayView({
       armTouchClickSuppression(gesture.key);
 
       if (!hasTouchGestureExceededTapThreshold(gesture, event) && !gesture.isSwipe) {
+        discardScrollSession();
         gesture.select();
       }
     },
-    [armTouchClickSuppression],
+    [
+      armTouchClickSuppression,
+      discardScrollSession,
+      finishTouchScroll,
+    ],
   );
 
   const handleTouchPointerCancel = useCallback(
@@ -587,9 +889,10 @@ export function WeekdayView({
         return;
       }
 
+      discardScrollSession();
       onDateSelect(date);
     },
-    [clearTouchClickSuppression, onDateSelect],
+    [clearTouchClickSuppression, discardScrollSession, onDateSelect],
   );
 
   return (
@@ -605,12 +908,13 @@ export function WeekdayView({
         tabIndex={isSelectedDateInBuffer ? -1 : 0}
         onFocus={handleRailFocus}
         onScroll={handleScroll}
-        onWheel={cancelSmoothCentering}
+        onWheel={handleRailWheel}
         onPointerDownCapture={handleRailPointerDownCapture}
+        onTouchStart={handleRailTouchStart}
         onPointerMove={handleTouchPointerMove}
         onPointerUp={handleTouchPointerUp}
         onPointerCancel={handleTouchPointerCancel}
-        className="relative min-w-0 max-w-full overflow-x-auto py-1 scroll-py-1 overscroll-x-contain touch-pan-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="relative min-w-0 max-w-full snap-x snap-mandatory overflow-x-auto py-1 scroll-px-3 scroll-py-1 overscroll-x-contain touch-pan-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:scroll-px-4 lg:scroll-px-6"
       >
         {offscreenSelectedAriaLabel && (
           <span
@@ -661,7 +965,7 @@ export function WeekdayView({
                 onKeyDown={(event) => handleKeyDown(event, date)}
                 data-date-key={dateKey}
                 className={cn(
-                  "relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
+                  "relative flex h-14 w-14 shrink-0 snap-center snap-always flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected
                     ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover"
                     : isDateToday

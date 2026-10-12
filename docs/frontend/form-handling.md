@@ -114,10 +114,16 @@ input opens with click, Enter, or Space and regains focus when the mobile drawer
 closes. Callers can provide a custom trigger for controls such as the schedule
 week selector.
 
-`RHFTimeField` uses the browser's native `type="time"` control and keeps its
-native picker affordance visible. Keep the control full width and do not overlay
-a custom clock icon; iOS can render its own time-control affordance inside the
-input.
+`RHFTimeField` keeps the browser's native `type="time"` control and picker, with
+the shared decorative clock icon on the left and enough input padding to keep
+the value clear of the icon. The control fills its available width without an
+iOS intrinsic-width override. Hide a competing native clock indicator when it
+would create a duplicate icon; tapping the time input still opens the platform
+picker.
+
+In the one-time Schedule drawer, Time and Duration share an equal-width row at
+all viewport sizes. Keep each label, required state, and validation error with
+its own field. The recurring editor keeps its existing weekday/time layout.
 
 In Add New Schedule, one-time duration and each selected recurring weekday use
 numeric selects with 30-minute choices from 30 minutes through 3 hours; each

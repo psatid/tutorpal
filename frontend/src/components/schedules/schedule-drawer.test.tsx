@@ -251,6 +251,49 @@ describe("ScheduleDrawer", () => {
 		);
 	});
 
+	it("associates the one-time Time label with its native input", () => {
+		render(
+			<ScheduleDrawer
+				isOpen
+				mode="create"
+				onModeChange={vi.fn()}
+				onOpenChange={vi.fn()}
+				scheduleId={null}
+				selectedDate={new Date(2026, 9, 8)}
+			/>,
+		);
+
+		const time = screen.getByLabelText(/^Time/);
+
+		expect(time).toHaveAttribute("type", "time");
+	});
+
+	it("keeps one-time Time and Duration in one equal two-column row", () => {
+		render(
+			<ScheduleDrawer
+				isOpen
+				mode="create"
+				onModeChange={vi.fn()}
+				onOpenChange={vi.fn()}
+				scheduleId={null}
+				selectedDate={new Date(2026, 9, 8)}
+			/>,
+		);
+
+		const time = screen.getByDisplayValue("09:00");
+		const duration = screen.getByRole("combobox", { name: /^Duration/ });
+		const timeField = time.closest<HTMLElement>('[data-slot="field"]');
+		const durationField = duration.closest<HTMLElement>('[data-slot="field"]');
+		const row = timeField?.parentElement;
+
+		expect(time).toHaveAttribute("type", "time");
+		expect(timeField).toHaveClass("w-full");
+		expect(durationField).toHaveClass("w-full");
+		expect(row).toBe(durationField?.parentElement);
+		expect(row).toHaveClass("grid", "grid-cols-2", "gap-3");
+		expect(row?.className).not.toContain("sm:grid-cols");
+	});
+
 	it("prefills duration when schedule details arrive after the drawer opens", async () => {
 		drawerState.schedule = null;
 		const props = {

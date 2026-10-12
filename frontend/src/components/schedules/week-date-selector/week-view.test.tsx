@@ -6,6 +6,10 @@ import { DateTime } from "@/lib/date-time";
 import { WeekView } from "./week-view";
 
 const SELECTED_DATE = DateTime.fromDateOnlyString("2026-10-14").toDate();
+const WEEK_TILE_WIDTH = 144;
+const WEEK_TILE_GAP = 8;
+const WEEK_ITEM_WIDTH = WEEK_TILE_WIDTH + WEEK_TILE_GAP;
+const WEEK_RAIL_WIDTH = 320;
 const originalScrollTo = Object.getOwnPropertyDescriptor(
   HTMLElement.prototype,
   "scrollTo",
@@ -102,6 +106,7 @@ function TouchSelectionFixture() {
 
   return (
     <>
+			<button type="button">Keep passive-scroll focus</button>
       <WeekView
         weekStarts={weekStarts}
         selectedDate={selectedDate}
@@ -119,6 +124,37 @@ function TouchSelectionFixture() {
       <output data-testid="selection-count">{selectionCount}</output>
     </>
   );
+}
+
+function configureWeekRail(
+	rail: HTMLElement,
+	{ scrollLeft = 0, scrollWidth = 1400 } = {},
+) {
+	Object.defineProperties(rail, {
+		clientWidth: { configurable: true, value: WEEK_RAIL_WIDTH },
+		scrollWidth: { configurable: true, value: scrollWidth },
+		scrollLeft: { configurable: true, writable: true, value: scrollLeft },
+	});
+
+	const buttons = Array.from(
+		rail.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
+	);
+
+	buttons.forEach((button, index) => {
+		Object.defineProperties(button, {
+			offsetLeft: {
+				configurable: true,
+				value: index * WEEK_ITEM_WIDTH,
+			},
+			offsetWidth: { configurable: true, value: WEEK_TILE_WIDTH },
+		});
+	});
+
+	buttons[0]?.parentElement?.style.setProperty("column-gap", "0px");
+}
+
+function getCenteredWeekScrollLeft(index: number) {
+	return index * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
 }
 
 function SmoothEdgeCenterFixture() {
@@ -779,5 +815,379 @@ describe("WeekView touch scrolling", () => {
       "2026-10-21",
     );
     expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+  });
+
+	it("keeps an iOS-taken-over week swipe unsettled through pointercancel until native touchend and its inertial tail", async () => {
+			vi.useFakeTimers();
+			render(<TouchSelectionFixture />);
+
+			const rail = screen.getByRole("radiogroup", {
+				name: "Schedule week selector",
+			});
+			configureWeekRail(rail);
+
+			const draggedWeek = rail.querySelector<HTMLButtonElement>(
+				'button[data-week-key="2026-10-12"]',
+			);
+
+			if (!draggedWeek) {
+				throw new Error("Expected the dragged week to be present in the rail.");
+			}
+
+			fireEvent.touchStart(rail, {
+				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+			});
+			fireEvent.pointerDown(draggedWeek, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 100,
+				clientY: 20,
+			});
+			rail.scrollLeft = getCenteredWeekScrollLeft(5);
+			fireEvent.pointerMove(rail, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 70,
+				clientY: 20,
+			});
+			fireEvent.scroll(rail);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			expect(screen.getByTestId("selected-date")).toHaveTextContent(
+				"2026-10-14",
+			);
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			fireEvent.pointerCancel(rail, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 70,
+				clientY: 20,
+			});
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			expect(screen.getByTestId("selected-date")).toHaveTextContent(
+				"2026-10-14",
+			);
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			rail.scrollLeft = getCenteredWeekScrollLeft(6);
+			fireEvent.scroll(rail);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			const nativeTouchEnd = {
+				changedTouches: [{ clientX: 40, clientY: 20, identifier: 1 }],
+				touches: [],
+			};
+			fireEvent.touchEnd(rail, nativeTouchEnd);
+			fireEvent.scroll(rail);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(149);
+			});
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(1);
+			});
+			expect(screen.getByTestId("selected-date")).toHaveTextContent(
+				"2026-10-21",
+			);
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+	});
+
+	it.each(["native touchcancel", "window blur", "window pagehide"] as const)(
+		"discards a %s interrupted week swipe without selecting and lets the next touch settle",
+		async (cancellation) => {
+			vi.useFakeTimers();
+			render(<TouchSelectionFixture />);
+
+			const rail = screen.getByRole("radiogroup", {
+				name: "Schedule week selector",
+			});
+			configureWeekRail(rail);
+
+			const draggedWeek = rail.querySelector<HTMLButtonElement>(
+				'button[data-week-key="2026-10-12"]',
+			);
+
+			if (!draggedWeek) {
+				throw new Error("Expected the dragged week to be present in the rail.");
+			}
+
+			fireEvent.touchStart(rail, {
+				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+			});
+			fireEvent.pointerDown(draggedWeek, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 100,
+				clientY: 20,
+			});
+			rail.scrollLeft = getCenteredWeekScrollLeft(5);
+			fireEvent.pointerMove(rail, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 70,
+				clientY: 20,
+			});
+			fireEvent.scroll(rail);
+
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			fireEvent.pointerCancel(rail, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 70,
+				clientY: 20,
+			});
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			rail.scrollLeft = getCenteredWeekScrollLeft(6);
+			fireEvent.scroll(rail);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			if (cancellation === "native touchcancel") {
+				fireEvent.touchCancel(rail, {
+					changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
+					touches: [],
+				});
+			} else if (cancellation === "window blur") {
+				fireEvent.blur(window);
+			} else {
+				fireEvent(window, new Event("pagehide"));
+			}
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(151);
+			});
+			fireEvent(rail, new Event("scrollend"));
+			expect(screen.getByTestId("selected-date")).toHaveTextContent(
+				"2026-10-14",
+			);
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			fireEvent.pointerUp(draggedWeek, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 70,
+				clientY: 20,
+			});
+			expect(screen.getByTestId("selected-date")).toHaveTextContent(
+				"2026-10-14",
+			);
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+			fireEvent.touchStart(rail, {
+				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+			});
+			fireEvent.pointerDown(draggedWeek, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 100,
+				clientY: 20,
+			});
+			rail.scrollLeft = getCenteredWeekScrollLeft(5);
+			fireEvent.pointerMove(rail, {
+				pointerId: 1,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: 70,
+				clientY: 20,
+			});
+			fireEvent.scroll(rail);
+			fireEvent.touchEnd(rail, {
+				changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
+				touches: [],
+			});
+			fireEvent.scroll(rail);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(150);
+			});
+			expect(screen.getByTestId("selected-date")).toHaveTextContent(
+				"2026-10-21",
+			);
+			expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+		},
+	);
+
+  it("settles a natively centered week once, preserves its weekday, and leaves passive-scroll focus alone", async () => {
+    vi.useFakeTimers();
+    render(<TouchSelectionFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule week selector",
+    });
+    const passiveFocus = screen.getByRole("button", {
+      name: "Keep passive-scroll focus",
+    });
+    configureWeekRail(rail);
+
+    passiveFocus.focus();
+    fireEvent.wheel(rail);
+    rail.scrollLeft = getCenteredWeekScrollLeft(5);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-21",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    expect(passiveFocus).toHaveFocus();
+
+    fireEvent(rail, new Event("scrollend"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+  });
+
+  it("limits a wide week fling to one matching weekday and smoothly centers it", () => {
+    render(<TouchSelectionFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule week selector",
+    });
+    configureWeekRail(rail);
+    scrollToMock.mockClear();
+
+    fireEvent.wheel(rail);
+    rail.scrollLeft = getCenteredWeekScrollLeft(7);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-21",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: getCenteredWeekScrollLeft(5),
+      behavior: "smooth",
+    });
+  });
+
+  it("uses a mouse-clicked week as the origin of the next wheel scroll", async () => {
+    vi.useFakeTimers();
+    render(<TouchSelectionFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule week selector",
+    });
+    const passiveFocus = screen.getByRole("button", {
+      name: "Keep passive-scroll focus",
+    });
+    configureWeekRail(rail);
+
+    const clickedWeek = rail.querySelector<HTMLButtonElement>(
+      'button[data-week-key="2026-10-19"]',
+    );
+
+    if (!clickedWeek) {
+      throw new Error("Expected the clicked week to be present in the rail.");
+    }
+
+    fireEvent.pointerDown(clickedWeek, { pointerType: "mouse" });
+    fireEvent.click(clickedWeek);
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-21",
+    );
+
+    passiveFocus.focus();
+    fireEvent.wheel(rail);
+    rail.scrollLeft = getCenteredWeekScrollLeft(6);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-28",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
+    expect(passiveFocus).toHaveFocus();
+
+    fireEvent(rail, new Event("scrollend"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
+  });
+
+  it("starts an independent touch swipe from a just-tapped week", () => {
+    render(<TouchSelectionFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule week selector",
+    });
+    configureWeekRail(rail);
+
+    const tappedWeek = rail.querySelector<HTMLButtonElement>(
+      'button[data-week-key="2026-10-19"]',
+    );
+
+    if (!tappedWeek) {
+      throw new Error("Expected the tapped week to be present in the rail.");
+    }
+
+    fireEvent.pointerDown(tappedWeek, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    fireEvent.pointerUp(tappedWeek, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    fireEvent.click(tappedWeek, { detail: 1 });
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+
+    fireEvent.pointerDown(rail, {
+      pointerId: 2,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    rail.scrollLeft = getCenteredWeekScrollLeft(6);
+    fireEvent.scroll(rail);
+    fireEvent.pointerUp(rail, {
+      pointerId: 2,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 60,
+      clientY: 20,
+    });
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-28",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
   });
 });

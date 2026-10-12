@@ -1,5 +1,7 @@
 import { Input, type InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Clock3 } from "lucide-react";
+import { useId } from "react";
 import { FormField } from "./form-field";
 
 type TimeFieldProps = Omit<InputProps, "type"> & {
@@ -21,10 +23,13 @@ function TimeField({
   className,
   ...inputProps
 }: TimeFieldProps) {
+  const generatedId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const inputId = inputProps.id ?? `time-${generatedId}`;
+
   return (
     <FormField
       label={label}
-      htmlFor={inputProps.id}
+      htmlFor={inputId}
       caption={caption}
       error={error}
       required={required}
@@ -34,11 +39,13 @@ function TimeField({
       <Input
         type="time"
         className={cn(
-          "w-full min-w-0 max-w-full box-border [inline-size:-webkit-fill-available]",
+          "w-full min-w-0 max-w-full box-border [&::-webkit-calendar-picker-indicator]:hidden",
           className,
         )}
         disabled={disabled}
         {...inputProps}
+        id={inputId}
+        leftIcon={Clock3}
         aria-required={required ? true : inputProps["aria-required"]}
       />
     </FormField>

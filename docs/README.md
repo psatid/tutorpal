@@ -44,3 +44,4 @@ Each application also has a local Makefile with targets suited to that app:
 - [Admin Portal and Controlled User Provisioning](features/admin-portal.md)
 - [Agent Team Workflow](agent-team-workflow.md)
 - [Feature Implementation History](features/README.md)
+- [Schedule Date Navigation Research](research/schedule-date-navigation.md)

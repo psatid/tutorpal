@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { prefersReducedMotion } from "motion-dom";
 import { useState } from "react";
@@ -393,6 +393,80 @@ describe("WeekDateSelector", () => {
         left: 568,
         behavior: "smooth",
       });
+    });
+  });
+
+  it("smoothly centers Today after updating the selected date", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 16, 12));
+
+    try {
+      render(<SelectorFixture />);
+
+      const rail = screen.getByRole("radiogroup", {
+        name: "Schedule date selector",
+      });
+      Object.defineProperties(rail, {
+        clientWidth: { configurable: true, value: 320 },
+        scrollWidth: { configurable: true, value: 1600 },
+        scrollLeft: { configurable: true, writable: true, value: 0 },
+      });
+
+      const today = getDateRadio("2026-10-16");
+      Object.defineProperties(today, {
+        offsetLeft: { configurable: true, value: 700 },
+        offsetWidth: { configurable: true, value: 56 },
+      });
+      scrollToMock.mockClear();
+
+      fireEvent.click(screen.getByRole("button", { name: "Today" }));
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        "2026-10-16",
+      );
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: 568,
+        behavior: "smooth",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("smoothly centers a date selected from the calendar", async () => {
+    const user = userEvent.setup();
+    render(<SelectorFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule date selector",
+    });
+    Object.defineProperties(rail, {
+      clientWidth: { configurable: true, value: 320 },
+      scrollWidth: { configurable: true, value: 1600 },
+      scrollLeft: { configurable: true, writable: true, value: 0 },
+    });
+
+    const selectedDate = getDateRadio("2026-10-16");
+    Object.defineProperties(selectedDate, {
+      offsetLeft: { configurable: true, value: 700 },
+      offsetWidth: { configurable: true, value: 56 },
+    });
+    scrollToMock.mockClear();
+
+    await user.click(
+      screen.getByRole("button", { name: "Open calendar for October 2026" }),
+    );
+    const calendarDate = await screen.findByRole("button", {
+      name: /Friday, October 16, 2026/,
+    });
+    await user.click(calendarDate);
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-16",
+    );
+    expect(scrollToMock).toHaveBeenCalledWith({
+      left: 568,
+      behavior: "smooth",
     });
   });
 

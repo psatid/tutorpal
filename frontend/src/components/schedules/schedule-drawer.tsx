@@ -638,33 +638,32 @@ export function ScheduleDrawer({
           />
 
           {!isRecurring && (
-            <RHFTimeField
-              control={control}
-              name="time"
-              label={t("schedules:drawer.time.label")}
-              required={mode !== "view"}
-              disabled={isDisabled}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <RHFTimeField
+                control={control}
+                name="time"
+                label={t("schedules:drawer.time.label")}
+                required={mode !== "view"}
+                disabled={isDisabled}
+              />
+              <RHFSelectField
+                control={control}
+                name="durationMinutes"
+                label={t("schedules:drawer.duration.label")}
+                required={mode !== "view"}
+                options={durationOptions}
+                selectProps={{
+                  placeholder: t("schedules:drawer.duration.placeholder"),
+                }}
+                disabled={isDisabled}
+              />
+            </div>
           )}
 
           {isRecurring && mode === "create" && (
             <WeekdayTimeSelector
               name="recurring.scheduleItems"
               control={control}
-              disabled={isDisabled}
-            />
-          )}
-
-          {!isRecurring && (
-            <RHFSelectField
-              control={control}
-              name="durationMinutes"
-              label={t("schedules:drawer.duration.label")}
-              required={mode !== "view"}
-              options={durationOptions}
-              selectProps={{
-                placeholder: t("schedules:drawer.duration.placeholder"),
-              }}
               disabled={isDisabled}
             />
           )}
