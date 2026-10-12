@@ -281,11 +281,19 @@ export function WeekdayView({
 
     if (!selectedButton) return;
 
-    const behavior =
+    const isInitialCenter = lastCenteredDateRef.current === null;
+    const selectedDateChanged =
+      lastCenteredDateRef.current !== selectedDateKey;
+    const centerRequestChanged =
       lastCenterRequestRef.current !== null &&
-      lastCenterRequestRef.current !== centerRequest.id
+      lastCenterRequestRef.current !== centerRequest.id;
+    const behavior = isInitialCenter
+      ? "auto"
+      : centerRequestChanged
         ? centerRequest.behavior
-        : "auto";
+        : selectedDateChanged
+          ? "smooth"
+          : "auto";
 
     centerSelectedDate(behavior);
     lastCenteredDateRef.current = selectedDateKey;

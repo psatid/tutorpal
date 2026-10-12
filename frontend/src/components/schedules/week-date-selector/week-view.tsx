@@ -51,6 +51,12 @@ interface TouchClickSuppression {
   expiresAt: number;
 }
 
+interface TouchEdgeRotation {
+  direction: "previous" | "next";
+  trackItemWidth: number;
+  appendStartWeek: number | null;
+}
+
 type NativeClickEvent = globalThis.MouseEvent & {
   sourceCapabilities?: {
     firesTouchEvents?: boolean;
@@ -59,6 +65,7 @@ type NativeClickEvent = globalThis.MouseEvent & {
 
 const EDGE_THRESHOLD = 128;
 const SMOOTH_SCROLL_SETTLE_DELAY = 150;
+const TOUCH_SCROLL_SETTLE_DELAY = 150;
 const TOUCH_SWIPE_THRESHOLD = 8;
 const TOUCH_CLICK_SUPPRESSION_DELAY = 500;
 const WEEK_DAYS = 7;
@@ -116,6 +123,10 @@ export function WeekView({
   const smoothCenteringRef = useRef(false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
+  const touchScrollSessionRef = useRef(false);
+  const touchScrollPointerActiveRef = useRef(false);
+  const queuedTouchEdgeRotationRef = useRef<TouchEdgeRotation | null>(null);
+  const touchScrollFallbackTimeoutRef = useRef<number | null>(null);
   const lastMousePointerDownAtRef = useRef<number | null>(null);
   const touchGestureRef = useRef<TouchSelectionGesture | null>(null);
   const touchClickSuppressionRef = useRef<TouchClickSuppression | null>(
@@ -169,6 +180,61 @@ export function WeekView({
 
     touchClickSuppressionRef.current = null;
   }, []);
+
+  const discardTouchScrollSession = useCallback(() => {
+    touchScrollSessionRef.current = false;
+    touchScrollPointerActiveRef.current = false;
+    queuedTouchEdgeRotationRef.current = null;
+
+    if (touchScrollFallbackTimeoutRef.current !== null) {
+      window.clearTimeout(touchScrollFallbackTimeoutRef.current);
+      touchScrollFallbackTimeoutRef.current = null;
+    }
+  }, []);
+
+  const settleTouchScrollSession = useCallback(() => {
+    if (
+      !touchScrollSessionRef.current ||
+      touchScrollPointerActiveRef.current
+    ) {
+      return;
+    }
+
+    const queuedRotation = queuedTouchEdgeRotationRef.current;
+
+    discardTouchScrollSession();
+
+    if (!queuedRotation) return;
+
+    pendingExtensionRef.current = queuedRotation.direction;
+
+    if (queuedRotation.direction === "previous") {
+      pendingPrependTrackWidthRef.current = queuedRotation.trackItemWidth;
+    } else {
+      pendingAppendStartWeekRef.current = queuedRotation.appendStartWeek;
+      pendingAppendTrackWidthRef.current = queuedRotation.trackItemWidth;
+    }
+
+    onExtendWeekBuffer(queuedRotation.direction);
+  }, [discardTouchScrollSession, onExtendWeekBuffer]);
+
+  const scheduleTouchScrollIdleFallback = useCallback(() => {
+    if (
+      !touchScrollSessionRef.current ||
+      touchScrollPointerActiveRef.current
+    ) {
+      return;
+    }
+
+    if (touchScrollFallbackTimeoutRef.current !== null) {
+      window.clearTimeout(touchScrollFallbackTimeoutRef.current);
+    }
+
+    touchScrollFallbackTimeoutRef.current = window.setTimeout(
+      settleTouchScrollSession,
+      TOUCH_SCROLL_SETTLE_DELAY,
+    );
+  }, [settleTouchScrollSession]);
 
   const armTouchClickSuppression = useCallback(
     (key: string) => {
@@ -233,9 +299,26 @@ export function WeekView({
     return () => {
       clearSmoothCentering();
       clearTouchClickSuppression();
+      discardTouchScrollSession();
       touchGestureRef.current = null;
     };
-  }, [clearSmoothCentering, clearTouchClickSuppression]);
+  }, [
+    clearSmoothCentering,
+    clearTouchClickSuppression,
+    discardTouchScrollSession,
+  ]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    container.addEventListener("scrollend", settleTouchScrollSession);
+
+    return () => {
+      container.removeEventListener("scrollend", settleTouchScrollSession);
+    };
+  }, [settleTouchScrollSession]);
 
   const centerSelectedWeek = useCallback(
     (behavior: ScrollBehavior = "auto") => {
@@ -308,11 +391,18 @@ export function WeekView({
 
     if (!selectedButton) return;
 
-    const behavior =
+    const isInitialCenter = lastCenteredWeekRef.current === null;
+    const selectedWeekChanged = lastCenteredWeekRef.current !== selectedWeekKey;
+    const centerRequestChanged =
       lastCenterRequestRef.current !== null &&
-      lastCenterRequestRef.current !== centerRequest.id
+      lastCenterRequestRef.current !== centerRequest.id;
+    const behavior = isInitialCenter
+      ? "auto"
+      : centerRequestChanged
         ? centerRequest.behavior
-        : "auto";
+        : selectedWeekChanged
+          ? "smooth"
+          : "auto";
 
     centerSelectedWeek(behavior);
     lastCenteredWeekRef.current = selectedWeekKey;
@@ -390,11 +480,20 @@ export function WeekView({
       return;
     }
 
-    if (pendingExtensionRef.current) return;
+    if (touchScrollSessionRef.current) {
+      scheduleTouchScrollIdleFallback();
+    }
 
     const scrollLeft = container.scrollLeft;
     const previousScrollLeft = lastScrollLeftRef.current;
     lastScrollLeftRef.current = scrollLeft;
+
+    if (
+      queuedTouchEdgeRotationRef.current !== null ||
+      pendingExtensionRef.current
+    ) {
+      return;
+    }
 
     if (previousScrollLeft === null || scrollLeft === previousScrollLeft) {
       return;
@@ -416,10 +515,26 @@ export function WeekView({
     const isNearEnd = scrollLeft >= maxScrollLeft - edgeThreshold;
 
     if (scrollLeft < previousScrollLeft && isNearStart) {
+      if (touchScrollSessionRef.current) {
+        queuedTouchEdgeRotationRef.current = {
+          direction: "previous",
+          trackItemWidth,
+          appendStartWeek: null,
+        };
+        return;
+      }
       pendingExtensionRef.current = "previous";
       pendingPrependTrackWidthRef.current = trackItemWidth;
       onExtendWeekBuffer("previous");
     } else if (scrollLeft > previousScrollLeft && isNearEnd) {
+      if (touchScrollSessionRef.current) {
+        queuedTouchEdgeRotationRef.current = {
+          direction: "next",
+          trackItemWidth,
+          appendStartWeek: weekStarts[0]?.getTime() ?? null,
+        };
+        return;
+      }
       pendingExtensionRef.current = "next";
       pendingAppendStartWeekRef.current = weekStarts[0]?.getTime() ?? null;
       pendingAppendTrackWidthRef.current = trackItemWidth;
@@ -428,6 +543,7 @@ export function WeekView({
   }, [
     onExtendWeekBuffer,
     scheduleSmoothCenterFallback,
+    scheduleTouchScrollIdleFallback,
     weekStarts,
   ]);
 
@@ -455,11 +571,15 @@ export function WeekView({
     (event: ReactPointerEvent<HTMLDivElement>) => {
       cancelSmoothCentering();
 
-      if (event.pointerType === "mouse") {
+      if (event.pointerType === "touch" && event.isPrimary) {
+        discardTouchScrollSession();
+        touchScrollSessionRef.current = true;
+        touchScrollPointerActiveRef.current = true;
+      } else if (event.pointerType === "mouse") {
         lastMousePointerDownAtRef.current = Date.now();
       }
     },
-    [cancelSmoothCentering],
+    [cancelSmoothCentering, discardTouchScrollSession],
   );
 
   const handleTouchPointerDown = useCallback(
@@ -501,6 +621,11 @@ export function WeekView({
 
   const handleTouchPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "touch" && event.isPrimary) {
+        touchScrollPointerActiveRef.current = false;
+        scheduleTouchScrollIdleFallback();
+      }
+
       const gesture = touchGestureRef.current;
 
       if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -512,11 +637,16 @@ export function WeekView({
         gesture.select();
       }
     },
-    [armTouchClickSuppression],
+    [armTouchClickSuppression, scheduleTouchScrollIdleFallback],
   );
 
   const handleTouchPointerCancel = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "touch" && event.isPrimary) {
+        touchScrollPointerActiveRef.current = false;
+        scheduleTouchScrollIdleFallback();
+      }
+
       const gesture = touchGestureRef.current;
 
       if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -524,7 +654,7 @@ export function WeekView({
       touchGestureRef.current = null;
       armTouchClickSuppression(gesture.key);
     },
-    [armTouchClickSuppression],
+    [armTouchClickSuppression, scheduleTouchScrollIdleFallback],
   );
 
   const handleWeekClick = useCallback(

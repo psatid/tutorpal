@@ -65,12 +65,13 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 - The month label remains a `DateField` trigger and always reflects the committed selected date, never the passively visible dates. When the external date is `null`, the rail and header use today as an internal fallback until a date is selected.
 - Today and calendar selections call `onDateSelect`; a date outside the current buffer rebuilds the bounded range around that date.
 - Clicking/tapping a tile, ArrowLeft/ArrowRight, PageUp/PageDown, Today, and date-picker selections smoothly center the selected tile by default. Reduced-motion users receive instant positioning.
+- Parent-driven date or week changes, such as changing the schedule date from another control, also smoothly center the selected tile once it is present in the rail. Initial positioning, explicit restoration, and reduced-motion positioning remain instant.
 - A touch tap commits on Pointer Events `pointerup` immediately before smooth centering begins. Horizontal swipes only scroll the rails and never change the committed selection; the following compatibility click is ignored so a tap commits once.
 - Selected dates use the primary tile treatment. Unselected today has a primary outline only; month boundaries show a compact month marker.
 
 ### Week mode
 
-- Uses eight complete Monday–Sunday ranges: four before the selected week, the selected week, and three after. Edge extension rotates one full week at a time and compensates the scroll position before paint.
+- Uses eight complete Monday–Sunday ranges: four before the selected week, the selected week, and three after. Mouse and keyboard edge extensions rotate one full week at a time and compensate the scroll position before paint. A touch plus its inertial tail queues at most one edge rotation; the rotation and measured compensation apply after native `scrollend` or a 150ms quiet fallback. Continued momentum refreshes that fallback, and a later independent swipe can extend the rail again.
 - Week buttons are 56px high, have a 128px minimum width, and are horizontally scrollable at every viewport. They grow evenly to fill wider rails, while the track keeps at least enough continuation for one full tile of compensated edge scrolling. They show a compact range (`Aug 10–16`, `Aug 31 – Sep 6`, or both years when needed), retain a partial adjacent button at the edge, and do not add previous/next controls. The current week keeps its primary border and accessible “Contains today” label without an extra dot.
 - Choosing a week—whether from the rail or calendar—preserves the committed weekday within that target week. A calendar click identifies the target week rather than changing the active weekday.
 - The header keeps the same layout in both modes and updates from the day-mode month label to the current week range directly. The calendar uses a controlled Monday–Sunday range highlight and closes as soon as a day is chosen.

@@ -1,4 +1,3 @@
-import { Clock3 } from "lucide-react";
 import { Input, type InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { FormField } from "./form-field";
@@ -34,8 +33,10 @@ function TimeField({
     >
       <Input
         type="time"
-        leftIcon={Clock3}
-        className={cn("[&::-webkit-calendar-picker-indicator]:opacity-0", className)}
+        className={cn(
+          "w-full min-w-0 max-w-full box-border [inline-size:-webkit-fill-available]",
+          className,
+        )}
         disabled={disabled}
         {...inputProps}
         aria-required={required ? true : inputProps["aria-required"]}

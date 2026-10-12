@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { prefersReducedMotion } from "motion-dom";
 import { useState } from "react";
 import {
   afterAll,
@@ -65,6 +66,59 @@ function RejectingControlledSelectorFixture() {
       />
       <output data-testid="requested-view-mode">
         {requestedViewMode ?? "none"}
+      </output>
+    </>
+  );
+}
+
+function ParentDrivenDateFixture() {
+  const [selectedDate, setSelectedDate] = useState(INITIAL_DATE);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          setSelectedDate(
+            DateTime.fromDateOnlyString("2026-10-16").toDate(),
+          )
+        }
+      >
+        Change date in schedule
+      </button>
+      <WeekDateSelector
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+        viewMode="day"
+        onViewModeChange={() => undefined}
+      />
+    </>
+  );
+}
+
+function ParentDrivenWeekDateFixture() {
+  const [selectedDate, setSelectedDate] = useState(INITIAL_DATE);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          setSelectedDate(
+            DateTime.fromDateOnlyString("2026-10-21").toDate(),
+          )
+        }
+      >
+        Change week in schedule
+      </button>
+      <WeekDateSelector
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+        viewMode="week"
+        onViewModeChange={() => undefined}
+      />
+      <output data-testid="selected-date">
+        {DateTime.from(selectedDate).toDateOnlyString()}
       </output>
     </>
   );
@@ -308,6 +362,111 @@ describe("WeekDateSelector", () => {
         screen.getByRole("radiogroup", { name: "Schedule date selector" }),
       ).getAllByRole("radio", { checked: true }),
     ).toHaveLength(1);
+  });
+
+  it("smoothly centers a date changed by the schedule screen", async () => {
+    const user = userEvent.setup();
+    render(<ParentDrivenDateFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule date selector",
+    });
+    Object.defineProperties(rail, {
+      clientWidth: { configurable: true, value: 320 },
+      scrollWidth: { configurable: true, value: 1600 },
+      scrollLeft: { configurable: true, writable: true, value: 0 },
+    });
+
+    const selectedDate = getDateRadio("2026-10-16");
+    Object.defineProperties(selectedDate, {
+      offsetLeft: { configurable: true, value: 700 },
+      offsetWidth: { configurable: true, value: 56 },
+    });
+    scrollToMock.mockClear();
+
+    await user.click(
+      screen.getByRole("button", { name: "Change date in schedule" }),
+    );
+
+    await waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: 568,
+        behavior: "smooth",
+      });
+    });
+  });
+
+  it("smoothly centers a parent-driven Week-mode date change", async () => {
+    const user = userEvent.setup();
+    render(<ParentDrivenWeekDateFixture />);
+
+    const rail = screen.getByRole("radiogroup", {
+      name: "Schedule week selector",
+    });
+    Object.defineProperties(rail, {
+      clientWidth: { configurable: true, value: 320 },
+      scrollWidth: { configurable: true, value: 1200 },
+      scrollLeft: { configurable: true, writable: true, value: 0 },
+    });
+
+    const selectedWeek = getWeekRadio("2026-10-19");
+    Object.defineProperties(selectedWeek, {
+      offsetLeft: { configurable: true, value: 700 },
+      offsetWidth: { configurable: true, value: 144 },
+    });
+    scrollToMock.mockClear();
+
+    await user.click(
+      screen.getByRole("button", { name: "Change week in schedule" }),
+    );
+
+    await waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: 612,
+        behavior: "smooth",
+      });
+    });
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-21",
+    );
+    expect(selectedWeek).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("centers parent-driven date changes instantly for reduced-motion users", async () => {
+    const originalPreference = prefersReducedMotion.current;
+    prefersReducedMotion.current = true;
+
+    try {
+      const user = userEvent.setup();
+      render(<ParentDrivenDateFixture />);
+
+      const rail = screen.getByRole("radiogroup", {
+        name: "Schedule date selector",
+      });
+      Object.defineProperties(rail, {
+        clientWidth: { configurable: true, value: 320 },
+        scrollWidth: { configurable: true, value: 1600 },
+        scrollLeft: { configurable: true, writable: true, value: 0 },
+      });
+
+      const selectedDate = getDateRadio("2026-10-16");
+      Object.defineProperties(selectedDate, {
+        offsetLeft: { configurable: true, value: 700 },
+        offsetWidth: { configurable: true, value: 56 },
+      });
+      scrollToMock.mockClear();
+
+      await user.click(
+        screen.getByRole("button", { name: "Change date in schedule" }),
+      );
+
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: 568,
+        behavior: "auto",
+      });
+    } finally {
+      prefersReducedMotion.current = originalPreference;
+    }
   });
 
   it("uses the selected Day tile itself for the primary surface without an overlay", () => {

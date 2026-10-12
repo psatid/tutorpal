@@ -110,6 +110,11 @@ input opens with click, Enter, or Space and regains focus when the mobile drawer
 closes. Callers can provide a custom trigger for controls such as the schedule
 week selector.
 
+`RHFTimeField` uses the browser's native `type="time"` control and keeps its
+native picker affordance visible. Keep the control full width and do not overlay
+a custom clock icon; iOS can render its own time-control affordance inside the
+input.
+
 In Add New Schedule, one-time duration and each selected recurring weekday use
 numeric selects with 30-minute choices from 30 minutes through 3 hours; each
 weekday keeps its own duration, defaulting to 60 minutes. Edit mode also offers
