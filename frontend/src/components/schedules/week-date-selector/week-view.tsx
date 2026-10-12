@@ -121,6 +121,13 @@ export function WeekView({
   const lastCenteredWeekRef = useRef<string | null>(null);
   const lastCenterRequestRef = useRef<number | null>(null);
   const smoothCenteringRef = useRef(false);
+  const smoothCenterEdgeDirectionRef = useRef<
+    "previous" | "next" | null
+  >(null);
+  const resizeDuringSmoothCenteringRef = useRef(false);
+  const centerSelectedWeekRef = useRef<
+    (behavior?: ScrollBehavior) => void
+  >(() => undefined);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
   const touchScrollSessionRef = useRef(false);
@@ -162,6 +169,7 @@ export function WeekView({
       : undefined;
   const clearSmoothCentering = useCallback(() => {
     smoothCenteringRef.current = false;
+    smoothCenterEdgeDirectionRef.current = null;
 
     if (smoothCenterFallbackTimeoutRef.current !== null) {
       window.clearTimeout(smoothCenterFallbackTimeoutRef.current);
@@ -269,6 +277,71 @@ export function WeekView({
       : null;
   }, []);
 
+  const extendClampedWeekBuffer = useCallback(
+    (direction: "previous" | "next"): boolean => {
+      const container = containerRef.current;
+
+      if (
+        !container ||
+        pendingExtensionRef.current !== null ||
+        queuedTouchEdgeRotationRef.current !== null
+      ) {
+        return false;
+      }
+
+      const maxScrollLeft = Math.max(
+        container.scrollWidth - container.clientWidth,
+        0,
+      );
+      const isAtClampedEdge =
+        maxScrollLeft > 0 &&
+        (direction === "previous"
+          ? container.scrollLeft <= 0.5
+          : container.scrollLeft >= maxScrollLeft - 0.5);
+
+      if (!isAtClampedEdge) return false;
+
+      updateTrackItemWidth();
+
+      const trackItemWidth = trackItemWidthRef.current;
+
+      if (trackItemWidth === null) return false;
+
+      pendingExtensionRef.current = direction;
+
+      if (direction === "previous") {
+        pendingPrependTrackWidthRef.current = trackItemWidth;
+      } else {
+        pendingAppendStartWeekRef.current = weekStarts[0]?.getTime() ?? null;
+        pendingAppendTrackWidthRef.current = trackItemWidth;
+      }
+
+      onExtendWeekBuffer(direction);
+
+      return true;
+    },
+    [onExtendWeekBuffer, updateTrackItemWidth, weekStarts],
+  );
+
+  const settleSmoothCentering = useCallback(() => {
+    if (!smoothCenteringRef.current) return;
+
+    const edgeDirection = smoothCenterEdgeDirectionRef.current;
+    const shouldRecenterAfterResize = resizeDuringSmoothCenteringRef.current;
+
+    resizeDuringSmoothCenteringRef.current = false;
+
+    clearSmoothCentering();
+
+    const didRotateBuffer = edgeDirection
+      ? extendClampedWeekBuffer(edgeDirection)
+      : false;
+
+    if (!didRotateBuffer && shouldRecenterAfterResize) {
+      centerSelectedWeekRef.current();
+    }
+  }, [clearSmoothCentering, extendClampedWeekBuffer]);
+
   const scheduleSmoothCenterFallback = useCallback(() => {
     if (!smoothCenteringRef.current) return;
 
@@ -277,12 +350,14 @@ export function WeekView({
     }
 
     smoothCenterFallbackTimeoutRef.current = window.setTimeout(
-      clearSmoothCentering,
+      settleSmoothCentering,
       SMOOTH_SCROLL_SETTLE_DELAY,
     );
-  }, [clearSmoothCentering]);
+  }, [settleSmoothCentering]);
 
   const cancelSmoothCentering = useCallback(() => {
+    resizeDuringSmoothCenteringRef.current = false;
+
     if (!smoothCenteringRef.current) return;
 
     clearSmoothCentering();
@@ -298,6 +373,7 @@ export function WeekView({
   useLayoutEffect(() => {
     return () => {
       clearSmoothCentering();
+      resizeDuringSmoothCenteringRef.current = false;
       clearTouchClickSuppression();
       discardTouchScrollSession();
       touchGestureRef.current = null;
@@ -333,15 +409,31 @@ export function WeekView({
         container.scrollWidth - container.clientWidth,
         0,
       );
+      const centeredScrollLeft =
+        selectedButton.offsetLeft +
+        selectedButton.offsetWidth / 2 -
+        container.clientWidth / 2;
       const targetLeft = Math.min(
-        Math.max(
-          selectedButton.offsetLeft +
-            selectedButton.offsetWidth / 2 -
-            container.clientWidth / 2,
-          0,
-        ),
+        Math.max(centeredScrollLeft, 0),
         maxScrollLeft,
       );
+      const firstWeekButton = container.querySelector<HTMLButtonElement>(
+        "button[data-week-key]",
+      );
+      const weekButtons = container.querySelectorAll<HTMLButtonElement>(
+        "button[data-week-key]",
+      );
+      const lastWeekButton = weekButtons[weekButtons.length - 1];
+      const clampedEdgeDirection =
+        maxScrollLeft > 0 &&
+        selectedButton === firstWeekButton &&
+        centeredScrollLeft < 0
+          ? "previous"
+          : maxScrollLeft > 0 &&
+              selectedButton === lastWeekButton &&
+              centeredScrollLeft > maxScrollLeft
+            ? "next"
+            : null;
       const shouldSmoothlyCenter =
         behavior === "smooth" &&
         !prefersReducedMotion &&
@@ -349,10 +441,12 @@ export function WeekView({
 
       if (shouldSmoothlyCenter) {
         clearSmoothCentering();
+        resizeDuringSmoothCenteringRef.current = false;
         smoothCenteringRef.current = true;
+        smoothCenterEdgeDirectionRef.current = clampedEdgeDirection;
 
         const handleScrollEnd = () => {
-          clearSmoothCentering();
+          settleSmoothCentering();
         };
 
         container.addEventListener("scrollend", handleScrollEnd, {
@@ -372,9 +466,23 @@ export function WeekView({
         left: targetLeft,
         behavior: shouldSmoothlyCenter ? "smooth" : "auto",
       });
+
+      if (!shouldSmoothlyCenter && clampedEdgeDirection) {
+        extendClampedWeekBuffer(clampedEdgeDirection);
+      }
     },
-    [clearSmoothCentering, prefersReducedMotion, scheduleSmoothCenterFallback],
+    [
+      clearSmoothCentering,
+      extendClampedWeekBuffer,
+      prefersReducedMotion,
+      scheduleSmoothCenterFallback,
+      settleSmoothCentering,
+    ],
   );
+
+  useLayoutEffect(() => {
+    centerSelectedWeekRef.current = centerSelectedWeek;
+  }, [centerSelectedWeek]);
 
   useLayoutEffect(() => {
     if (!selectedWeekKey) return;
@@ -459,7 +567,13 @@ export function WeekView({
 
     const resizeObserver = new ResizeObserver(() => {
       updateTrackItemWidth();
-      centerSelectedWeek();
+
+      if (smoothCenteringRef.current) {
+        resizeDuringSmoothCenteringRef.current = true;
+        return;
+      }
+
+      centerSelectedWeekRef.current();
     });
 
     resizeObserver.observe(container);
@@ -467,7 +581,7 @@ export function WeekView({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [centerSelectedWeek, updateTrackItemWidth]);
+  }, [updateTrackItemWidth]);
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;

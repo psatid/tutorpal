@@ -111,6 +111,10 @@ export function WeekdayView({
   const lastCenteredDateRef = useRef<string | null>(null);
   const lastCenterRequestRef = useRef<number | null>(null);
   const smoothCenteringRef = useRef(false);
+  const resizeDuringSmoothCenteringRef = useRef(false);
+  const centerSelectedDateRef = useRef<
+    (behavior?: ScrollBehavior) => void
+  >(() => undefined);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
   const lastMousePointerDownAtRef = useRef<number | null>(null);
@@ -180,6 +184,19 @@ export function WeekdayView({
     [clearTouchClickSuppression],
   );
 
+  const settleSmoothCentering = useCallback(() => {
+    if (!smoothCenteringRef.current) return;
+
+    const shouldRecenterAfterResize = resizeDuringSmoothCenteringRef.current;
+
+    resizeDuringSmoothCenteringRef.current = false;
+    clearSmoothCentering();
+
+    if (shouldRecenterAfterResize) {
+      centerSelectedDateRef.current();
+    }
+  }, [clearSmoothCentering]);
+
   const scheduleSmoothCenterFallback = useCallback(() => {
     if (!smoothCenteringRef.current) return;
 
@@ -188,12 +205,14 @@ export function WeekdayView({
     }
 
     smoothCenterFallbackTimeoutRef.current = window.setTimeout(
-      clearSmoothCentering,
+      settleSmoothCentering,
       SMOOTH_SCROLL_SETTLE_DELAY,
     );
-  }, [clearSmoothCentering]);
+  }, [settleSmoothCentering]);
 
   const cancelSmoothCentering = useCallback(() => {
+    resizeDuringSmoothCenteringRef.current = false;
+
     if (!smoothCenteringRef.current) return;
 
     clearSmoothCentering();
@@ -208,6 +227,7 @@ export function WeekdayView({
   useLayoutEffect(() => {
     return () => {
       clearSmoothCentering();
+      resizeDuringSmoothCenteringRef.current = false;
       clearTouchClickSuppression();
       touchGestureRef.current = null;
     };
@@ -242,10 +262,11 @@ export function WeekdayView({
 
       if (shouldSmoothlyCenter) {
         clearSmoothCentering();
+        resizeDuringSmoothCenteringRef.current = false;
         smoothCenteringRef.current = true;
 
         const handleScrollEnd = () => {
-          clearSmoothCentering();
+          settleSmoothCentering();
         };
 
         container.addEventListener("scrollend", handleScrollEnd, {
@@ -262,8 +283,17 @@ export function WeekdayView({
         behavior: shouldSmoothlyCenter ? "smooth" : "auto",
       });
     },
-    [clearSmoothCentering, prefersReducedMotion, scheduleSmoothCenterFallback],
+    [
+      clearSmoothCentering,
+      prefersReducedMotion,
+      scheduleSmoothCenterFallback,
+      settleSmoothCentering,
+    ],
   );
+
+  useLayoutEffect(() => {
+    centerSelectedDateRef.current = centerSelectedDate;
+  }, [centerSelectedDate]);
 
   useLayoutEffect(() => {
     if (!selectedDate) return;
@@ -343,7 +373,12 @@ export function WeekdayView({
     if (!container || typeof ResizeObserver === "undefined") return;
 
     const resizeObserver = new ResizeObserver(() => {
-      centerSelectedDate();
+      if (smoothCenteringRef.current) {
+        resizeDuringSmoothCenteringRef.current = true;
+        return;
+      }
+
+      centerSelectedDateRef.current();
     });
 
     resizeObserver.observe(container);
@@ -351,7 +386,7 @@ export function WeekdayView({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [centerSelectedDate]);
+  }, []);
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
