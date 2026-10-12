@@ -118,7 +118,7 @@ const th = {
 		emptyDescription:
 			"กำหนดรูปแบบรายสัปดาห์สำหรับชั้นเรียนนี้เพื่อให้ช่วงเรียนในอนาคตสอดคล้องกัน",
 		noAvailabilityDescription:
-			"เพิ่มชั่วโมงก่อนสร้างตารางเรียนซ้ำ",
+			"{{balance}} เพิ่มชั่วโมงก่อนสร้างตารางเรียนซ้ำ",
 		addHoursAction: "เพิ่มชั่วโมง",
 		createAction: "สร้างตารางเรียนซ้ำ",
 		editAction: "แก้ไขตารางเรียนซ้ำ",
@@ -167,22 +167,19 @@ const th = {
 		},
 		class: {
 			label: "ชั้นเรียน",
-			caption: "จำเป็น",
 			placeholder: "เลือกชั้นเรียน",
 		},
 		date: {
 			label: "วันที่",
-			caption: "จำเป็น",
 			recurringLabel: "วันที่เริ่ม",
 			recurringCaption: "ครั้งแรกของตารางเรียนซ้ำนี้",
 		},
 		time: {
 			label: "เวลา",
-			caption: "จำเป็น",
 		},
 		duration: {
 			label: "ระยะเวลา",
-			caption: "จำเป็น",
+			placeholder: "เลือกระยะเวลา",
 		},
 		notes: {
 			label: "บันทึก",
@@ -191,7 +188,6 @@ const th = {
 		},
 		status: {
 			label: "สถานะ",
-			caption: "จำเป็น",
 			placeholder: "เลือกสถานะ",
 		},
 		type: {
@@ -213,10 +209,8 @@ const th = {
 			selectAll: "เลือกทั้งหมด",
 			clearAll: "ล้างทั้งหมด",
 			timeLabel: "เวลา — {{interval}}",
-			timeCaption: "จำเป็น",
 			durationLabel: "ระยะเวลา (นาที) — {{interval}}",
 			durationSelectLabel: "ระยะเวลา — {{interval}}",
-			durationCaption: "จำเป็น",
 			durationPlaceholder: "เช่น 60",
 			interval: "ช่วงเรียนที่ {{number}}",
 			intervalLabel: "{{weekday}} ช่วงเรียนที่ {{number}}",
@@ -249,12 +243,12 @@ const th = {
 		searchPlaceholder: "ค้นหาตามชั้นเรียนหรือนักเรียน...",
 		noClasses: "ยังไม่มีชั้นเรียน",
 		noResults: "ไม่พบชั้นเรียน",
-		selectButton: "เลือก",
+		selected: "เลือกแล้ว",
 		remainingHours: "เหลือ {{hours}} ชม.",
 	},
 	classNoAvailability: {
 		description:
-			"ชั้นเรียนนี้ไม่มีชั่วโมงคงเหลือ เพิ่มชั่วโมงก่อนนัดช่วงเรียน",
+			"{{balance}} เพิ่มชั่วโมงก่อนนัดช่วงเรียน",
 		addHours: "เพิ่มชั่วโมง",
 	},
 	classAvailability: {
@@ -284,9 +278,13 @@ const th = {
 	},
 	timeline: {
 		label: "ไทม์ไลน์ตารางเรียนรายสัปดาห์",
+		instruction:
+			"ใช้ปุ่มลูกศรเพื่อเลื่อนระหว่างช่วงเวลา 30 นาทีและวัน กด Enter หรือ Space เพื่อสร้างช่วงเรียน",
 		previousWeek: "สัปดาห์ก่อนหน้า",
 		nextWeek: "สัปดาห์ถัดไป",
 		openCalendar: "เลือกวันที่ใน {{week}}",
+		createCellLabel: "สร้างช่วงเรียนในวันที่ {{date}} เวลา {{time}}",
+		currentTimeLabel: "เวลาปัจจุบัน: {{time}}",
 		eventLabel:
 			"{{className}} วันที่ {{date}} เวลา {{startTime}} ถึง {{endTime}} สถานะ {{status}} ประเภท {{type}}",
 	},

@@ -63,7 +63,7 @@ export function StudentRow({
               <p className="truncate font-semibold text-foreground">
                 {data.name}
               </p>
-              <Badge variant="outline">
+              <Badge variant="info">
                 {t("students:grade", { grade: data.grade })}
               </Badge>
               {linked ? (

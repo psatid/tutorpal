@@ -15,6 +15,8 @@ export const ClassSchema = z.object({
 	name: z.string().min(1),
 	displayName: z.string(),
 	totalHours: z.number(),
+	scheduledHours: z.number(),
+	usedHours: z.number(),
 	students: z.array(StudentInClassSchema),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),

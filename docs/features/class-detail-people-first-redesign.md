@@ -7,8 +7,10 @@ mutation, and localization behavior.
 
 ## Behavior
 
-- The identity header groups the class title, enrolled students, and remaining
-  hours with a progress indicator and a direct Add hours action.
+- The identity header places Edit beside the truncated class title and groups
+  enrolled students with the class balance. It shows scheduled and used hours
+  separately, and the progress indicator represents used hours against the
+  class total. Add hours remains a direct action.
 - Upcoming sessions are shown before recurring schedule, recent sessions, and
   hour additions. The nearest three upcoming sessions are previewed first,
   with local Show all upcoming sessions and Show fewer upcoming sessions
@@ -16,13 +18,26 @@ mutation, and localization behavior.
 - Upcoming sessions use the current client time and refresh that reference
   every 30 seconds so scheduled sessions move between upcoming and recent
   without a full page reload.
-- Recent sessions remain grouped by localized date and preserve the existing
-  session detail and overflow actions.
+- A populated recurring schedule is a static summary with one Edit action; it
+  does not expand into duplicate details. Recent sessions remain grouped by
+  localized date, show the time range without a repeated duration, and preserve
+  the existing session detail and overflow actions.
+- The Recent sessions card is hidden when its loaded data has no recent
+  sessions. Its loading skeleton remains visible during the initial load.
+- Hours & revenue history uses a leading icon treatment without a decorative
+  rule beside its heading.
+- The schedule details drawer shows Status and its full-width badge on one row.
+  Delete stays in the schedule row's overflow menu, not the drawer footer.
+- Opening Record no show from the drawer covers and blocks the drawer. Cancel
+  returns focus to Record no show; a successful update returns focus to Edit.
+- Whole-hour quantities in schedule confirmations omit the decimal, while
+  fractional hours remain precise.
 
 ## Responsive behavior
 
-- Desktop uses a two-column lower workspace while tablet and mobile collapse to
-  one readable flow.
+- Desktop uses a two-column lower workspace. The recurring schedule and a
+  populated Recent sessions card sit beside each other when there is room, and
+  stack at narrower widths. An empty Recent sessions card leaves no blank slot.
 - The existing application shell remains the source of navigation; the screen
   does not add a second mobile navigation pattern.
 - Interactive controls retain a minimum 44px touch target and the layout avoids
@@ -35,11 +50,14 @@ mutation, and localization behavior.
 - Schedule failures are owned by the upcoming section. Cached schedules remain
   visible during refresh failures, while a recent-session failure without
   cached data stays quiet and local to that section.
-- The remaining-hours meter exposes its value through progressbar semantics,
-  and the recurring schedule accordion keeps its heading semantics intact.
+- The used-hours meter exposes its value through progressbar semantics. The
+  No Show dialog traps focus and returns it to an appropriate drawer action.
+- Dropdown and selection-list hover, focus, and highlighted states use the
+  shared accent token for a subdued surface. Checked and selected rows keep a
+  separate primary tint, and keyboard focus remains visible.
 
 ## Implementation scope
 
-The change is limited to the class-detail screen, its information, schedule,
-recurring-schedule, and hour-addition sections, plus English and Thai class
-translations. It introduces no route, API, or data-model changes.
+The UI changes cover the class-detail screen and sections, schedule details and
+No Show dialog, responsive drawer overlay, and shared dropdown and select
+states. They introduce no route or API changes.

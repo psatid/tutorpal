@@ -16,6 +16,7 @@ interface FormFieldProps {
   error?: string | string[];
   errorId?: string;
   required?: boolean;
+  requiredLabel?: string;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
   className?: string;
@@ -31,6 +32,7 @@ function FormField({
   error,
   errorId,
   required,
+  requiredLabel,
   disabled,
   orientation,
   className,
@@ -52,7 +54,16 @@ function FormField({
       {label && (
         <FieldLabel htmlFor={htmlFor} id={labelId}>
           {label}
-          {required && <span className="text-destructive">*</span>}
+          {required && (
+            <>
+              <span aria-hidden="true" className="text-destructive">
+                *
+              </span>
+              {requiredLabel ? (
+                <span className="sr-only"> {requiredLabel}</span>
+              ) : null}
+            </>
+          )}
         </FieldLabel>
       )}
       <FieldContent>

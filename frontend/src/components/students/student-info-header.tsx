@@ -55,25 +55,25 @@ export function StudentInfoHeader({
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+        <Badge variant="info">
           {t("students:grade", { grade: data.grade })}
         </Badge>
 
         {data.phoneNumber && (
-          <Badge variant="outline" className="gap-1">
+          <Badge className="gap-1" variant="info">
             <Phone className="w-3 h-3" />
             {data.phoneNumber}
           </Badge>
         )}
 
         {data.isLineLinked && (
-          <Badge variant="outline" className="gap-1 text-green-600 border-green-600/30">
+          <Badge className="gap-1" variant="success">
             <CheckCircle2 className="w-3 h-3" />
             LINE
           </Badge>
         )}
         {data.needsLineRelink && (
-          <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-700">
+          <Badge className="gap-1" variant="warning">
             <TriangleAlert className="w-3 h-3" />
             {t("students:line.needsRelink")}
           </Badge>

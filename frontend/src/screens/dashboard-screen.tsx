@@ -177,7 +177,9 @@ export function DashboardScreen() {
       return;
     }
 
-    const hoursToDeduct = (schedule.durationMinutes / 60).toFixed(1);
+    const hoursToDeduct = DateTime.formatDurationHours(
+      schedule.durationMinutes / 60,
+    );
     let wasConfirmed = false;
     let isConfirmationClosed = false;
     const releaseIfUnconfirmed = () => {
@@ -993,10 +995,6 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                   : "inset-y-0";
           const status =
             statusColors[schedule.status] ?? statusColors.SCHEDULED;
-          const statusClassName =
-            schedule.status === "SCHEDULED"
-              ? "bg-primary-container text-primary"
-              : status.className;
           const StatusIcon = status.icon ?? Clock3;
           const ScheduleTypeIcon =
             schedule.type === "ONLINE" ? Monitor : MapPin;
@@ -1040,13 +1038,13 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                   !isLast && "border-b border-border",
                 )}
               >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="min-w-0 flex-1 wrap-break-word font-semibold leading-5 text-foreground">
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="min-w-0 flex-1 truncate font-semibold leading-5 text-foreground">
                     {schedule.className}
                   </p>
                   <Badge
-                    className={cn("gap-1 border-transparent", statusClassName)}
-                    variant="outline"
+                    className="shrink-0 gap-1"
+                    variant={status.badgeVariant}
                   >
                     <StatusIcon className="size-3" aria-hidden="true" />
                     {t(`schedules:status.${schedule.status}`)}

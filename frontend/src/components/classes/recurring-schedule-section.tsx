@@ -3,12 +3,6 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/components/ui/accordion";
 import { DateTime } from "@/lib/date-time";
 import { formatDuration } from "@/lib/schedule-utils";
 import {
@@ -19,6 +13,7 @@ import {
 } from "@/types/schedule";
 
 interface RecurringScheduleSectionProps {
+	balanceState?: "no-hours" | "all-scheduled" | "exhausted" | "available";
 	hasNoAvailableHours: boolean;
 	onAddHours: () => void;
 	recurringSchedule?: RecurringScheduleSummary | null;
@@ -79,16 +74,23 @@ function formatRecurringItems(
 }
 
 export function RecurringScheduleSection({
+	balanceState = "no-hours",
 	hasNoAvailableHours,
 	onAddHours,
 	recurringSchedule,
 	onEdit,
 	onCreate,
 }: RecurringScheduleSectionProps) {
-	const { t } = useTranslation(["schedules"]);
+	const { t } = useTranslation(["schedules", "classes"]);
 	const recurringItems = recurringSchedule
 		? formatRecurringItems(recurringSchedule, t)
 		: [];
+	const unavailableBalanceLabel =
+		balanceState === "no-hours"
+			? t("classes:balance.noHours")
+			: balanceState === "all-scheduled"
+				? t("classes:balance.allScheduled")
+				: t("classes:balance.exhausted");
 
 	if (!recurringSchedule) {
 		return (
@@ -104,7 +106,9 @@ export function RecurringScheduleSection({
 							</h2>
 							<p className="max-w-[34ch] text-sm leading-6 text-on-surface-variant">
 								{hasNoAvailableHours
-									? t("schedules:recurring.noAvailabilityDescription")
+									? t("schedules:recurring.noAvailabilityDescription", {
+											balance: unavailableBalanceLabel,
+										})
 									: t("schedules:recurring.emptyDescription")}
 							</p>
 						</div>
@@ -125,109 +129,76 @@ export function RecurringScheduleSection({
 	}
 
 	return (
-		<section aria-labelledby="recurring-schedule-title">
-			<h2 className="sr-only" id="recurring-schedule-title">
-				{t("schedules:recurring.sectionTitle")}
-			</h2>
-			<Accordion
-				defaultValue={[]}
-				className="rounded-xl border-border bg-card"
-			>
-			<AccordionItem
-				value="recurring-schedule"
-				className="border-border data-open:bg-transparent"
-			>
-				<AccordionTrigger className="gap-3 p-4 text-left hover:no-underline">
-					<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
-						<Repeat2 className="h-4 w-4 text-on-surface" />
-					</div>
+		<section
+			aria-labelledby="recurring-schedule-title"
+			className="rounded-xl border border-border bg-card p-4"
+		>
+			<div className="flex min-w-0 items-start gap-3">
+				<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
+					<Repeat2 aria-hidden="true" className="h-4 w-4 text-on-surface" />
+				</div>
 					<div className="min-w-0 flex-1 space-y-3">
-						<div className="min-w-0 space-y-2">
-							<span className="text-base font-semibold text-on-surface">
-								{t("schedules:recurring.sectionTitle")}
-							</span>
-							<div className="flex flex-wrap gap-2">
-								<Badge
-									variant="outline"
-									className="inline-flex max-w-full gap-1 self-start whitespace-normal text-left"
-								>
-									<CalendarRange className="mt-0.5 h-3 w-3 shrink-0" />
-									<span>
-										{t("schedules:recurring.startsOn", {
-											date: DateTime.formatDate(recurringSchedule.startDate, {
-												day: "numeric",
-												month: "long",
-												year: "numeric",
-											}),
-										})}
-									</span>
-								</Badge>
-								<Badge variant="outline" className="inline-flex gap-1">
-									{recurringSchedule.type === "ONLINE" ? (
-										<Monitor className="h-3 w-3 shrink-0" aria-hidden="true" />
-									) : (
-										<MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
-									)}
-									<span>{t(`schedules:type.${recurringSchedule.type}`)}</span>
-								</Badge>
-							</div>
-						</div>
-
-						<div className="space-y-1.5 text-sm leading-5 text-on-surface-variant">
-							{recurringItems.map((item) => (
-								<div
-									key={item.weekdayKey}
-									className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
-								>
-									<span className="font-medium text-on-surface">{item.weekday}</span>
-									{item.items.map((interval) => (
-										<span key={interval.id}>
-											{interval.startTime} · {interval.durationLabel}
-										</span>
-									))}
-								</div>
-							))}
+					<div className="min-w-0 space-y-2">
+						<h2
+							className="text-base font-semibold text-on-surface"
+							id="recurring-schedule-title"
+						>
+							{t("schedules:recurring.sectionTitle")}
+						</h2>
+						<div className="flex flex-wrap gap-2">
+							<Badge
+								className="inline-flex max-w-full gap-1 self-start whitespace-normal text-left"
+								variant="info"
+							>
+								<CalendarRange className="mt-0.5 h-3 w-3 shrink-0" />
+								<span>
+									{t("schedules:recurring.startsOn", {
+										date: DateTime.formatDate(recurringSchedule.startDate, {
+											day: "numeric",
+											month: "long",
+											year: "numeric",
+										}),
+									})}
+								</span>
+							</Badge>
+							<Badge className="inline-flex gap-1" variant="info">
+								{recurringSchedule.type === "ONLINE" ? (
+									<Monitor aria-hidden="true" className="h-3 w-3 shrink-0" />
+								) : (
+									<MapPin aria-hidden="true" className="h-3 w-3 shrink-0" />
+								)}
+								<span>{t(`schedules:type.${recurringSchedule.type}`)}</span>
+							</Badge>
 						</div>
 					</div>
-				</AccordionTrigger>
 
-				<AccordionContent className="space-y-4 border-t border-border pl-[2.75rem] sm:pl-[3.75rem]">
-					<ul className="space-y-2">
+					<div className="space-y-1.5 text-sm leading-5 text-on-surface-variant">
 						{recurringItems.map((item) => (
-							<li
+							<div
+								className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
 								key={item.weekdayKey}
-								className="flex items-start justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2"
 							>
-								<div className="min-w-0">
-									<p className="text-sm font-medium leading-5 text-on-surface">
-										{item.weekday}
-									</p>
-									<div className="mt-1 space-y-1 text-sm leading-5 text-on-surface-variant">
-										{item.items.map((interval) => (
-											<p key={interval.id}>
-												{interval.startTime} · {interval.durationLabel}
-											</p>
-										))}
-									</div>
-								</div>
-							</li>
+								<span className="font-medium text-on-surface">{item.weekday}</span>
+								{item.items.map((interval) => (
+									<span key={interval.id}>
+										{interval.startTime} · {interval.durationLabel}
+									</span>
+								))}
+							</div>
 						))}
-					</ul>
-					<p className="max-w-[34ch] text-xs leading-6 text-on-surface-variant">
-						{t("schedules:recurring.editHint")}
-					</p>
-					<Button
-						variant="outline"
-						size="md"
-						leftIcon={Pencil}
-						onClick={onEdit}
-						className="w-full lg:w-auto"
-					>
-						{t("schedules:recurring.editAction")}
-					</Button>
-				</AccordionContent>
-			</AccordionItem>
-			</Accordion>
+					</div>
+				</div>
+				<Button
+					aria-label={t("schedules:recurring.editAction")}
+					className="size-11 -m-1 shrink-0"
+					onClick={onEdit}
+					size="icon"
+					type="button"
+					variant="ghost"
+				>
+					<Pencil aria-hidden="true" className="size-4" />
+				</Button>
+			</div>
 		</section>
 	);
 }

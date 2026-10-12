@@ -114,7 +114,7 @@ export default {
 		emptyDescription:
 			"Set the weekly pattern for this class so future sessions stay in sync.",
 		noAvailabilityDescription:
-			"Add hours before creating a recurring schedule.",
+			"{{balance}}. Add hours before creating a recurring schedule.",
 		addHoursAction: "Add hours",
 		createAction: "Create recurring schedule",
 		editAction: "Edit recurring schedule",
@@ -163,22 +163,19 @@ export default {
 		},
 		class: {
 			label: "Class",
-			caption: "Required",
 			placeholder: "Select a class",
 		},
 		date: {
 			label: "Date",
-			caption: "Required",
 			recurringLabel: "Start Date",
 			recurringCaption: "First occurrence of this recurring schedule",
 		},
 		time: {
 			label: "Time",
-			caption: "Required",
 		},
 		duration: {
 			label: "Duration",
-			caption: "Required",
+			placeholder: "Select duration",
 		},
 		notes: {
 			label: "Notes",
@@ -187,7 +184,6 @@ export default {
 		},
 		status: {
 			label: "Status",
-			caption: "Required",
 			placeholder: "Select status",
 		},
 		type: {
@@ -208,10 +204,8 @@ export default {
 			selectAll: "Select All",
 			clearAll: "Clear All",
 			timeLabel: "Time — {{interval}}",
-			timeCaption: "Required",
 			durationLabel: "Duration (minutes) — {{interval}}",
 			durationSelectLabel: "Duration — {{interval}}",
-			durationCaption: "Required",
 			durationPlaceholder: "e.g., 60",
 			interval: "Session {{number}}",
 			intervalLabel: "{{weekday}}, session {{number}}",
@@ -244,12 +238,12 @@ export default {
 		searchPlaceholder: "Search by class or student...",
 		noClasses: "No classes yet",
 		noResults: "No classes found",
-		selectButton: "Select",
+		selected: "Selected",
 		remainingHours: "{{hours}}h left",
 	},
 	classNoAvailability: {
 		description:
-			"This class has no hours available. Add hours before scheduling a session.",
+			"{{balance}}. Add hours before scheduling a session.",
 		addHours: "Add hours",
 	},
 	classAvailability: {
@@ -279,9 +273,13 @@ export default {
 	},
 	timeline: {
 		label: "Weekly schedule timeline",
+		instruction:
+			"Use the Arrow keys to move between 30-minute slots and days. Press Enter or Space to create a schedule.",
 		previousWeek: "Previous week",
 		nextWeek: "Next week",
 		openCalendar: "Choose a date in {{week}}",
+		createCellLabel: "Create schedule on {{date}} at {{time}}.",
+		currentTimeLabel: "Current time: {{time}}",
 		eventLabel:
 			"{{className}} on {{date}}, {{startTime}} to {{endTime}}, {{status}}, {{type}}",
 	},

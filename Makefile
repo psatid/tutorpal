@@ -239,6 +239,12 @@ db-setup: db-up
 db-migrate:
 	+$(MAKE) -C backend db-migrate
 
+db-migrate-deploy:
+	+$(MAKE) -C backend db-migrate-deploy
+
+db-generate:
+	+$(MAKE) -C backend db-generate
+
 ################################################################################
 # DEPRECATED
 # do not use docker targets. Use `make deploy` instead.

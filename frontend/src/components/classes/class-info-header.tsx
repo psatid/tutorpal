@@ -27,46 +27,53 @@ export function ClassInfoHeader({
 	const balanceLabel =
 		data.balanceState === "no-hours"
 			? t("classes:balance.noHours")
+			: data.balanceState === "all-scheduled"
+				? t("classes:balance.allScheduled")
 			: data.balanceState === "exhausted"
 				? t("classes:balance.exhausted")
-				: t("classes:balance.remaining", {
+				: t("classes:balance.available", {
 					hours: data.formattedRemainingHours,
 				});
 	const balanceProgress =
 		data.totalHours > 0
 			? Math.min(
 					100,
-					Math.max(0, (data.remainingHours / data.totalHours) * 100),
+					Math.max(0, (data.usedHours / data.totalHours) * 100),
 				)
 			: null;
+	const usedHoursForProgress = Math.min(
+		data.totalHours,
+		Math.max(0, data.usedHours),
+	);
 	const BalanceIcon =
 		data.balanceState === "exhausted" ? AlertTriangle : Clock3;
 
 	return (
 		<header className="rounded-xl border border-border bg-card p-4 sm:p-5">
-			<div className="flex items-center gap-3">
+			<div className="flex min-w-0 items-center gap-3">
 				<button
 					aria-label={t("classDetail.back")}
-					className="-ml-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
+					className="-ml-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
 					onClick={onBack}
 					type="button"
 				>
 					<ArrowLeft aria-hidden="true" className="size-5 text-on-surface" />
 				</button>
-				<div className="min-w-0 flex-1">
-					<h1 className="break-words text-xl font-medium leading-tight tracking-[-0.01em] text-on-surface sm:text-2xl">
+				<div className="flex min-w-0 items-center gap-1">
+					<h1 className="min-w-0 truncate text-xl font-medium leading-tight tracking-[-0.01em] text-on-surface sm:text-2xl">
 						{data.displayName}
 					</h1>
+					<Button
+						aria-label={t("classDetail.editClass")}
+						className="size-11 shrink-0"
+						onClick={onEdit}
+						size="icon"
+						type="button"
+						variant="ghost"
+					>
+						<Pencil aria-hidden="true" className="size-4" />
+					</Button>
 				</div>
-				<Button
-					aria-label={t("classDetail.editClass")}
-					onClick={onEdit}
-					size="icon"
-					type="button"
-					variant="ghost"
-				>
-					<Pencil aria-hidden="true" className="size-4" />
-				</Button>
 			</div>
 			<div className="mt-5 grid gap-5 border-t border-border pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,0.65fr)] lg:gap-8">
 				<section aria-labelledby="class-students-title" className="min-w-0">
@@ -138,6 +145,37 @@ export function ClassInfoHeader({
 						})}
 					</p>
 					<div className="mt-4 border-t border-white/20 pt-4">
+						<p className="text-sm tabular-nums text-white">
+							{t("classes:balance.accounting", {
+								scheduled: data.formattedScheduledHours,
+								used: data.formattedUsedHours,
+							})}
+						</p>
+					</div>
+					{balanceProgress !== null ? (
+						<div
+							aria-label={t("classes:balance.usedProgressLabel")}
+							aria-valuemax={data.totalHours}
+							aria-valuemin={0}
+							aria-valuenow={usedHoursForProgress}
+							aria-valuetext={t("classes:balance.usedProgress", {
+								used: data.formattedUsedHours,
+								total: data.formattedTotalHours,
+							})}
+							className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/20"
+							role="progressbar"
+						>
+							<span
+								className={cn(
+									"block h-full rounded-full bg-primary-container transition-[width]",
+									data.balanceState === "all-scheduled" && "bg-info",
+									data.balanceState === "exhausted" && "bg-warning-container",
+								)}
+								style={{ width: `${balanceProgress}%` }}
+							/>
+						</div>
+					) : null}
+					<div className="mt-4 border-t border-white/20 pt-4">
 						<p className="text-xs font-medium uppercase tracking-[0.12em] text-white/70">
 							{t("classes:revenue.label")}
 						</p>
@@ -146,25 +184,6 @@ export function ClassInfoHeader({
 								t("classes:revenue.notRecorded")}
 						</p>
 					</div>
-					{balanceProgress !== null ? (
-						<div
-							aria-label={t("classes:balance.label")}
-							aria-valuemax={100}
-							aria-valuemin={0}
-							aria-valuenow={Math.round(balanceProgress)}
-							aria-valuetext={balanceLabel}
-							className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20"
-							role="progressbar"
-						>
-							<span
-								className={cn(
-									"block h-full rounded-full bg-primary-container transition-[width]",
-									data.balanceState === "exhausted" && "bg-warning-container",
-								)}
-								style={{ width: `${balanceProgress}%` }}
-							/>
-						</div>
-					) : null}
 					<Button
 						className="mt-4 w-full sm:w-auto"
 						leftIcon={Clock3}

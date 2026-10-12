@@ -713,49 +713,115 @@ describe("ClassRepository hour additions", () => {
 	});
 
 	test("authorizes detail reads before summing immutable ledger revenue", async () => {
-		const originalFindById = ClassRepository.prototype.findById;
 		let aggregateCalls = 0;
 		let aggregateQuery: unknown;
+		let findFirstArgs: unknown;
+		const detailClass = {
+			id: "class-1",
+			tutorId: "tutor-1",
+			name: "Algebra",
+			totalSeconds: 9_000n,
+			createdAt,
+			updatedAt: createdAt,
+			students: [],
+		};
 
-		try {
-			ClassRepository.prototype.findById = async () => null;
-			classHourAdditionAggregate = async () => {
-				aggregateCalls += 1;
-				return { _sum: { revenueAmount: { toNumber: () => 1_250 } } };
-			};
+		transactionClient = {
+			class: {
+				findFirst: async (args: unknown) => {
+					findFirstArgs = args;
+					return null;
+				},
+			},
+			schedule: {
+				groupBy: async () => {
+					throw new Error("missing classes must not read schedule accounting");
+				},
+			},
+			classHourDeduction: {
+				groupBy: async () => {
+					throw new Error("missing classes must not read deduction accounting");
+				},
+			},
+			classHourAddition: {
+				aggregate: async () => {
+					aggregateCalls += 1;
+					return { _sum: { revenueAmount: { toNumber: () => 1_250 } } };
+				},
+			},
+		};
 
-			await expect(
-				new ClassRepository().findDetailById("foreign-class", "tutor-1"),
-			).resolves.toBeNull();
-			expect(aggregateCalls).toBe(0);
+		await expect(
+			new ClassRepository().findDetailById("foreign-class", "tutor-1"),
+		).resolves.toBeNull();
+		expect(findFirstArgs).toMatchObject({
+			where: { id: "foreign-class", tutorId: "tutor-1" },
+		});
+		expect(aggregateCalls).toBe(0);
 
-			ClassRepository.prototype.findById = async () => ({}) as never;
-			classHourAdditionAggregate = async (args) => {
-				aggregateCalls += 1;
-				aggregateQuery = args;
-				return { _sum: { revenueAmount: null } };
-			};
+		transactionClient = {
+			class: {
+				findFirst: async (args: unknown) => {
+					findFirstArgs = args;
+					return detailClass;
+				},
+			},
+			schedule: {
+				groupBy: async () => [
+					{
+						classId: "class-1",
+						status: "SCHEDULED",
+						_sum: { durationSeconds: 0n },
+					},
+				],
+			},
+			classHourDeduction: {
+				groupBy: async () => [],
+			},
+			classHourAddition: {
+				aggregate: async (args: unknown) => {
+					aggregateCalls += 1;
+					aggregateQuery = args;
+					return { _sum: { revenueAmount: null } };
+				},
+			},
+		};
 
-			const legacyOnly = await new ClassRepository().findDetailById(
-				"class-1",
-				"tutor-1",
-			);
-			expect(aggregateQuery).toEqual({
-				where: { classId: "class-1" },
-				_sum: { revenueAmount: true },
-			});
-			expect(legacyOnly?.recordedRevenue).toBe(0);
+		const legacyOnly = await new ClassRepository().findDetailById(
+			"class-1",
+			"tutor-1",
+		);
+		expect(findFirstArgs).toMatchObject({
+			where: { id: "class-1", tutorId: "tutor-1" },
+		});
+		expect(aggregateQuery).toEqual({
+			where: { classId: "class-1" },
+			_sum: { revenueAmount: true },
+		});
+		expect(legacyOnly?.recordedRevenue).toBe(0);
 
-			classHourAdditionAggregate = async () => ({
-				_sum: { revenueAmount: { toNumber: () => 1_250 } },
-			});
-			const recorded = await new ClassRepository().findDetailById(
-				"class-1",
-				"tutor-1",
-			);
-			expect(recorded?.recordedRevenue).toBe(1_250);
-		} finally {
-			ClassRepository.prototype.findById = originalFindById;
-		}
+		transactionClient = {
+			class: { findFirst: async () => detailClass },
+			schedule: {
+				groupBy: async () => [
+					{
+						classId: "class-1",
+						status: "SCHEDULED",
+						_sum: { durationSeconds: 0n },
+					},
+				],
+			},
+			classHourDeduction: { groupBy: async () => [] },
+			classHourAddition: {
+				aggregate: async () => ({
+					_sum: { revenueAmount: { toNumber: () => 1_250 } },
+				}),
+			},
+		};
+		const recorded = await new ClassRepository().findDetailById(
+			"class-1",
+			"tutor-1",
+		);
+		expect(recorded?.recordedRevenue).toBe(1_250);
 	});
 });

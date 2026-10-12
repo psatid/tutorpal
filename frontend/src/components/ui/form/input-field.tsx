@@ -36,7 +36,12 @@ function InputField({
       disabled={disabled}
       orientation={orientation}
     >
-      <Input className={className} disabled={disabled} {...inputProps} />
+      <Input
+        className={className}
+        disabled={disabled}
+        {...inputProps}
+        aria-required={required ? true : inputProps["aria-required"]}
+      />
     </FormField>
   );
 }

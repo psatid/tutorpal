@@ -27,6 +27,7 @@ const th = {
     name: "ชื่อ",
     description: "รายละเอียด",
     required: "จำเป็นต้องกรอกข้อมูลนี้",
+    requiredLabel: "จำเป็น",
     invalidEmail: "กรุณากรอกที่อยู่อีเมลที่ถูกต้อง",
     chooseDate: "เลือกวันที่",
     chooseWeek: "เลือกสัปดาห์",

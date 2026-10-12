@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { BookOpen, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { StudentEnrollmentClass } from "@/models/student";
 
 interface StudentClassListProps {
@@ -74,14 +73,12 @@ export function StudentClassList({
 						</div>
 
 						<Badge
-							variant="outline"
-							className={cn(
-								"shrink-0 gap-1",
-								hours.remainingHours !== undefined &&
-									hours.remainingHours > 0
-									? "text-green-600 border-green-600/30"
-									: undefined,
-							)}
+							className="shrink-0 gap-1"
+							variant={
+								hours.remainingHours !== undefined && hours.remainingHours > 0
+									? "success"
+									: "info"
+							}
 						>
 							<Clock className="w-3 h-3" />
 							{hours.remainingHours !== undefined

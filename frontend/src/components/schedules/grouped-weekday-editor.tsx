@@ -1,6 +1,6 @@
+import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	getOverlappingRecurringScheduleItemIndexes,
 	timeStringToMinutes,
@@ -109,21 +109,31 @@ export function GroupedWeekdayEditor({
 							className="rounded-xl border border-border/60 p-3"
 							key={weekday}
 						>
-							<div className="flex items-center gap-2">
-								<Checkbox
-									checked={isSelected}
-									disabled={disabled}
-									id={`weekday-${weekday}`}
-									onCheckedChange={() => onToggleWeekday(weekday)}
-								/>
-								<label
-									className="cursor-pointer text-sm font-medium"
-									htmlFor={`weekday-${weekday}`}
-									id={`weekday-${weekday}-label`}
+							<button
+								aria-checked={isSelected}
+								aria-label={weekdayLabel}
+								className={
+									disabled
+										? "flex min-h-11 w-full cursor-not-allowed items-center gap-2 rounded-lg px-2 text-left opacity-50"
+										: "flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2 text-left transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+								}
+								disabled={disabled}
+								onClick={() => onToggleWeekday(weekday)}
+								role="checkbox"
+								type="button"
+							>
+								<span
+									aria-hidden="true"
+									className={
+										isSelected
+											? "flex size-4 shrink-0 items-center justify-center rounded-[6px] border border-primary bg-primary text-primary-foreground"
+											: "flex size-4 shrink-0 items-center justify-center rounded-[6px] border border-input"
+									}
 								>
-									{weekdayLabel}
-								</label>
-							</div>
+									{isSelected ? <Check className="size-3.5" /> : null}
+								</span>
+								<span className="text-sm font-medium">{weekdayLabel}</span>
+							</button>
 
 							{isSelected ? (
 								<div className="mt-3 space-y-3">

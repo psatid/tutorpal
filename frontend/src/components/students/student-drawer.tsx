@@ -153,9 +153,7 @@ export function StudentDrawer({
         control={control}
         name="name"
         label={t("students:drawer.name.label")}
-        caption={
-          mode === "create" ? t("students:drawer.name.caption") : undefined
-        }
+        required={mode !== "view"}
         disabled={isDisabled}
         inputProps={{
           type: "text",
@@ -179,9 +177,7 @@ export function StudentDrawer({
         control={control}
         name="grade"
         label={t("students:drawer.grade.label")}
-        caption={
-          mode === "create" ? t("students:drawer.grade.caption") : undefined
-        }
+        required={mode !== "view"}
         options={gradeOptions}
         disabled={isDisabled}
         selectProps={{

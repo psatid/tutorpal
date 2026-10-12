@@ -16,7 +16,7 @@ The standalone class and hour-addition flow is described in
 
 ## Workspace pattern
 
-Each workspace uses the same page header, count, primary action, search and refinement controls, spaced card rows, loading skeletons, errors, and empty states. Students show learner and LINE context, Classes show optional students and their hour balance, and Courses show reusable hour presets.
+Each workspace uses the same page header, count, primary action, search and refinement controls, spaced card rows, loading skeletons, errors, and empty states. Students show learner and LINE context, Classes show linked students as an avatar group and their hour balance (with no placeholder row when there are no linked students), and Courses show reusable hour presets.
 
 Students, Courses, and Classes share `useWorkspaceSearchControls` for search state, 300ms debouncing, sort defaults, dirty-state detection, and reset behavior. Classes supplies its route-backed filter reset through the hook's optional callback.
 
@@ -39,7 +39,7 @@ Create and edit forms use the shared responsive drawer: an accessible bottom she
 - Search, filter, sort, reset, and clear controls reuse the shared Input, Button, and Select visual styles. Workspace-specific styling is limited to layout, responsive behavior, and text wrapping.
 - Controls use the shared component radii, clear borders, compact toolbar targets, 44px drawer choices, visible keyboard focus, and reduced-motion-safe transitions.
 - Long names truncate without hiding actions; mobile refinement rails scroll horizontally without creating page-level overflow. The page scrollbar remains available as the primary vertical scroll affordance.
-- On small screens, persistent create actions usually use a fixed 56px circular FAB with safe-area-aware spacing. Schedule Day view keeps its FAB; populated Schedule Week view hides it and places a labeled 44px icon Add action beside search, while the empty-week state keeps its inline Add Schedule action. From `sm` upward, Students, Courses, Classes, and Schedule use their text header actions. Scrollable content reserves space for a mobile FAB when one is present; empty-state instructional actions remain inline.
+- On small screens, persistent create actions usually use a fixed 56px circular FAB with safe-area-aware spacing. Schedule Day view keeps its FAB; Schedule Week hides the mobile FAB and header Add action, with blank hourly cells serving as the mobile create path. From `sm` upward, Students, Courses, Classes, and Schedule use their text header actions. Scrollable content reserves space for a mobile FAB when one is present; empty-state instructional actions remain inline.
 - All overlays use the shared responsive drawer: below `md` it is a bottom sheet with a drag handle, while at `md` and above it enters from the right. Forms, selectors, and calendar pickers share focus trapping, close behavior, scroll regions, footer actions, and nested layering.
 - Create and edit forms use one primary action in the fixed footer. Read-only drawers use one Edit action; the shared header close control handles dismissal in every state.
 - Select menus and Popovers opened in a drawer portal into that drawer. Selects stay modal on mobile and non-modal on desktop so keyboard focus and pointer selection remain reliable; calendar Popovers remain within the drawer's stacking boundary.

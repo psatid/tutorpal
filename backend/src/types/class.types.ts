@@ -9,6 +9,8 @@ export interface ClassDTO {
 	name: string;
 	displayName: string;
 	totalHours: number;
+	scheduledHours: number;
+	usedHours: number;
 	students: StudentInClassDTO[];
 	createdAt: string;
 	updatedAt: string;

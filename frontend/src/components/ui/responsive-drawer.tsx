@@ -15,6 +15,7 @@ import {
   DrawerViewport,
 } from "@/components/ui/drawer";
 import { DrawerOverlayPortalContext } from "@/components/ui/drawer-overlay-portal-context";
+import { overlayLayers } from "@/components/ui/overlay-layers";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type DrawerMode = "create" | "view" | "edit";
@@ -36,6 +37,7 @@ interface ResponsiveDrawerProps {
   headerContent?: ReactNode;
   layer?: DrawerLayer;
   onCloseAutoFocus?: () => void;
+  coverContent?: boolean;
 }
 
 export function ResponsiveDrawer({
@@ -48,6 +50,7 @@ export function ResponsiveDrawer({
   headerContent,
   layer = "base",
   onCloseAutoFocus,
+  coverContent = false,
 }: ResponsiveDrawerProps) {
   const { t } = useTranslation("common");
   const [drawerPopup, setDrawerPopup] = useState<HTMLDivElement | null>(null);
@@ -122,6 +125,12 @@ export function ResponsiveDrawer({
                 </DrawerFooter>
               ) : null}
             </DrawerOverlayPortalContext.Provider>
+            {coverContent ? (
+              <div
+                aria-hidden="true"
+                className={`pointer-events-auto absolute inset-0 bg-overlay-navy/25 ${overlayLayers.nestedBackdrop}`}
+              />
+            ) : null}
           </DrawerPopup>
         </DrawerViewport>
       </DrawerPortal>

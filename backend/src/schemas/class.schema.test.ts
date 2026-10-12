@@ -2,12 +2,37 @@ import { describe, expect, test } from "bun:test";
 import {
 	ClassHourAdditionListQuerySchema,
 	ClassListQuerySchema,
+	ClassSchema,
 	CreateClassHourAdditionSchema,
 	CreateClassSchema,
 	UpdateClassSchema,
 } from "./class.schema";
 
 describe("class request contracts", () => {
+	test("requires numeric scheduled and used hours in class responses", () => {
+		const classResponse = {
+			id: "class-1",
+			name: "Algebra",
+			displayName: "Algebra",
+			totalHours: 12.5,
+			scheduledHours: 2.25,
+			usedHours: 1.75,
+			students: [],
+			createdAt: "2026-06-28T10:00:00.000Z",
+			updatedAt: "2026-06-28T10:30:00.000Z",
+			remainingHours: 7.5,
+		};
+
+		expect(ClassSchema.safeParse(classResponse).success).toBe(true);
+		expect(
+			ClassSchema.safeParse({ ...classResponse, scheduledHours: undefined })
+				.success,
+		).toBe(false);
+		expect(
+			ClassSchema.safeParse({ ...classResponse, usedHours: undefined }).success,
+		).toBe(false);
+	});
+
 	test("creates a standalone class with no students and a trimmed name", () => {
 		const result = CreateClassSchema.parse({ name: "  Jane  " });
 		expect(result).toEqual({ name: "Jane" });

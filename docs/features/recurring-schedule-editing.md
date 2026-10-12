@@ -5,6 +5,7 @@
 **Behavior**:
 - Class detail now shows a dedicated `Recurring schedule` section with the current weekly pattern and an edit action
 - Global schedule creation and class-detail recurring create/edit allow multiple intervals on the same weekday; intervals are displayed in chronological order
+- Each weekday uses a full-width checkbox header as its toggle target; interval fields and add/remove actions remain separate controls
 - Class-detail duration controls use the shared recurring-session choices; existing custom durations remain available when editing
 - A new interval on a weekday starts at that day's latest interval end with a 60-minute duration, and adding is disabled when no start time remains in that day
 - Overlaps are rejected across the weekly timeline, including sessions crossing midnight and the Sunday-to-Monday boundary; back-to-back sessions are allowed

@@ -10,7 +10,6 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  formatDuration,
   formatTime24Hour,
   statusColors,
 } from "@/lib/schedule-utils";
@@ -157,14 +155,9 @@ function ScheduleRow({
         onClick={() => onViewSchedule(schedule)}
         type="button"
       >
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="text-sm font-medium tabular-nums text-on-surface">
-            {startTime} – {endTime}
-          </span>
-          <span className="text-xs tabular-nums text-on-surface-variant">
-            {formatDuration(schedule.durationMinutes, t)}
-          </span>
-        </div>
+        <span className="text-sm font-medium tabular-nums text-on-surface">
+          {startTime} – {endTime}
+        </span>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
           <ScheduleTypeIcon aria-hidden="true" className="size-3.5" />
           <span>{t(`type.${schedule.type}`)}</span>
@@ -178,11 +171,8 @@ function ScheduleRow({
 
       <div className="flex shrink-0 items-center gap-1">
         <Badge
-          variant="outline"
-          className={cn(
-            "shrink-0 gap-1 whitespace-nowrap",
-            status?.className ?? "bg-primary-container text-on-primary-container",
-          )}
+          className="shrink-0 gap-1 whitespace-nowrap"
+          variant={status?.badgeVariant ?? "info"}
         >
           {StatusIcon ? <StatusIcon className="size-3" /> : null}
           {t(`status.${schedule.status}`)}
@@ -324,6 +314,14 @@ export function ScheduleLog({
       : displayedSchedules;
   const hasAdditionalUpcomingSchedules =
     isUpcoming && displayedSchedules.length > UPCOMING_PREVIEW_COUNT;
+
+  if (
+    !isUpcoming &&
+    displayedSchedules.length === 0 &&
+    (!isLoading || hasData)
+  ) {
+    return null;
+  }
 
   return (
     <section aria-labelledby={titleId} className="rounded-xl border border-border bg-card p-4 sm:p-5">

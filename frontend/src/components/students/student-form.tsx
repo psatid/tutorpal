@@ -23,7 +23,6 @@ export function StudentForm({ onCreated }: { onCreated: () => void }) {
 			onSubmit={handleSubmit((data) => create.mutate(data))}
 		>
 			<RHFInputField
-				caption={t("students:drawer.name.caption")}
 				control={control}
 				inputProps={{
 					autoFocus: true,
@@ -31,6 +30,7 @@ export function StudentForm({ onCreated }: { onCreated: () => void }) {
 				}}
 				label={t("students:drawer.name.label")}
 				name="name"
+				required
 			/>
 			<RHFInputField
 				caption={t("students:drawer.phone.caption")}
@@ -43,11 +43,11 @@ export function StudentForm({ onCreated }: { onCreated: () => void }) {
 				name="phone"
 			/>
 			<RHFSelectField
-				caption={t("students:drawer.grade.caption")}
 				control={control}
 				label={t("students:drawer.grade.label")}
 				name="grade"
 				options={gradeOptions}
+				required
 				selectProps={{ placeholder: t("students:drawer.grade.placeholder") }}
 			/>
 		</form>

@@ -7,6 +7,93 @@ export const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
 	"NO_SHOW",
 ];
 
+type ClassHours = {
+	id: string;
+	totalSeconds: bigint;
+};
+
+type ClassHourAccountingReader = Pick<
+	PrismaClient,
+	"schedule" | "classHourDeduction"
+>;
+
+export type ClassHourAccounting = {
+	remainingHours: number;
+	scheduledHours: number;
+	usedHours: number;
+};
+
+export async function getClassHourAccountingMap(
+	client: ClassHourAccountingReader,
+	classes: ClassHours[],
+): Promise<Map<string, ClassHourAccounting>> {
+	if (classes.length === 0) {
+		return new Map();
+	}
+
+	const uniqueClasses = new Map(
+		classes.map((classData) => [classData.id, classData.totalSeconds]),
+	);
+	const classIds = [...uniqueClasses.keys()];
+	const [scheduleSecondsByClass, usedSecondsByClass] = await Promise.all([
+		client.schedule.groupBy({
+			by: ["classId", "status"],
+			where: {
+				classId: { in: classIds },
+				status: { in: ACTIVE_SCHEDULE_STATUSES },
+			},
+			_sum: {
+				durationSeconds: true,
+			},
+		}),
+		client.classHourDeduction.groupBy({
+			by: ["classId"],
+			where: {
+				classId: { in: classIds },
+				restoredAt: null,
+			},
+			_sum: {
+				secondsDeducted: true,
+			},
+		}),
+	]);
+
+	const reservedSecondsByClass = new Map<string, bigint>();
+	const scheduledSecondsByClass = new Map<string, bigint>();
+	for (const schedule of scheduleSecondsByClass) {
+		const seconds = schedule._sum.durationSeconds ?? 0n;
+		reservedSecondsByClass.set(
+			schedule.classId,
+			(reservedSecondsByClass.get(schedule.classId) ?? 0n) + seconds,
+		);
+		if (schedule.status === "SCHEDULED") {
+			scheduledSecondsByClass.set(schedule.classId, seconds);
+		}
+	}
+
+	const usedSecondsMap = new Map(
+		usedSecondsByClass.map((item) => [
+			item.classId,
+			item._sum.secondsDeducted ?? 0n,
+		]),
+	);
+
+	return new Map(
+		[...uniqueClasses].map(([classId, totalSeconds]) => [
+			classId,
+			{
+				remainingHours: secondsToHours(
+					totalSeconds - (reservedSecondsByClass.get(classId) ?? 0n),
+				),
+				scheduledHours: secondsToHours(
+					scheduledSecondsByClass.get(classId) ?? 0n,
+				),
+				usedHours: secondsToHours(usedSecondsMap.get(classId) ?? 0n),
+			},
+		]),
+	);
+}
+
 export async function getRemainingSecondsMap(
 	client: PrismaClient,
 	classIds: string[],

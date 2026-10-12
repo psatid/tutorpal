@@ -134,7 +134,6 @@ export function WeekdayTimeSelector({
 				return (
 					<div className="grid gap-3 sm:grid-cols-2">
 						<RHFTimeField
-							caption={t("schedules:drawer.weekdayTime.timeCaption")}
 							control={control}
 							disabled={disabled}
 							inputProps={{
@@ -146,9 +145,9 @@ export function WeekdayTimeSelector({
 								interval: intervalLabel,
 							})}
 							name={timeFieldName}
+							required
 						/>
 						<RHFSelectField
-							caption={t("schedules:drawer.weekdayTime.durationCaption")}
 							control={control}
 							disabled={disabled}
 							label={t("schedules:drawer.weekdayTime.durationSelectLabel", {
@@ -156,6 +155,7 @@ export function WeekdayTimeSelector({
 							})}
 							name={durationFieldName}
 							options={durationOptions}
+							required
 							selectProps={{
 								ariaLabel: t(
 									"schedules:drawer.weekdayTime.durationSelectLabel",

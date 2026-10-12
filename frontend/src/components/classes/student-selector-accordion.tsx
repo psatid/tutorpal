@@ -102,7 +102,7 @@ export function StudentSelectorAccordion({
       <button
         type="button"
         onClick={handleToggleAccordion}
-        className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-low transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
@@ -184,11 +184,11 @@ export function StudentSelectorAccordion({
                       key={student.getId()}
                       onClick={() => handleToggleStudent(student.getId())}
                       className={`
-                        w-full flex items-center gap-3 p-3 rounded-xl transition-all
+                        w-full flex items-center gap-3 p-3 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50
                         ${
                           isSelected
                             ? "bg-primary-container"
-                            : "bg-surface-container-low hover:bg-surface-container"
+                            : "bg-surface-container-low hover:bg-surface-container-low"
                         }
                       `}
                     >

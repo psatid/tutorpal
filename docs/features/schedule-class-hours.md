@@ -89,3 +89,22 @@
 - No-show requires a deduct/no-deduct choice and can save a separate optional note. Deduct produces `NO_SHOW`; no-deduct produces `CANCELLED` and releases the reservation.
 - Course defaults, class totals, additions, deductions, schedule durations, and recurring-item durations are stored as 64-bit integer seconds. API and form values remain in hours or whole minutes; time-of-day values remain minutes.
 - The coordinated migration converts existing values and checks that class balances and active deductions still match after conversion. Existing completed and no-show records are treated as deducted.
+
+## Class accounting and exhaustion state (October 12, 2026)
+
+Class list and detail responses include `scheduledHours` and `usedHours` in
+addition to the existing `totalHours` and `remainingHours`:
+
+- `scheduledHours` sums concrete schedules in `SCHEDULED` status. Recurring
+  templates count only after they materialize into schedule records.
+- `usedHours` sums deduction rows whose `restoredAt` is null. Restored
+  deductions and deductions deleted with their schedule do not count.
+- `remainingHours` continues to represent scheduling capacity by reserving
+  `SCHEDULED`, `COMPLETED`, and deducted `NO_SHOW` sessions.
+
+The class repository reads each response's class data and hour aggregates in
+one `RepeatableRead` transaction snapshot. Schedule creation remains blocked
+when `remainingHours <= 0`. The UI calls hours exhausted only when
+`totalHours > 0 && usedHours >= totalHours`; zero-hour classes show **No hours
+added yet**, and fully scheduled classes with deductions below the total show
+**All hours scheduled**.

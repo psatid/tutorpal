@@ -125,6 +125,7 @@ function DateField({
       error={error}
       errorId={errorId}
       required={required}
+      requiredLabel={required ? t("form.requiredLabel") : undefined}
       disabled={disabled}
     >
       {isDesktop ? (

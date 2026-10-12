@@ -38,6 +38,68 @@ describe("RecurringScheduleDrawer", () => {
     mutations.updateRecurring.mockReset();
   });
 
+  it.each([
+    [
+      "no-hours",
+      "No hours added yet. Add hours before creating a recurring schedule.",
+    ],
+    [
+      "all-scheduled",
+      "All hours scheduled. Add hours before creating a recurring schedule.",
+    ],
+    [
+      "exhausted",
+      "Hours exhausted. Add hours before creating a recurring schedule.",
+    ],
+  ] as const)(
+    "shows the localized %s balance state and blocks creation",
+    (balanceState, description) => {
+      render(
+        <RecurringScheduleDrawer
+          balanceState={balanceState}
+          classId="class-1"
+          hasNoAvailableHours
+          isOpen
+          onAddHours={vi.fn()}
+          onOpenChange={vi.fn()}
+          schedules={[]}
+        />,
+      );
+
+      const message = screen.getByText(description);
+      expect(message).toBeVisible();
+      expect(message).not.toHaveTextContent("{{balance}}");
+      expect(
+        screen.getByRole("button", { name: "Create recurring schedule" }),
+      ).toBeDisabled();
+    },
+  );
+
+  it("localizes the all-scheduled message in Thai", async () => {
+    await i18n.changeLanguage("th");
+
+    render(
+      <RecurringScheduleDrawer
+        balanceState="all-scheduled"
+        classId="class-1"
+        hasNoAvailableHours
+        isOpen
+        onAddHours={vi.fn()}
+        onOpenChange={vi.fn()}
+        schedules={[]}
+      />,
+    );
+
+    const message = screen.getByText(
+      "นัดชั่วโมงครบแล้ว เพิ่มชั่วโมงก่อนสร้างตารางเรียนซ้ำ",
+    );
+    expect(message).toBeVisible();
+    expect(message).not.toHaveTextContent("{{balance}}");
+    expect(
+      screen.getByRole("button", { name: "สร้างตารางเรียนซ้ำ" }),
+    ).toBeDisabled();
+  });
+
   it("keeps repeated weekday values and appends the next class interval after the latest end", async () => {
     const user = userEvent.setup();
     render(

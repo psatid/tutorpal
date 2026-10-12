@@ -26,8 +26,8 @@ import type {
 } from "../types/pagination.types";
 import {
 	ACTIVE_SCHEDULE_STATUSES,
+	getClassHourAccountingMap,
 	getRemainingHoursForClass,
-	getRemainingHoursMap,
 } from "./class-hours";
 
 const classInclude = {
@@ -249,38 +249,88 @@ export class ClassRepository implements IClassRepository {
 					}
 				: {}),
 		};
-		const [total, classes] = await Promise.all([
-			this.prisma.class.count({ where }),
-			this.prisma.class.findMany({
-				where,
-				skip,
-				take: limit,
-				orderBy: { [sortBy]: sortOrder },
-				include: classInclude,
-			}),
-		]);
-		const remaining = await getRemainingHoursMap(
-			this.prisma,
-			classes.map((item) => item.id),
-		);
-		const totalPages = Math.ceil(total / limit);
-		return {
-			data: classes.map((item) =>
-				ClassModel.fromClassPrisma(item, remaining.get(item.id)),
-			),
-			pagination: {
-				total,
-				page,
-				limit,
-				totalPages,
-				hasNext: page < totalPages,
-				hasPrev: page > 1,
+		return this.prisma.$transaction(
+			async (tx) => {
+				const [total, classes] = await Promise.all([
+					tx.class.count({ where }),
+					tx.class.findMany({
+						where,
+						skip,
+						take: limit,
+						orderBy: { [sortBy]: sortOrder },
+						include: classInclude,
+					}),
+				]);
+				const accounting = await getClassHourAccountingMap(
+					tx,
+					classes.map((item) => ({
+						id: item.id,
+						totalSeconds: item.totalSeconds,
+					})),
+				);
+				const totalPages = Math.ceil(total / limit);
+				return {
+					data: classes.map((item) => {
+						const hours = accounting.get(item.id);
+						return ClassModel.fromClassPrisma(
+							item,
+							hours?.remainingHours,
+							hours?.scheduledHours,
+							hours?.usedHours,
+						);
+					}),
+					pagination: {
+						total,
+						page,
+						limit,
+						totalPages,
+						hasNext: page < totalPages,
+						hasPrev: page > 1,
+					},
+				};
 			},
-		};
+			{ isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+		);
 	}
 
 	async findById(id: string, tutorId: string): Promise<ClassModel | null> {
-		const item = await this.prisma.class.findFirst({
+		return this.prisma.$transaction(
+			(tx) => this.findByIdWithAccounting(tx, id, tutorId),
+			{ isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+		);
+	}
+
+	async findDetailById(
+		id: string,
+		tutorId: string,
+	): Promise<ClassDetail | null> {
+		return this.prisma.$transaction(
+			async (tx) => {
+				const classData = await this.findByIdWithAccounting(tx, id, tutorId);
+				if (!classData) return null;
+
+				const revenue = await tx.classHourAddition.aggregate({
+					where: { classId: id },
+					_sum: { revenueAmount: true },
+				});
+				return {
+					classData,
+					recordedRevenue:
+						revenue._sum.revenueAmount === null
+							? 0
+							: revenue._sum.revenueAmount.toNumber(),
+				};
+			},
+			{ isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+		);
+	}
+
+	private async findByIdWithAccounting(
+		tx: Prisma.TransactionClient,
+		id: string,
+		tutorId: string,
+	): Promise<ClassModel | null> {
+		const item = await tx.class.findFirst({
 			where: { id, tutorId },
 			include: {
 				...classInclude,
@@ -296,30 +346,16 @@ export class ClassRepository implements IClassRepository {
 			},
 		});
 		if (!item) return null;
+		const accounting = await getClassHourAccountingMap(tx, [
+			{ id: item.id, totalSeconds: item.totalSeconds },
+		]);
+		const hours = accounting.get(item.id);
 		return ClassModel.fromClassPrisma(
 			item,
-			await getRemainingHoursForClass(this.prisma, id),
+			hours?.remainingHours,
+			hours?.scheduledHours,
+			hours?.usedHours,
 		);
-	}
-
-	async findDetailById(
-		id: string,
-		tutorId: string,
-	): Promise<ClassDetail | null> {
-		const classData = await this.findById(id, tutorId);
-		if (!classData) return null;
-
-		const revenue = await this.prisma.classHourAddition.aggregate({
-			where: { classId: id },
-			_sum: { revenueAmount: true },
-		});
-		return {
-			classData,
-			recordedRevenue:
-				revenue._sum.revenueAmount === null
-					? 0
-					: revenue._sum.revenueAmount.toNumber(),
-		};
 	}
 
 	async update(

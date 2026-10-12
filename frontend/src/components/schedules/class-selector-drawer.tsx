@@ -1,7 +1,6 @@
-import { BookOpen, Clock, Loader2, Search } from "lucide-react";
+import { BookOpen, Check, Clock, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
@@ -25,16 +24,12 @@ export function ClassSelectorDrawer({
 }: ClassSelectorDrawerProps) {
 	const { t } = useTranslation(["schedules", "classes"]);
 	const [searchQuery, setSearchQuery] = useState("");
-	const [localSelectedId, setLocalSelectedId] = useState<string | null>(
-		selectedClassId,
-	);
 	const loadMoreRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (!isOpen) return;
-		setLocalSelectedId(selectedClassId);
 		setSearchQuery("");
-	}, [isOpen, selectedClassId]);
+	}, [isOpen]);
 
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useInfiniteClasses({
@@ -55,34 +50,18 @@ export function ClassSelectorDrawer({
 		},
 	);
 
-	const handleSelect = (classId: string) => {
-		setLocalSelectedId(classId);
-	};
-
-	const handleConfirm = () => {
-		if (localSelectedId) {
-			onSelect(localSelectedId);
-			onOpenChange(false);
-		}
-	};
-
 	const handleClose = () => {
-		setLocalSelectedId(selectedClassId);
 		setSearchQuery("");
 		onOpenChange(false);
 	};
 
+	const handleSelect = (classId: string) => {
+		onSelect(classId);
+		handleClose();
+	};
+
 	return (
 		<ResponsiveDrawer
-			footer={
-				<Button
-					className="w-full"
-					disabled={!localSelectedId}
-					onClick={handleConfirm}
-				>
-					{t("schedules:classSelector.selectButton")}
-				</Button>
-			}
 			headerContent={
 				<Input
 					leftIcon={Search}
@@ -116,63 +95,59 @@ export function ClassSelectorDrawer({
 					</div>
 				) : (
 					<div className="space-y-2">
-						<fieldset className="space-y-2">
-							<legend className="sr-only">
-								{t("schedules:classSelector.title")}
-							</legend>
-							{classes.map((classItem) => {
-								const data = classItem.getListItemData();
-								const isSelected = localSelectedId === data.id;
-								const optionId = `class-selector-${data.id}`;
-								const studentNames = data.studentNames.join(", ");
-								const balanceLabel =
-									data.balanceState === "no-hours"
-										? t("classes:balance.noHours")
+						{classes.map((classItem) => {
+							const data = classItem.getListItemData();
+							const isSelected = selectedClassId === data.id;
+							const studentNames = data.studentNames.join(", ");
+							const balanceLabel =
+								data.balanceState === "no-hours"
+									? t("classes:balance.noHours")
+									: data.balanceState === "all-scheduled"
+										? t("classes:balance.allScheduled")
 										: data.balanceState === "exhausted"
 											? t("classes:balance.exhausted")
-											: t("schedules:classSelector.remainingHours", {
-													hours: data.formattedRemainingHours,
-												});
+											: t("classes:balance.available", {
+												hours: data.formattedRemainingHours,
+											});
 
-								return (
-									<label
-										className={cn(
-											"flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
-											isSelected
-												? "border-primary bg-primary/5 text-primary"
-												: "border-outline-variant bg-card hover:bg-surface-container",
-										)}
-										htmlFor={optionId}
-										key={data.id}
-									>
-										<input
-											checked={isSelected}
-											className="h-4 w-4 shrink-0 accent-primary"
-											id={optionId}
-											name="class-selector"
-											onChange={() => handleSelect(data.id)}
-											type="radio"
-											value={data.id}
-										/>
-										<div className="min-w-0 flex-1">
-											<p className="truncate font-medium text-on-surface">
-												{data.displayName}
-											</p>
-											{studentNames ? (
-												<p className="truncate text-sm text-on-surface-variant">
-													{studentNames}
-												</p>
-											) : null}
-										</div>
+							return (
+								<button
+									className={cn(
+										"flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+										isSelected
+											? "border-primary bg-primary/5 text-primary"
+											: "border-outline-variant bg-card hover:bg-surface-container-low",
+									)}
+									key={data.id}
+									onClick={() => handleSelect(data.id)}
+									type="button"
+								>
+									<span className="block min-w-0 flex-1">
+										<span className="block truncate font-medium text-on-surface">
+											{data.displayName}
+										</span>
+										{studentNames ? (
+											<span className="block truncate text-sm text-on-surface-variant">
+												{studentNames}
+											</span>
+										) : null}
+									</span>
 
-										<div className="flex shrink-0 items-center gap-1 text-xs text-on-surface-variant">
-											<Clock className="h-3 w-3" />
-											<span>{balanceLabel}</span>
-										</div>
-									</label>
-								);
-							})}
-						</fieldset>
+									<span className="flex shrink-0 items-center gap-1 text-xs text-on-surface-variant">
+										<Clock className="h-3 w-3" />
+										<span>{balanceLabel}</span>
+									</span>
+									{isSelected ? (
+										<span className="flex shrink-0 items-center text-primary">
+											<Check aria-hidden="true" className="size-4" />
+											<span className="sr-only">
+												{t("schedules:classSelector.selected")}
+											</span>
+										</span>
+									) : null}
+								</button>
+							);
+						})}
 
 						<div ref={loadMoreRef}>
 							{isFetchingNextPage ? (

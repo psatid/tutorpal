@@ -38,6 +38,7 @@ function TimeField({
         className={cn("[&::-webkit-calendar-picker-indicator]:opacity-0", className)}
         disabled={disabled}
         {...inputProps}
+        aria-required={required ? true : inputProps["aria-required"]}
       />
     </FormField>
   );

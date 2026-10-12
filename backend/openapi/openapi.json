@@ -1352,6 +1352,12 @@
                     "totalHours": {
                       "type": "number"
                     },
+                    "scheduledHours": {
+                      "type": "number"
+                    },
+                    "usedHours": {
+                      "type": "number"
+                    },
                     "students": {
                       "type": "array",
                       "items": {
@@ -1488,6 +1494,8 @@
                     "name",
                     "displayName",
                     "totalHours",
+                    "scheduledHours",
+                    "usedHours",
                     "students",
                     "createdAt",
                     "updatedAt",
@@ -1614,6 +1622,12 @@
                             "type": "string"
                           },
                           "totalHours": {
+                            "type": "number"
+                          },
+                          "scheduledHours": {
+                            "type": "number"
+                          },
+                          "usedHours": {
                             "type": "number"
                           },
                           "students": {
@@ -1752,6 +1766,8 @@
                           "name",
                           "displayName",
                           "totalHours",
+                          "scheduledHours",
+                          "usedHours",
                           "students",
                           "createdAt",
                           "updatedAt",
@@ -2249,6 +2265,12 @@
                     "totalHours": {
                       "type": "number"
                     },
+                    "scheduledHours": {
+                      "type": "number"
+                    },
+                    "usedHours": {
+                      "type": "number"
+                    },
                     "students": {
                       "type": "array",
                       "items": {
@@ -2388,6 +2410,8 @@
                     "name",
                     "displayName",
                     "totalHours",
+                    "scheduledHours",
+                    "usedHours",
                     "students",
                     "createdAt",
                     "updatedAt",
@@ -2441,6 +2465,12 @@
                       "type": "string"
                     },
                     "totalHours": {
+                      "type": "number"
+                    },
+                    "scheduledHours": {
+                      "type": "number"
+                    },
+                    "usedHours": {
                       "type": "number"
                     },
                     "students": {
@@ -2579,6 +2609,8 @@
                     "name",
                     "displayName",
                     "totalHours",
+                    "scheduledHours",
+                    "usedHours",
                     "students",
                     "createdAt",
                     "updatedAt",

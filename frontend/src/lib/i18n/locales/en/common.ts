@@ -24,6 +24,7 @@ export default {
     name: "Name",
     description: "Description",
     required: "This field is required",
+    requiredLabel: "required",
     invalidEmail: "Please enter a valid email address",
     chooseDate: "Choose date",
     chooseWeek: "Choose week",

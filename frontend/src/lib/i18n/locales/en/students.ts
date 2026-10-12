@@ -71,7 +71,6 @@ export default {
 		name: {
 			label: "Full Name",
 			placeholder: "e.g., John Smith",
-			caption: "Required",
 		},
 		phone: {
 			label: "Phone Number",
@@ -81,7 +80,6 @@ export default {
 		grade: {
 			label: "Grade Level",
 			placeholder: "Select grade",
-			caption: "Required",
 		},
 		createButton: "Create Student",
 		updateButton: "Update Student",

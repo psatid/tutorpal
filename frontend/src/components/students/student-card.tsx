@@ -38,17 +38,17 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="font-medium text-on-surface truncate">{data.name}</p>
-          <Badge variant="outline" className="shrink-0">
+          <Badge className="shrink-0" variant="info">
             {t("students:grade", { grade: data.grade })}
           </Badge>
           {isLineLinked && (
-            <Badge variant="outline" className="shrink-0 gap-1 text-green-600 border-green-600/30">
+            <Badge variant="success" className="shrink-0 gap-1">
               <CheckCircle2 className="w-3 h-3" />
               LINE
             </Badge>
           )}
           {needsLineRelink && (
-            <Badge variant="outline" className="shrink-0 gap-1 border-amber-500/30 text-amber-700">
+            <Badge variant="warning" className="shrink-0 gap-1">
               <TriangleAlert className="w-3 h-3" />
               {t("students:line.needsRelink")}
             </Badge>

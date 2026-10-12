@@ -132,6 +132,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -307,6 +308,27 @@ describe("WeekDateSelector", () => {
         screen.getByRole("radiogroup", { name: "Schedule date selector" }),
       ).getAllByRole("radio", { checked: true }),
     ).toHaveLength(1);
+  });
+
+  it("uses the selected Day tile itself for the primary surface without an overlay", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 11, 12));
+    render(<SelectorFixture />);
+
+    const selectedDate = getDateRadio("2026-10-14");
+    const today = getDateRadio("2026-10-11");
+
+    expect(selectedDate).toHaveClass(
+      "border-primary",
+      "bg-primary",
+      "text-primary-foreground",
+    );
+    expect(
+      selectedDate.querySelector("span.pointer-events-none"),
+    ).not.toBeInTheDocument();
+    expect(today).toHaveAttribute("aria-checked", "false");
+    expect(today).toHaveClass("border-primary", "bg-card", "text-foreground");
+    expect(today).not.toHaveClass("bg-primary");
   });
 
   it("shows the newly active panel immediately for reduced-motion users", async () => {

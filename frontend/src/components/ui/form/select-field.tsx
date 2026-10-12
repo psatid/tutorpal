@@ -48,6 +48,7 @@ function SelectField<T = string>({
     "aria-describedby": describedBy,
     "aria-invalid": ariaInvalid,
     "aria-errormessage": error ? errorId : undefined,
+    "aria-required": required || undefined,
   };
 
   return (

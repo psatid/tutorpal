@@ -25,7 +25,7 @@ const prismaClass = {
 
 describe("ClassModel", () => {
 	test("converts a standalone Prisma class record into a model", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
+		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5, 2.25, 1.75);
 
 		expect(classModel.id).toBe("class-1");
 		expect(classModel.tutorId).toBe("tutor-1");
@@ -33,6 +33,8 @@ describe("ClassModel", () => {
 		expect(classModel.displayName).toBe("Algebra");
 		expect(classModel.totalHours).toBe(12.5);
 		expect(classModel.remainingHours).toBe(7.5);
+		expect(classModel.scheduledHours).toBe(2.25);
+		expect(classModel.usedHours).toBe(1.75);
 		expect(classModel.createdAt).toBe(createdAt);
 		expect(classModel.updatedAt).toBe(updatedAt);
 	});
@@ -45,10 +47,12 @@ describe("ClassModel", () => {
 
 		expect(classModel.toClassDTO().students).toEqual([]);
 		expect(classModel.toClassDTO().remainingHours).toBe(12.5);
+		expect(classModel.toClassDTO().scheduledHours).toBe(0);
+		expect(classModel.toClassDTO().usedHours).toBe(0);
 	});
 
 	test("serializes a standalone class without course context", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
+		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5, 2.25, 1.75);
 
 		expect(classModel.toClassDTO()).toEqual({
 			id: "class-1",
@@ -67,16 +71,20 @@ describe("ClassModel", () => {
 			createdAt: "2026-06-28T10:00:00.000Z",
 			updatedAt: "2026-06-28T10:30:00.000Z",
 			remainingHours: 7.5,
+			scheduledHours: 2.25,
+			usedHours: 1.75,
 			recurringSchedule: undefined,
 		});
 	});
 
 	test("adds recorded revenue only to the class detail DTO", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5);
+		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5, 2.25, 1.75);
 
 		expect(classModel.toClassDTO()).not.toHaveProperty("recordedRevenue");
 		expect(classModel.toClassDetailDTO(1_250)).toMatchObject({
 			id: "class-1",
+			scheduledHours: 2.25,
+			usedHours: 1.75,
 			recordedRevenue: 1_250,
 		});
 	});

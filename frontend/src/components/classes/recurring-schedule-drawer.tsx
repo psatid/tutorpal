@@ -89,6 +89,7 @@ type RecurringScheduleFormData = z.infer<
 >;
 
 interface RecurringScheduleDrawerProps {
+	balanceState?: "no-hours" | "all-scheduled" | "exhausted" | "available";
 	hasNoAvailableHours: boolean;
 	isOpen: boolean;
 	onAddHours: () => void;
@@ -282,7 +283,6 @@ function RecurringWeekdayTimeSelector({
 				return (
 					<div className="grid gap-3 sm:grid-cols-2">
 						<RHFTimeField
-							caption={t("schedules:drawer.weekdayTime.timeCaption")}
 							control={control}
 							inputProps={{
 								"aria-describedby": overlapDescriptionId,
@@ -293,15 +293,16 @@ function RecurringWeekdayTimeSelector({
 								interval: intervalLabel,
 							})}
 							name={`scheduleItems.${item.index}.time`}
+							required
 						/>
 						<RHFSelectField
-							caption={t("schedules:drawer.weekdayTime.durationCaption")}
 							control={control}
 							label={t("schedules:drawer.weekdayTime.durationSelectLabel", {
 								interval: intervalLabel,
 							})}
 							name={`scheduleItems.${item.index}.durationMinutes`}
 							options={durationOptions}
+							required
 							selectProps={{
 								ariaLabel: t(
 									"schedules:drawer.weekdayTime.durationSelectLabel",
@@ -319,6 +320,7 @@ function RecurringWeekdayTimeSelector({
 }
 
 export function RecurringScheduleDrawer({
+	balanceState = "no-hours",
 	hasNoAvailableHours,
 	isOpen,
 	onAddHours,
@@ -327,13 +329,19 @@ export function RecurringScheduleDrawer({
 	recurringSchedule,
 	schedules,
 }: RecurringScheduleDrawerProps) {
-	const { t } = useTranslation(["schedules"]);
+	const { t } = useTranslation(["schedules", "classes"]);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [pendingValues, setPendingValues] = useState<RecurringScheduleFormData | null>(
 		null,
 	);
 	const mode = recurringSchedule ? "edit" : "create";
 	const isCreateUnavailable = mode === "create" && hasNoAvailableHours;
+	const unavailableBalanceLabel =
+		balanceState === "no-hours"
+			? t("classes:balance.noHours")
+			: balanceState === "all-scheduled"
+				? t("classes:balance.allScheduled")
+				: t("classes:balance.exhausted");
 	const createMutation = useCreateSchedule({
 		onSuccess: () => {
 			onOpenChange(false);
@@ -489,7 +497,9 @@ export function RecurringScheduleDrawer({
 				{isCreateUnavailable ? (
 					<div className="rounded-lg border border-border bg-muted/50 p-4">
 						<p className="text-sm text-foreground">
-							{t("schedules:recurring.noAvailabilityDescription")}
+							{t("schedules:recurring.noAvailabilityDescription", {
+								balance: unavailableBalanceLabel,
+							})}
 						</p>
 						<Button
 							className="mt-3"

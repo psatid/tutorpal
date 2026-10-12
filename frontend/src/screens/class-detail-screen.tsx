@@ -199,7 +199,9 @@ export function ClassDetailScreen({
 
   const handleCompleteSchedule = useCallback(
     (schedule: GetV1Schedules200Item) => {
-      const hoursToDeduct = (schedule.durationMinutes / 60).toFixed(1);
+      const hoursToDeduct = DateTime.formatDurationHours(
+        schedule.durationMinutes / 60,
+      );
       toast(
         t("schedules:complete.confirm", {
           hours: hoursToDeduct,
@@ -222,7 +224,9 @@ export function ClassDetailScreen({
 
   const handleRestoreHours = useCallback(
     (schedule: GetV1Schedules200Item) => {
-      const hoursToRestore = (schedule.durationMinutes / 60).toFixed(1);
+      const hoursToRestore = DateTime.formatDurationHours(
+        schedule.durationMinutes / 60,
+      );
       toast(
         t("schedules:restore.confirm", {
           hours: hoursToRestore,
@@ -397,8 +401,9 @@ export function ClassDetailScreen({
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.55fr)] lg:items-start">
-        <div className="space-y-6">
+        <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]">
           <RecurringScheduleSection
+            balanceState={classData.getBalanceState()}
             hasNoAvailableHours={classData.hasNoAvailableHours()}
             onAddHours={handleAddHours}
             recurringSchedule={classData.getRecurringSchedule()}
@@ -466,6 +471,7 @@ export function ClassDetailScreen({
       />
 
       <RecurringScheduleDrawer
+        balanceState={classData.getBalanceState()}
         hasNoAvailableHours={classData.hasNoAvailableHours()}
         isOpen={isRecurringDrawerOpen}
         onAddHours={handleAddHoursFromRecurring}

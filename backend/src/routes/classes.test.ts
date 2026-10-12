@@ -33,6 +33,7 @@ const customAddition = ClassHourAdditionModel.fromPrisma({
 let createData: unknown;
 let addHourData: unknown;
 let historyParams: unknown;
+let listOwnership: unknown;
 let addHourOwnership: unknown;
 let historyOwnership: unknown;
 let detailOwnership: unknown;
@@ -43,6 +44,20 @@ let detailResult: { classData: ClassModel; recordedRevenue: number } | null = {
 
 mock.module("../repositories", () => ({
 	classRepository: {
+		findAll: async (tutorId: string, params: unknown) => {
+			listOwnership = { tutorId, params };
+			return {
+				data: [classModel],
+				pagination: {
+					total: 1,
+					page: 1,
+					limit: 10,
+					totalPages: 1,
+					hasNext: false,
+					hasPrev: false,
+				},
+			};
+		},
 		create: async (data: unknown) => {
 			createData = data;
 			return classModel;
@@ -120,6 +135,19 @@ function request(path: string, method = "GET", body?: unknown) {
 }
 
 describe("class routes", () => {
+	test("returns scheduled and used hours from the tutor-scoped class list", async () => {
+		const response = await request("/v1/classes?page=2&limit=5");
+
+		expect(response.status).toBe(200);
+		expect(listOwnership).toMatchObject({
+			tutorId: "tutor-1",
+			params: { page: 2, limit: 5 },
+		});
+		expect(await response.json()).toMatchObject({
+			data: [expect.objectContaining({ scheduledHours: 0, usedHours: 0 })],
+		});
+	});
+
 	test("creates a studentless standalone class from only its name", async () => {
 		const response = await request("/v1/classes", "POST", {
 			name: "  Algebra  ",
@@ -207,7 +235,11 @@ describe("class routes", () => {
 		expect(response.status).toBe(200);
 		expect(detailOwnership).toEqual({ id: "class-1", tutorId: "tutor-1" });
 		expect(await response.json()).toEqual(
-			expect.objectContaining({ recordedRevenue: 1_250 }),
+			expect.objectContaining({
+				recordedRevenue: 1_250,
+				scheduledHours: 0,
+				usedHours: 0,
+			}),
 		);
 	});
 

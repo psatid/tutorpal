@@ -74,7 +74,6 @@ const th = {
 		name: {
 			label: "ชื่อ-นามสกุล",
 			placeholder: "เช่น สมชาย ใจดี",
-			caption: "จำเป็น",
 		},
 		phone: {
 			label: "หมายเลขโทรศัพท์",
@@ -84,7 +83,6 @@ const th = {
 		grade: {
 			label: "ระดับชั้น",
 			placeholder: "เลือกระดับชั้น",
-			caption: "จำเป็น",
 		},
 		createButton: "สร้างนักเรียน",
 		updateButton: "อัปเดตนักเรียน",

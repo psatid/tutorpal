@@ -63,9 +63,13 @@ const th = {
 	balance: {
 		label: "ยอดคงเหลือ",
 		noHours: "ยังไม่ได้เพิ่มชั่วโมง",
+		allScheduled: "นัดชั่วโมงครบแล้ว",
 		exhausted: "ใช้ชั่วโมงหมดแล้ว",
-		remaining: "เหลือ {{hours}} ชั่วโมง",
+		available: "มีชั่วโมงให้ใช้ {{hours}} ชั่วโมง",
 		total: "ทั้งหมด {{hours}} ชั่วโมง",
+		accounting: "นัดแล้ว {{scheduled}} · ใช้แล้ว {{used}}",
+		usedProgress: "ใช้แล้ว {{used}} จาก {{total}} ชั่วโมง",
+		usedProgressLabel: "ชั่วโมงที่ใช้แล้ว",
 	},
 	revenue: {
 		label: "รายได้ที่บันทึก",
@@ -164,7 +168,6 @@ const th = {
 		cancelButton: "ยกเลิก",
 		name: {
 			label: "ชื่อชั้นเรียน",
-			caption: "จำเป็น",
 			placeholder: "เช่น แคลคูลัสขั้นสูง",
 		},
 		students: {
@@ -179,7 +182,6 @@ const th = {
 		cancel: "ยกเลิก",
 		name: {
 			label: "ชื่อชั้นเรียน",
-			caption: "จำเป็น",
 			placeholder: "เช่น แคลคูลัสขั้นสูง",
 		},
 		students: {

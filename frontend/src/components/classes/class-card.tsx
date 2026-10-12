@@ -29,6 +29,18 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 	const data = classData.getDetailsHeaderData();
 	const displayedStudents = data.students.slice(0, 3);
 	const remainingStudents = data.students.length - 3;
+	const balanceStatus =
+		data.balanceState === "available"
+			? null
+			: data.balanceState === "no-hours"
+				? t("classes:balance.noHours")
+				: data.balanceState === "all-scheduled"
+					? t("classes:balance.allScheduled")
+					: t("classes:balance.exhausted");
+	const accountingLabel = t("classes:balance.accounting", {
+		scheduled: data.formattedScheduledHours,
+		used: data.formattedUsedHours,
+	});
 
 	return (
 		<InfoCard onClick={onView}>
@@ -37,17 +49,26 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 					<p className="font-medium text-on-surface truncate">
 						{data.displayName}
 					</p>
-					<Badge variant="outline" className="shrink-0 gap-1">
+					<Badge
+						className="shrink-0 gap-1"
+						variant="info"
+					>
 						<Clock className="w-3 h-3" />
-						{data.remainingHours !== undefined
-							? t("classes:hoursWithRemaining", {
-									total: data.formattedTotalHours,
-									remaining: data.formattedRemainingHours,
-								})
-							: t("classes:hours", {
-									hours: data.formattedTotalHours,
-								})}
+						{t("classes:hoursWithRemaining", {
+							total: data.formattedTotalHours,
+							remaining: data.formattedRemainingHours,
+						})}
 					</Badge>
+					{balanceStatus ? (
+						<Badge
+							className="shrink-0"
+							variant={
+								data.balanceState === "exhausted" ? "warning" : "info"
+							}
+						>
+							{balanceStatus}
+						</Badge>
+					) : null}
 					<AvatarGroup className="shrink-0">
 						{displayedStudents.map((student) => (
 							<Avatar key={student.getId()} size="sm">
@@ -64,6 +85,9 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 						{t("classes:students", { count: data.students.length })}
 					</span>
 				</div>
+				<p className="mt-1 text-xs tabular-nums text-on-surface-variant">
+					{accountingLabel}
+				</p>
 			</div>
 
 			<DropdownMenu>

@@ -17,6 +17,8 @@ type ClassDetails = {
 	name: string;
 	displayName: string;
 	totalHours: number;
+	scheduledHours: number;
+	usedHours: number;
 	remainingHours: number;
 	recordedRevenue: number | null;
 	students: ClassStudent[];
@@ -86,8 +88,14 @@ export class Class {
 	getHoursData() {
 		return {
 			totalHours: this.data.totalHours,
+			scheduledHours: this.data.scheduledHours,
+			usedHours: this.data.usedHours,
 			remainingHours: this.data.remainingHours,
 			formattedTotalHours: DateTime.formatDurationHours(this.data.totalHours),
+			formattedScheduledHours: DateTime.formatDurationHours(
+				this.data.scheduledHours,
+			),
+			formattedUsedHours: DateTime.formatDurationHours(this.data.usedHours),
 			formattedRemainingHours: DateTime.formatDurationHours(
 				this.data.remainingHours,
 			),
@@ -96,7 +104,10 @@ export class Class {
 
 	getBalanceState() {
 		if (this.data.totalHours <= 0) return "no-hours" as const;
-		if (this.data.remainingHours <= 0) return "exhausted" as const;
+		if (this.data.usedHours >= this.data.totalHours) {
+			return "exhausted" as const;
+		}
+		if (this.data.remainingHours <= 0) return "all-scheduled" as const;
 		return "available" as const;
 	}
 
@@ -149,6 +160,8 @@ function toClassDetails(
 		name: response.name,
 		displayName: response.displayName,
 		totalHours: response.totalHours,
+		scheduledHours: response.scheduledHours,
+		usedHours: response.usedHours,
 		remainingHours: response.remainingHours,
 		recordedRevenue:
 			"recordedRevenue" in response ? response.recordedRevenue : null,

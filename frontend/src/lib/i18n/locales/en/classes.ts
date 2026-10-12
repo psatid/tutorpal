@@ -59,9 +59,13 @@ export default {
 	balance: {
 		label: "Balance",
 		noHours: "No hours added yet",
+		allScheduled: "All hours scheduled",
 		exhausted: "Hours exhausted",
-		remaining: "{{hours}} hours remaining",
+		available: "{{hours}} hours available",
 		total: "{{hours}} hours total",
+		accounting: "Scheduled {{scheduled}} · Used {{used}}",
+		usedProgress: "{{used}} of {{total}} hours used",
+		usedProgressLabel: "Hours used",
 	},
 	revenue: {
 		label: "Recorded revenue",
@@ -159,7 +163,6 @@ export default {
 		cancelButton: "Cancel",
 		name: {
 			label: "Class Name",
-			caption: "Required",
 			placeholder: "e.g. Advanced Calculus",
 		},
 		students: {
@@ -174,7 +177,6 @@ export default {
 		cancel: "Cancel",
 		name: {
 			label: "Class Name",
-			caption: "Required",
 			placeholder: "e.g. Advanced Calculus",
 		},
 		students: {

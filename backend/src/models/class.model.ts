@@ -41,6 +41,8 @@ type ClassModelProps = {
 	createdAt: Date;
 	updatedAt: Date;
 	remainingHours: number;
+	scheduledHours: number;
+	usedHours: number;
 	recurringSchedule?: RecurringScheduleDTO | null;
 };
 
@@ -54,6 +56,8 @@ export class ClassModel {
 	readonly createdAt: Date;
 	readonly updatedAt: Date;
 	readonly remainingHours: number;
+	readonly scheduledHours: number;
+	readonly usedHours: number;
 	readonly recurringSchedule?: RecurringScheduleDTO | null;
 
 	constructor(props: ClassModelProps) {
@@ -66,12 +70,16 @@ export class ClassModel {
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
 		this.remainingHours = props.remainingHours;
+		this.scheduledHours = props.scheduledHours;
+		this.usedHours = props.usedHours;
 		this.recurringSchedule = props.recurringSchedule;
 	}
 
 	static fromClassPrisma(
 		classData: ClassPrismaRecord,
 		remainingHours = secondsToHours(classData.totalSeconds),
+		scheduledHours = 0,
+		usedHours = 0,
 	): ClassModel {
 		const students = classData.students.map((enrollment) => enrollment.student);
 		return new ClassModel({
@@ -83,6 +91,8 @@ export class ClassModel {
 			createdAt: classData.createdAt,
 			updatedAt: classData.updatedAt,
 			remainingHours,
+			scheduledHours,
+			usedHours,
 			recurringSchedule: toLatestRecurringScheduleDTO(
 				classData,
 				classData.name,
@@ -101,6 +111,8 @@ export class ClassModel {
 			createdAt: DateTime.from(this.createdAt).toISOString(),
 			updatedAt: DateTime.from(this.updatedAt).toISOString(),
 			remainingHours: this.remainingHours,
+			scheduledHours: this.scheduledHours,
+			usedHours: this.usedHours,
 			recurringSchedule: this.recurringSchedule,
 		};
 	}

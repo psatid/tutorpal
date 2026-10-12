@@ -200,6 +200,57 @@ describe("ScheduleDrawer", () => {
 		);
 	});
 
+	it("uses a timeline cell's date and hour after selecting a one-time duration", async () => {
+		const user = userEvent.setup();
+		render(
+			<ScheduleDrawer
+				initialTime={13 * 60}
+				isOpen
+				mode="create"
+				onModeChange={vi.fn()}
+				onOpenChange={vi.fn()}
+				scheduleId={null}
+				selectedDate={new Date(2026, 9, 8)}
+			/>,
+		);
+
+		const duration = screen.getByRole("combobox", { name: "Duration" });
+		expect(duration).toHaveTextContent("Select duration");
+
+		await user.click(screen.getByRole("button", { name: "Class" }));
+		await user.click(screen.getByRole("button", { name: "Choose class one" }));
+		await user.click(screen.getByRole("radio", { name: "Online" }));
+		await user.click(duration);
+		await user.click(await screen.findByRole("option", { name: "1 h" }));
+		await user.click(screen.getByRole("button", { name: "Add Schedule" }));
+
+		expect(mutations.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				date: "2026-10-08",
+				durationMinutes: 60,
+				time: 13 * 60,
+			}),
+		);
+	});
+
+	it("uses 09:00 when create opens without a timeline cell time", () => {
+		render(
+			<ScheduleDrawer
+				isOpen
+				mode="create"
+				onModeChange={vi.fn()}
+				onOpenChange={vi.fn()}
+				scheduleId={null}
+				selectedDate={new Date(2026, 9, 8)}
+			/>,
+		);
+
+		expect(screen.getByDisplayValue("09:00")).toHaveAttribute(
+			"type",
+			"time",
+		);
+	});
+
 	it("focuses the first conflicting recurring time when overlap validation fails", async () => {
 		const user = userEvent.setup();
 		render(

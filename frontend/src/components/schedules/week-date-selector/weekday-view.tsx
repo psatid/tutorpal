@@ -620,7 +620,7 @@ export function WeekdayView({
                 className={cn(
                   "relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected
-                    ? "border-primary text-primary-foreground"
+                    ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover"
                     : isDateToday
                       ? "border-primary bg-card text-foreground hover:bg-muted"
                       : "border-border bg-card text-foreground hover:border-primary hover:bg-muted",
@@ -630,15 +630,9 @@ export function WeekdayView({
                 aria-checked={isSelected}
                 tabIndex={isSelected ? 0 : -1}
               >
-                {isSelected && (
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 rounded-xl bg-primary"
-                  />
-                )}
                 <span
                   className={cn(
-                    "relative z-10 text-[9px] font-bold leading-none uppercase tracking-[0.08em]",
+                    "text-[9px] font-bold leading-none uppercase tracking-[0.08em]",
                     isSelected
                       ? "text-primary-foreground"
                       : "text-muted-foreground",
@@ -648,7 +642,7 @@ export function WeekdayView({
                 </span>
                 <span
                   className={cn(
-                    "relative z-10 text-lg font-medium tracking-[-0.01em] leading-none",
+                    "text-lg font-medium tracking-[-0.01em] leading-none",
                     isSelected ? "text-primary-foreground" : "text-foreground",
                   )}
                 >
@@ -657,7 +651,7 @@ export function WeekdayView({
                 {showsMonthMarker && (
                   <span
                     className={cn(
-                      "absolute bottom-1 right-1 z-10 text-[8px] font-bold uppercase tracking-[0.08em]",
+                      "absolute bottom-1 right-1 text-[8px] font-bold uppercase tracking-[0.08em]",
                       isSelected
                         ? "text-primary-foreground"
                         : "text-muted-foreground",

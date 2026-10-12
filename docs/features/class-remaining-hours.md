@@ -47,7 +47,7 @@
 - `frontend/src/components/classes/class-card.tsx` - Updated badge display
 - `frontend/src/lib/i18n/locales/en/classes.ts` - Added hoursWithRemaining translation
 
-## Current calculation (October 11, 2026)
+## Current calculation (October 12, 2026)
 
 The persisted values use integer seconds:
 
@@ -56,4 +56,44 @@ remainingSeconds = totalSeconds - sum(durationSeconds for SCHEDULED, COMPLETED, 
 remainingHours = remainingSeconds / 3600
 ```
 
-`CANCELLED` sessions do not reserve hours. A no-show with no deduction becomes `CANCELLED`; a deducted no-show remains `NO_SHOW`. Class and student API responses continue to expose `totalHours` and `remainingHours` as numbers.
+`CANCELLED` sessions do not reserve hours. A no-show with no deduction becomes `CANCELLED`; a deducted no-show remains `NO_SHOW`. The API exposes hour values as numbers.
+
+Class list and detail responses also expose these accounting values as numbers:
+
+```text
+scheduledHours = sum(durationSeconds for concrete SCHEDULED schedules) / 3600
+usedHours = sum(secondsDeducted for ClassHourDeduction rows where restoredAt is null) / 3600
+```
+
+Recurring schedule templates and their items are not included in `scheduledHours`.
+Deleting a schedule keeps the existing cascading deletion of its deduction row.
+Class list, single-class, and class-detail accounting values are read from one
+PostgreSQL `RepeatableRead` transaction snapshot, including both aggregates.
+
+The frontend uses `remainingHours` for scheduling capacity. Its displayed
+balance state follows this rule:
+
+```text
+No hours added yet: totalHours <= 0
+Hours exhausted: totalHours > 0 && usedHours >= totalHours
+All hours scheduled: remainingHours <= 0 && usedHours < totalHours
+Available: otherwise
+```
+
+The one-time and recurring schedule forms keep creation disabled when
+`remainingHours <= 0`. Zero availability by itself does not mean the hours are
+exhausted; only active deductions reaching the class total does.
+
+## Current frontend presentation
+
+Class cards and rows retain their available and total-hour balance while also
+showing a localized `Scheduled · Used` accounting line. The class detail header
+shows available and total hours, then scheduled and used hours; its progress bar
+represents used hours divided by total hours. Capacity messages in the one-time
+and recurring schedule flows name the relevant balance state and offer the
+existing Add hours action.
+
+Scheduling capacity continues to use `remainingHours`. When no capacity remains
+but used hours are still below the total, the UI presents **All hours scheduled**
+with informational styling. It presents **Hours exhausted** with warning styling
+only when used hours reach the total.

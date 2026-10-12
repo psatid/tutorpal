@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Clock3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteClassHourAdditions } from "@/hooks/queries/use-infinite-class-hour-additions";
 
@@ -20,13 +20,15 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 			className="space-y-3 rounded-xl border border-border bg-card p-4 sm:p-5"
 		>
 			<div className="flex items-center gap-3">
+				<div className="rounded-full bg-surface-container-low p-2">
+					<Clock3 aria-hidden="true" className="size-4 text-on-surface" />
+				</div>
 				<h2
-					className="shrink-0 text-base font-medium tracking-[-0.01em] text-foreground"
+					className="text-base font-medium tracking-[-0.01em] text-foreground"
 					id="class-hour-additions-title"
 				>
 					{t("classes:hourAdditions.historyTitle")}
 				</h2>
-				<Separator className="min-w-0 flex-1 !shrink" />
 			</div>
 			{additionsQuery.isLoading ? (
 				<div className="space-y-3" role="status">

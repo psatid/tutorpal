@@ -9,7 +9,6 @@ import {
   Monitor,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +24,6 @@ import {
   statusColors,
 } from "@/lib/schedule-utils";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
-
-const scheduleBadgeClasses: Record<GetV1Schedules200Item["status"], string> = {
-  SCHEDULED: "bg-primary-container text-primary-pressed",
-  COMPLETED: "bg-success-container text-success-container-foreground",
-  NO_SHOW: "bg-warning-container text-warning-container-foreground",
-  CANCELLED: "bg-destructive/10 text-destructive",
-};
 
 interface ScheduleCardProps {
   schedule: GetV1Schedules200Item;
@@ -56,8 +48,9 @@ export function ScheduleCard({
   const endTime = formatTime24Hour(scheduleEndTime);
   const ScheduleTypeIcon = schedule.type === "ONLINE" ? Monitor : MapPin;
   const notes = schedule.notes?.trim();
-  const StatusIcon = (statusColors[schedule.status] ?? statusColors.SCHEDULED)
-    .icon;
+  const scheduleStatus =
+    statusColors[schedule.status] ?? statusColors.SCHEDULED;
+  const StatusIcon = scheduleStatus.icon;
 
   return (
     <article className="flex min-w-0 items-stretch gap-1 rounded-xl border border-border bg-card p-2 transition-colors motion-reduce:transition-none hover:bg-surface focus-within:bg-surface sm:gap-2 sm:p-3">
@@ -76,13 +69,13 @@ export function ScheduleCard({
         </span>
 
         <span className="min-w-0 flex-1 py-0.5">
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="basis-full min-w-0 wrap-break-word text-sm font-semibold leading-5 text-on-surface sm:flex-1 sm:basis-0">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-on-surface">
               {schedule.className}
             </span>
             <Badge
-              variant="outline"
-              className={cn("gap-1", scheduleBadgeClasses[schedule.status])}
+              className="shrink-0 gap-1"
+              variant={scheduleStatus.badgeVariant}
             >
               {StatusIcon ? <StatusIcon aria-hidden="true" /> : null}
               {t(`schedules:status.${schedule.status}`)}

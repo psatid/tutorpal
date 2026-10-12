@@ -82,8 +82,8 @@ export function ScheduleTypeField({
           return (
             <label
               className={cn(
-                "flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-sm transition-colors",
-                "border-outline-variant bg-card hover:bg-surface-container",
+                "flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-sm transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                "border-outline-variant bg-card hover:bg-surface-container-low",
                 isSelected && "border-primary bg-primary/5 text-primary",
                 disabled && "cursor-not-allowed opacity-50",
               )}

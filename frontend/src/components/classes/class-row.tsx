@@ -1,7 +1,13 @@
 import { ChevronRight, Clock3, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { useCallback, useId, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarGroup,
+	AvatarGroupCount,
+} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -11,6 +17,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 import { cn } from "@/lib/utils";
 import { Class } from "@/models/class";
 
@@ -31,6 +38,10 @@ export function ClassRow({
 }) {
 	const { t } = useTranslation(["classes"]);
 	const data = item.getListItemData();
+	const students = item.getStudents();
+	const displayedStudents = students.slice(0, 3);
+	const remainingStudents = students.length - displayedStudents.length;
+	const studentDescriptionId = useId();
 	const actionButtonRef = useRef<HTMLButtonElement>(null);
 	const addHoursButtonRef = useRef<HTMLButtonElement>(null);
 	const setActionTriggerRef = useCallback(
@@ -52,16 +63,25 @@ export function ClassRow({
 	const balanceLabel =
 		data.balanceState === "no-hours"
 			? t("classes:balance.noHours")
+			: data.balanceState === "all-scheduled"
+				? t("classes:balance.allScheduled")
 			: data.balanceState === "exhausted"
 				? t("classes:balance.exhausted")
-				: t("classes:balance.remaining", {
+				: t("classes:balance.available", {
 					hours: data.formattedRemainingHours,
 				});
+	const accountingLabel = t("classes:balance.accounting", {
+		scheduled: data.formattedScheduledHours,
+		used: data.formattedUsedHours,
+	});
 
 	return (
 		<li className="scroll-mt-28 md:scroll-mt-32">
 			<div className="flex min-h-20 items-center gap-3 rounded-lg border border-border bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-surface focus-within:bg-surface">
 				<Button
+					aria-describedby={
+						students.length > 0 ? studentDescriptionId : undefined
+					}
 					aria-label={t("classes:viewDetailsFor", { name: data.displayName })}
 					className="group h-auto min-h-11 min-w-0 flex-1 justify-start gap-3 rounded-lg px-0 py-0 text-left hover:bg-transparent focus-visible:ring-offset-2"
 					onClick={onOpen}
@@ -73,11 +93,27 @@ export function ClassRow({
 						<p className="max-w-full truncate font-semibold text-foreground">
 							{data.displayName}
 						</p>
-						<p className="mt-1 truncate text-sm text-muted-foreground">
-							{data.studentNames.length > 0
-								? data.studentNames.join(", ")
-								: t("classes:noStudents")}
-						</p>
+						{students.length > 0 ? (
+							<>
+								<span className="sr-only" id={studentDescriptionId}>
+									{data.studentNames.join(", ")}
+								</span>
+								<AvatarGroup aria-hidden="true" className="mt-2">
+									{displayedStudents.map((student) => (
+										<Avatar key={student.getId()} size="sm">
+											<AvatarFallback
+												className={`${nameToneAvatarClasses[getNameTone(student.getName())]} font-semibold`}
+											>
+												{student.getInitials()}
+											</AvatarFallback>
+										</Avatar>
+									))}
+									{remainingStudents > 0 ? (
+										<AvatarGroupCount>+{remainingStudents}</AvatarGroupCount>
+									) : null}
+								</AvatarGroup>
+							</>
+						) : null}
 						<div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm sm:hidden">
 							<span
 								className={cn(
@@ -93,6 +129,9 @@ export function ClassRow({
 								})}
 							</span>
 						</div>
+						<p className="mt-1 text-xs tabular-nums text-muted-foreground sm:hidden">
+							{accountingLabel}
+						</p>
 					</div>
 					<div className="hidden shrink-0 text-right sm:block">
 						<p
@@ -107,6 +146,9 @@ export function ClassRow({
 							{t("classes:balance.total", {
 								hours: data.formattedTotalHours,
 							})}
+						</p>
+						<p className="mt-1 text-xs text-muted-foreground tabular-nums">
+							{accountingLabel}
 						</p>
 					</div>
 				</Button>

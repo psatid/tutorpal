@@ -21,23 +21,28 @@ export function formatDuration(totalMinutes: number, t: TFunction): string {
 
 type ScheduleStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 
+type ScheduleStatusPresentation = {
+  badgeVariant: "info" | "success" | "warning" | "destructive";
+  icon?: React.ComponentType<{ className?: string }>;
+};
+
 export const statusColors: Record<
   ScheduleStatus,
-  { className: string; icon?: React.ComponentType<{ className?: string }> }
+  ScheduleStatusPresentation
 > = {
   SCHEDULED: {
-    className: "bg-primary-container text-on-primary-container",
+    badgeVariant: "info",
   },
   COMPLETED: {
-    className: "bg-green-100 text-green-800",
+    badgeVariant: "success",
     icon: Check,
   },
   NO_SHOW: {
-    className: "bg-amber-100 text-amber-800",
+    badgeVariant: "warning",
     icon: AlertCircle,
   },
   CANCELLED: {
-    className: "bg-destructive/10 text-destructive",
+    badgeVariant: "destructive",
     icon: X,
   },
 };
