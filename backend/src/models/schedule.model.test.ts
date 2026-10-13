@@ -3,6 +3,7 @@ import {
 	RecurringScheduleModel,
 	RecurringScheduleUpdateResultModel,
 	ScheduleModel,
+	ScheduleTransitionViolation,
 } from "./schedule.model";
 
 const createdAt = new Date("2026-06-28T10:00:00.000Z");
@@ -81,6 +82,107 @@ describe("ScheduleModel", () => {
 		expect(JSON.stringify(schedule.toScheduleDTO())).toContain(
 			'"durationMinutes":90',
 		);
+	});
+
+	test("plans lifecycle transitions with exact persistence snapshots", () => {
+		const scheduled = ScheduleModel.fromSchedulePrisma(prismaSchedule);
+
+		expect(scheduled.durationSeconds).toBe(5_400n);
+		expect(scheduled.planCompletion()).toEqual({
+			expected: {
+				id: "schedule-1",
+				classId: "class-1",
+				status: "SCHEDULED",
+				durationSeconds: 5_400n,
+			},
+			patch: { status: "COMPLETED" },
+			deduction: {
+				kind: "upsert",
+				classId: "class-1",
+				seconds: 5_400n,
+			},
+		});
+		expect(
+			scheduled.planNoShow({ deductHours: true, note: "  Absent  " }),
+		).toEqual({
+			expected: {
+				id: "schedule-1",
+				classId: "class-1",
+				status: "SCHEDULED",
+				durationSeconds: 5_400n,
+			},
+			patch: { status: "NO_SHOW", noShowNote: "Absent" },
+			deduction: {
+				kind: "upsert",
+				classId: "class-1",
+				seconds: 5_400n,
+			},
+		});
+		expect(scheduled.planNoShow({ deductHours: false, note: " \t " })).toEqual({
+			expected: {
+				id: "schedule-1",
+				classId: "class-1",
+				status: "SCHEDULED",
+				durationSeconds: 5_400n,
+			},
+			patch: { status: "CANCELLED", noShowNote: null },
+			deduction: { kind: "none" },
+		});
+
+		for (const status of ["COMPLETED", "NO_SHOW"] as const) {
+			const restorable = ScheduleModel.fromSchedulePrisma({
+				...prismaSchedule,
+				status,
+			});
+			expect(restorable.planRestoration()).toEqual({
+				expected: {
+					id: "schedule-1",
+					classId: "class-1",
+					status,
+					durationSeconds: 5_400n,
+				},
+				patch: { status: "CANCELLED" },
+				deduction: { kind: "restore", classId: "class-1" },
+			});
+		}
+	});
+
+	test("centralizes capacity and restore eligibility", () => {
+		for (const status of ["SCHEDULED", "COMPLETED", "NO_SHOW"] as const) {
+			expect(ScheduleModel.isCapacityReservingStatus(status)).toBe(true);
+		}
+		for (const status of ["CANCELLED"] as const) {
+			expect(ScheduleModel.isCapacityReservingStatus(status)).toBe(false);
+		}
+		expect(ScheduleModel.isRestorableStatus("COMPLETED")).toBe(true);
+		expect(ScheduleModel.isRestorableStatus("NO_SHOW")).toBe(true);
+		expect(ScheduleModel.isRestorableStatus("SCHEDULED")).toBe(false);
+		expect(ScheduleModel.isRestorableStatus("CANCELLED")).toBe(false);
+	});
+
+	test("rejects lifecycle transitions outside the allowed matrix", () => {
+		for (const status of ["COMPLETED", "NO_SHOW", "CANCELLED"] as const) {
+			const schedule = ScheduleModel.fromSchedulePrisma({
+				...prismaSchedule,
+				status,
+			});
+			expect(() => schedule.planCompletion()).toThrow(
+				ScheduleTransitionViolation,
+			);
+			expect(() => schedule.planNoShow({ deductHours: true })).toThrow(
+				ScheduleTransitionViolation,
+			);
+		}
+
+		for (const status of ["SCHEDULED", "CANCELLED"] as const) {
+			const schedule = ScheduleModel.fromSchedulePrisma({
+				...prismaSchedule,
+				status,
+			});
+			expect(() => schedule.planRestoration()).toThrow(
+				ScheduleTransitionViolation,
+			);
+		}
 	});
 });
 

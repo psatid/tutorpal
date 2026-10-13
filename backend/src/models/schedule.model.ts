@@ -44,6 +44,54 @@ type RecurringSchedulePrismaRecord = {
 	}>;
 };
 
+export const CAPACITY_RESERVING_SCHEDULE_STATUSES: ScheduleStatus[] = [
+	"SCHEDULED",
+	"COMPLETED",
+	"NO_SHOW",
+];
+
+export type ScheduleTransitionPlan = {
+	expected: {
+		id: string;
+		classId: string;
+		status: ScheduleStatus;
+		durationSeconds: bigint;
+	};
+	patch: {
+		status: ScheduleStatus;
+		noShowNote?: string | null;
+	};
+	deduction:
+		| { kind: "upsert"; classId: string; seconds: bigint }
+		| { kind: "restore"; classId: string }
+		| { kind: "none" };
+};
+
+export class ScheduleTransitionViolation extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ScheduleTransitionViolation";
+	}
+}
+
+type ScheduleModelProps = {
+	id: string;
+	classId: string;
+	className: string;
+	recurringScheduleId?: string | null;
+	date: Date;
+	time: number;
+	durationMinutes: number;
+	durationSeconds: bigint;
+	notes: string | null;
+	noShowNote: string | null;
+	status: ScheduleStatus;
+	type: ScheduleType;
+	createdAt: Date;
+	updatedAt: Date;
+	remainingHours?: number;
+};
+
 function classContext(item: ClassContext) {
 	return {
 		className: item.name,
@@ -58,6 +106,7 @@ export class ScheduleModel {
 	readonly date!: Date;
 	readonly time!: number;
 	readonly durationMinutes!: number;
+	readonly durationSeconds!: bigint;
 	readonly notes!: string | null;
 	readonly noShowNote!: string | null;
 	readonly status!: ScheduleStatus;
@@ -66,8 +115,88 @@ export class ScheduleModel {
 	readonly updatedAt!: Date;
 	readonly remainingHours?: number;
 
-	constructor(props: Omit<ScheduleModel, "toScheduleDTO">) {
+	constructor(props: ScheduleModelProps) {
 		Object.assign(this, props);
+	}
+
+	static isCapacityReservingStatus(status: ScheduleStatus): boolean {
+		return CAPACITY_RESERVING_SCHEDULE_STATUSES.includes(status);
+	}
+
+	static isRestorableStatus(status: ScheduleStatus): boolean {
+		return status === "COMPLETED" || status === "NO_SHOW";
+	}
+
+	reservesCapacity(): boolean {
+		return ScheduleModel.isCapacityReservingStatus(this.status);
+	}
+
+	planCompletion(): ScheduleTransitionPlan {
+		if (this.status !== "SCHEDULED") {
+			throw new ScheduleTransitionViolation(
+				"Only scheduled schedules can be completed",
+			);
+		}
+
+		return this.planTransition(
+			{ status: "COMPLETED" },
+			{ kind: "upsert", classId: this.classId, seconds: this.durationSeconds },
+		);
+	}
+
+	planNoShow(input: {
+		deductHours: boolean;
+		note?: string;
+	}): ScheduleTransitionPlan {
+		if (this.status !== "SCHEDULED") {
+			throw new ScheduleTransitionViolation(
+				"Only scheduled schedules can be marked as no-show",
+			);
+		}
+
+		const noShowNote = input.note?.trim() || null;
+		return this.planTransition(
+			{
+				status: input.deductHours ? "NO_SHOW" : "CANCELLED",
+				noShowNote,
+			},
+			input.deductHours
+				? {
+						kind: "upsert",
+						classId: this.classId,
+						seconds: this.durationSeconds,
+					}
+				: { kind: "none" },
+		);
+	}
+
+	planRestoration(): ScheduleTransitionPlan {
+		if (!ScheduleModel.isRestorableStatus(this.status)) {
+			throw new ScheduleTransitionViolation(
+				"Only completed or no-show schedules can have hours restored",
+			);
+		}
+
+		return this.planTransition(
+			{ status: "CANCELLED" },
+			{ kind: "restore", classId: this.classId },
+		);
+	}
+
+	private planTransition(
+		patch: ScheduleTransitionPlan["patch"],
+		deduction: ScheduleTransitionPlan["deduction"],
+	): ScheduleTransitionPlan {
+		return {
+			expected: {
+				id: this.id,
+				classId: this.classId,
+				status: this.status,
+				durationSeconds: this.durationSeconds,
+			},
+			patch,
+			deduction,
+		};
 	}
 
 	static fromSchedulePrisma(
@@ -82,6 +211,7 @@ export class ScheduleModel {
 			date: schedule.date,
 			time: schedule.time,
 			durationMinutes: secondsToMinutes(schedule.durationSeconds),
+			durationSeconds: schedule.durationSeconds,
 			notes: schedule.notes,
 			noShowNote: schedule.noShowNote,
 			status: schedule.status,

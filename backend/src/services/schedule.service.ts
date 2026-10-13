@@ -2,9 +2,11 @@ import type { ScheduleStatus } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import { AppError } from "../lib/error";
 import { minutesToSeconds } from "../lib/teaching-time";
-import type {
-	RecurringScheduleUpdateResultModel,
+import {
+	type RecurringScheduleUpdateResultModel,
 	ScheduleModel,
+	type ScheduleTransitionPlan,
+	ScheduleTransitionViolation,
 } from "../models/schedule.model";
 import { classRepository as defaultClassRepository } from "../repositories";
 import type {
@@ -15,12 +17,7 @@ import type {
 	UpdateRecurringScheduleDTO,
 	UpdateScheduleDTO,
 } from "../types";
-
-const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
-	"SCHEDULED",
-	"COMPLETED",
-	"NO_SHOW",
-];
+import { ScheduleLifecyclePersistenceError } from "../types";
 
 export class ScheduleService {
 	constructor(
@@ -29,7 +26,7 @@ export class ScheduleService {
 	) {}
 
 	private isActiveStatus(status: ScheduleStatus): boolean {
-		return ACTIVE_SCHEDULE_STATUSES.includes(status);
+		return ScheduleModel.isCapacityReservingStatus(status);
 	}
 
 	private async validateScheduleCapacity(
@@ -240,7 +237,9 @@ export class ScheduleService {
 	}
 
 	async completeSchedule(id: string, tutorId: string): Promise<ScheduleModel> {
-		return this.repository.completeSchedule(id, tutorId);
+		return this.transitionSchedule(id, tutorId, (schedule) =>
+			schedule.planCompletion(),
+		);
 	}
 
 	async markNoShow(
@@ -248,11 +247,43 @@ export class ScheduleService {
 		data: NoShowScheduleDTO,
 		tutorId: string,
 	): Promise<ScheduleModel> {
-		return this.repository.markNoShow(id, tutorId, data);
+		return this.transitionSchedule(id, tutorId, (schedule) =>
+			schedule.planNoShow(data),
+		);
 	}
 
 	async restoreHours(id: string, tutorId: string): Promise<ScheduleModel> {
-		return this.repository.restoreHours(id, tutorId);
+		return this.transitionSchedule(id, tutorId, (schedule) =>
+			schedule.planRestoration(),
+		);
+	}
+
+	private async transitionSchedule(
+		id: string,
+		tutorId: string,
+		decide: (schedule: ScheduleModel) => ScheduleTransitionPlan,
+	): Promise<ScheduleModel> {
+		try {
+			return await this.repository.withLifecycleTransaction(async (tx) => {
+				const schedule = await tx.loadOwned(id, tutorId);
+				if (!schedule) {
+					throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
+				}
+				return tx.apply(tutorId, decide(schedule));
+			});
+		} catch (error) {
+			if (error instanceof ScheduleTransitionViolation) {
+				throw AppError.conflict("SCHEDULE_STATUS_CONFLICT", error.message);
+			}
+			if (error instanceof AppError) throw error;
+			if (error instanceof ScheduleLifecyclePersistenceError) {
+				if (error.reason === "not_found") {
+					throw AppError.notFound("SCHEDULE_NOT_FOUND", error.message);
+				}
+				throw AppError.conflict("SCHEDULE_STATUS_CONFLICT", error.message);
+			}
+			throw error;
+		}
 	}
 
 	async getRemainingHours(classId: string, tutorId: string): Promise<number> {

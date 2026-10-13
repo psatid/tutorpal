@@ -17,25 +17,19 @@ import {
 import type {
 	CreateScheduleDTO,
 	IScheduleRepository,
-	NoShowScheduleDTO,
 	RecurringScheduleCreationData,
+	ScheduleLifecycleTransaction,
 	ScheduleListQueryDTO,
 	UpdateRecurringScheduleDTO,
 	UpdateScheduleDTO,
 } from "../types";
+import { ScheduleLifecyclePersistenceError } from "../types/schedule.types";
 import {
+	ACTIVE_SCHEDULE_STATUSES,
 	getRemainingHoursForClass,
 	getRemainingHoursMap,
 	getRemainingSecondsForClass,
 } from "./class-hours";
-
-const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
-	"SCHEDULED",
-	"COMPLETED",
-	"NO_SHOW",
-];
-
-const RESTORABLE_SCHEDULE_STATUSES: ScheduleStatus[] = ["COMPLETED", "NO_SHOW"];
 
 const RECURRING_REPLACEABLE_STATUSES: ScheduleStatus[] = [
 	"SCHEDULED",
@@ -247,7 +241,7 @@ export class ScheduleRepository implements IScheduleRepository {
 				},
 			});
 
-			if (RESTORABLE_SCHEDULE_STATUSES.includes(updatedSchedule.status)) {
+			if (ScheduleModel.isRestorableStatus(updatedSchedule.status)) {
 				await tx.classHourDeduction.upsert({
 					where: { scheduleId: updatedSchedule.id },
 					update: {
@@ -276,144 +270,102 @@ export class ScheduleRepository implements IScheduleRepository {
 		});
 	}
 
-	async completeSchedule(id: string, tutorId: string): Promise<ScheduleModel> {
-		const updatedSchedule = await this.prisma.$transaction(async (tx) => {
-			const schedule = await this.getScheduleForTransition(tx, id, tutorId);
-			if (schedule.status !== "SCHEDULED") {
-				throw this.statusConflict("Only scheduled schedules can be completed");
-			}
-
-			const transition = await tx.schedule.updateMany({
-				where: {
-					id,
-					classId: schedule.classId,
-					durationSeconds: schedule.durationSeconds,
-					status: "SCHEDULED",
-					class: { tutorId },
+	withLifecycleTransaction<T>(
+		work: (transaction: ScheduleLifecycleTransaction) => Promise<T>,
+	): Promise<T> {
+		return this.prisma.$transaction((tx) =>
+			work({
+				loadOwned: async (scheduleId, tutorId) => {
+					const schedule = await tx.schedule.findFirst({
+						where: { id: scheduleId, class: { tutorId } },
+						include: { class: { include: classContextInclude } },
+					});
+					return schedule ? ScheduleModel.fromSchedulePrisma(schedule) : null;
 				},
-				data: { status: "COMPLETED" },
-			});
-			if (transition.count !== 1) {
-				await this.throwTransitionFailure(tx, id, tutorId);
-			}
+				apply: async (tutorId, plan) => {
+					const transition = await tx.schedule.updateMany({
+						where: {
+							id: plan.expected.id,
+							classId: plan.expected.classId,
+							durationSeconds: plan.expected.durationSeconds,
+							status: plan.expected.status,
+							class: { tutorId },
+						},
+						data: plan.patch,
+					});
+					if (transition.count !== 1) {
+						const ownedSchedule = await tx.schedule.findFirst({
+							where: {
+								id: plan.expected.id,
+								class: { tutorId },
+							},
+							select: { id: true },
+						});
+						if (!ownedSchedule) {
+							throw new ScheduleLifecyclePersistenceError(
+								"not_found",
+								"Schedule not found",
+							);
+						}
+						throw new ScheduleLifecyclePersistenceError(
+							"stale",
+							"The schedule status changed before this action",
+						);
+					}
 
-			await tx.classHourDeduction.upsert({
-				where: { scheduleId: id },
-				update: {
-					classId: schedule.classId,
-					secondsDeducted: schedule.durationSeconds,
-					restoredAt: null,
+					if (plan.deduction.kind === "upsert") {
+						await tx.classHourDeduction.upsert({
+							where: { scheduleId: plan.expected.id },
+							update: {
+								classId: plan.deduction.classId,
+								secondsDeducted: plan.deduction.seconds,
+								restoredAt: null,
+							},
+							create: {
+								scheduleId: plan.expected.id,
+								classId: plan.deduction.classId,
+								secondsDeducted: plan.deduction.seconds,
+							},
+						});
+					} else if (plan.deduction.kind === "restore") {
+						const deduction = await tx.classHourDeduction.updateMany({
+							where: {
+								scheduleId: plan.expected.id,
+								classId: plan.deduction.classId,
+								restoredAt: null,
+							},
+							data: { restoredAt: DateTime.now().toDate() },
+						});
+						if (deduction.count !== 1) {
+							throw new ScheduleLifecyclePersistenceError(
+								"active_deduction_missing",
+								"The schedule no longer has an active hour deduction",
+							);
+						}
+					}
+
+					const schedule = await tx.schedule.findFirst({
+						where: {
+							id: plan.expected.id,
+							class: { tutorId },
+						},
+						include: { class: { include: classContextInclude } },
+					});
+					if (!schedule) {
+						throw new ScheduleLifecyclePersistenceError(
+							"not_found",
+							"Schedule not found",
+						);
+					}
+
+					const remainingHours = await getRemainingHoursForClass(
+						tx,
+						schedule.classId,
+					);
+					return ScheduleModel.fromSchedulePrisma(schedule, remainingHours);
 				},
-				create: {
-					scheduleId: id,
-					classId: schedule.classId,
-					secondsDeducted: schedule.durationSeconds,
-				},
-			});
-
-			return this.getTransitionedSchedule(tx, id);
-		});
-
-		const remainingHours = await this.getRemainingHours(
-			updatedSchedule.classId,
+			}),
 		);
-		return ScheduleModel.fromSchedulePrisma(updatedSchedule, remainingHours);
-	}
-
-	async markNoShow(
-		id: string,
-		tutorId: string,
-		data: NoShowScheduleDTO,
-	): Promise<ScheduleModel> {
-		const noShowNote = data.note?.trim() || null;
-		const status: ScheduleStatus = data.deductHours ? "NO_SHOW" : "CANCELLED";
-		const updatedSchedule = await this.prisma.$transaction(async (tx) => {
-			const schedule = await this.getScheduleForTransition(tx, id, tutorId);
-			if (schedule.status !== "SCHEDULED") {
-				throw this.statusConflict(
-					"Only scheduled schedules can be marked as no-show",
-				);
-			}
-
-			const transition = await tx.schedule.updateMany({
-				where: {
-					id,
-					classId: schedule.classId,
-					durationSeconds: schedule.durationSeconds,
-					status: "SCHEDULED",
-					class: { tutorId },
-				},
-				data: { status, noShowNote },
-			});
-			if (transition.count !== 1) {
-				await this.throwTransitionFailure(tx, id, tutorId);
-			}
-
-			if (data.deductHours) {
-				await tx.classHourDeduction.upsert({
-					where: { scheduleId: id },
-					update: {
-						classId: schedule.classId,
-						secondsDeducted: schedule.durationSeconds,
-						restoredAt: null,
-					},
-					create: {
-						scheduleId: id,
-						classId: schedule.classId,
-						secondsDeducted: schedule.durationSeconds,
-					},
-				});
-			}
-
-			return this.getTransitionedSchedule(tx, id);
-		});
-
-		const remainingHours = await this.getRemainingHours(
-			updatedSchedule.classId,
-		);
-		return ScheduleModel.fromSchedulePrisma(updatedSchedule, remainingHours);
-	}
-
-	async restoreHours(id: string, tutorId: string): Promise<ScheduleModel> {
-		const updatedSchedule = await this.prisma.$transaction(async (tx) => {
-			const schedule = await this.getScheduleForTransition(tx, id, tutorId);
-			if (!RESTORABLE_SCHEDULE_STATUSES.includes(schedule.status)) {
-				throw this.statusConflict(
-					"Only completed or no-show schedules can have hours restored",
-				);
-			}
-
-			const transition = await tx.schedule.updateMany({
-				where: {
-					id,
-					classId: schedule.classId,
-					durationSeconds: schedule.durationSeconds,
-					status: schedule.status,
-					class: { tutorId },
-				},
-				data: { status: "CANCELLED" },
-			});
-			if (transition.count !== 1) {
-				await this.throwTransitionFailure(tx, id, tutorId);
-			}
-
-			const deduction = await tx.classHourDeduction.updateMany({
-				where: { scheduleId: id, classId: schedule.classId, restoredAt: null },
-				data: { restoredAt: DateTime.now().toDate() },
-			});
-			if (deduction.count !== 1) {
-				throw this.statusConflict(
-					"The schedule no longer has an active hour deduction",
-				);
-			}
-
-			return this.getTransitionedSchedule(tx, id);
-		});
-
-		const remainingHours = await this.getRemainingHours(
-			updatedSchedule.classId,
-		);
-		return ScheduleModel.fromSchedulePrisma(updatedSchedule, remainingHours);
 	}
 
 	async getRemainingSeconds(classId: string): Promise<bigint> {
@@ -422,64 +374,6 @@ export class ScheduleRepository implements IScheduleRepository {
 
 	async getRemainingHours(classId: string): Promise<number> {
 		return getRemainingHoursForClass(this.prisma, classId);
-	}
-
-	private statusConflict(message: string): AppError {
-		return AppError.conflict("SCHEDULE_STATUS_CONFLICT", message);
-	}
-
-	private async getScheduleForTransition(
-		tx: Prisma.TransactionClient,
-		id: string,
-		tutorId: string,
-	): Promise<{
-		id: string;
-		classId: string;
-		status: ScheduleStatus;
-		durationSeconds: bigint;
-	}> {
-		const schedule = await tx.schedule.findFirst({
-			where: { id, class: { tutorId } },
-			select: {
-				id: true,
-				classId: true,
-				status: true,
-				durationSeconds: true,
-			},
-		});
-		if (!schedule) {
-			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
-		}
-		return schedule;
-	}
-
-	private async throwTransitionFailure(
-		tx: Prisma.TransactionClient,
-		id: string,
-		tutorId: string,
-	): Promise<never> {
-		const schedule = await tx.schedule.findFirst({
-			where: { id, class: { tutorId } },
-			select: { id: true },
-		});
-		if (!schedule) {
-			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
-		}
-		throw this.statusConflict("The schedule status changed before this action");
-	}
-
-	private async getTransitionedSchedule(
-		tx: Prisma.TransactionClient,
-		id: string,
-	) {
-		const schedule = await tx.schedule.findUnique({
-			where: { id },
-			include: { class: { include: classContextInclude } },
-		});
-		if (!schedule) {
-			throw AppError.notFound("SCHEDULE_NOT_FOUND", "Schedule not found");
-		}
-		return schedule;
 	}
 
 	async createRecurringSchedule(

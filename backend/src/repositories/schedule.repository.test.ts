@@ -2,6 +2,11 @@ import { describe, expect, test } from "bun:test";
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "../lib/db";
 import { hoursToSeconds, minutesToSeconds } from "../lib/teaching-time";
+import type {
+	ScheduleModel,
+	ScheduleTransitionPlan,
+} from "../models/schedule.model";
+import { ScheduleLifecyclePersistenceError } from "../types";
 import { ScheduleRepository } from "./schedule.repository";
 
 const createdAt = new Date("2026-08-01T00:00:00.000Z");
@@ -565,6 +570,22 @@ describe("ScheduleRepository repeated weekday schedules", () => {
 
 type TransitionStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 
+type TransitionScheduleRecord = {
+	id: string;
+	classId: string;
+	recurringScheduleId: null;
+	date: Date;
+	time: number;
+	durationSeconds: bigint;
+	notes: string | null;
+	noShowNote: string | null;
+	status: TransitionStatus;
+	type: "ON_SITE";
+	createdAt: Date;
+	updatedAt: Date;
+	class: typeof classContext;
+};
+
 function makeTransitionRepositoryFixture({
 	status = "SCHEDULED" as TransitionStatus,
 	ownerId = "tutor-1",
@@ -576,26 +597,11 @@ function makeTransitionRepositoryFixture({
 	ownerId?: string;
 	transitionCount?: number;
 	deductionUpdateCount?: number;
-	concurrentScheduleChange?: {
-		classId?: string;
-		durationSeconds?: bigint;
-	};
+	concurrentScheduleChange?: Partial<
+		Pick<TransitionScheduleRecord, "classId" | "durationSeconds" | "status">
+	>;
 } = {}) {
-	let schedule: {
-		id: string;
-		classId: string;
-		recurringScheduleId: null;
-		date: Date;
-		time: number;
-		durationSeconds: bigint;
-		notes: string | null;
-		noShowNote: string | null;
-		status: TransitionStatus;
-		type: "ON_SITE";
-		createdAt: Date;
-		updatedAt: Date;
-		class: typeof classContext;
-	} = {
+	let schedule: TransitionScheduleRecord = {
 		id: "schedule-1",
 		classId: "class-1",
 		recurringScheduleId: null,
@@ -613,9 +619,17 @@ function makeTransitionRepositoryFixture({
 	const transitionCalls: unknown[] = [];
 	const deductionUpserts: unknown[] = [];
 	const deductionUpdates: unknown[] = [];
+	let transactionClassReads = 0;
+	let transactionScheduleReads = 0;
 	let pendingConcurrentScheduleChange = concurrentScheduleChange;
 
 	const transaction = {
+		class: {
+			findMany: async () => {
+				transactionClassReads += 1;
+				return [{ id: "class-1", totalSeconds: 3_600n }];
+			},
+		},
 		schedule: {
 			findFirst: async ({
 				where,
@@ -641,30 +655,36 @@ function makeTransitionRepositoryFixture({
 					id: string;
 					classId: string;
 					durationSeconds: bigint;
-					status: TransitionStatus | { in: TransitionStatus[] };
+					status: TransitionStatus;
 					class: { tutorId: string };
 				};
 				data: { status: TransitionStatus; noShowNote?: string | null };
 			}) => {
 				transitionCalls.push({ where, data });
-				const matchingStatus =
-					typeof where.status === "string"
-						? schedule.status === where.status
-						: where.status.in.includes(schedule.status);
 				if (
 					transitionCount !== 1 ||
 					where.id !== schedule.id ||
 					where.classId !== schedule.classId ||
 					where.durationSeconds !== schedule.durationSeconds ||
 					where.class.tutorId !== ownerId ||
-					!matchingStatus
+					where.status !== schedule.status
 				) {
 					return { count: 0 };
 				}
 				schedule = { ...schedule, ...data };
 				return { count: 1 };
 			},
-			findUnique: async () => schedule,
+			groupBy: async () => {
+				transactionScheduleReads += 1;
+				return ["SCHEDULED", "COMPLETED", "NO_SHOW"].includes(schedule.status)
+					? [
+							{
+								classId: "class-1",
+								_sum: { durationSeconds: schedule.durationSeconds },
+							},
+						]
+					: [];
+			},
 		},
 		classHourDeduction: {
 			upsert: async (args: unknown) => {
@@ -678,23 +698,9 @@ function makeTransitionRepositoryFixture({
 		},
 	};
 	const client = {
-		class: {
-			findMany: async () => [{ id: "class-1", totalSeconds: 3_600n }],
-		},
-		schedule: {
-			groupBy: async () =>
-				["SCHEDULED", "COMPLETED", "NO_SHOW"].includes(schedule.status)
-					? [
-							{
-								classId: "class-1",
-								_sum: { durationSeconds: schedule.durationSeconds },
-							},
-						]
-					: [],
-		},
-		$transaction: async (
-			callback: (tx: typeof transaction) => Promise<unknown>,
-		) => {
+		$transaction: async <T>(
+			callback: (tx: typeof transaction) => Promise<T>,
+		): Promise<T> => {
 			const before = { ...schedule };
 			try {
 				return await callback(transaction);
@@ -708,94 +714,154 @@ function makeTransitionRepositoryFixture({
 	return {
 		repository: new ScheduleRepository(client),
 		getSchedule: () => schedule,
+		getTransactionHourReadCounts: () => ({
+			classes: transactionClassReads,
+			schedules: transactionScheduleReads,
+		}),
 		transitionCalls,
 		deductionUpserts,
 		deductionUpdates,
 	};
 }
 
-describe("ScheduleRepository status transitions", () => {
-	test("marks a charged no-show or a no-deduction cancellation with its note", async () => {
-		const charged = makeTransitionRepositoryFixture();
-		const chargedResult = await charged.repository.markNoShow(
-			"schedule-1",
+async function applyTransition(
+	repository: ScheduleRepository,
+	tutorId: string,
+	decide: (schedule: ScheduleModel) => ScheduleTransitionPlan,
+) {
+	return repository.withLifecycleTransaction(async (transaction) => {
+		const schedule = await transaction.loadOwned("schedule-1", tutorId);
+		if (!schedule) {
+			throw new Error("Expected the transition fixture to load a schedule");
+		}
+		return transaction.apply(tutorId, decide(schedule));
+	});
+}
+
+describe("ScheduleRepository lifecycle transaction adapter", () => {
+	test("uses an owner-scoped exact-seconds CAS and refreshes remaining hours on the transaction client", async () => {
+		const fixture = makeTransitionRepositoryFixture();
+
+		const result = await applyTransition(
+			fixture.repository,
 			"tutor-1",
-			{ deductHours: true, note: "  Absent  " },
+			(schedule) => schedule.planCompletion(),
+		);
+
+		expect(fixture.getSchedule().status).toBe("COMPLETED");
+		expect(fixture.transitionCalls).toEqual([
+			{
+				where: {
+					id: "schedule-1",
+					classId: "class-1",
+					durationSeconds: 1_800n,
+					status: "SCHEDULED",
+					class: { tutorId: "tutor-1" },
+				},
+				data: { status: "COMPLETED" },
+			},
+		]);
+		expect(fixture.deductionUpserts).toEqual([
+			{
+				where: { scheduleId: "schedule-1" },
+				update: {
+					classId: "class-1",
+					secondsDeducted: 1_800n,
+					restoredAt: null,
+				},
+				create: {
+					scheduleId: "schedule-1",
+					classId: "class-1",
+					secondsDeducted: 1_800n,
+				},
+			},
+		]);
+		expect(result.toScheduleDTO().remainingHours).toBe(0.5);
+		expect(fixture.getTransactionHourReadCounts()).toEqual({
+			classes: 1,
+			schedules: 1,
+		});
+	});
+
+	test("upserts charged no-shows and leaves no-deduction cancellation without a deduction", async () => {
+		const charged = makeTransitionRepositoryFixture();
+		await applyTransition(charged.repository, "tutor-1", (schedule) =>
+			schedule.planNoShow({ deductHours: true, note: "  Absent  " }),
 		);
 
 		expect(charged.getSchedule()).toMatchObject({
 			status: "NO_SHOW",
 			noShowNote: "Absent",
 		});
-		expect(chargedResult.toScheduleDTO()).toMatchObject({
-			status: "NO_SHOW",
-			noShowNote: "Absent",
-			durationMinutes: 30,
-		});
-		expect(charged.deductionUpserts).toEqual([
-			expect.objectContaining({
-				create: expect.objectContaining({ secondsDeducted: 1_800n }),
-				update: expect.objectContaining({ secondsDeducted: 1_800n }),
-			}),
-		]);
+		expect(charged.deductionUpserts).toHaveLength(1);
 
 		const cancelled = makeTransitionRepositoryFixture();
-		await cancelled.repository.markNoShow("schedule-1", "tutor-1", {
-			deductHours: false,
-			note: "Student cancelled",
-		});
+		const cancelledResult = await applyTransition(
+			cancelled.repository,
+			"tutor-1",
+			(schedule) =>
+				schedule.planNoShow({
+					deductHours: false,
+					note: "Student cancelled",
+				}),
+		);
 
 		expect(cancelled.getSchedule()).toMatchObject({
 			status: "CANCELLED",
 			noShowNote: "Student cancelled",
 		});
 		expect(cancelled.deductionUpserts).toEqual([]);
+		expect(cancelledResult.toScheduleDTO().remainingHours).toBe(1);
 	});
 
-	test("creates or restores the hour deduction for complete and restore transitions", async () => {
-		const completed = makeTransitionRepositoryFixture();
-		await completed.repository.completeSchedule("schedule-1", "tutor-1");
+	test("restores exactly one active deduction and then refreshes the restored balance", async () => {
+		const fixture = makeTransitionRepositoryFixture({ status: "COMPLETED" });
 
-		expect(completed.getSchedule().status).toBe("COMPLETED");
-		expect(completed.deductionUpserts).toHaveLength(1);
-
-		const restored = makeTransitionRepositoryFixture({ status: "COMPLETED" });
-		const restoredResult = await restored.repository.restoreHours(
-			"schedule-1",
+		const result = await applyTransition(
+			fixture.repository,
 			"tutor-1",
+			(schedule) => schedule.planRestoration(),
 		);
 
-		expect(restored.getSchedule().status).toBe("CANCELLED");
-		expect(restored.deductionUpdates).toEqual([
+		expect(fixture.getSchedule().status).toBe("CANCELLED");
+		expect(fixture.deductionUpdates).toEqual([
+			{
+				where: {
+					scheduleId: "schedule-1",
+					classId: "class-1",
+					restoredAt: null,
+				},
+				data: { restoredAt: expect.any(Date) },
+			},
+		]);
+		expect(result.toScheduleDTO().remainingHours).toBe(1);
+	});
+
+	test("checks ownership both while loading and in the compare-and-set write", async () => {
+		const fixture = makeTransitionRepositoryFixture();
+
+		await fixture.repository.withLifecycleTransaction(async (transaction) => {
+			expect(await transaction.loadOwned("schedule-1", "tutor-2")).toBeNull();
+			const schedule = await transaction.loadOwned("schedule-1", "tutor-1");
+			if (!schedule) {
+				throw new Error("Expected schedule to load for its owner");
+			}
+
+			await expect(
+				transaction.apply("tutor-2", schedule.planCompletion()),
+			).rejects.toMatchObject({ reason: "not_found" });
+		});
+
+		expect(fixture.transitionCalls).toEqual([
 			expect.objectContaining({
-				where: expect.objectContaining({ restoredAt: null }),
+				where: expect.objectContaining({ class: { tutorId: "tutor-2" } }),
 			}),
 		]);
-		expect(restoredResult.toScheduleDTO().remainingHours).toBe(1);
+		expect(fixture.deductionUpserts).toEqual([]);
+		expect(fixture.getSchedule().status).toBe("SCHEDULED");
 	});
 
-	test("keeps foreign and raced transitions from writing deductions", async () => {
-		const foreign = makeTransitionRepositoryFixture();
-		await expect(
-			foreign.repository.completeSchedule("schedule-1", "tutor-2"),
-		).rejects.toMatchObject({ errorCode: "SCHEDULE_NOT_FOUND", status: 404 });
-		expect(foreign.transitionCalls).toEqual([]);
-		expect(foreign.deductionUpserts).toEqual([]);
-
-		const raced = makeTransitionRepositoryFixture({ transitionCount: 0 });
-		await expect(
-			raced.repository.markNoShow("schedule-1", "tutor-1", {
-				deductHours: true,
-			}),
-		).rejects.toMatchObject({
-			errorCode: "SCHEDULE_STATUS_CONFLICT",
-			status: 409,
-		});
-		expect(raced.transitionCalls).toHaveLength(1);
-		expect(raced.deductionUpserts).toEqual([]);
-	});
-
-	test("rejects a stale class or duration snapshot before writing a no-show deduction", async () => {
+	test("prevents deductions when the schedule snapshot loses its class or duration CAS", async () => {
 		for (const concurrentScheduleChange of [
 			{ classId: "class-2" },
 			{ durationSeconds: 3_600n },
@@ -805,13 +871,10 @@ describe("ScheduleRepository status transitions", () => {
 			});
 
 			await expect(
-				fixture.repository.markNoShow("schedule-1", "tutor-1", {
-					deductHours: true,
-				}),
-			).rejects.toMatchObject({
-				errorCode: "SCHEDULE_STATUS_CONFLICT",
-				status: 409,
-			});
+				applyTransition(fixture.repository, "tutor-1", (schedule) =>
+					schedule.planNoShow({ deductHours: true }),
+				),
+			).rejects.toBeInstanceOf(ScheduleLifecyclePersistenceError);
 			expect(fixture.transitionCalls).toEqual([
 				expect.objectContaining({
 					where: expect.objectContaining({
@@ -821,22 +884,51 @@ describe("ScheduleRepository status transitions", () => {
 				}),
 			]);
 			expect(fixture.deductionUpserts).toEqual([]);
+			expect(fixture.getSchedule().status).toBe("SCHEDULED");
 		}
 	});
 
-	test("rolls back a restore when its active deduction is gone", async () => {
+	test("reports a stale status CAS without deducting or committing the transition", async () => {
+		const fixture = makeTransitionRepositoryFixture({
+			concurrentScheduleChange: { status: "COMPLETED" },
+		});
+
+		await expect(
+			applyTransition(fixture.repository, "tutor-1", (schedule) =>
+				schedule.planNoShow({ deductHours: true }),
+			),
+		).rejects.toMatchObject({
+			reason: "stale",
+			message: "The schedule status changed before this action",
+		});
+		expect(fixture.transitionCalls).toEqual([
+			expect.objectContaining({
+				where: expect.objectContaining({ status: "SCHEDULED" }),
+			}),
+		]);
+		expect(fixture.deductionUpserts).toEqual([]);
+		expect(fixture.getSchedule()).toMatchObject({
+			status: "SCHEDULED",
+			noShowNote: null,
+		});
+	});
+
+	test("rolls back the status change when the active deduction is missing", async () => {
 		const fixture = makeTransitionRepositoryFixture({
 			status: "COMPLETED",
 			deductionUpdateCount: 0,
 		});
 
 		await expect(
-			fixture.repository.restoreHours("schedule-1", "tutor-1"),
-		).rejects.toMatchObject({
-			errorCode: "SCHEDULE_STATUS_CONFLICT",
-			status: 409,
-		});
+			applyTransition(fixture.repository, "tutor-1", (schedule) =>
+				schedule.planRestoration(),
+			),
+		).rejects.toMatchObject({ reason: "active_deduction_missing" });
 		expect(fixture.getSchedule().status).toBe("COMPLETED");
 		expect(fixture.deductionUpdates).toHaveLength(1);
+		expect(fixture.getTransactionHourReadCounts()).toEqual({
+			classes: 0,
+			schedules: 0,
+		});
 	});
 });

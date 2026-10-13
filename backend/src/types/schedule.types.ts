@@ -3,7 +3,28 @@ import type {
 	RecurringScheduleModel,
 	RecurringScheduleUpdateResultModel,
 	ScheduleModel,
+	ScheduleTransitionPlan,
 } from "../models/schedule.model";
+
+export type ScheduleLifecycleFailureReason =
+	| "not_found"
+	| "stale"
+	| "active_deduction_missing";
+
+export class ScheduleLifecyclePersistenceError extends Error {
+	constructor(
+		readonly reason: ScheduleLifecycleFailureReason,
+		message: string,
+	) {
+		super(message);
+		this.name = "ScheduleLifecyclePersistenceError";
+	}
+}
+
+export interface ScheduleLifecycleTransaction {
+	loadOwned(scheduleId: string, tutorId: string): Promise<ScheduleModel | null>;
+	apply(tutorId: string, plan: ScheduleTransitionPlan): Promise<ScheduleModel>;
+}
 
 // DTOs for clean data transfer between layers
 export interface ScheduleDTO {
@@ -111,6 +132,9 @@ export interface RecurringScheduleCreationData {
 
 // Repository interface - abstract data access
 export interface IScheduleRepository {
+	withLifecycleTransaction<T>(
+		work: (transaction: ScheduleLifecycleTransaction) => Promise<T>,
+	): Promise<T>;
 	create(data: CreateScheduleDTO): Promise<ScheduleModel>;
 	createMany(
 		data: Array<{
@@ -128,13 +152,6 @@ export interface IScheduleRepository {
 	findById(id: string, tutorId?: string): Promise<ScheduleModel | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel>;
 	delete(id: string): Promise<void>;
-	completeSchedule(id: string, tutorId: string): Promise<ScheduleModel>;
-	restoreHours(id: string, tutorId: string): Promise<ScheduleModel>;
-	markNoShow(
-		id: string,
-		tutorId: string,
-		data: NoShowScheduleDTO,
-	): Promise<ScheduleModel>;
 	getRemainingSeconds(classId: string): Promise<bigint>;
 	getRemainingHours(classId: string): Promise<number>;
 	createRecurringSchedule(

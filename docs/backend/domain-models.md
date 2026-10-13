@@ -11,6 +11,9 @@ and provide the internal representation used inside the backend application.
 - Services coordinate use cases and apply business rules through model methods.
 - Repositories query Prisma and convert Prisma records into models before
   returning data to services.
+- Models own deterministic entity rules and calculations. Keep them free of
+  Prisma access and application or transport errors; services coordinate model
+  decisions with repositories and external workflows.
 - DTOs remain API-facing response shapes. Models are the internal application
   shape.
 - DTO date/time serialization should use `DateTime` from
@@ -38,6 +41,19 @@ For schedule data, use `ScheduleModel.fromSchedulePrisma(...)` when converting
 persistence records and `scheduleModel.toScheduleDTO()` when returning API
 responses. Recurring schedule responses use `RecurringScheduleModel` and
 `RecurringScheduleUpdateResultModel` for recurring schedule serialization.
+
+Schedule lifecycle decisions live on `ScheduleModel`: completion, no-show,
+restoration, capacity-reserving status, and no-show note normalization. The
+transition methods return a `ScheduleTransitionPlan` with the expected
+persistence snapshot, next-state patch, and hour-deduction effect. They preserve
+exact duration seconds and do not access Prisma or throw `AppError`.
+
+`ScheduleService` coordinates a lifecycle use case by opening the repository's
+schedule-specific transaction, loading the tutor-owned schedule, asking the
+model for a plan, and mapping domain or persistence failures to the existing
+application errors. `ScheduleRepository` applies the plan with an owner-scoped
+compare-and-set, writes the deduction effect, and refreshes the result inside
+the same Prisma transaction so a failure rolls back the full transition.
 
 ## Tutor-owned integrations
 

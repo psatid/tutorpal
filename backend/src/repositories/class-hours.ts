@@ -1,11 +1,8 @@
-import type { PrismaClient, ScheduleStatus } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { secondsToHours } from "../lib/teaching-time";
+import { CAPACITY_RESERVING_SCHEDULE_STATUSES } from "../models/schedule.model";
 
-export const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
-	"SCHEDULED",
-	"COMPLETED",
-	"NO_SHOW",
-];
+export const ACTIVE_SCHEDULE_STATUSES = CAPACITY_RESERVING_SCHEDULE_STATUSES;
 
 type ClassHours = {
 	id: string;
@@ -95,7 +92,7 @@ export async function getClassHourAccountingMap(
 }
 
 export async function getRemainingSecondsMap(
-	client: PrismaClient,
+	client: Pick<PrismaClient, "class" | "schedule">,
 	classIds: string[],
 ): Promise<Map<string, bigint>> {
 	if (classIds.length === 0) {
@@ -142,7 +139,7 @@ export async function getRemainingSecondsMap(
 }
 
 export async function getRemainingSecondsForClass(
-	client: PrismaClient,
+	client: Pick<PrismaClient, "class" | "schedule">,
 	classId: string,
 ): Promise<bigint> {
 	const remainingSecondsMap = await getRemainingSecondsMap(client, [classId]);
@@ -169,7 +166,7 @@ export async function getRemainingHoursMap(
 }
 
 export async function getRemainingHoursForClass(
-	client: PrismaClient,
+	client: Pick<PrismaClient, "class" | "schedule">,
 	classId: string,
 ): Promise<number> {
 	return secondsToHours(await getRemainingSecondsForClass(client, classId));
