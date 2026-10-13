@@ -429,16 +429,69 @@ describe("WeekView rail behavior", () => {
     expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
   });
 
+  it("measures the Week stride once per active wheel session", () => {
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const firstWeek = getWeekButton(rail, 0);
+
+    configureWeekRail(rail, { scrollLeft: WEEK_RAIL_WIDTH });
+    const measureStride = vi.spyOn(firstWeek, "getBoundingClientRect");
+    measureStride.mockClear();
+
+    fireEvent.wheel(rail, { deltaX: 144 });
+    fireEvent.wheel(rail, { deltaX: 144 });
+
+    expect(measureStride).toHaveBeenCalledTimes(1);
+
+    fireEvent(rail, new Event("scrollend"));
+    fireEvent.wheel(rail, { deltaX: 144 });
+
+    expect(measureStride).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
-    ["previous", 1, WEEK_TILE_WIDTH + 1],
     [
+      "mouse wheel",
+      "previous",
+      WEEK_TILE_WIDTH - 1,
+      WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH,
+    ],
+    [
+      "trackpad",
+      "previous",
+      WEEK_TILE_WIDTH - 1,
+      WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH,
+    ],
+    [
+      "mouse drag",
+      "previous",
+      WEEK_TILE_WIDTH - 1,
+      WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH,
+    ],
+    [
+      "mouse wheel",
       "next",
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1,
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1 - WEEK_TILE_WIDTH,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
+    ],
+    [
+      "trackpad",
+      "next",
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
+    ],
+    [
+      "mouse drag",
+      "next",
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
     ],
   ] as const)(
-    "extends the %s edge once per user scroll without selecting or reacting to compensation scroll events",
-    async (_direction, initialScrollLeft, expectedScrollLeft) => {
+    "prefetches the %s Week range once when %s movement enters the zone before the hard edge",
+    async (input, _direction, prefetchScrollLeft, expectedScrollLeft) => {
       vi.useFakeTimers();
       render(<WeekRailFixture />);
 
@@ -456,11 +509,30 @@ describe("WeekView rail behavior", () => {
       configureWeekRail(rail, { scrollLeft: browseStartScrollLeft });
       scrollToMock.mockClear();
       passiveFocus.focus();
-      fireEvent.wheel(rail);
-      rail.scrollLeft = initialScrollLeft;
-      fireEvent.scroll(rail);
-      fireEvent(rail, new Event("scrollend"));
 
+      if (input === "mouse drag") {
+        fireEvent.pointerDown(rail, {
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+          clientX: 120,
+          clientY: 20,
+        });
+      } else {
+        fireEvent.wheel(
+          rail,
+          input === "trackpad" ? { deltaX: 144 } : { deltaY: 144 },
+        );
+      }
+
+      expect(prefetchScrollLeft).toBeGreaterThan(0);
+      expect(prefetchScrollLeft).toBeLessThan(
+        WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH,
+      );
+      rail.scrollLeft = prefetchScrollLeft;
+      fireEvent.scroll(rail);
+
+      // Prefetch happens as directional movement enters the zone, before scrollend.
       expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
       expect(rail.scrollLeft).toBe(expectedScrollLeft);
       expect(screen.getByTestId("selected-date")).toHaveTextContent(
@@ -473,6 +545,9 @@ describe("WeekView rail behavior", () => {
       expect(passiveFocus).toHaveFocus();
       expect(scrollToMock).not.toHaveBeenCalled();
 
+      fireEvent(rail, new Event("scrollend"));
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+
       const compensatedScrollLeft = rail.scrollLeft;
       fireEvent.scroll(rail);
       fireEvent(rail, new Event("scrollend"));
@@ -482,28 +557,19 @@ describe("WeekView rail behavior", () => {
 
       expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
       expect(rail.scrollLeft).toBe(compensatedScrollLeft);
-
-      rail.scrollLeft = browseStartScrollLeft;
-      fireEvent.wheel(rail);
-      rail.scrollLeft = initialScrollLeft;
-      fireEvent.scroll(rail);
-      fireEvent(rail, new Event("scrollend"));
-
-      expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
-      expect(rail.scrollLeft).toBe(expectedScrollLeft);
     },
   );
 
   it.each([
-    ["previous", 1, WEEK_TILE_WIDTH + 1],
+    ["previous", WEEK_TILE_WIDTH - 1, WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH],
     [
       "next",
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1,
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1 - WEEK_TILE_WIDTH,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
     ],
   ] as const)(
-    "uses the quiet-period fallback to extend a touch scroll at the %s edge once",
-    async (_direction, edgeScrollLeft, expectedScrollLeft) => {
+    "queues a touch prefetch at the %s zone until touch end, then extends once",
+    async (_direction, prefetchScrollLeft, expectedScrollLeft) => {
       vi.useFakeTimers();
       render(<WeekRailFixture />);
 
@@ -527,8 +593,16 @@ describe("WeekView rail behavior", () => {
         clientX: 120,
         clientY: 20,
       });
-      rail.scrollLeft = edgeScrollLeft;
+      expect(prefetchScrollLeft).toBeGreaterThan(0);
+      expect(prefetchScrollLeft).toBeLessThan(
+        WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH,
+      );
+      rail.scrollLeft = prefetchScrollLeft;
       fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
+
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+
       fireEvent.pointerUp(rail, {
         pointerId: 1,
         pointerType: "touch",
@@ -536,6 +610,8 @@ describe("WeekView rail behavior", () => {
         clientX: 80,
         clientY: 20,
       });
+
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(150);
@@ -638,7 +714,7 @@ describe("WeekView rail behavior", () => {
     ).toBe(rail.scrollLeft + rail.clientWidth / 2);
   });
 
-  it("allows a later scroll session to extend again after duplicate settlement is ignored", () => {
+  it("allows a later prefetch session after duplicate scrollend is ignored", () => {
     render(<WeekRailFixture />);
 
     const rail = screen.getByRole("group", {
@@ -646,16 +722,21 @@ describe("WeekView rail behavior", () => {
     });
     const maxScrollLeft = WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH;
 
-    configureWeekRail(rail, { scrollLeft: maxScrollLeft - 1 });
+    const prefetchScrollLeft = maxScrollLeft - (WEEK_TILE_WIDTH - 1);
+    const browseStartScrollLeft = maxScrollLeft / 2;
+
+    configureWeekRail(rail, { scrollLeft: browseStartScrollLeft });
     fireEvent.wheel(rail);
+    rail.scrollLeft = prefetchScrollLeft;
     fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
     fireEvent(rail, new Event("scrollend"));
 
     expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
 
-    rail.scrollLeft = maxScrollLeft - 1;
+    rail.scrollLeft = browseStartScrollLeft;
     fireEvent.wheel(rail);
+    rail.scrollLeft = prefetchScrollLeft;
     fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
 
@@ -707,6 +788,7 @@ describe("WeekView rail behavior", () => {
         getWeekdayKey(5),
       );
       expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
     },
   );
 

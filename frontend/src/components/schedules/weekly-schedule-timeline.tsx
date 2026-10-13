@@ -478,24 +478,19 @@ export function WeeklyScheduleTimeline({
                   aria-current={isSelected ? "date" : undefined}
                   className={cn(
                     "min-w-0 border-r border-border px-2 py-3 text-center last:border-r-0",
-                    (isSelected || isToday) && "bg-primary/5",
+                    isToday && "bg-primary/5",
                   )}
                   key={getDateKey(date)}
                 >
                   <div
                     className={cn(
                       "text-xs font-semibold uppercase tracking-[0.04em] text-muted-foreground",
-                      (isSelected || isToday) && "text-primary",
+                      isToday && "text-primary",
                     )}
                   >
                     {DateTime.formatDate(date, { weekday: "short" })}
                   </div>
-                  <div
-                    className={cn(
-                      "mt-1 text-lg font-medium tabular-nums text-foreground",
-                      isSelected && "text-primary",
-                    )}
-                  >
+                  <div className="mt-1 text-lg font-medium tabular-nums text-foreground">
                     {DateTime.formatDate(date, { day: "numeric" })}
                   </div>
                 </div>

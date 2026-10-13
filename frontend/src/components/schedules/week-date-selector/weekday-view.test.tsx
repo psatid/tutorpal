@@ -377,16 +377,78 @@ describe("WeekdayView rail behavior", () => {
     expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
   });
 
+  it("measures the Day stride once per active wheel session", () => {
+    render(<DayRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const firstDate = getDayButton(rail, 0);
+
+    configureDayRail(rail, { scrollLeft: DAY_RAIL_WIDTH });
+    const measureStride = vi.spyOn(firstDate, "getBoundingClientRect");
+    measureStride.mockClear();
+
+    fireEvent.wheel(rail, { deltaX: 56 });
+    fireEvent.wheel(rail, { deltaX: 56 });
+
+    expect(measureStride).toHaveBeenCalledTimes(1);
+
+    fireEvent(rail, new Event("scrollend"));
+    fireEvent.wheel(rail, { deltaX: 56 });
+
+    expect(measureStride).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
-    ["previous", 1, DAY_TILE_WIDTH * 7 + 1],
     [
+      "mouse wheel",
+      "previous",
+      DAY_TILE_WIDTH,
+      DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7,
+    ],
+    [
+      "trackpad",
+      "previous",
+      DAY_TILE_WIDTH,
+      DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7,
+    ],
+    [
+      "mouse drag",
+      "previous",
+      DAY_TILE_WIDTH,
+      DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7,
+    ],
+    [
+      "mouse wheel",
       "next",
-      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1,
-      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1 - DAY_TILE_WIDTH * 7,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - DAY_TILE_WIDTH,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
+        DAY_RAIL_WIDTH -
+        DAY_TILE_WIDTH -
+        DAY_TILE_WIDTH * 7,
+    ],
+    [
+      "trackpad",
+      "next",
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - DAY_TILE_WIDTH,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
+        DAY_RAIL_WIDTH -
+        DAY_TILE_WIDTH -
+        DAY_TILE_WIDTH * 7,
+    ],
+    [
+      "mouse drag",
+      "next",
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - DAY_TILE_WIDTH,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
+        DAY_RAIL_WIDTH -
+        DAY_TILE_WIDTH -
+        DAY_TILE_WIDTH * 7,
     ],
   ] as const)(
-    "extends the %s edge once per user scroll without selecting or reacting to compensation scroll events",
-    async (_direction, initialScrollLeft, expectedScrollLeft) => {
+    "prefetches the %s Day range once when %s movement enters the zone before the hard edge",
+    async (input, _direction, prefetchScrollLeft, expectedScrollLeft) => {
       vi.useFakeTimers();
       render(<DayRailFixture />);
 
@@ -404,11 +466,30 @@ describe("WeekdayView rail behavior", () => {
       configureDayRail(rail, { scrollLeft: browseStartScrollLeft });
       scrollToMock.mockClear();
       passiveFocus.focus();
-      fireEvent.wheel(rail);
-      rail.scrollLeft = initialScrollLeft;
-      fireEvent.scroll(rail);
-      fireEvent(rail, new Event("scrollend"));
 
+      if (input === "mouse drag") {
+        fireEvent.pointerDown(rail, {
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+          clientX: 120,
+          clientY: 20,
+        });
+      } else {
+        fireEvent.wheel(
+          rail,
+          input === "trackpad" ? { deltaX: 56 } : { deltaY: 56 },
+        );
+      }
+
+      expect(prefetchScrollLeft).toBeGreaterThan(0);
+      expect(prefetchScrollLeft).toBeLessThan(
+        DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH,
+      );
+      rail.scrollLeft = prefetchScrollLeft;
+      fireEvent.scroll(rail);
+
+      // Prefetch happens as directional movement enters the zone, before scrollend.
       expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
       expect(rail.scrollLeft).toBe(expectedScrollLeft);
       expect(screen.getByTestId("selected-date")).toHaveTextContent(
@@ -421,6 +502,9 @@ describe("WeekdayView rail behavior", () => {
       expect(passiveFocus).toHaveFocus();
       expect(scrollToMock).not.toHaveBeenCalled();
 
+      fireEvent(rail, new Event("scrollend"));
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+
       const compensatedScrollLeft = rail.scrollLeft;
       fireEvent.scroll(rail);
       fireEvent(rail, new Event("scrollend"));
@@ -430,28 +514,22 @@ describe("WeekdayView rail behavior", () => {
 
       expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
       expect(rail.scrollLeft).toBe(compensatedScrollLeft);
-
-      rail.scrollLeft = browseStartScrollLeft;
-      fireEvent.wheel(rail);
-      rail.scrollLeft = initialScrollLeft;
-      fireEvent.scroll(rail);
-      fireEvent(rail, new Event("scrollend"));
-
-      expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
-      expect(rail.scrollLeft).toBe(expectedScrollLeft);
     },
   );
 
   it.each([
-    ["previous", 1, DAY_TILE_WIDTH * 7 + 1],
+    ["previous", DAY_TILE_WIDTH, DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7],
     [
       "next",
-      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1,
-      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1 - DAY_TILE_WIDTH * 7,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - DAY_TILE_WIDTH,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
+        DAY_RAIL_WIDTH -
+        DAY_TILE_WIDTH -
+        DAY_TILE_WIDTH * 7,
     ],
   ] as const)(
-    "uses the quiet-period fallback to extend a touch scroll at the %s edge once",
-    async (_direction, edgeScrollLeft, expectedScrollLeft) => {
+    "queues a touch prefetch at the %s zone until touch end, then extends once",
+    async (_direction, prefetchScrollLeft, expectedScrollLeft) => {
       vi.useFakeTimers();
       render(<DayRailFixture />);
 
@@ -475,8 +553,16 @@ describe("WeekdayView rail behavior", () => {
         clientX: 120,
         clientY: 20,
       });
-      rail.scrollLeft = edgeScrollLeft;
+      expect(prefetchScrollLeft).toBeGreaterThan(0);
+      expect(prefetchScrollLeft).toBeLessThan(
+        DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH,
+      );
+      rail.scrollLeft = prefetchScrollLeft;
       fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
+
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+
       fireEvent.pointerUp(rail, {
         pointerId: 1,
         pointerType: "touch",
@@ -484,6 +570,8 @@ describe("WeekdayView rail behavior", () => {
         clientX: 80,
         clientY: 20,
       });
+
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(150);
@@ -509,7 +597,7 @@ describe("WeekdayView rail behavior", () => {
     },
   );
 
-  it("allows a later scroll session to extend again after duplicate settlement is ignored", () => {
+  it("allows a later prefetch session after duplicate scrollend is ignored", () => {
     render(<DayRailFixture />);
 
     const rail = screen.getByRole("group", {
@@ -517,16 +605,21 @@ describe("WeekdayView rail behavior", () => {
     });
     const maxScrollLeft = DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH;
 
-    configureDayRail(rail, { scrollLeft: maxScrollLeft - 1 });
+    const prefetchScrollLeft = maxScrollLeft - DAY_TILE_WIDTH;
+    const browseStartScrollLeft = maxScrollLeft / 2;
+
+    configureDayRail(rail, { scrollLeft: browseStartScrollLeft });
     fireEvent.wheel(rail);
+    rail.scrollLeft = prefetchScrollLeft;
     fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
     fireEvent(rail, new Event("scrollend"));
 
     expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
 
-    rail.scrollLeft = maxScrollLeft - 1;
+    rail.scrollLeft = browseStartScrollLeft;
     fireEvent.wheel(rail);
+    rail.scrollLeft = prefetchScrollLeft;
     fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
 
@@ -578,6 +671,7 @@ describe("WeekdayView rail behavior", () => {
         getDayKey(20),
       );
       expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
     },
   );
 

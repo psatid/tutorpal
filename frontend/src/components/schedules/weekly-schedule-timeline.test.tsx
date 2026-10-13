@@ -83,7 +83,7 @@ describe("WeeklyScheduleTimeline", () => {
     expect(screen.queryByRole("button", { name: "Add Schedule" })).not.toBeInTheDocument();
   });
 
-  it("emphasizes both selected header labels while keeping an unselected Today column distinct", () => {
+  it("keeps a non-Today selected header current but visually neutral while highlighting only Today", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 9, 11, 12));
     renderTimeline();
@@ -106,15 +106,27 @@ describe("WeeklyScheduleTimeline", () => {
 
     const [selectedWeekday, selectedDay] = Array.from(selectedHeader.children);
     const [todayWeekday, todayDay] = Array.from(todayHeader.children);
+    const selectedColumn = getCell(selectedDate, "09:00").parentElement
+      ?.parentElement;
+    const todayColumn = getCell(new Date(2026, 9, 11), "09:00").parentElement
+      ?.parentElement;
 
-    expect(selectedHeader).toHaveClass("bg-primary/5");
-    expect(selectedWeekday).toHaveClass("text-primary");
-    expect(selectedDay).toHaveClass("text-primary");
+    if (!selectedColumn || !todayColumn) {
+      throw new Error("Expected selected and Today timeline columns.");
+    }
+
+    expect(selectedHeader).toHaveAttribute("aria-current", "date");
+    expect(selectedHeader).not.toHaveClass("bg-primary/5");
+    expect(selectedWeekday).not.toHaveClass("text-primary");
+    expect(selectedDay).toHaveClass("text-foreground");
+    expect(selectedDay).not.toHaveClass("text-primary");
+    expect(selectedColumn).not.toHaveClass("bg-primary/2");
     expect(todayHeader).not.toHaveAttribute("aria-current");
     expect(todayHeader).toHaveClass("bg-primary/5");
     expect(todayWeekday).toHaveClass("text-primary");
     expect(todayDay).toHaveClass("text-foreground");
     expect(todayDay).not.toHaveClass("text-primary");
+    expect(todayColumn).toHaveClass("bg-primary/2");
   });
 
   it("creates at the exact day and hour selected from a cell", async () => {

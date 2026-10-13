@@ -45,6 +45,12 @@ interface TouchClickSuppression {
   expiresAt: number;
 }
 
+interface TouchEdgeRotation {
+  direction: "previous" | "next";
+  trackItemWidth: number;
+  appendStartDate: number | null;
+}
+
 type NativeClickEvent = globalThis.MouseEvent & {
   sourceCapabilities?: {
     firesTouchEvents?: boolean;
@@ -53,6 +59,7 @@ type NativeClickEvent = globalThis.MouseEvent & {
 
 const EDGE_THRESHOLD = 128;
 const SMOOTH_SCROLL_SETTLE_DELAY = 150;
+const TOUCH_SCROLL_SETTLE_DELAY = 150;
 const SCROLL_SETTLE_DELAY = 150;
 const TOUCH_SWIPE_THRESHOLD = 8;
 const TOUCH_CLICK_SUPPRESSION_DELAY = 500;
@@ -82,6 +89,13 @@ function isTouchGeneratedClick(
   );
 }
 
+function getEdgeThreshold(maxScrollLeft: number, trackItemWidth: number) {
+  return Math.min(
+    Math.max(EDGE_THRESHOLD, trackItemWidth),
+    maxScrollLeft / 2,
+  );
+}
+
 function getDateByDayOffset(date: Date, dayOffset: number): Date {
   const dateTime = DateTime.from(date);
   const weekdayIndex = (dateTime.getWeekdayIndex() + 6) % WEEK_DAYS;
@@ -108,6 +122,8 @@ export function WeekdayView({
   const prefersReducedMotion = useReducedMotion() === true;
   const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastScrollLeftRef = useRef<number | null>(null);
+  const trackItemWidthRef = useRef<number | null>(null);
   const pendingPrependTrackWidthRef = useRef<number | null>(null);
   const pendingAppendStartDateRef = useRef<number | null>(null);
   const pendingAppendTrackWidthRef = useRef<number | null>(null);
@@ -128,12 +144,15 @@ export function WeekdayView({
   >(() => false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
+  const touchScrollSessionRef = useRef(false);
   const scrollSettlementTimeoutRef = useRef<number | null>(null);
   const scrollSessionActiveRef = useRef(false);
   const didScrollSessionMoveRef = useRef(false);
   const didExtendScrollSessionRef = useRef(false);
   const touchScrollPointerActiveRef = useRef(false);
   const activeTouchIdentifierRef = useRef<number | null>(null);
+  const queuedTouchEdgeRotationRef = useRef<TouchEdgeRotation | null>(null);
+  const touchScrollFallbackTimeoutRef = useRef<number | null>(null);
   const settleRailScrollRef = useRef<() => void>(() => undefined);
   const lastMousePointerDownAtRef = useRef<number | null>(null);
   const touchGestureRef = useRef<TouchSelectionGesture | null>(null);
@@ -197,11 +216,22 @@ export function WeekdayView({
     }
   }, []);
 
-  const discardPendingBrowseSession = useCallback(() => {
-    discardScrollSession();
+  const discardTouchScrollSession = useCallback(() => {
+    touchScrollSessionRef.current = false;
     touchScrollPointerActiveRef.current = false;
     activeTouchIdentifierRef.current = null;
-  }, [discardScrollSession]);
+    queuedTouchEdgeRotationRef.current = null;
+
+    if (touchScrollFallbackTimeoutRef.current !== null) {
+      window.clearTimeout(touchScrollFallbackTimeoutRef.current);
+      touchScrollFallbackTimeoutRef.current = null;
+    }
+  }, []);
+
+  const discardPendingBrowseSession = useCallback(() => {
+    discardScrollSession();
+    discardTouchScrollSession();
+  }, [discardScrollSession, discardTouchScrollSession]);
 
   useLayoutEffect(() => {
     if (!isActive) {
@@ -214,6 +244,56 @@ export function WeekdayView({
 
     settleRailScrollRef.current();
   }, []);
+
+  const settleTouchScrollSession = useCallback(() => {
+    if (
+      !touchScrollSessionRef.current ||
+      touchScrollPointerActiveRef.current
+    ) {
+      return;
+    }
+
+    const queuedRotation = queuedTouchEdgeRotationRef.current;
+
+    discardTouchScrollSession();
+
+    if (!queuedRotation) {
+      settleRailScrollRef.current();
+      return;
+    }
+
+    pendingExtensionRef.current = queuedRotation.direction;
+
+    if (queuedRotation.direction === "previous") {
+      pendingPrependTrackWidthRef.current =
+        queuedRotation.trackItemWidth * WEEK_DAYS;
+    } else {
+      pendingAppendStartDateRef.current = queuedRotation.appendStartDate;
+      pendingAppendTrackWidthRef.current =
+        queuedRotation.trackItemWidth * WEEK_DAYS;
+    }
+
+    onExtendDateBuffer(queuedRotation.direction);
+    settleRailScrollRef.current();
+  }, [discardTouchScrollSession, onExtendDateBuffer]);
+
+  const scheduleTouchScrollIdleFallback = useCallback(() => {
+    if (
+      !touchScrollSessionRef.current ||
+      touchScrollPointerActiveRef.current
+    ) {
+      return;
+    }
+
+    if (touchScrollFallbackTimeoutRef.current !== null) {
+      window.clearTimeout(touchScrollFallbackTimeoutRef.current);
+    }
+
+    touchScrollFallbackTimeoutRef.current = window.setTimeout(
+      settleTouchScrollSession,
+      TOUCH_SCROLL_SETTLE_DELAY,
+    );
+  }, [settleTouchScrollSession]);
 
   const scheduleRailScrollSettlement = useCallback(() => {
     if (
@@ -238,8 +318,8 @@ export function WeekdayView({
 
     touchScrollPointerActiveRef.current = false;
     activeTouchIdentifierRef.current = null;
-    scheduleRailScrollSettlement();
-  }, [scheduleRailScrollSettlement]);
+    scheduleTouchScrollIdleFallback();
+  }, [scheduleTouchScrollIdleFallback]);
 
   useLayoutEffect(() => {
     const didTrackedTouchEnd = (event: TouchEvent) => {
@@ -259,16 +339,14 @@ export function WeekdayView({
     const handleTouchCancel = (event: TouchEvent) => {
       if (didTrackedTouchEnd(event)) {
         touchGestureRef.current = null;
-        touchScrollPointerActiveRef.current = false;
-        activeTouchIdentifierRef.current = null;
+        discardTouchScrollSession();
         discardScrollSession();
       }
     };
     const discardInterruptedTouch = () => {
       touchGestureRef.current = null;
       clearTouchClickSuppression();
-      touchScrollPointerActiveRef.current = false;
-      activeTouchIdentifierRef.current = null;
+      discardTouchScrollSession();
       discardScrollSession();
     };
 
@@ -283,7 +361,12 @@ export function WeekdayView({
       window.removeEventListener("pagehide", discardInterruptedTouch);
       window.removeEventListener("blur", discardInterruptedTouch);
     };
-  }, [clearTouchClickSuppression, discardScrollSession, finishTouchScroll]);
+  }, [
+    clearTouchClickSuppression,
+    discardScrollSession,
+    discardTouchScrollSession,
+    finishTouchScroll,
+  ]);
 
   const armTouchClickSuppression = useCallback(
     (key: string) => {
@@ -349,12 +432,16 @@ export function WeekdayView({
       clearSmoothCentering();
       resizeDuringSmoothCenteringRef.current = false;
       clearTouchClickSuppression();
+      discardTouchScrollSession();
       discardScrollSession();
-      touchScrollPointerActiveRef.current = false;
-      activeTouchIdentifierRef.current = null;
       touchGestureRef.current = null;
     };
-  }, [clearSmoothCentering, clearTouchClickSuppression, discardScrollSession]);
+  }, [
+    clearSmoothCentering,
+    clearTouchClickSuppression,
+    discardScrollSession,
+    discardTouchScrollSession,
+  ]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -760,54 +847,65 @@ export function WeekdayView({
     };
   }, [centerRequest.id, isActive, selectedDateKey]);
 
-  const extendAtSettledEdge = useCallback(() => {
-    const container = containerRef.current;
-
-    if (!container || pendingExtensionRef.current !== null) return false;
-
-    const firstDateButton = container.querySelector<HTMLButtonElement>(
+  const updateTrackItemWidth = useCallback(() => {
+    const firstDateButton = containerRef.current?.querySelector<HTMLButtonElement>(
       "button[data-date-key]",
     );
     const track = firstDateButton?.parentElement;
     const gap = track
       ? Number.parseFloat(window.getComputedStyle(track).columnGap) || 0
       : 0;
-    const itemWidth = firstDateButton
+
+    trackItemWidthRef.current = firstDateButton
       ? firstDateButton.getBoundingClientRect().width + gap
       : null;
+  }, []);
 
-    if (itemWidth === null) return false;
+  const extendAtEdgeThreshold = useCallback(
+    (direction: "previous" | "next"): boolean => {
+      const container = containerRef.current;
 
-    const maxScrollLeft = Math.max(
-      container.scrollWidth - container.clientWidth,
-      0,
-    );
-    const edgeThreshold = Math.min(
-      EDGE_THRESHOLD,
-      Math.max(maxScrollLeft - itemWidth, 0),
-    );
-    const direction =
-      maxScrollLeft > 0 && container.scrollLeft <= edgeThreshold
-        ? "previous"
-        : maxScrollLeft > 0 &&
-            container.scrollLeft >= maxScrollLeft - edgeThreshold
-          ? "next"
-          : null;
+      if (
+        !container ||
+        pendingExtensionRef.current !== null ||
+        queuedTouchEdgeRotationRef.current !== null
+      ) {
+        return false;
+      }
 
-    if (!direction) return false;
+      updateTrackItemWidth();
 
-    pendingExtensionRef.current = direction;
+      const trackItemWidth = trackItemWidthRef.current;
 
-    if (direction === "previous") {
-      pendingPrependTrackWidthRef.current = itemWidth * WEEK_DAYS;
-    } else {
-      pendingAppendStartDateRef.current = dates[0]?.getTime() ?? null;
-      pendingAppendTrackWidthRef.current = itemWidth * WEEK_DAYS;
-    }
+      if (trackItemWidth === null) return false;
 
-    onExtendDateBuffer(direction);
-    return true;
-  }, [dates, onExtendDateBuffer]);
+      const maxScrollLeft = Math.max(
+        container.scrollWidth - container.clientWidth,
+        0,
+      );
+      const edgeThreshold = getEdgeThreshold(maxScrollLeft, trackItemWidth);
+      const isAtBufferedEdge =
+        maxScrollLeft > 0 &&
+        (direction === "previous"
+          ? container.scrollLeft <= edgeThreshold
+          : container.scrollLeft >= maxScrollLeft - edgeThreshold);
+
+      if (!isAtBufferedEdge) return false;
+
+      pendingExtensionRef.current = direction;
+
+      if (direction === "previous") {
+        pendingPrependTrackWidthRef.current = trackItemWidth * WEEK_DAYS;
+      } else {
+        pendingAppendStartDateRef.current = dates[0]?.getTime() ?? null;
+        pendingAppendTrackWidthRef.current = trackItemWidth * WEEK_DAYS;
+      }
+
+      onExtendDateBuffer(direction);
+      return true;
+    },
+    [dates, onExtendDateBuffer, updateTrackItemWidth],
+  );
 
   const settleRailScroll = useCallback(() => {
     if (smoothCenteringRef.current) {
@@ -815,7 +913,12 @@ export function WeekdayView({
       return;
     }
 
-    if (touchScrollPointerActiveRef.current) return;
+    if (touchScrollSessionRef.current) {
+      if (!touchScrollPointerActiveRef.current) {
+        settleTouchScrollSession();
+      }
+      return;
+    }
 
     if (!scrollSessionActiveRef.current) return;
 
@@ -826,14 +929,9 @@ export function WeekdayView({
       scrollSettlementTimeoutRef.current = null;
     }
 
-    if (!didScrollSessionMoveRef.current) return;
-
-    if (!didExtendScrollSessionRef.current) {
-      didExtendScrollSessionRef.current = extendAtSettledEdge();
-    }
   }, [
-    extendAtSettledEdge,
     settleSmoothCentering,
+    settleTouchScrollSession,
   ]);
 
   useLayoutEffect(() => {
@@ -845,6 +943,8 @@ export function WeekdayView({
 
     if (!container) return;
 
+    const scrollLeft = container.scrollLeft;
+
     const ignoredCompensationScrollLeft =
       ignoredCompensationScrollLeftRef.current;
 
@@ -852,27 +952,94 @@ export function WeekdayView({
       ignoredCompensationScrollLeftRef.current = null;
 
       if (
-        Math.abs(container.scrollLeft - ignoredCompensationScrollLeft) < 0.5
+        Math.abs(scrollLeft - ignoredCompensationScrollLeft) < 0.5
       ) {
+        lastScrollLeftRef.current = scrollLeft;
         return;
       }
     }
 
     if (smoothCenteringRef.current) {
+      lastScrollLeftRef.current = scrollLeft;
       scheduleSmoothCenterFallback();
       return;
     }
 
-    if (pendingExtensionRef.current !== null) return;
+    if (pendingExtensionRef.current !== null) {
+      lastScrollLeftRef.current = scrollLeft;
+      return;
+    }
 
-    if (!scrollSessionActiveRef.current) return;
+    if (!scrollSessionActiveRef.current && !touchScrollSessionRef.current) {
+      lastScrollLeftRef.current = scrollLeft;
+      return;
+    }
+
+    const previousScrollLeft = lastScrollLeftRef.current;
+    lastScrollLeftRef.current = scrollLeft;
+
+    if (
+      previousScrollLeft === null ||
+      Math.abs(scrollLeft - previousScrollLeft) < 0.5
+    ) {
+      return;
+    }
 
     didScrollSessionMoveRef.current = true;
     scheduleRailScrollSettlement();
 
+    if (touchScrollSessionRef.current) {
+      scheduleTouchScrollIdleFallback();
+    }
+
+    if (
+      didExtendScrollSessionRef.current ||
+      queuedTouchEdgeRotationRef.current !== null
+    ) {
+      return;
+    }
+
+    const trackItemWidth = trackItemWidthRef.current;
+
+    if (trackItemWidth === null) return;
+
+    const maxScrollLeft = Math.max(
+      container.scrollWidth - container.clientWidth,
+      0,
+    );
+    const edgeThreshold = getEdgeThreshold(maxScrollLeft, trackItemWidth);
+    const edgeDirection =
+      maxScrollLeft > 0 &&
+      scrollLeft < previousScrollLeft &&
+      scrollLeft <= edgeThreshold
+        ? "previous"
+        : maxScrollLeft > 0 &&
+            scrollLeft > previousScrollLeft &&
+            scrollLeft >= maxScrollLeft - edgeThreshold
+          ? "next"
+          : null;
+
+    if (!edgeDirection) return;
+
+    if (touchScrollSessionRef.current) {
+      queuedTouchEdgeRotationRef.current = {
+        direction: edgeDirection,
+        trackItemWidth,
+        appendStartDate:
+          edgeDirection === "next" ? dates[0]?.getTime() ?? null : null,
+      };
+      didExtendScrollSessionRef.current = true;
+      return;
+    }
+
+    didExtendScrollSessionRef.current =
+      extendAtEdgeThreshold(edgeDirection);
   }, [
+    dates,
+    extendAtEdgeThreshold,
     scheduleRailScrollSettlement,
     scheduleSmoothCenterFallback,
+    scheduleTouchScrollIdleFallback,
   ]);
 
   const handleKeyDown = useCallback(
@@ -928,14 +1095,22 @@ export function WeekdayView({
       scrollSessionActiveRef.current = true;
       didScrollSessionMoveRef.current = false;
       didExtendScrollSessionRef.current = false;
+      lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
+      updateTrackItemWidth();
 
       if (event.pointerType === "touch" && event.isPrimary) {
+        discardTouchScrollSession();
+        touchScrollSessionRef.current = true;
         touchScrollPointerActiveRef.current = true;
       } else if (event.pointerType === "mouse") {
         lastMousePointerDownAtRef.current = Date.now();
       }
     },
-    [cancelSmoothCentering],
+    [
+      cancelSmoothCentering,
+      discardTouchScrollSession,
+      updateTrackItemWidth,
+    ],
   );
 
   const handleRailTouchStart = useCallback(
@@ -948,10 +1123,19 @@ export function WeekdayView({
 
       if (!touch) return;
 
+      if (!touchScrollSessionRef.current) {
+        scrollSessionActiveRef.current = true;
+        didScrollSessionMoveRef.current = false;
+        didExtendScrollSessionRef.current = false;
+        touchScrollSessionRef.current = true;
+        updateTrackItemWidth();
+      }
+
       touchScrollPointerActiveRef.current = true;
       activeTouchIdentifierRef.current = touch.identifier;
+      lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
     },
-    [],
+    [updateTrackItemWidth],
   );
 
   const handleRailWheel = useCallback(() => {
@@ -961,8 +1145,11 @@ export function WeekdayView({
       scrollSessionActiveRef.current = true;
       didScrollSessionMoveRef.current = false;
       didExtendScrollSessionRef.current = false;
+      updateTrackItemWidth();
     }
-  }, [cancelSmoothCentering]);
+
+    lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
+  }, [cancelSmoothCentering, updateTrackItemWidth]);
 
   const handleTouchPointerDown = useCallback(
     (
@@ -1015,6 +1202,7 @@ export function WeekdayView({
       armTouchClickSuppression(gesture.key);
 
       if (!hasTouchGestureExceededTapThreshold(gesture, event) && !gesture.isSwipe) {
+        discardTouchScrollSession();
         discardScrollSession();
         gesture.select();
       }
@@ -1022,6 +1210,7 @@ export function WeekdayView({
     [
       armTouchClickSuppression,
       discardScrollSession,
+      discardTouchScrollSession,
       finishTouchScroll,
     ],
   );

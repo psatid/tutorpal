@@ -100,6 +100,13 @@ function isTouchGeneratedClick(
   );
 }
 
+function getEdgeThreshold(maxScrollLeft: number, trackItemWidth: number) {
+  return Math.min(
+    Math.max(EDGE_THRESHOLD, trackItemWidth),
+    maxScrollLeft / 2,
+  );
+}
+
 export function WeekView({
   weekStarts,
   selectedDate,
@@ -404,10 +411,7 @@ export function WeekView({
         container.scrollWidth - container.clientWidth,
         0,
       );
-      const edgeThreshold = Math.min(
-        EDGE_THRESHOLD,
-        Math.max(maxScrollLeft - trackItemWidth, 0),
-      );
+      const edgeThreshold = getEdgeThreshold(maxScrollLeft, trackItemWidth);
       const isAtBufferedEdge =
         maxScrollLeft > 0 &&
         (direction === "previous"
@@ -899,6 +903,8 @@ export function WeekView({
 
     if (!container) return;
 
+    const scrollLeft = container.scrollLeft;
+
     const ignoredCompensationScrollLeft =
       ignoredCompensationScrollLeftRef.current;
 
@@ -906,25 +912,36 @@ export function WeekView({
       ignoredCompensationScrollLeftRef.current = null;
 
       if (
-        Math.abs(container.scrollLeft - ignoredCompensationScrollLeft) < 0.5
+        Math.abs(scrollLeft - ignoredCompensationScrollLeft) < 0.5
       ) {
-        lastScrollLeftRef.current = container.scrollLeft;
+        lastScrollLeftRef.current = scrollLeft;
         return;
       }
     }
 
     if (smoothCenteringRef.current) {
-      lastScrollLeftRef.current = container.scrollLeft;
+      lastScrollLeftRef.current = scrollLeft;
       scheduleSmoothCenterFallback();
       return;
     }
 
     if (pendingExtensionRef.current !== null) {
-      lastScrollLeftRef.current = container.scrollLeft;
+      lastScrollLeftRef.current = scrollLeft;
       return;
     }
 
     if (!scrollSessionActiveRef.current && !touchScrollSessionRef.current) {
+      lastScrollLeftRef.current = scrollLeft;
+      return;
+    }
+
+    const previousScrollLeft = lastScrollLeftRef.current;
+    lastScrollLeftRef.current = scrollLeft;
+
+    if (
+      previousScrollLeft === null ||
+      Math.abs(scrollLeft - previousScrollLeft) < 0.5
+    ) {
       return;
     }
 
@@ -943,15 +960,10 @@ export function WeekView({
       scheduleTouchScrollIdleFallback();
     }
 
-    const scrollLeft = container.scrollLeft;
-    const previousScrollLeft = lastScrollLeftRef.current;
-    lastScrollLeftRef.current = scrollLeft;
-
-    if (queuedTouchEdgeRotationRef.current !== null) {
-      return;
-    }
-
-    if (previousScrollLeft === null || scrollLeft === previousScrollLeft) {
+    if (
+      didExtendScrollSessionRef.current ||
+      queuedTouchEdgeRotationRef.current !== null
+    ) {
       return;
     }
 
@@ -963,35 +975,37 @@ export function WeekView({
       container.scrollWidth - container.clientWidth,
       0,
     );
-    const edgeThreshold = Math.min(
-      EDGE_THRESHOLD,
-      Math.max(maxScrollLeft - trackItemWidth, 0),
-    );
-    const isNearStart = scrollLeft <= edgeThreshold;
-    const isNearEnd = scrollLeft >= maxScrollLeft - edgeThreshold;
+    const edgeThreshold = getEdgeThreshold(maxScrollLeft, trackItemWidth);
+    const edgeDirection =
+      maxScrollLeft > 0 &&
+      scrollLeft < previousScrollLeft &&
+      scrollLeft <= edgeThreshold
+        ? "previous"
+        : maxScrollLeft > 0 &&
+            scrollLeft > previousScrollLeft &&
+            scrollLeft >= maxScrollLeft - edgeThreshold
+          ? "next"
+          : null;
 
-    if (scrollLeft < previousScrollLeft && isNearStart) {
-      if (touchScrollSessionRef.current) {
-        queuedTouchEdgeRotationRef.current = {
-          direction: "previous",
-          trackItemWidth,
-          appendStartWeek: null,
-        };
-        return;
-      }
-      return;
-    } else if (scrollLeft > previousScrollLeft && isNearEnd) {
-      if (touchScrollSessionRef.current) {
-        queuedTouchEdgeRotationRef.current = {
-          direction: "next",
-          trackItemWidth,
-          appendStartWeek: weekStarts[0]?.getTime() ?? null,
-        };
-        return;
-      }
+    if (!edgeDirection) return;
+
+    if (touchScrollSessionRef.current) {
+      queuedTouchEdgeRotationRef.current = {
+        direction: edgeDirection,
+        trackItemWidth,
+        appendStartWeek:
+          edgeDirection === "next"
+            ? weekStarts[0]?.getTime() ?? null
+            : null,
+      };
+      didExtendScrollSessionRef.current = true;
       return;
     }
+
+    didExtendScrollSessionRef.current =
+      extendClampedWeekBuffer(edgeDirection);
   }, [
+    extendClampedWeekBuffer,
     scheduleSmoothCenterFallback,
     scheduleTouchScrollIdleFallback,
     weekStarts,
@@ -1018,39 +1032,7 @@ export function WeekView({
       window.clearTimeout(scrollSettlementTimeoutRef.current);
       scrollSettlementTimeoutRef.current = null;
     }
-
-    if (!didScrollSessionMoveRef.current) return;
-
-    const container = containerRef.current;
-
-    if (!container) return;
-
-    const maxScrollLeft = Math.max(
-      container.scrollWidth - container.clientWidth,
-      0,
-    );
-    const edgeThreshold = Math.min(
-      EDGE_THRESHOLD,
-      Math.max(maxScrollLeft - (trackItemWidthRef.current ?? 0), 0),
-    );
-    const edgeDirection =
-      maxScrollLeft > 0 && container.scrollLeft <= edgeThreshold
-        ? "previous"
-        : maxScrollLeft > 0 &&
-            container.scrollLeft >= maxScrollLeft - edgeThreshold
-          ? "next"
-          : null;
-
-    if (
-      edgeDirection &&
-      !didExtendScrollSessionRef.current &&
-      pendingExtensionRef.current === null &&
-      queuedTouchEdgeRotationRef.current === null
-    ) {
-      didExtendScrollSessionRef.current = extendClampedWeekBuffer(edgeDirection);
-    }
   }, [
-    extendClampedWeekBuffer,
     settleSmoothCentering,
     settleTouchScrollSession,
   ]);
@@ -1066,6 +1048,8 @@ export function WeekView({
       scrollSessionActiveRef.current = true;
       didScrollSessionMoveRef.current = false;
       didExtendScrollSessionRef.current = false;
+      lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
+      updateTrackItemWidth();
 
       if (event.pointerType === "touch" && event.isPrimary) {
         discardTouchScrollSession();
@@ -1078,6 +1062,7 @@ export function WeekView({
     [
       cancelSmoothCentering,
       discardTouchScrollSession,
+      updateTrackItemWidth,
     ],
   );
 
@@ -1091,10 +1076,19 @@ export function WeekView({
 
       if (!touch) return;
 
+      if (!touchScrollSessionRef.current) {
+        scrollSessionActiveRef.current = true;
+        didScrollSessionMoveRef.current = false;
+        didExtendScrollSessionRef.current = false;
+        touchScrollSessionRef.current = true;
+        updateTrackItemWidth();
+      }
+
       touchScrollPointerActiveRef.current = true;
       activeTouchIdentifierRef.current = touch.identifier;
+      lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
     },
-    [],
+    [updateTrackItemWidth],
   );
 
   const handleRailWheel = useCallback(() => {
@@ -1104,8 +1098,11 @@ export function WeekView({
       scrollSessionActiveRef.current = true;
       didScrollSessionMoveRef.current = false;
       didExtendScrollSessionRef.current = false;
+      updateTrackItemWidth();
     }
-  }, [cancelSmoothCentering]);
+
+    lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
+  }, [cancelSmoothCentering, updateTrackItemWidth]);
 
   const handleTouchPointerDown = useCallback(
     (
