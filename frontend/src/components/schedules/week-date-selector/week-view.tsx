@@ -646,6 +646,7 @@ export function WeekView({
       maxScrollLeft,
     );
 
+    lastScrollLeftRef.current = targetLeft;
     container.scrollTo({ left: targetLeft, behavior: "auto" });
     button.focus({ preventScroll: true });
     return true;
@@ -930,12 +931,28 @@ export function WeekView({
       return;
     }
 
+    const previousScrollLeft = lastScrollLeftRef.current;
+
     if (!scrollSessionActiveRef.current && !touchScrollSessionRef.current) {
+      if (
+        previousScrollLeft === null ||
+        Math.abs(scrollLeft - previousScrollLeft) < 0.5
+      ) {
+        lastScrollLeftRef.current = scrollLeft;
+        return;
+      }
+
+      scrollSessionActiveRef.current = true;
+      didScrollSessionMoveRef.current = false;
+      didExtendScrollSessionRef.current = false;
+      updateTrackItemWidth();
+    }
+
+    if (previousScrollLeft === null) {
       lastScrollLeftRef.current = scrollLeft;
       return;
     }
 
-    const previousScrollLeft = lastScrollLeftRef.current;
     lastScrollLeftRef.current = scrollLeft;
 
     if (
@@ -1008,6 +1025,7 @@ export function WeekView({
     extendClampedWeekBuffer,
     scheduleSmoothCenterFallback,
     scheduleTouchScrollIdleFallback,
+    updateTrackItemWidth,
     weekStarts,
   ]);
 

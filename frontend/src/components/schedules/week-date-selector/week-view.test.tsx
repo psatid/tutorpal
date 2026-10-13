@@ -560,6 +560,72 @@ describe("WeekView rail behavior", () => {
     },
   );
 
+  it("extends the Week buffer once after activation when native scroll enters an edge zone", async () => {
+    vi.useFakeTimers();
+    render(<HiddenWeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const passiveFocus = screen.getByRole("button", {
+      name: "Keep passive-scroll focus",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+    const maxScrollLeft = WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH;
+    const prefetchScrollLeft = maxScrollLeft - (WEEK_TILE_WIDTH - 1);
+    const centeredScrollLeft =
+      4 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
+
+    configureWeekRail(rail);
+    scrollToMock.mockImplementation(function (
+      this: HTMLElement,
+      options: ScrollToOptions,
+    ) {
+      this.scrollLeft = options.left ?? this.scrollLeft;
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show week rail" }));
+
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: centeredScrollLeft,
+      behavior: "auto",
+    });
+    expect(rail.scrollLeft).toBe(centeredScrollLeft);
+
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    scrollToMock.mockClear();
+    passiveFocus.focus();
+
+    rail.scrollLeft = prefetchScrollLeft;
+    fireEvent.scroll(rail);
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(passiveFocus).toHaveFocus();
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    const compensatedScrollLeft = rail.scrollLeft;
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    fireEvent(rail, new Event("scrollend"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    expect(rail.scrollLeft).toBe(compensatedScrollLeft);
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
   it.each([
     ["previous", WEEK_TILE_WIDTH - 1, WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH],
     [

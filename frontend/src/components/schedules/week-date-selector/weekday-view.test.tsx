@@ -517,6 +517,55 @@ describe("WeekdayView rail behavior", () => {
     },
   );
 
+  it("extends the Day buffer once when its first native scroll enters an edge zone", async () => {
+    vi.useFakeTimers();
+    render(<DayRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const passiveFocus = screen.getByRole("button", {
+      name: "Keep passive-scroll focus",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+    const maxScrollLeft = DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH;
+    const browseStartScrollLeft = maxScrollLeft / 2;
+    const prefetchScrollLeft = maxScrollLeft - DAY_TILE_WIDTH;
+
+    configureDayRail(rail, { scrollLeft: browseStartScrollLeft });
+    scrollToMock.mockClear();
+    passiveFocus.focus();
+
+    rail.scrollLeft = prefetchScrollLeft;
+    fireEvent.scroll(rail);
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(passiveFocus).toHaveFocus();
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    const compensatedScrollLeft = rail.scrollLeft;
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    fireEvent(rail, new Event("scrollend"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    expect(rail.scrollLeft).toBe(compensatedScrollLeft);
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
   it.each([
     ["previous", DAY_TILE_WIDTH, DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7],
     [

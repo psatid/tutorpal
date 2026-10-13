@@ -559,6 +559,10 @@ export function WeekdayView({
         scheduleSmoothCenterFallback();
       }
 
+      if (!shouldSmoothlyCenter) {
+        lastScrollLeftRef.current = targetLeft;
+      }
+
       container.scrollTo({
         left: targetLeft,
         behavior: shouldSmoothlyCenter ? "smooth" : "auto",
@@ -601,6 +605,7 @@ export function WeekdayView({
       maxScrollLeft,
     );
 
+    lastScrollLeftRef.current = targetLeft;
     container.scrollTo({ left: targetLeft, behavior: "auto" });
     button.focus({ preventScroll: true });
     return true;
@@ -736,6 +741,7 @@ export function WeekdayView({
 
     pendingExtensionRef.current = null;
     pendingSelectionBufferStartDateRef.current = null;
+    lastScrollLeftRef.current = container.scrollLeft;
 
     if (adjustedForBufferExtension) {
       ignoredCompensationScrollLeftRef.current = container.scrollLeft;
@@ -970,12 +976,28 @@ export function WeekdayView({
       return;
     }
 
+    const previousScrollLeft = lastScrollLeftRef.current;
+
     if (!scrollSessionActiveRef.current && !touchScrollSessionRef.current) {
+      if (
+        previousScrollLeft === null ||
+        Math.abs(scrollLeft - previousScrollLeft) < 0.5
+      ) {
+        lastScrollLeftRef.current = scrollLeft;
+        return;
+      }
+
+      scrollSessionActiveRef.current = true;
+      didScrollSessionMoveRef.current = false;
+      didExtendScrollSessionRef.current = false;
+      updateTrackItemWidth();
+    }
+
+    if (previousScrollLeft === null) {
       lastScrollLeftRef.current = scrollLeft;
       return;
     }
 
-    const previousScrollLeft = lastScrollLeftRef.current;
     lastScrollLeftRef.current = scrollLeft;
 
     if (
@@ -1040,6 +1062,7 @@ export function WeekdayView({
     scheduleRailScrollSettlement,
     scheduleSmoothCenterFallback,
     scheduleTouchScrollIdleFallback,
+    updateTrackItemWidth,
   ]);
 
   const handleKeyDown = useCallback(
