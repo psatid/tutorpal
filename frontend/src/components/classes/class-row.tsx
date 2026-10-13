@@ -168,6 +168,7 @@ export function ClassRow({
 						render={
 							<Button
 								aria-label={t("classes:actionsFor", { name: data.displayName })}
+								className="self-start"
 								onKeyDown={handleButtonKeyDown}
 								ref={setActionTriggerRef}
 								size="icon"

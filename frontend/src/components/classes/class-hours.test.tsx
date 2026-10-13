@@ -70,6 +70,9 @@ describe("class-hour surfaces", () => {
 		}
 		expect(desktopAccounting.parentElement).toHaveClass("hidden", "sm:block");
 		expect(screen.getAllByText("All hours scheduled")).toHaveLength(2);
+		expect(
+			screen.getByRole("button", { name: "Actions for Algebra 1" }),
+		).toHaveClass("self-start");
 	});
 
 	it("uses active deductions, rather than reserved hours, for detail progress", () => {
