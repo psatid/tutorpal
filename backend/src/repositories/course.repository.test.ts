@@ -10,6 +10,9 @@ let courseFindFirst: Delegate;
 let classHourAdditionAggregate: Delegate;
 
 mock.module("../lib/db", () => ({
+	getLocalPrisma: () => {
+		throw new Error("Unexpected local Prisma access");
+	},
 	prisma: {
 		course: {
 			create: (args: unknown) => courseCreate(args),

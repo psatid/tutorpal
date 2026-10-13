@@ -1,8 +1,11 @@
-import { describe, expect, mock, test } from "bun:test";
-import { Hono } from "hono";
+import { describe, expect, test } from "bun:test";
+import { Hono, type MiddlewareHandler } from "hono";
+import { AppError } from "../lib/error";
 import { errorHandler } from "../middleware/error-handler";
 import { CourseModel } from "../models/course.model";
+import { CourseService } from "../services/course.service";
 import type { AppEnv } from "../types/hono-env";
+import { createCourseRoutes } from "./courses";
 
 const createdAt = new Date("2026-08-13T00:00:00.000Z");
 const courseModel = CourseModel.fromPrisma({
@@ -28,48 +31,29 @@ let detailResult: {
 	recordedRevenue: 1_700,
 };
 
-mock.module("../repositories/course.repository", () => ({
-	courseRepository: {
-		create: async (data: unknown) => {
-			createData = data;
-			return courseModel;
-		},
-		findDetailById: async (id: string, tutorId: string) => {
-			detailOwnership = { id, tutorId };
-			return detailResult;
-		},
+const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
+	if (c.req.header("Authorization") !== "Bearer test-session") {
+		throw AppError.unauthorized("UNAUTHORIZED", "Authentication required");
+	}
+
+	c.set("tutorId", "tutor-1");
+	await next();
+};
+
+const courseService = new CourseService({
+	create: async (data: unknown) => {
+		createData = data;
+		return courseModel;
 	},
-}));
-
-mock.module("../lib/auth", () => ({
-	auth: {
-		api: {
-			getSession: async ({ headers }: { headers: Headers }) => {
-				if (headers.get("Authorization") !== "Bearer test-session") {
-					return null;
-				}
-
-				return {
-					user: { id: "user-1" },
-					session: { id: "session-1" },
-				};
-			},
-		},
+	findDetailById: async (id: string, tutorId: string) => {
+		detailOwnership = { id, tutorId };
+		return detailResult;
 	},
-}));
+} as never);
 
-mock.module("../lib/db", () => ({
-	prisma: {
-		tutor: {
-			findUnique: async () => ({ id: "tutor-1" }),
-		},
-	},
-}));
-
-const { default: courseRoutes } = await import("./courses");
 const app = new Hono<AppEnv>();
 app.onError(errorHandler);
-app.route("/v1/courses", courseRoutes);
+app.route("/v1/courses", createCourseRoutes({ requireAuth, courseService }));
 
 function request(path: string, method = "GET", body?: unknown) {
 	return app.request(`http://api.test${path}`, {

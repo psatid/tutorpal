@@ -1,9 +1,12 @@
-import { describe, expect, mock, test } from "bun:test";
-import { Hono } from "hono";
+import { describe, expect, test } from "bun:test";
+import { Hono, type MiddlewareHandler } from "hono";
+import { AppError } from "../lib/error";
 import { errorHandler } from "../middleware/error-handler";
 import { ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
+import { ClassService } from "../services/class.service";
 import type { AppEnv } from "../types/hono-env";
+import { createClassRoutes } from "./classes";
 
 const createdAt = new Date("2026-08-11T03:00:00.000Z");
 const requestId = "0cfd69ef-6b4b-4a57-9f4a-c5ac83c2494c";
@@ -42,86 +45,67 @@ let detailResult: { classData: ClassModel; recordedRevenue: number } | null = {
 	recordedRevenue: 1_250,
 };
 
-mock.module("../repositories", () => ({
-	classRepository: {
-		findAll: async (tutorId: string, params: unknown) => {
-			listOwnership = { tutorId, params };
-			return {
-				data: [classModel],
-				pagination: {
-					total: 1,
-					page: 1,
-					limit: 10,
-					totalPages: 1,
-					hasNext: false,
-					hasPrev: false,
-				},
-			};
-		},
-		create: async (data: unknown) => {
-			createData = data;
-			return classModel;
-		},
-		addHourAddition: async (id: string, tutorId: string, data: unknown) => {
-			addHourOwnership = { id, tutorId };
-			addHourData = data;
-			return {
-				addition: customAddition,
-				totalHours: 2.5,
-				remainingHours: 1.5,
-			};
-		},
-		findHourAdditions: async (id: string, tutorId: string, params: unknown) => {
-			historyOwnership = { id, tutorId };
-			historyParams = params;
-			return {
-				data: [customAddition],
-				pagination: {
-					total: 1,
-					page: 1,
-					limit: 20,
-					totalPages: 1,
-					hasNext: false,
-					hasPrev: false,
-				},
-			};
-		},
-		findDetailById: async (id: string, tutorId: string) => {
-			detailOwnership = { id, tutorId };
-			return detailResult;
-		},
-	},
-}));
+const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
+	if (c.req.header("Authorization") !== "Bearer test-session") {
+		throw AppError.unauthorized("UNAUTHORIZED", "Authentication required");
+	}
 
-mock.module("../lib/auth", () => ({
-	auth: {
-		api: {
-			getSession: async ({ headers }: { headers: Headers }) => {
-				if (headers.get("Authorization") !== "Bearer test-session") {
-					return null;
-				}
+	c.set("tutorId", "tutor-1");
+	await next();
+};
 
-				return {
-					user: { id: "user-1" },
-					session: { id: "session-1" },
-				};
+const classService = new ClassService({
+	findAll: async (tutorId: string, params: unknown) => {
+		listOwnership = { tutorId, params };
+		return {
+			data: [classModel],
+			pagination: {
+				total: 1,
+				page: 1,
+				limit: 10,
+				totalPages: 1,
+				hasNext: false,
+				hasPrev: false,
 			},
-		},
+		};
 	},
-}));
-
-mock.module("../lib/db", () => ({
-	prisma: {
-		tutor: {
-			findUnique: async () => ({ id: "tutor-1" }),
-		},
+	create: async (data: unknown) => {
+		createData = data;
+		return classModel;
 	},
-}));
+	addHourAddition: async (id: string, tutorId: string, data: unknown) => {
+		addHourOwnership = { id, tutorId };
+		addHourData = data;
+		return {
+			addition: customAddition,
+			totalHours: 2.5,
+			remainingHours: 1.5,
+		};
+	},
+	findHourAdditions: async (id: string, tutorId: string, params: unknown) => {
+		historyOwnership = { id, tutorId };
+		historyParams = params;
+		return {
+			data: [customAddition],
+			pagination: {
+				total: 1,
+				page: 1,
+				limit: 20,
+				totalPages: 1,
+				hasNext: false,
+				hasPrev: false,
+			},
+		};
+	},
+	findDetailById: async (id: string, tutorId: string) => {
+		detailOwnership = { id, tutorId };
+		return detailResult;
+	},
+} as never);
 
-const { default: classRoutes } = await import("./classes");
 const app = new Hono<AppEnv>();
 app.onError(errorHandler);
-app.route("/v1/classes", classRoutes);
+app.route("/v1/classes", createClassRoutes({ requireAuth, classService }));
 
 function request(path: string, method = "GET", body?: unknown) {
 	return app.request(`http://api.test${path}`, {

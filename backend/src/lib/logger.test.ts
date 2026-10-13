@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createLogger } from "./logger";
+import { createAppConfig } from "./app-config";
 
 type LoggerProcessResult = {
 	exitCode: number;
@@ -11,7 +11,9 @@ async function runLoggerProcess(
 	script: string,
 	environment: Record<string, string | undefined> = {},
 ): Promise<LoggerProcessResult> {
-	const env = { ...process.env };
+	const env: Record<string, string | undefined> = {
+		PATH: process.env.PATH,
+	};
 
 	for (const [name, value] of Object.entries(environment)) {
 		if (value === undefined) {
@@ -21,12 +23,15 @@ async function runLoggerProcess(
 		}
 	}
 
-	const childProcess = Bun.spawn([process.execPath, "--eval", script], {
-		cwd: `${import.meta.dir}/../..`,
-		env,
-		stderr: "pipe",
-		stdout: "pipe",
-	});
+	const childProcess = Bun.spawn(
+		[process.execPath, "--no-env-file", "--eval", script],
+		{
+			cwd: `${import.meta.dir}/../..`,
+			env,
+			stderr: "pipe",
+			stdout: "pipe",
+		},
+	);
 	const [stdout, stderr, exitCode] = await Promise.all([
 		new Response(childProcess.stdout).text(),
 		new Response(childProcess.stderr).text(),
@@ -45,14 +50,24 @@ function parseLogLines(stdout: string): Array<Record<string, unknown>> {
 }
 
 describe("createLogger", () => {
-	test("binds the service, component, and environment without a global logger", () => {
-		const logger = createLogger("test-component");
+	test("binds the service, component, and configured environment", async () => {
+		const result = await runLoggerProcess(
+			[
+				'import { createLogger } from "./src/lib/logger";',
+				'const logger = createLogger("test-component", { ENVIRONMENT: "test", LOG_LEVEL: "info" });',
+				'logger.info("binding test");',
+				"logger.flush();",
+			].join(" "),
+		);
 
-		expect(logger.bindings()).toEqual({
-			service: "tutorpal-backend",
-			component: "test-component",
-			environment: process.env.NODE_ENV ?? "development",
-		});
+		expect(result.exitCode).toBe(0);
+		expect(parseLogLines(result.stdout)).toContainEqual(
+			expect.objectContaining({
+				service: "tutorpal-backend",
+				component: "test-component",
+				environment: "test",
+			}),
+		);
 	});
 
 	test("emits ISO timestamps, serializes errors, and removes sensitive fields", async () => {
@@ -63,7 +78,7 @@ describe("createLogger", () => {
 				'logger.info({ authorization: "Bearer secret", nested: { password: "password-secret", accessToken: "access-secret" }, lineChannelSecret: "line-secret", "set-cookie": "cookie-secret", a: { b: { password: "deep-password-secret" } }, a2: { b: { c: { authorization: "deep-authorization-secret" } } }, request: { body: { users: [{ token: "array-token-secret" }] } }, err: new Error("test failure") }, "logger test");',
 				"logger.flush();",
 			].join(" "),
-			{ LOG_LEVEL: "info", NODE_ENV: "test" },
+			{ ENVIRONMENT: "test", LOG_LEVEL: "info" },
 		);
 
 		expect(result.exitCode).toBe(0);
@@ -192,21 +207,20 @@ describe("createLogger", () => {
 		});
 	});
 
-	test("defaults LOG_LEVEL by environment and rejects invalid values", async () => {
+	test("requires an explicit valid LOG_LEVEL", async () => {
 		const script =
-			'import { ENV } from "./src/lib/env"; console.log(ENV.LOG_LEVEL);';
-		const development = await runLoggerProcess(script, {
-			LOG_LEVEL: undefined,
-			NODE_ENV: "development",
-		});
-		const production = await runLoggerProcess(script, {
-			LOG_LEVEL: undefined,
-			NODE_ENV: "production",
+			'import { ENV } from "./src/lib/env"; console.log(JSON.stringify({ environment: ENV.ENVIRONMENT, logLevel: ENV.LOG_LEVEL }));';
+		const explicit = await runLoggerProcess(script, {
+			ENVIRONMENT: "production",
+			LOG_LEVEL: "warn",
 		});
 		const invalid = await runLoggerProcess(script, { LOG_LEVEL: "verbose" });
 
-		expect(development).toMatchObject({ exitCode: 0, stdout: "debug\n" });
-		expect(production).toMatchObject({ exitCode: 0, stdout: "info\n" });
+		expect(explicit).toMatchObject({
+			exitCode: 0,
+			stdout: '{"environment":"production","logLevel":"warn"}\n',
+		});
+		expect(() => createAppConfig({})).toThrow('Invalid LOG_LEVEL "undefined"');
 		expect(invalid.exitCode).not.toBe(0);
 		expect(invalid.stderr).toContain('Invalid LOG_LEVEL "verbose"');
 	});

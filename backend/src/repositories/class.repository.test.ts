@@ -18,6 +18,9 @@ function unexpectedRootRead(): never {
 }
 
 mock.module("../lib/db", () => ({
+	getLocalPrisma: () => {
+		throw new Error("Unexpected local Prisma access");
+	},
 	prisma: {
 		$transaction: (callback: TransactionCallback, options: unknown) =>
 			runTransaction(callback, options),

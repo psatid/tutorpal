@@ -1,9 +1,14 @@
 import type { Hono } from "hono";
+import type { Auth } from "../lib/auth-factory";
+
+type AuthenticatedSession = NonNullable<
+	Awaited<ReturnType<Auth["api"]["getSession"]>>
+>;
 
 export type AppEnv = {
 	Variables: {
-		user: any;
-		session: any;
+		user: AuthenticatedSession["user"];
+		session: AuthenticatedSession["session"];
 		tutorId: string;
 	};
 };

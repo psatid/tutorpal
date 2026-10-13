@@ -1,37 +1,37 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "tutorpal-cron-reminders-dev",
-  "main": "../../src/cloudflare-reminder-worker.ts",
-  "compatibility_date": "2026-08-12",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": false,
-  "triggers": {
-    "crons": ["*/15 * * * *"],
-  },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE_CACHE_DISABLED",
-      "id": "3a4bf5c376c54b0fb059556b27ad6a57",
-    },
-  ],
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1,
-    "logs": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true,
-      "invocation_logs": true,
-      "destinations": ["tutorpal-grafana-logs"],
-    },
-    "traces": {
-      "enabled": true,
-      "persist": true,
-      "head_sampling_rate": 1,
-      "destinations": ["tutorpal-grafana-traces"],
-    },
-  },
-  "secrets": {
-    "required": ["LINE_CREDENTIALS_ENCRYPTION_KEY"],
-  },
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "tutorpal-cron-reminders-dev",
+	"main": "../../src/cloudflare-reminder-worker.ts",
+	"compatibility_date": "2026-08-12",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": false,
+	"triggers": {
+		"crons": ["*/15 * * * *"]
+	},
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE_CACHE_DISABLED",
+			"id": "3a4bf5c376c54b0fb059556b27ad6a57"
+		}
+	],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true,
+			"invocation_logs": true,
+			"destinations": ["tutorpal-grafana-logs"]
+		},
+		"traces": {
+			"enabled": true,
+			"persist": true,
+			"head_sampling_rate": 1,
+			"destinations": ["tutorpal-grafana-traces"]
+		}
+	},
+	"secrets": {
+		"required": ["LINE_CREDENTIALS_ENCRYPTION_KEY"]
+	}
 }

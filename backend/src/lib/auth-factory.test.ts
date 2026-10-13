@@ -177,9 +177,9 @@ describe("Better Auth social login configuration", () => {
 				allowDifferentEmails: false,
 			},
 		});
-		expect(
-			auth.options.account?.accountLinking?.trustedProviders,
-		).toBeUndefined();
+		expect(auth.options.account?.accountLinking).not.toHaveProperty(
+			"trustedProviders",
+		);
 	});
 
 	test("does not register social providers when credentials are absent", () => {
@@ -221,7 +221,7 @@ describe("Better Auth social login configuration", () => {
 			{} as never,
 		);
 
-		expect(Object.keys(auth.options.socialProviders)).toEqual(providers);
+		expect(Object.keys(auth.options.socialProviders)).toEqual([...providers]);
 	});
 });
 
@@ -287,20 +287,17 @@ describe("Better Auth tutor-only social hooks", () => {
 		const before = auth.options.databaseHooks?.account?.create?.before;
 		expect(before).toBeDefined();
 
-		const result = await before?.(
-			{
-				id: "account-1",
-				providerId,
-				accountId: "provider-user-1",
-				userId: "user-1",
-				accessToken: "access-token",
-				refreshToken: "refresh-token",
-				idToken: "id-token",
-				accessTokenExpiresAt: new Date("2030-01-01T00:00:00.000Z"),
-				refreshTokenExpiresAt: new Date("2030-02-01T00:00:00.000Z"),
-			},
-			null,
-		);
+		const result = await before?.({
+			id: "account-1",
+			providerId,
+			accountId: "provider-user-1",
+			userId: "user-1",
+			accessToken: "access-token",
+			refreshToken: "refresh-token",
+			idToken: "id-token",
+			accessTokenExpiresAt: new Date("2030-01-01T00:00:00.000Z"),
+			refreshTokenExpiresAt: new Date("2030-02-01T00:00:00.000Z"),
+		});
 
 		expect(result).toMatchObject({
 			data: {

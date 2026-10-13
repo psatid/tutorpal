@@ -8,7 +8,9 @@ let classFindFirst: Delegate;
 let classFindMany: Delegate;
 let classHourAdditionCount: Delegate;
 let classHourAdditionFindMany: Delegate;
-let classHourAdditionAggregate: Delegate;
+const classHourAdditionAggregate: Delegate = async () => {
+	throw new Error("Unexpected class hour addition aggregate query");
+};
 let classHourAdditionFindUnique: Delegate;
 let scheduleAggregate: Delegate;
 let scheduleGroupBy: Delegate;
@@ -34,7 +36,12 @@ const prismaMock = {
 
 let transactionClient: unknown;
 
-mock.module("../lib/db", () => ({ prisma: prismaMock }));
+mock.module("../lib/db", () => ({
+	getLocalPrisma: () => {
+		throw new Error("Unexpected local Prisma access");
+	},
+	prisma: prismaMock,
+}));
 
 const { ClassRepository } = await import("./class.repository");
 
