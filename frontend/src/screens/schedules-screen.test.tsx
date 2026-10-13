@@ -292,7 +292,7 @@ describe("SchedulesScreen weekly timeline integration", () => {
     }
 
     expect(modeContent).toContainElement(
-      screen.getByRole("radiogroup", { name: "Schedule date selector" }),
+      screen.getByRole("group", { name: "Schedule date selector" }),
     );
     expect(modeContent).toContainElement(
       screen.getByRole("button", { name: "All" }),

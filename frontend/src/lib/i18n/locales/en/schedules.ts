@@ -260,10 +260,10 @@ export default {
 		openWeekCalendar: "Open calendar for {{week}}",
 		dateRailLabel: "Schedule date selector",
 		dateRailInstruction:
-			"Scroll horizontally to browse dates; when scrolling stops, the centered date is selected. Use the Left and Right Arrow keys to select a day. Use Page Up and Page Down to move by a week.",
+			"Scroll horizontally to browse dates without changing the selected date. Select a date with its button. Use the Left and Right Arrow keys or Page Up and Page Down to move focus without selecting. Press Enter or Space to select the focused date.",
 		weekRailLabel: "Schedule week selector",
 		weekRailInstruction:
-			"Scroll horizontally to browse weeks; when scrolling stops, the centered week is selected. Use the Left and Right Arrow keys to select a week. Use Page Up and Page Down to move by four weeks.",
+			"Scroll horizontally to browse weeks without changing the selected week. Select a week with its button. Use the Left and Right Arrow keys or Page Up and Page Down to move focus without selecting. Press Enter or Space to select the focused week.",
 		weekLabel: "Week of {{start}} through {{end}}",
 	},
 	viewMode: {

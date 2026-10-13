@@ -1,246 +1,279 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import i18n from "@/lib/i18n/config";
 import { DateTime } from "@/lib/date-time";
+import i18n from "@/lib/i18n/config";
 import { WeekView } from "./week-view";
 
-const SELECTED_DATE = DateTime.fromDateOnlyString("2026-10-14").toDate();
 const WEEK_TILE_WIDTH = 144;
 const WEEK_TILE_GAP = 8;
 const WEEK_ITEM_WIDTH = WEEK_TILE_WIDTH + WEEK_TILE_GAP;
 const WEEK_RAIL_WIDTH = 320;
+const WEEK_BUFFER_LENGTH = 8;
+const WEEK_SCROLL_WIDTH = 1400;
 const originalScrollTo = Object.getOwnPropertyDescriptor(
   HTMLElement.prototype,
   "scrollTo",
 );
+const originalOffsetLeft = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "offsetLeft",
+);
+const originalOffsetWidth = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "offsetWidth",
+);
 const scrollToMock = vi.fn();
-
-let resizeObservers: ResizeObserverMock[] = [];
+let resizeObserver: ResizeObserverMock | null = null;
 
 class ResizeObserverMock {
-  private isDisconnected = false;
-
   constructor(private readonly callback: ResizeObserverCallback) {
-    resizeObservers.push(this);
+    resizeObserver = this;
   }
 
-  disconnect() {
-    this.isDisconnected = true;
-  }
+  disconnect() {}
 
   observe(_target: Element) {}
 
-  unobserve(_target: Element) {}
-
   trigger() {
-    if (this.isDisconnected) return;
-
     this.callback([], this as unknown as ResizeObserver);
   }
 }
 
-function triggerLatestResizeObserver() {
-  const resizeObserver = resizeObservers.at(-1);
+function restoreProperty(
+  target: object,
+  property: string,
+  descriptor: PropertyDescriptor | undefined,
+) {
+  if (descriptor) {
+    Object.defineProperty(target, property, descriptor);
+  } else {
+    Reflect.deleteProperty(target, property);
+  }
+}
 
-  if (!resizeObserver) {
-    throw new Error("Expected the week rail to register a ResizeObserver.");
+function getWeekBuffer() {
+  const firstWeek = DateTime.fromDateOnlyString("2026-09-14");
+
+  return Array.from({ length: WEEK_BUFFER_LENGTH }, (_, index) =>
+    firstWeek.addWeeks(index).toDate(),
+  );
+}
+
+function getDateKey(date: Date) {
+  return DateTime.from(date).toDateOnlyString();
+}
+
+function getWeekKey(index: number) {
+  return getDateKey(getWeekBuffer()[index]!);
+}
+
+function getWeekdayKey(index: number) {
+  return getDateKey(getWeekdayDate(index));
+}
+
+function getWeekdayDate(index: number) {
+  const date = DateTime.getWeekDates(getWeekBuffer()[index]!)[2];
+
+  if (!date) {
+    throw new Error(`Expected Wednesday for week ${getWeekKey(index)}.`);
   }
 
-  resizeObserver.trigger();
+  return date.toDate();
 }
 
-function TouchScrollFixture() {
-  const [weekStarts, setWeekStarts] = useState(() => {
-    const selectedWeek = DateTime.from(SELECTED_DATE).startOfWeek();
-
-    return Array.from({ length: 8 }, (_, index) =>
-      selectedWeek.addWeeks(index - 4).toDate(),
-    );
-  });
-  const [extensionCount, setExtensionCount] = useState(0);
-
-  const extendWeekBuffer = (direction: "previous" | "next") => {
-    setExtensionCount((count) => count + 1);
-    setWeekStarts((currentWeeks) => {
-      const edgeWeek =
-        direction === "previous" ? currentWeeks[0] : currentWeeks.at(-1);
-
-      if (!edgeWeek) return currentWeeks;
-
-      const adjacentWeek = DateTime.from(edgeWeek)
-        .addWeeks(direction === "previous" ? -1 : 1)
-        .toDate();
-
-      return direction === "previous"
-        ? [adjacentWeek, ...currentWeeks.slice(0, -1)]
-        : [...currentWeeks.slice(1), adjacentWeek];
-    });
-  };
-
-  return (
-    <>
-      <WeekView
-        weekStarts={weekStarts}
-        selectedDate={SELECTED_DATE}
-        onDateSelect={() => undefined}
-        onExtendWeekBuffer={extendWeekBuffer}
-        onRestoreSelectedWeek={() => undefined}
-        centerRequest={{ id: 0, behavior: "auto" }}
-      />
-      <output data-testid="extension-count">{extensionCount}</output>
-    </>
+function getWeekButton(rail: HTMLElement, index: number) {
+  const button = rail.querySelector<HTMLButtonElement>(
+    `button[data-week-key="${getWeekKey(index)}"]`,
   );
-}
 
-function TouchSelectionFixture() {
-  const [selectedDate, setSelectedDate] = useState(SELECTED_DATE);
-  const [selectionCount, setSelectionCount] = useState(0);
-  const [weekStarts] = useState(() => {
-    const selectedWeek = DateTime.from(SELECTED_DATE).startOfWeek();
+  if (!button) {
+    throw new Error(`Expected week button ${getWeekKey(index)} to be rendered.`);
+  }
 
-    return Array.from({ length: 8 }, (_, index) =>
-      selectedWeek.addWeeks(index - 4).toDate(),
-    );
-  });
-
-  return (
-    <>
-			<button type="button">Keep passive-scroll focus</button>
-      <WeekView
-        weekStarts={weekStarts}
-        selectedDate={selectedDate}
-        onDateSelect={(date) => {
-          setSelectionCount((count) => count + 1);
-          setSelectedDate(date);
-        }}
-        onExtendWeekBuffer={() => undefined}
-        onRestoreSelectedWeek={() => undefined}
-        centerRequest={{ id: 0, behavior: "auto" }}
-      />
-      <output data-testid="selected-date">
-        {DateTime.from(selectedDate).toDateOnlyString()}
-      </output>
-      <output data-testid="selection-count">{selectionCount}</output>
-    </>
-  );
+  return button;
 }
 
 function configureWeekRail(
-	rail: HTMLElement,
-	{ scrollLeft = 0, scrollWidth = 1400 } = {},
+  rail: HTMLElement,
+  {
+    scrollLeft = 0,
+    scrollWidth = WEEK_SCROLL_WIDTH,
+    clientWidth = WEEK_RAIL_WIDTH,
+  }: {
+    scrollLeft?: number;
+    scrollWidth?: number;
+    clientWidth?: number;
+  } = {},
 ) {
-	Object.defineProperties(rail, {
-		clientWidth: { configurable: true, value: WEEK_RAIL_WIDTH },
-		scrollWidth: { configurable: true, value: scrollWidth },
-		scrollLeft: { configurable: true, writable: true, value: scrollLeft },
-	});
-
-	const buttons = Array.from(
-		rail.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
-	);
-
-	buttons.forEach((button, index) => {
-		Object.defineProperties(button, {
-			offsetLeft: {
-				configurable: true,
-				value: index * WEEK_ITEM_WIDTH,
-			},
-			offsetWidth: { configurable: true, value: WEEK_TILE_WIDTH },
-		});
-	});
-
-	buttons[0]?.parentElement?.style.setProperty("column-gap", "0px");
-}
-
-function getCenteredWeekScrollLeft(index: number) {
-	return index * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
-}
-
-function SmoothEdgeCenterFixture() {
-  const [selectedDate, setSelectedDate] = useState(SELECTED_DATE);
-  const [weekStarts, setWeekStarts] = useState(() => {
-    const selectedWeek = DateTime.from(SELECTED_DATE).startOfWeek();
-
-    return Array.from({ length: 8 }, (_, index) =>
-      selectedWeek.addWeeks(index - 4).toDate(),
-    );
+  Object.defineProperties(rail, {
+    clientWidth: { configurable: true, value: clientWidth },
+    scrollWidth: { configurable: true, value: scrollWidth },
+    scrollLeft: { configurable: true, writable: true, value: scrollLeft },
   });
+
+  rail
+    .querySelector("button[data-week-key]")
+    ?.parentElement?.style.setProperty("column-gap", "0px");
+}
+
+function WeekRailFixture({
+  initialIndex = 4,
+  isActive = true,
+  showExternalSelectionControls = false,
+}: {
+  initialIndex?: number;
+  isActive?: boolean;
+  showExternalSelectionControls?: boolean;
+}) {
+  const [weekStarts, setWeekStarts] = useState(getWeekBuffer);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const selectedDate = DateTime.getWeekDates(weekStarts[initialIndex]!)[2];
+
+    if (!selectedDate) {
+      throw new Error("Expected an initial Wednesday in the week buffer.");
+    }
+
+    return selectedDate.toDate();
+  });
+  const [selectionCount, setSelectionCount] = useState(0);
   const [extensionCount, setExtensionCount] = useState(0);
+  const [externalCenterRequest, setExternalCenterRequest] = useState<{
+    id: number;
+    behavior: ScrollBehavior;
+  } | null>(null);
 
-  const extendWeekBuffer = (direction: "previous" | "next") => {
-    setExtensionCount((count) => count + 1);
+  const selectDate = (date: Date) => {
+    setSelectionCount((count) => count + 1);
+    setSelectedDate(date);
+  };
+  const selectCalendarWeek = (index: number) => {
+    setExternalCenterRequest((currentRequest) => ({
+      id: (currentRequest?.id ?? 0) + 1,
+      behavior: "smooth",
+    }));
+    selectDate(getWeekdayDate(index));
+  };
+  const extendWeekBuffer = (
+    direction: "previous" | "next",
+    count = 1,
+  ) => {
+    setExtensionCount((currentCount) => currentCount + 1);
     setWeekStarts((currentWeeks) => {
-      const edgeWeek =
-        direction === "previous" ? currentWeeks[0] : currentWeeks.at(-1);
+      let nextWeeks = currentWeeks;
 
-      if (!edgeWeek) return currentWeeks;
+      for (let index = 0; index < count; index += 1) {
+        const edgeWeek =
+          direction === "previous" ? nextWeeks[0] : nextWeeks.at(-1);
 
-      const adjacentWeek = DateTime.from(edgeWeek)
-        .addWeeks(direction === "previous" ? -1 : 1)
-        .toDate();
+        if (!edgeWeek) return nextWeeks;
 
-      return direction === "previous"
-        ? [adjacentWeek, ...currentWeeks.slice(0, -1)]
-        : [...currentWeeks.slice(1), adjacentWeek];
+        const adjacentWeek = DateTime.from(edgeWeek)
+          .addWeeks(direction === "previous" ? -1 : 1)
+          .toDate();
+
+        nextWeeks =
+          direction === "previous"
+            ? [adjacentWeek, ...nextWeeks.slice(0, -1)]
+            : [...nextWeeks.slice(1), adjacentWeek];
+      }
+
+      return nextWeeks;
+    });
+  };
+  const moveBufferForward = () => {
+    setWeekStarts((currentWeeks) => {
+      const lastWeek = currentWeeks.at(-1);
+
+      if (!lastWeek) return currentWeeks;
+
+      return [
+        ...currentWeeks.slice(1),
+        DateTime.from(lastWeek).addWeeks(1).toDate(),
+      ];
     });
   };
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() =>
-          setSelectedDate(DateTime.fromDateOnlyString("2026-09-16").toDate())
-        }
-      >
-        Select first buffered week
+      <button type="button">Keep passive-scroll focus</button>
+      <button type="button" onClick={moveBufferForward}>
+        Move week buffer forward
       </button>
-      <button
-        type="button"
-        onClick={() =>
-          setSelectedDate(DateTime.fromDateOnlyString("2026-11-04").toDate())
-        }
-      >
-        Select last buffered week
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          setSelectedDate(DateTime.fromDateOnlyString("2026-10-21").toDate())
-        }
-      >
-        Select middle buffered week
-      </button>
+      {showExternalSelectionControls ? (
+        <button type="button" onClick={() => selectCalendarWeek(6)}>
+          Select calendar week
+        </button>
+      ) : null}
       <WeekView
         weekStarts={weekStarts}
         selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
+        onDateSelect={selectDate}
         onExtendWeekBuffer={extendWeekBuffer}
-        onRestoreSelectedWeek={() => undefined}
-        centerRequest={{ id: 0, behavior: "auto" }}
+        centerRequest={externalCenterRequest ?? { id: 0, behavior: "auto" }}
+        isActive={isActive}
       />
-      <output data-testid="selected-date">
-        {DateTime.from(selectedDate).toDateOnlyString()}
-      </output>
+      <output data-testid="selected-date">{getDateKey(selectedDate)}</output>
+      <output data-testid="result-date">{getDateKey(selectedDate)}</output>
+      <output data-testid="selection-count">{selectionCount}</output>
       <output data-testid="extension-count">{extensionCount}</output>
     </>
   );
 }
 
-describe("WeekView touch scrolling", () => {
+function HiddenWeekRailFixture({ initialIndex = 4 }: { initialIndex?: number }) {
+  const [isActive, setIsActive] = useState(false);
+
+  return (
+    <>
+      <button type="button" onClick={() => setIsActive(true)}>
+        Show week rail
+      </button>
+      <WeekRailFixture initialIndex={initialIndex} isActive={isActive} />
+    </>
+  );
+}
+
+describe("WeekView rail behavior", () => {
   beforeEach(async () => {
-    resizeObservers = [];
+    resizeObserver = null;
     scrollToMock.mockReset();
-    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
       configurable: true,
       writable: true,
       value: scrollToMock,
     });
+    Object.defineProperties(HTMLElement.prototype, {
+      offsetLeft: {
+        configurable: true,
+        get(this: HTMLElement) {
+          if (!this.matches("button[data-week-key]")) return 0;
+
+          const buttons = Array.from(
+            this.parentElement?.querySelectorAll<HTMLButtonElement>(
+              "button[data-week-key]",
+            ) ?? [],
+          );
+
+          return (
+            Math.max(buttons.indexOf(this as HTMLButtonElement), 0) *
+            WEEK_ITEM_WIDTH
+          );
+        },
+      },
+      offsetWidth: {
+        configurable: true,
+        get(this: HTMLElement) {
+          return this.matches("button[data-week-key]") ? WEEK_TILE_WIDTH : 0;
+        },
+      },
+    });
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
-        const width = this.matches("button[data-week-key]") ? 144 : 0;
+        const width = this.matches("button[data-week-key]")
+          ? WEEK_TILE_WIDTH
+          : 0;
 
         return {
           x: 0,
@@ -260,934 +293,948 @@ describe("WeekView touch scrolling", () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    restoreProperty(HTMLElement.prototype, "scrollTo", originalScrollTo);
+    restoreProperty(HTMLElement.prototype, "offsetLeft", originalOffsetLeft);
+    restoreProperty(HTMLElement.prototype, "offsetWidth", originalOffsetWidth);
+  });
 
-    if (originalScrollTo) {
-      Object.defineProperty(
-        HTMLElement.prototype,
-        "scrollTo",
-        originalScrollTo,
+  it.each(["wheel", "native", "touch"] as const)(
+    "keeps selection, result selection, and focus unchanged when a %s scroll settles away from an edge",
+    async (input) => {
+      vi.useFakeTimers();
+      render(<WeekRailFixture />);
+
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const passiveFocus = screen.getByRole("button", {
+        name: "Keep passive-scroll focus",
+      });
+      const selectedDate = screen.getByTestId("selected-date").textContent;
+
+      configureWeekRail(rail);
+      scrollToMock.mockClear();
+      passiveFocus.focus();
+
+      if (input === "wheel") {
+        fireEvent.wheel(rail);
+      } else if (input === "touch") {
+        fireEvent.pointerDown(rail, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 120,
+          clientY: 20,
+        });
+      }
+
+      rail.scrollLeft = 500;
+      fireEvent.scroll(rail);
+
+      if (input === "touch") {
+        fireEvent.pointerUp(rail, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 80,
+          clientY: 20,
+        });
+      }
+
+      fireEvent(rail, new Event("scrollend"));
+
+      expect(rail).toHaveAccessibleDescription(
+        "Scroll horizontally to browse weeks without changing the selected week. Select a week with its button. Use the Left and Right Arrow keys or Page Up and Page Down to move focus without selecting. Press Enter or Space to select the focused week.",
       );
-    } else {
-      Reflect.deleteProperty(HTMLElement.prototype, "scrollTo");
-    }
-  });
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(passiveFocus).toHaveFocus();
+      expect(scrollToMock).not.toHaveBeenCalled();
 
-  it("waits for a long touch fling to settle before rotating the week buffer once", async () => {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
+
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    },
+  );
+
+  it("does not turn a Week mode switch's programmatic center near an edge into a browse session", async () => {
     vi.useFakeTimers();
-    render(<TouchScrollFixture />);
+    render(<HiddenWeekRailFixture initialIndex={1} />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
+    const centeredScrollLeft =
+      WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
 
-    fireEvent.pointerDown(rail, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-
-    rail.scrollLeft = 400;
-    fireEvent.scroll(rail);
-
-    fireEvent.pointerUp(rail, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 40,
-      clientY: 20,
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(70);
-    });
-    rail.scrollLeft = 550;
-    fireEvent.scroll(rail);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(70);
-    });
-    rail.scrollLeft = 700;
-    fireEvent.scroll(rail);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(11);
-    });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
-
-    rail.scrollLeft = 800;
-    fireEvent.scroll(rail);
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
-
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(rail.scrollLeft).toBe(656);
-    expect(
-      rail.querySelector('button[data-week-key="2026-10-12"]'),
-    ).toHaveAttribute("aria-checked", "true");
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
-    });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-  });
-
-  it("uses the idle fallback to settle an edge rotation when scrollend is absent", async () => {
-    vi.useFakeTimers();
-    render(<TouchScrollFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
-
-    fireEvent.pointerDown(rail, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-    rail.scrollLeft = 400;
-    fireEvent.scroll(rail);
-    fireEvent.pointerUp(rail, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 40,
-      clientY: 20,
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(70);
-    });
-    rail.scrollLeft = 800;
-    fireEvent.scroll(rail);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(149);
-    });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1);
-    });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(rail.scrollLeft).toBe(656);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
-    });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-  });
-
-  it("extends the week buffer when smooth centering clamps to its last week", async () => {
-    vi.useFakeTimers();
-    render(<SmoothEdgeCenterFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
-
-    const lastWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-11-02"]',
-    );
-
-    if (!lastWeek) {
-      throw new Error("Expected the last buffered week to be present.");
-    }
-
-    Object.defineProperties(lastWeek, {
-      offsetLeft: { configurable: true, value: 1050 },
-      offsetWidth: { configurable: true, value: 144 },
-    });
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Select last buffered week" }),
-    );
-
-    expect(lastWeek).toHaveAttribute("aria-checked", "true");
-    expect(HTMLElement.prototype.scrollTo).toHaveBeenCalledWith({
-      left: 880,
-      behavior: "smooth",
-    });
-
-    rail.scrollLeft = 880;
-    fireEvent.scroll(rail);
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(
-      rail.querySelector('button[data-week-key="2026-11-09"]'),
-    ).toBeInTheDocument();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
-    });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-  });
-
-  it("uses the smooth-centering fallback once when scrollend arrives late", async () => {
-    vi.useFakeTimers();
-    render(<SmoothEdgeCenterFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
-
-    const lastWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-11-02"]',
-    );
-    const selectLastWeek = screen.getByRole("button", {
-      name: "Select last buffered week",
-    });
-
-    if (!lastWeek) {
-      throw new Error("Expected the last buffered week to be present.");
-    }
-
-    Object.defineProperties(lastWeek, {
-      offsetLeft: { configurable: true, value: 1050 },
-      offsetWidth: { configurable: true, value: 144 },
-    });
-
-    selectLastWeek.focus();
-    fireEvent.click(selectLastWeek);
-
-    expect(HTMLElement.prototype.scrollTo).toHaveBeenCalledWith({
-      left: 880,
-      behavior: "smooth",
-    });
-    expect(selectLastWeek).toHaveFocus();
-
-    rail.scrollLeft = 880;
-    fireEvent.scroll(rail);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
-    });
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(rail.scrollLeft).toBe(736);
-    expect(lastWeek).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-11-04",
-    );
-    expect(
-      rail.querySelectorAll('button[role="radio"][aria-checked="true"]'),
-    ).toHaveLength(1);
-    expect(selectLastWeek).toHaveFocus();
-
-    fireEvent(rail, new Event("scrollend"));
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-  });
-
-  it("extends the previous buffer edge after smooth centering without changing selection or focus", () => {
-    render(<SmoothEdgeCenterFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 500 },
-    });
-
-    const firstWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-09-14"]',
-    );
-    const selectFirstWeek = screen.getByRole("button", {
-      name: "Select first buffered week",
-    });
-
-    if (!firstWeek) {
-      throw new Error("Expected the first buffered week to be present.");
-    }
-
-    Object.defineProperties(firstWeek, {
-      offsetLeft: { configurable: true, value: 0 },
-      offsetWidth: { configurable: true, value: 144 },
-    });
-
-    selectFirstWeek.focus();
-    fireEvent.click(selectFirstWeek);
-
-    expect(HTMLElement.prototype.scrollTo).toHaveBeenCalledWith({
-      left: 0,
-      behavior: "smooth",
-    });
-    expect(selectFirstWeek).toHaveFocus();
-
-    rail.scrollLeft = 0;
-    fireEvent.scroll(rail);
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(rail.scrollLeft).toBe(144);
-    expect(
-      rail.querySelector('button[data-week-key="2026-09-07"]'),
-    ).toBeInTheDocument();
-    expect(firstWeek).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-09-16",
-    );
-    expect(
-      rail.querySelectorAll('button[role="radio"][aria-checked="true"]'),
-    ).toHaveLength(1);
-    expect(selectFirstWeek).toHaveFocus();
-  });
-
-  it("defers a resize during smooth edge centering until its one rotation settles", () => {
-    vi.useFakeTimers();
-    render(<SmoothEdgeCenterFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
-
-    const lastWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-11-02"]',
-    );
-
-    if (!lastWeek) {
-      throw new Error("Expected the last buffered week to be present.");
-    }
-
-    Object.defineProperties(lastWeek, {
-      offsetLeft: { configurable: true, value: 1050 },
-      offsetWidth: { configurable: true, value: 144 },
-    });
+    configureWeekRail(rail);
     scrollToMock.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Show week rail" }));
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Select last buffered week" }),
-    );
     expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
-      left: 880,
-      behavior: "smooth",
-    });
-
-    rail.scrollLeft = 500;
-    fireEvent.scroll(rail);
-    const scrollLeftBeforeResize = rail.scrollLeft;
-
-    act(() => {
-      triggerLatestResizeObserver();
-    });
-
-    expect(rail.scrollLeft).toBe(scrollLeftBeforeResize);
-    expect(scrollToMock).toHaveBeenCalledTimes(1);
-
-    rail.scrollLeft = 880;
-    fireEvent.scroll(rail);
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(rail.scrollLeft).toBe(736);
-    expect(scrollToMock).toHaveBeenCalledTimes(1);
-
-    fireEvent(rail, new Event("scrollend"));
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(scrollToMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("coalesces resize reconciliation until non-edge smooth centering settles", () => {
-    vi.useFakeTimers();
-    render(<SmoothEdgeCenterFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
-
-    const middleWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-10-19"]',
-    );
-
-    if (!middleWeek) {
-      throw new Error("Expected the middle buffered week to be present.");
-    }
-
-    Object.defineProperties(middleWeek, {
-      offsetLeft: { configurable: true, value: 700 },
-      offsetWidth: { configurable: true, value: 144 },
-    });
-    scrollToMock.mockClear();
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Select middle buffered week" }),
-    );
-    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
-      left: 612,
-      behavior: "smooth",
-    });
-
-    rail.scrollLeft = 300;
-    fireEvent.scroll(rail);
-    Object.defineProperty(middleWeek, "offsetLeft", {
-      configurable: true,
-      value: 720,
-    });
-
-    act(() => {
-      triggerLatestResizeObserver();
-      triggerLatestResizeObserver();
-    });
-
-    expect(rail.scrollLeft).toBe(300);
-    expect(scrollToMock).toHaveBeenCalledTimes(1);
-
-    rail.scrollLeft = 612;
-    fireEvent.scroll(rail);
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
-    expect(scrollToMock).toHaveBeenCalledTimes(2);
-    expect(scrollToMock).toHaveBeenLastCalledWith({
-      left: 632,
+      left: centeredScrollLeft,
       behavior: "auto",
     });
 
+    rail.scrollLeft = centeredScrollLeft;
+    fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
-    expect(scrollToMock).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(151);
+    });
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
   });
 
-  it("allows a second touch gesture to rotate once after the first settles", async () => {
+  it("does not load an edge after a touch press without scroll movement", async () => {
     vi.useFakeTimers();
-    render(<TouchScrollFixture />);
+    render(<WeekRailFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1200 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
 
+    configureWeekRail(rail, { scrollLeft: 1 });
     fireEvent.pointerDown(rail, {
       pointerId: 1,
       pointerType: "touch",
       isPrimary: true,
-      clientX: 100,
+      clientX: 120,
       clientY: 20,
     });
-    rail.scrollLeft = 400;
-    fireEvent.scroll(rail);
     fireEvent.pointerUp(rail, {
       pointerId: 1,
       pointerType: "touch",
       isPrimary: true,
-      clientX: 40,
+      clientX: 120,
       clientY: 20,
     });
-    rail.scrollLeft = 800;
-    fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    expect(rail.scrollLeft).toBe(656);
-
-    fireEvent.pointerDown(rail, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-    rail.scrollLeft = 800;
-    fireEvent.scroll(rail);
-    fireEvent.pointerUp(rail, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 40,
-      clientY: 20,
-    });
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
-    expect(rail.scrollLeft).toBe(656);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
+      await vi.advanceTimersByTimeAsync(151);
     });
-    expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
   });
 
-  it("selects a stationary touch once and leaves the selection unchanged after an 8px swipe", () => {
-    render(<TouchSelectionFixture />);
+  it.each([
+    ["previous", 1, WEEK_TILE_WIDTH + 1],
+    [
+      "next",
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1 - WEEK_TILE_WIDTH,
+    ],
+  ] as const)(
+    "extends the %s edge once per user scroll without selecting or reacting to compensation scroll events",
+    async (_direction, initialScrollLeft, expectedScrollLeft) => {
+      vi.useFakeTimers();
+      render(<WeekRailFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    const tappedWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-10-19"]',
-    );
-    const swipedWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-10-26"]',
-    );
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const passiveFocus = screen.getByRole("button", {
+        name: "Keep passive-scroll focus",
+      });
+      const selectedDate = screen.getByTestId("selected-date").textContent;
 
-    if (!tappedWeek || !swipedWeek) {
-      throw new Error("Expected fixture weeks are missing from the rail.");
-    }
+      const browseStartScrollLeft =
+        (WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH) / 2;
 
-    fireEvent.pointerDown(tappedWeek, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-    fireEvent.pointerUp(tappedWeek, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-    fireEvent.click(tappedWeek, { detail: 1 });
+      configureWeekRail(rail, { scrollLeft: browseStartScrollLeft });
+      scrollToMock.mockClear();
+      passiveFocus.focus();
+      fireEvent.wheel(rail);
+      rail.scrollLeft = initialScrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
 
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-21",
-    );
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(rail.scrollLeft).toBe(expectedScrollLeft);
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(passiveFocus).toHaveFocus();
+      expect(scrollToMock).not.toHaveBeenCalled();
 
-    fireEvent.pointerDown(swipedWeek, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-    fireEvent.pointerMove(rail, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 108,
-      clientY: 20,
-    });
-    fireEvent.pointerUp(rail, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 108,
-      clientY: 20,
-    });
-    fireEvent.click(swipedWeek, { detail: 1 });
+      const compensatedScrollLeft = rail.scrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
 
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-21",
-    );
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-  });
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(rail.scrollLeft).toBe(compensatedScrollLeft);
 
-	it("keeps an iOS-taken-over week swipe unsettled through pointercancel until native touchend and its inertial tail", async () => {
-			vi.useFakeTimers();
-			render(<TouchSelectionFixture />);
+      rail.scrollLeft = browseStartScrollLeft;
+      fireEvent.wheel(rail);
+      rail.scrollLeft = initialScrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
 
-			const rail = screen.getByRole("radiogroup", {
-				name: "Schedule week selector",
-			});
-			configureWeekRail(rail);
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
+      expect(rail.scrollLeft).toBe(expectedScrollLeft);
+    },
+  );
 
-			const draggedWeek = rail.querySelector<HTMLButtonElement>(
-				'button[data-week-key="2026-10-12"]',
-			);
+  it.each([
+    ["previous", 1, WEEK_TILE_WIDTH + 1],
+    [
+      "next",
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - 1 - WEEK_TILE_WIDTH,
+    ],
+  ] as const)(
+    "uses the quiet-period fallback to extend a touch scroll at the %s edge once",
+    async (_direction, edgeScrollLeft, expectedScrollLeft) => {
+      vi.useFakeTimers();
+      render(<WeekRailFixture />);
 
-			if (!draggedWeek) {
-				throw new Error("Expected the dragged week to be present in the rail.");
-			}
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const passiveFocus = screen.getByRole("button", {
+        name: "Keep passive-scroll focus",
+      });
+      const selectedDate = screen.getByTestId("selected-date").textContent;
+      const browseStartScrollLeft =
+        (WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH) / 2;
 
-			fireEvent.touchStart(rail, {
-				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			});
-			fireEvent.pointerDown(draggedWeek, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 100,
-				clientY: 20,
-			});
-			rail.scrollLeft = getCenteredWeekScrollLeft(5);
-			fireEvent.pointerMove(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				"2026-10-14",
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      configureWeekRail(rail, { scrollLeft: browseStartScrollLeft });
+      scrollToMock.mockClear();
+      passiveFocus.focus();
+      fireEvent.pointerDown(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 120,
+        clientY: 20,
+      });
+      rail.scrollLeft = edgeScrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent.pointerUp(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 80,
+        clientY: 20,
+      });
 
-			fireEvent.pointerCancel(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				"2026-10-14",
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
 
-			rail.scrollLeft = getCenteredWeekScrollLeft(6);
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(rail.scrollLeft).toBe(expectedScrollLeft);
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(passiveFocus).toHaveFocus();
+      expect(scrollToMock).not.toHaveBeenCalled();
 
-			const nativeTouchEnd = {
-				changedTouches: [{ clientX: 40, clientY: 20, identifier: 1 }],
-				touches: [],
-			};
-			fireEvent.touchEnd(rail, nativeTouchEnd);
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(149);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
 
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(1);
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				"2026-10-21",
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-	});
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    },
+  );
 
-	it.each(["native touchcancel", "window blur", "window pagehide"] as const)(
-		"discards a %s interrupted week swipe without selecting and lets the next touch settle",
-		async (cancellation) => {
-			vi.useFakeTimers();
-			render(<TouchSelectionFixture />);
-
-			const rail = screen.getByRole("radiogroup", {
-				name: "Schedule week selector",
-			});
-			configureWeekRail(rail);
-
-			const draggedWeek = rail.querySelector<HTMLButtonElement>(
-				'button[data-week-key="2026-10-12"]',
-			);
-
-			if (!draggedWeek) {
-				throw new Error("Expected the dragged week to be present in the rail.");
-			}
-
-			fireEvent.touchStart(rail, {
-				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			});
-			fireEvent.pointerDown(draggedWeek, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 100,
-				clientY: 20,
-			});
-			rail.scrollLeft = getCenteredWeekScrollLeft(5);
-			fireEvent.pointerMove(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			fireEvent.scroll(rail);
-
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
-
-			fireEvent.pointerCancel(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
-
-			rail.scrollLeft = getCenteredWeekScrollLeft(6);
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
-
-			if (cancellation === "native touchcancel") {
-				fireEvent.touchCancel(rail, {
-					changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
-					touches: [],
-				});
-			} else if (cancellation === "window blur") {
-				fireEvent.blur(window);
-			} else {
-				fireEvent(window, new Event("pagehide"));
-			}
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			fireEvent(rail, new Event("scrollend"));
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				"2026-10-14",
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
-
-			fireEvent.pointerUp(draggedWeek, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				"2026-10-14",
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
-
-			fireEvent.touchStart(rail, {
-				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			});
-			fireEvent.pointerDown(draggedWeek, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 100,
-				clientY: 20,
-			});
-			rail.scrollLeft = getCenteredWeekScrollLeft(5);
-			fireEvent.pointerMove(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			fireEvent.scroll(rail);
-			fireEvent.touchEnd(rail, {
-				changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
-				touches: [],
-			});
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(150);
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				"2026-10-21",
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-		},
-	);
-
-  it("settles a natively centered week once, preserves its weekday, and leaves passive-scroll focus alone", async () => {
+  it("discards a queued touch-edge rotation when a calendar week is selected before its idle fallback", async () => {
     vi.useFakeTimers();
-    render(<TouchSelectionFixture />);
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<WeekRailFixture showExternalSelectionControls />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
-    const passiveFocus = screen.getByRole("button", {
-      name: "Keep passive-scroll focus",
-    });
+    const initialCenteredScrollLeft =
+      4 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
+    const selectedWeek = getWeekButton(rail, 6);
+    const expectedCenteredScrollLeft =
+      selectedWeek.offsetLeft +
+      selectedWeek.offsetWidth / 2 -
+      WEEK_RAIL_WIDTH / 2;
+
     configureWeekRail(rail);
-
-    passiveFocus.focus();
-    fireEvent.wheel(rail);
-    rail.scrollLeft = getCenteredWeekScrollLeft(5);
-    fireEvent.scroll(rail);
-    fireEvent(rail, new Event("scrollend"));
-
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-21",
-    );
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-    expect(passiveFocus).toHaveFocus();
-
-    fireEvent(rail, new Event("scrollend"));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
+    act(() => {
+      resizeObserver?.trigger();
     });
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-  });
-
-  it("limits a wide week fling to one matching weekday and smoothly centers it", () => {
-    render(<TouchSelectionFixture />);
-
-    const rail = screen.getByRole("radiogroup", {
-      name: "Schedule week selector",
-    });
-    configureWeekRail(rail);
+    rail.scrollLeft = initialCenteredScrollLeft;
     scrollToMock.mockClear();
+    scrollToMock.mockImplementation(function (
+      this: HTMLElement,
+      options: ScrollToOptions,
+    ) {
+      this.scrollLeft = options.left ?? this.scrollLeft;
+    });
 
-    fireEvent.wheel(rail);
-    rail.scrollLeft = getCenteredWeekScrollLeft(7);
+    fireEvent.pointerDown(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 120,
+      clientY: 20,
+    });
+    rail.scrollLeft = 1;
     fireEvent.scroll(rail);
-    fireEvent(rail, new Event("scrollend"));
+    fireEvent.pointerUp(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 80,
+      clientY: 20,
+    });
 
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-21",
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select calendar week" }),
     );
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+
     expect(scrollToMock).toHaveBeenLastCalledWith({
-      left: getCenteredWeekScrollLeft(5),
+      left: expectedCenteredScrollLeft,
       behavior: "smooth",
     });
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      getWeekdayKey(6),
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(151);
+    });
+
+    const explicitSelection = rail.querySelector<HTMLButtonElement>(
+      'button[data-selected="true"]',
+    );
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+    expect(rail.scrollLeft).toBe(expectedCenteredScrollLeft);
+    expect(explicitSelection).toBe(selectedWeek);
+    expect(
+      explicitSelection!.offsetLeft + explicitSelection!.offsetWidth / 2,
+    ).toBe(rail.scrollLeft + rail.clientWidth / 2);
   });
 
-  it("uses a mouse-clicked week as the origin of the next wheel scroll", async () => {
-    vi.useFakeTimers();
-    render(<TouchSelectionFixture />);
+  it("allows a later scroll session to extend again after duplicate settlement is ignored", () => {
+    render(<WeekRailFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
-    const passiveFocus = screen.getByRole("button", {
-      name: "Keep passive-scroll focus",
-    });
-    configureWeekRail(rail);
+    const maxScrollLeft = WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH;
 
-    const clickedWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-10-19"]',
-    );
-
-    if (!clickedWeek) {
-      throw new Error("Expected the clicked week to be present in the rail.");
-    }
-
-    fireEvent.pointerDown(clickedWeek, { pointerType: "mouse" });
-    fireEvent.click(clickedWeek);
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-21",
-    );
-
-    passiveFocus.focus();
+    configureWeekRail(rail, { scrollLeft: maxScrollLeft - 1 });
     fireEvent.wheel(rail);
-    rail.scrollLeft = getCenteredWeekScrollLeft(6);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+
+    rail.scrollLeft = maxScrollLeft - 1;
+    fireEvent.wheel(rail);
     fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
 
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-28",
-    );
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
-    expect(passiveFocus).toHaveFocus();
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
 
+  it.each(["click", "touch tap", "Enter", "Space"] as const)(
+    "selects a week exactly once through explicit %s activation and preserves the weekday",
+    async (activation) => {
+      render(<WeekRailFixture />);
+
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const target = getWeekButton(rail, 5);
+
+      configureWeekRail(rail);
+
+      if (activation === "click") {
+        fireEvent.click(target);
+      } else if (activation === "touch tap") {
+        fireEvent.pointerDown(target, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 100,
+          clientY: 20,
+        });
+        fireEvent.pointerUp(rail, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 100,
+          clientY: 20,
+        });
+        fireEvent.click(target, { detail: 1 });
+      } else {
+        const user = userEvent.setup();
+
+        target.focus();
+        await user.keyboard(activation === "Enter" ? "{Enter}" : " ");
+      }
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getWeekdayKey(5),
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        getWeekdayKey(5),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    },
+  );
+
+  it.each([
+    ["first", 0],
+    ["last", WEEK_BUFFER_LENGTH - 1],
+  ] as const)(
+    "centers an explicitly selected %s buffered week without selecting again when the rail later scrolls",
+    (edge, index) => {
+      render(<WeekRailFixture />);
+
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const target = getWeekButton(rail, index);
+
+      configureWeekRail(rail, {
+        scrollWidth: WEEK_BUFFER_LENGTH * WEEK_ITEM_WIDTH,
+      });
+      scrollToMock.mockClear();
+      fireEvent.click(target);
+
+      const selectedButton = rail.querySelector<HTMLButtonElement>(
+        'button[data-selected="true"]',
+      );
+
+      if (!selectedButton) {
+        throw new Error(`Expected the ${edge} week to be selected.`);
+      }
+
+      const centeredScrollLeft = Math.min(
+        Math.max(
+          selectedButton.offsetLeft +
+            selectedButton.offsetWidth / 2 -
+            rail.clientWidth / 2,
+          0,
+        ),
+        rail.scrollWidth - rail.clientWidth,
+      );
+
+      expect(selectedButton).toHaveAttribute("data-week-key", getWeekKey(index));
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getWeekdayKey(index),
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        getWeekdayKey(index),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(scrollToMock).toHaveBeenLastCalledWith({
+        left: centeredScrollLeft,
+        behavior: "auto",
+      });
+
+      rail.scrollLeft = (rail.scrollWidth - rail.clientWidth) / 2;
+      fireEvent.wheel(rail);
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getWeekdayKey(index),
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        getWeekdayKey(index),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    },
+  );
+
+  it("moves roving focus and the viewport with Arrow and Page keys, then commits only on Space", async () => {
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const selected = getWeekButton(rail, 4);
+    const arrowTarget = getWeekButton(rail, 5);
+    const pageTarget = getWeekButton(rail, 1);
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureWeekRail(rail);
+    scrollToMock.mockClear();
+    selected.focus();
+    fireEvent.keyDown(selected, { key: "ArrowRight" });
+
+    expect(arrowTarget).toHaveFocus();
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: 5 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
+
+    fireEvent.keyDown(arrowTarget, { key: "PageUp" });
+
+    expect(pageTarget).toHaveFocus();
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
+
+    const user = userEvent.setup();
+
+    await user.keyboard(" ");
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      getWeekdayKey(1),
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      getWeekdayKey(1),
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+  });
+
+  it("moves focus into a visible browse target when the selected week falls out of the buffer", async () => {
+    const user = userEvent.setup();
+    render(<WeekRailFixture initialIndex={0} />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureWeekRail(rail, { scrollLeft: 500 });
+    scrollToMock.mockClear();
+    await user.click(
+      screen.getByRole("button", { name: "Move week buffer forward" }),
+    );
+
+    const browseTarget = rail.querySelector<HTMLButtonElement>(
+      'button[data-week-key][tabindex="0"]',
+    );
+
+    if (!browseTarget) {
+      throw new Error("Expected a visible week browse target.");
+    }
+
+    const browseTargetCenter =
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2;
+
+    expect(
+      rail.querySelector(`button[data-week-key="${getWeekKey(0)}"]`),
+    ).toBeNull();
+    expect(browseTargetCenter).toBeGreaterThanOrEqual(rail.scrollLeft);
+    expect(browseTargetCenter).toBeLessThanOrEqual(
+      rail.scrollLeft + rail.clientWidth,
+    );
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    await user.tab();
+
+    expect(browseTarget).toHaveFocus();
+    expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
+  it("does not select after a touch swipe followed by its synthetic click", () => {
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const target = getWeekButton(rail, 5);
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureWeekRail(rail);
+    fireEvent.pointerDown(target, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    rail.scrollLeft = 500;
+    fireEvent.pointerMove(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 80,
+      clientY: 20,
+    });
+    fireEvent.scroll(rail);
+    fireEvent.pointerUp(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 80,
+      clientY: 20,
+    });
+    fireEvent.click(target, { detail: 1 });
     fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
+  it("waits for native touchend after an iOS pointercancel before settling its inertial tail", async () => {
+    vi.useFakeTimers();
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const draggedWeek = getWeekButton(rail, 4);
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureWeekRail(rail);
+    fireEvent.touchStart(rail, {
+      changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+      touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+    });
+    fireEvent.pointerDown(draggedWeek, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    rail.scrollLeft = 500;
+    fireEvent.pointerMove(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 70,
+      clientY: 20,
+    });
+    fireEvent.scroll(rail);
+    fireEvent.pointerCancel(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 70,
+      clientY: 20,
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(151);
+    });
+
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+
+    rail.scrollLeft = 600;
+    fireEvent.scroll(rail);
+    fireEvent.touchEnd(rail, {
+      changedTouches: [{ clientX: 40, clientY: 20, identifier: 1 }],
+      touches: [],
+    });
+    fireEvent.scroll(rail);
+
     await act(async () => {
       await vi.advanceTimersByTimeAsync(150);
     });
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
+
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
   });
 
-  it("starts an independent touch swipe from a just-tapped week", () => {
-    render(<TouchSelectionFixture />);
+  it.each(["touchcancel", "blur", "pagehide"] as const)(
+    "discards an interrupted touch swipe after %s and allows the next tap to select once",
+    async (cancellation) => {
+      vi.useFakeTimers();
+      render(<WeekRailFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const draggedWeek = getWeekButton(rail, 5);
+      const selectedDate = screen.getByTestId("selected-date").textContent;
+
+      configureWeekRail(rail);
+      fireEvent.touchStart(rail, {
+        changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+        touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+      });
+      fireEvent.pointerDown(draggedWeek, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 100,
+        clientY: 20,
+      });
+      rail.scrollLeft = 500;
+      fireEvent.pointerMove(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 70,
+        clientY: 20,
+      });
+      fireEvent.scroll(rail);
+      fireEvent.pointerCancel(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 70,
+        clientY: 20,
+      });
+
+      if (cancellation === "touchcancel") {
+        fireEvent.touchCancel(rail, {
+          changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
+          touches: [],
+        });
+      } else if (cancellation === "blur") {
+        fireEvent.blur(window);
+      } else {
+        fireEvent(window, new Event("pagehide"));
+      }
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(151);
+      });
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+      fireEvent.pointerDown(draggedWeek, {
+        pointerId: 2,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 100,
+        clientY: 20,
+      });
+      fireEvent.pointerUp(rail, {
+        pointerId: 2,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 100,
+        clientY: 20,
+      });
+      fireEvent.click(draggedWeek, { detail: 1 });
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getWeekdayKey(5),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    },
+  );
+
+  it("centers the initial layout and preserves a later browsed week viewport through orientation resize", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+    const browseTarget = getWeekButton(rail, 2);
+    const selectedButton = getWeekButton(rail, 4);
+
     configureWeekRail(rail);
-
-    const tappedWeek = rail.querySelector<HTMLButtonElement>(
-      'button[data-week-key="2026-10-19"]',
-    );
-
-    if (!tappedWeek) {
-      throw new Error("Expected the tapped week to be present in the rail.");
-    }
-
-    fireEvent.pointerDown(tappedWeek, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
+    scrollToMock.mockClear();
+    act(() => {
+      resizeObserver?.trigger();
     });
-    fireEvent.pointerUp(tappedWeek, {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
-    });
-    fireEvent.click(tappedWeek, { detail: 1 });
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
 
-    fireEvent.pointerDown(rail, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 100,
-      clientY: 20,
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: 4 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2,
+      behavior: "auto",
     });
-    rail.scrollLeft = getCenteredWeekScrollLeft(6);
+
+    rail.scrollLeft = 200;
+    fireEvent.wheel(rail);
     fireEvent.scroll(rail);
-    fireEvent.pointerUp(rail, {
-      pointerId: 2,
-      pointerType: "touch",
-      isPrimary: true,
-      clientX: 60,
-      clientY: 20,
+    fireEvent(rail, new Event("scrollend"));
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeGreaterThanOrEqual(rail.scrollLeft);
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeLessThanOrEqual(rail.scrollLeft + rail.clientWidth);
+    expect(selectedButton.offsetLeft).toBeGreaterThan(
+      rail.scrollLeft + rail.clientWidth,
+    );
+    Object.defineProperty(rail, "clientWidth", {
+      configurable: true,
+      value: 400,
     });
+    scrollToMock.mockClear();
+
+    act(() => {
+      resizeObserver?.trigger();
+    });
+
+    expect(rail.scrollLeft).toBe(200);
+    expect(scrollToMock).not.toHaveBeenCalled();
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeGreaterThanOrEqual(rail.scrollLeft);
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeLessThanOrEqual(rail.scrollLeft + rail.clientWidth);
+    expect(selectedButton.offsetLeft).toBeGreaterThan(
+      rail.scrollLeft + rail.clientWidth,
+    );
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
+  it("keeps hidden Week initialization pending until it becomes measurable, then preserves its browse position through later observers", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<HiddenWeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureWeekRail(rail, { clientWidth: 0, scrollWidth: 0 });
+    scrollToMock.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Show week rail" }));
+
+    expect(resizeObserver).not.toBeNull();
+    act(() => {
+      resizeObserver?.trigger();
+    });
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    configureWeekRail(rail);
+    act(() => {
+      resizeObserver?.trigger();
+    });
+
+    const initialCenteredScrollLeft =
+      4 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
+
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: initialCenteredScrollLeft,
+      behavior: "auto",
+    });
+
+    rail.scrollLeft = initialCenteredScrollLeft;
+    scrollToMock.mockClear();
+    Object.defineProperty(rail, "clientWidth", {
+      configurable: true,
+      value: 400,
+    });
+    act(() => {
+      resizeObserver?.trigger();
+    });
+    Object.defineProperty(rail, "scrollWidth", {
+      configurable: true,
+      value: WEEK_SCROLL_WIDTH + WEEK_ITEM_WIDTH,
+    });
+    act(() => {
+      resizeObserver?.trigger();
+    });
+
+    expect(rail.scrollLeft).toBe(initialCenteredScrollLeft);
+    expect(scrollToMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
+  it("defers resize reconciliation until smooth explicit centering settles", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const target = getWeekButton(rail, 5);
+
+    configureWeekRail(rail);
+    act(() => {
+      resizeObserver?.trigger();
+    });
+    scrollToMock.mockClear();
+    fireEvent.click(target);
+
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: 5 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2,
+      behavior: "smooth",
+    });
+
+    rail.scrollLeft = 400;
+    fireEvent.scroll(rail);
+    act(() => {
+      resizeObserver?.trigger();
+      resizeObserver?.trigger();
+    });
+
+    expect(scrollToMock).toHaveBeenCalledTimes(1);
+
+    rail.scrollLeft =
+      5 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2;
+    fireEvent.scroll(rail);
     fireEvent(rail, new Event("scrollend"));
 
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-28",
-    );
-    expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: 5 * WEEK_ITEM_WIDTH + WEEK_TILE_WIDTH / 2 - WEEK_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
+    expect(scrollToMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,12 +1,11 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import i18n from "@/lib/i18n/config";
 import { DateTime } from "@/lib/date-time";
+import i18n from "@/lib/i18n/config";
 import { WeekdayView } from "./weekday-view";
 
-const INITIAL_DATE = DateTime.fromDateOnlyString("2026-10-14").toDate();
-const TARGET_DATE = DateTime.fromDateOnlyString("2026-10-16").toDate();
 const DAY_TILE_WIDTH = 56;
 const DAY_TILE_GAP = 8;
 const DAY_ITEM_WIDTH = DAY_TILE_WIDTH + DAY_TILE_GAP;
@@ -16,8 +15,15 @@ const originalScrollTo = Object.getOwnPropertyDescriptor(
   HTMLElement.prototype,
   "scrollTo",
 );
+const originalOffsetLeft = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "offsetLeft",
+);
+const originalOffsetWidth = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "offsetWidth",
+);
 const scrollToMock = vi.fn();
-
 let resizeObserver: ResizeObserverMock | null = null;
 
 class ResizeObserverMock {
@@ -34,744 +40,1010 @@ class ResizeObserverMock {
   }
 }
 
-function SmoothCenterFixture() {
-  const [selectedDate, setSelectedDate] = useState(INITIAL_DATE);
-  const [dates] = useState(() =>
-    Array.from({ length: 9 }, (_, weekIndex) =>
-      DateTime.getWeekDates(
-        DateTime.from(INITIAL_DATE).startOfWeek().addWeeks(weekIndex - 4),
-      ),
-    )
-      .flat()
-      .slice(2, 58)
-      .map((date) => date.toDate()),
+function restoreProperty(
+  target: object,
+  property: string,
+  descriptor: PropertyDescriptor | undefined,
+) {
+  if (descriptor) {
+    Object.defineProperty(target, property, descriptor);
+  } else {
+    Reflect.deleteProperty(target, property);
+  }
+}
+
+function getDayBuffer() {
+  const firstWeek = DateTime.fromDateOnlyString("2026-09-14");
+
+  return Array.from({ length: DAY_BUFFER_LENGTH / 7 }, (_, weekIndex) =>
+    DateTime.getWeekDates(firstWeek.addWeeks(weekIndex)).map((date) =>
+      date.toDate(),
+    ),
+  ).flat();
+}
+
+function getDateKey(date: Date) {
+  return DateTime.from(date).toDateOnlyString();
+}
+
+function getDayKey(index: number) {
+  return getDateKey(getDayBuffer()[index]!);
+}
+
+function getDayButton(rail: HTMLElement, index: number) {
+  const button = rail.querySelector<HTMLButtonElement>(
+    `button[data-date-key="${getDayKey(index)}"]`,
   );
+
+  if (!button) {
+    throw new Error(`Expected date button ${getDayKey(index)} to be rendered.`);
+  }
+
+  return button;
+}
+
+function configureDayRail(
+  rail: HTMLElement,
+  {
+    scrollLeft = 0,
+    scrollWidth = DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH,
+  }: { scrollLeft?: number; scrollWidth?: number } = {},
+) {
+  Object.defineProperties(rail, {
+    clientWidth: { configurable: true, value: DAY_RAIL_WIDTH },
+    scrollWidth: { configurable: true, value: scrollWidth },
+    scrollLeft: { configurable: true, writable: true, value: scrollLeft },
+  });
+
+  rail
+    .querySelector("button[data-date-key]")
+    ?.parentElement?.style.setProperty("column-gap", "0px");
+}
+
+function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
+  const [dates, setDates] = useState(getDayBuffer);
+  const [selectedDate, setSelectedDate] = useState(() => dates[initialIndex]!);
+  const [selectionCount, setSelectionCount] = useState(0);
+  const [extensionCount, setExtensionCount] = useState(0);
+
+  const selectDate = (date: Date) => {
+    setSelectionCount((count) => count + 1);
+    setSelectedDate(date);
+  };
+  const extendDateBuffer = (
+    direction: "previous" | "next",
+    count = 1,
+  ) => {
+    setExtensionCount((count) => count + 1);
+    setDates((currentDates) => {
+      let nextDates = currentDates;
+
+      for (let index = 0; index < count; index += 1) {
+        const firstDate = nextDates[0];
+        const lastDate = nextDates.at(-1);
+
+        if (!firstDate || !lastDate) return nextDates;
+
+        nextDates =
+          direction === "previous"
+            ? [
+                ...DateTime.getWeekDates(
+                  DateTime.from(firstDate).subWeeks(1),
+                ).map((date) => date.toDate()),
+                ...nextDates.slice(0, -7),
+              ]
+            : [
+                ...nextDates.slice(7),
+                ...DateTime.getWeekDates(
+                  DateTime.from(lastDate).addWeeks(1),
+                ).map((date) => date.toDate()),
+              ];
+      }
+
+      return nextDates;
+    });
+  };
+  const moveBufferForward = () => {
+    setDates((currentDates) => {
+      const lastDate = currentDates.at(-1);
+
+      if (!lastDate) return currentDates;
+
+      return [
+        ...currentDates.slice(7),
+        ...DateTime.getWeekDates(DateTime.from(lastDate).addWeeks(1)).map(
+          (date) => date.toDate(),
+        ),
+      ];
+    });
+  };
 
   return (
     <>
-      <button type="button" onClick={() => setSelectedDate(TARGET_DATE)}>
-        Select another date
+      <button type="button">Keep passive-scroll focus</button>
+      <button type="button" onClick={moveBufferForward}>
+        Move date buffer forward
       </button>
       <WeekdayView
         dates={dates}
         selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
-        onExtendDateBuffer={() => undefined}
-        onRestoreSelectedDate={() => undefined}
+        onDateSelect={selectDate}
+        onExtendDateBuffer={extendDateBuffer}
         centerRequest={{ id: 0, behavior: "auto" }}
       />
+      <output data-testid="selected-date">{getDateKey(selectedDate)}</output>
+      <output data-testid="result-date">{getDateKey(selectedDate)}</output>
+      <output data-testid="selection-count">{selectionCount}</output>
+      <output data-testid="extension-count">{extensionCount}</output>
     </>
   );
-}
-
-function getDayBuffer() {
-	const firstWeek = DateTime.fromDateOnlyString("2026-09-14");
-
-	return Array.from({ length: DAY_BUFFER_LENGTH / 7 }, (_, weekIndex) =>
-		DateTime.getWeekDates(firstWeek.addWeeks(weekIndex)).map((date) =>
-			date.toDate(),
-		),
-	).flat();
-}
-
-function getDayKey(index: number) {
-	return DateTime.from(getDayBuffer()[index]!).toDateOnlyString();
-}
-
-function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
-	const [dates, setDates] = useState(getDayBuffer);
-	const [selectedDate, setSelectedDate] = useState(() => dates[initialIndex]!);
-	const [extensionCount, setExtensionCount] = useState(0);
-	const [selectionCount, setSelectionCount] = useState(0);
-
-	const selectDate = (date: Date) => {
-		setSelectionCount((count) => count + 1);
-		setSelectedDate(date);
-	};
-	const extendDateBuffer = (direction: "previous" | "next") => {
-		setExtensionCount((count) => count + 1);
-		setDates((currentDates) => {
-			const firstDate = currentDates[0];
-			const lastDate = currentDates.at(-1);
-
-			if (!firstDate || !lastDate) return currentDates;
-
-			return direction === "previous"
-				? [
-						...DateTime.getWeekDates(DateTime.from(firstDate).subWeeks(1)).map(
-							(date) => date.toDate(),
-						),
-						...currentDates.slice(0, -7),
-					]
-				: [
-						...currentDates.slice(7),
-						...DateTime.getWeekDates(DateTime.from(lastDate).addWeeks(1)).map(
-							(date) => date.toDate(),
-						),
-					];
-		});
-	};
-
-	return (
-		<>
-			<button type="button">Keep passive-scroll focus</button>
-			<WeekdayView
-				dates={dates}
-				selectedDate={selectedDate}
-				onDateSelect={selectDate}
-				onExtendDateBuffer={extendDateBuffer}
-				onRestoreSelectedDate={() => undefined}
-				centerRequest={{ id: 0, behavior: "auto" }}
-			/>
-			<output data-testid="selected-date">
-				{DateTime.from(selectedDate).toDateOnlyString()}
-			</output>
-			<output data-testid="selection-count">{selectionCount}</output>
-			<output data-testid="extension-count">{extensionCount}</output>
-		</>
-	);
-}
-
-function configureDayRail(
-	rail: HTMLElement,
-	{ scrollLeft = 0, scrollWidth = DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH } = {},
-) {
-	Object.defineProperties(rail, {
-		clientWidth: { configurable: true, value: DAY_RAIL_WIDTH },
-		scrollWidth: { configurable: true, value: scrollWidth },
-		scrollLeft: { configurable: true, writable: true, value: scrollLeft },
-	});
-
-	const buttons = Array.from(
-		rail.querySelectorAll<HTMLButtonElement>("button[data-date-key]"),
-	);
-
-	buttons.forEach((button, index) => {
-		Object.defineProperties(button, {
-			offsetLeft: {
-				configurable: true,
-				value: index * DAY_ITEM_WIDTH,
-			},
-			offsetWidth: { configurable: true, value: DAY_TILE_WIDTH },
-		});
-	});
-
-	buttons[0]?.parentElement?.style.setProperty("column-gap", "0px");
-}
-
-function getCenteredDayScrollLeft(index: number) {
-	return index * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2;
 }
 
 describe("WeekdayView rail behavior", () => {
   beforeEach(async () => {
     resizeObserver = null;
     scrollToMock.mockReset();
-    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
       configurable: true,
       writable: true,
       value: scrollToMock,
     });
-		vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-			function (this: HTMLElement) {
-				const width = this.matches("button[data-date-key]")
-					? DAY_TILE_WIDTH
-					: 0;
+    Object.defineProperties(HTMLElement.prototype, {
+      offsetLeft: {
+        configurable: true,
+        get(this: HTMLElement) {
+          if (!this.matches("button[data-date-key]")) return 0;
 
-				return {
-					x: 0,
-					y: 0,
-					left: 0,
-					top: 0,
-					right: width,
-					bottom: DAY_TILE_WIDTH,
-					width,
-					height: DAY_TILE_WIDTH,
-					toJSON: () => ({}),
-				};
-			},
-		);
+          const buttons = Array.from(
+            this.parentElement?.querySelectorAll<HTMLButtonElement>(
+              "button[data-date-key]",
+            ) ?? [],
+          );
+
+          return (
+            Math.max(buttons.indexOf(this as HTMLButtonElement), 0) *
+            DAY_ITEM_WIDTH
+          );
+        },
+      },
+      offsetWidth: {
+        configurable: true,
+        get(this: HTMLElement) {
+          return this.matches("button[data-date-key]") ? DAY_TILE_WIDTH : 0;
+        },
+      },
+    });
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        const width = this.matches("button[data-date-key]")
+          ? DAY_TILE_WIDTH
+          : 0;
+
+        return {
+          x: 0,
+          y: 0,
+          left: 0,
+          top: 0,
+          right: width,
+          bottom: DAY_TILE_WIDTH,
+          width,
+          height: DAY_TILE_WIDTH,
+          toJSON: () => ({}),
+        };
+      },
+    );
     await i18n.changeLanguage("en");
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
-		vi.restoreAllMocks();
-
-    if (originalScrollTo) {
-      Object.defineProperty(
-        HTMLElement.prototype,
-        "scrollTo",
-        originalScrollTo,
-      );
-    } else {
-      Reflect.deleteProperty(HTMLElement.prototype, "scrollTo");
-    }
+    restoreProperty(HTMLElement.prototype, "scrollTo", originalScrollTo);
+    restoreProperty(HTMLElement.prototype, "offsetLeft", originalOffsetLeft);
+    restoreProperty(HTMLElement.prototype, "offsetWidth", originalOffsetWidth);
   });
 
-  it.each(["scrollend", "idle fallback"])(
-    "defers resize reconciliation until %s settles smooth centering",
-    async (settlement) => {
+  it.each(["wheel", "native", "touch"] as const)(
+    "keeps selection, result selection, and focus unchanged when a %s scroll settles away from an edge",
+    async (input) => {
       vi.useFakeTimers();
-      render(<SmoothCenterFixture />);
+      render(<DayRailFixture />);
 
-      const rail = screen.getByRole("radiogroup", {
+      const rail = screen.getByRole("group", {
         name: "Schedule date selector",
       });
-      Object.defineProperties(rail, {
-        clientWidth: { configurable: true, value: 320 },
-        scrollWidth: { configurable: true, value: 1600 },
-        scrollLeft: { configurable: true, writable: true, value: 0 },
+      const passiveFocus = screen.getByRole("button", {
+        name: "Keep passive-scroll focus",
       });
+      const selectedDate = screen.getByTestId("selected-date").textContent;
 
-      const selectedDate = rail.querySelector<HTMLButtonElement>(
-        'button[data-date-key="2026-10-16"]',
-      );
-
-      if (!selectedDate || !resizeObserver) {
-        throw new Error(
-          "Expected the date rail and ResizeObserver to be present.",
-        );
-      }
-
-      Object.defineProperties(selectedDate, {
-        offsetLeft: { configurable: true, value: 700 },
-        offsetWidth: { configurable: true, value: 56 },
-      });
+      configureDayRail(rail);
       scrollToMock.mockClear();
+      passiveFocus.focus();
 
-      fireEvent.click(
-        screen.getByRole("button", { name: "Select another date" }),
-      );
-      expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
-        left: 568,
-        behavior: "smooth",
-      });
-
-      rail.scrollLeft = 300;
-      fireEvent.scroll(rail);
-      Object.defineProperty(selectedDate, "offsetLeft", {
-        configurable: true,
-        value: 720,
-      });
-
-      act(() => {
-        resizeObserver?.trigger();
-        resizeObserver?.trigger();
-      });
-
-      expect(rail.scrollLeft).toBe(300);
-      expect(scrollToMock).toHaveBeenCalledTimes(1);
-
-      rail.scrollLeft = 568;
-      fireEvent.scroll(rail);
-
-      if (settlement === "scrollend") {
-        fireEvent(rail, new Event("scrollend"));
-      } else {
-        await act(async () => {
-          await vi.advanceTimersByTimeAsync(150);
+      if (input === "wheel") {
+        fireEvent.wheel(rail);
+      } else if (input === "touch") {
+        fireEvent.pointerDown(rail, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 120,
+          clientY: 20,
         });
       }
 
-      expect(scrollToMock).toHaveBeenCalledTimes(2);
-      expect(scrollToMock).toHaveBeenLastCalledWith({
-        left: 588,
-        behavior: "auto",
-      });
+      rail.scrollLeft = 800;
+      fireEvent.scroll(rail);
+
+      if (input === "touch") {
+        fireEvent.pointerUp(rail, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 80,
+          clientY: 20,
+        });
+      }
 
       fireEvent(rail, new Event("scrollend"));
-      expect(scrollToMock).toHaveBeenCalledTimes(2);
+
+      expect(rail).toHaveAccessibleDescription(
+        "Scroll horizontally to browse dates without changing the selected date. Select a date with its button. Use the Left and Right Arrow keys or Page Up and Page Down to move focus without selecting. Press Enter or Space to select the focused date.",
+      );
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(passiveFocus).toHaveFocus();
+      expect(scrollToMock).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
+
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
     },
   );
 
-	it("selects the natively centered day once without moving passive-scroll focus", async () => {
-		vi.useFakeTimers();
-		render(<DayRailFixture />);
+  it("does not turn an initial programmatic center near an edge into a browse session", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<DayRailFixture initialIndex={3} />);
 
-		const rail = screen.getByRole("radiogroup", {
-			name: "Schedule date selector",
-		});
-		const passiveFocus = screen.getByRole("button", {
-			name: "Keep passive-scroll focus",
-		});
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const centeredScrollLeft =
+      3 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2;
 
-		configureDayRail(rail);
-		passiveFocus.focus();
-		fireEvent.wheel(rail);
-		rail.scrollLeft = getCenteredDayScrollLeft(18);
-		fireEvent.scroll(rail);
-		fireEvent(rail, new Event("scrollend"));
+    configureDayRail(rail);
+    scrollToMock.mockClear();
+    expect(resizeObserver).not.toBeNull();
+    act(() => {
+      resizeObserver?.trigger();
+    });
 
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(18),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-		expect(passiveFocus).toHaveFocus();
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: centeredScrollLeft,
+      behavior: "auto",
+    });
 
-		fireEvent(rail, new Event("scrollend"));
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(150);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-	});
+    rail.scrollLeft = centeredScrollLeft;
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(151);
+    });
 
-	it("keeps a held touch swipe unsettled through a quiet pause until pointerup and its inertial tail", async () => {
-		vi.useFakeTimers();
-		render(<DayRailFixture />);
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
 
-		const rail = screen.getByRole("radiogroup", {
-			name: "Schedule date selector",
-		});
-		configureDayRail(rail);
+  it("does not load an edge after a touch press without scroll movement", async () => {
+    vi.useFakeTimers();
+    render(<DayRailFixture />);
 
-		const draggedDate = rail.querySelector<HTMLButtonElement>(
-			`button[data-date-key="${getDayKey(17)}"]`,
-		);
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
 
-		if (!draggedDate) {
-			throw new Error("Expected the dragged date to be present in the rail.");
-		}
+    configureDayRail(rail, { scrollLeft: 1 });
+    fireEvent.pointerDown(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 120,
+      clientY: 20,
+    });
+    fireEvent.pointerUp(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 120,
+      clientY: 20,
+    });
+    fireEvent(rail, new Event("scrollend"));
 
-		fireEvent.touchStart(rail, {
-			changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-		});
-		fireEvent.pointerDown(draggedDate, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 100,
-			clientY: 20,
-		});
-		rail.scrollLeft = getCenteredDayScrollLeft(18);
-		fireEvent.pointerMove(rail, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 70,
-			clientY: 20,
-		});
-		fireEvent.scroll(rail);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(151);
+    });
 
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(151);
-		});
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(17),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
 
-		rail.scrollLeft = getCenteredDayScrollLeft(19);
-		fireEvent.pointerMove(rail, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 40,
-			clientY: 20,
-		});
-		fireEvent.scroll(rail);
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(151);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  it.each([
+    ["previous", 1, DAY_TILE_WIDTH * 7 + 1],
+    [
+      "next",
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1 - DAY_TILE_WIDTH * 7,
+    ],
+  ] as const)(
+    "extends the %s edge once per user scroll without selecting or reacting to compensation scroll events",
+    async (_direction, initialScrollLeft, expectedScrollLeft) => {
+      vi.useFakeTimers();
+      render(<DayRailFixture />);
 
-		fireEvent.pointerUp(rail, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 40,
-			clientY: 20,
-		});
-		fireEvent.scroll(rail);
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(149);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      const passiveFocus = screen.getByRole("button", {
+        name: "Keep passive-scroll focus",
+      });
+      const selectedDate = screen.getByTestId("selected-date").textContent;
 
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(1);
-		});
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(18),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-	});
+      const browseStartScrollLeft =
+        (DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH) / 2;
 
-	it.each(["native touchcancel", "window blur", "window pagehide"] as const)(
-		"discards a %s interrupted touch swipe without selecting and lets the next touch settle",
-		async (cancellation) => {
-			vi.useFakeTimers();
-			render(<DayRailFixture />);
+      configureDayRail(rail, { scrollLeft: browseStartScrollLeft });
+      scrollToMock.mockClear();
+      passiveFocus.focus();
+      fireEvent.wheel(rail);
+      rail.scrollLeft = initialScrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
 
-			const rail = screen.getByRole("radiogroup", {
-				name: "Schedule date selector",
-			});
-			configureDayRail(rail);
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(rail.scrollLeft).toBe(expectedScrollLeft);
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(passiveFocus).toHaveFocus();
+      expect(scrollToMock).not.toHaveBeenCalled();
 
-			const draggedDate = rail.querySelector<HTMLButtonElement>(
-				`button[data-date-key="${getDayKey(17)}"]`,
-			);
+      const compensatedScrollLeft = rail.scrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
 
-			if (!draggedDate) {
-				throw new Error("Expected the dragged date to be present in the rail.");
-			}
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(rail.scrollLeft).toBe(compensatedScrollLeft);
 
-			fireEvent.touchStart(rail, {
-				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			});
-			fireEvent.pointerDown(draggedDate, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 100,
-				clientY: 20,
-			});
-			rail.scrollLeft = getCenteredDayScrollLeft(18);
-			fireEvent.pointerMove(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			fireEvent.scroll(rail);
+      rail.scrollLeft = browseStartScrollLeft;
+      fireEvent.wheel(rail);
+      rail.scrollLeft = initialScrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
 
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
+      expect(rail.scrollLeft).toBe(expectedScrollLeft);
+    },
+  );
 
-			fireEvent.pointerCancel(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  it.each([
+    ["previous", 1, DAY_TILE_WIDTH * 7 + 1],
+    [
+      "next",
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1,
+      DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - 1 - DAY_TILE_WIDTH * 7,
+    ],
+  ] as const)(
+    "uses the quiet-period fallback to extend a touch scroll at the %s edge once",
+    async (_direction, edgeScrollLeft, expectedScrollLeft) => {
+      vi.useFakeTimers();
+      render(<DayRailFixture />);
 
-			rail.scrollLeft = getCenteredDayScrollLeft(19);
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      const passiveFocus = screen.getByRole("button", {
+        name: "Keep passive-scroll focus",
+      });
+      const selectedDate = screen.getByTestId("selected-date").textContent;
+      const browseStartScrollLeft =
+        (DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH) / 2;
 
-			if (cancellation === "native touchcancel") {
-				fireEvent.touchCancel(rail, {
-					changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
-					touches: [],
-				});
-			} else if (cancellation === "window blur") {
-				fireEvent.blur(window);
-			} else {
-				fireEvent(window, new Event("pagehide"));
-			}
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(151);
-			});
-			fireEvent(rail, new Event("scrollend"));
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				getDayKey(17),
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      configureDayRail(rail, { scrollLeft: browseStartScrollLeft });
+      scrollToMock.mockClear();
+      passiveFocus.focus();
+      fireEvent.pointerDown(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 120,
+        clientY: 20,
+      });
+      rail.scrollLeft = edgeScrollLeft;
+      fireEvent.scroll(rail);
+      fireEvent.pointerUp(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 80,
+        clientY: 20,
+      });
 
-			fireEvent.pointerUp(draggedDate, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				getDayKey(17),
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
 
-			fireEvent.touchStart(rail, {
-				changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-				touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			});
-			fireEvent.pointerDown(draggedDate, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 100,
-				clientY: 20,
-			});
-			rail.scrollLeft = getCenteredDayScrollLeft(18);
-			fireEvent.pointerMove(rail, {
-				pointerId: 1,
-				pointerType: "touch",
-				isPrimary: true,
-				clientX: 70,
-				clientY: 20,
-			});
-			fireEvent.scroll(rail);
-			fireEvent.touchEnd(rail, {
-				changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
-				touches: [],
-			});
-			fireEvent.scroll(rail);
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(150);
-			});
-			expect(screen.getByTestId("selected-date")).toHaveTextContent(
-				getDayKey(18),
-			);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-		},
-	);
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(rail.scrollLeft).toBe(expectedScrollLeft);
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      expect(passiveFocus).toHaveFocus();
+      expect(scrollToMock).not.toHaveBeenCalled();
 
-	it("keeps an iOS-taken-over touch swipe unsettled through pointercancel until native touchend and its inertial tail", async () => {
-		vi.useFakeTimers();
-		render(<DayRailFixture />);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(150);
+      });
 
-		const rail = screen.getByRole("radiogroup", {
-			name: "Schedule date selector",
-		});
-		configureDayRail(rail);
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    },
+  );
 
-		const draggedDate = rail.querySelector<HTMLButtonElement>(
-			`button[data-date-key="${getDayKey(17)}"]`,
-		);
+  it("allows a later scroll session to extend again after duplicate settlement is ignored", () => {
+    render(<DayRailFixture />);
 
-		if (!draggedDate) {
-			throw new Error("Expected the dragged date to be present in the rail.");
-		}
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const maxScrollLeft = DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH;
 
-		fireEvent.touchStart(rail, {
-			changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-			touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
-		});
-		fireEvent.pointerDown(draggedDate, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 100,
-			clientY: 20,
-		});
-		rail.scrollLeft = getCenteredDayScrollLeft(18);
-		fireEvent.pointerMove(rail, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 70,
-			clientY: 20,
-		});
-		fireEvent.scroll(rail);
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(151);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    configureDayRail(rail, { scrollLeft: maxScrollLeft - 1 });
+    fireEvent.wheel(rail);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    fireEvent(rail, new Event("scrollend"));
 
-		fireEvent.pointerCancel(rail, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 70,
-			clientY: 20,
-		});
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(151);
-		});
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(17),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
 
-		rail.scrollLeft = getCenteredDayScrollLeft(19);
-		fireEvent.scroll(rail);
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(151);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    rail.scrollLeft = maxScrollLeft - 1;
+    fireEvent.wheel(rail);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
 
-		const nativeTouchEnd = {
-			changedTouches: [{ clientX: 40, clientY: 20, identifier: 1 }],
-			touches: [],
-		};
-		fireEvent.touchEnd(rail, nativeTouchEnd);
-		fireEvent.scroll(rail);
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(149);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
 
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(1);
-		});
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(18),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-	});
+  it.each(["click", "touch tap", "Enter", "Space"] as const)(
+    "selects a date exactly once through explicit %s activation",
+    async (activation) => {
+      render(<DayRailFixture />);
 
-	it.each([
-		["previous", 2, 0, DAY_TILE_WIDTH * 7],
-		[
-			"next",
-			32,
-			DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH,
-			DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - DAY_TILE_WIDTH * 7,
-		],
-	] as const)(
-		"extends the %s date buffer once after native edge settlement and preserves the viewport",
-		async (_direction, initialIndex, scrollLeft, expectedScrollLeft) => {
-			vi.useFakeTimers();
-			render(<DayRailFixture initialIndex={initialIndex} />);
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      const target = getDayButton(rail, 20);
 
-			const rail = screen.getByRole("radiogroup", {
-				name: "Schedule date selector",
-			});
-			configureDayRail(rail, { scrollLeft });
-			fireEvent.wheel(rail);
-			fireEvent.scroll(rail);
-			fireEvent(rail, new Event("scrollend"));
+      configureDayRail(rail);
 
-			expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-			expect(rail.scrollLeft).toBe(expectedScrollLeft);
-			expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+      if (activation === "click") {
+        fireEvent.click(target);
+      } else if (activation === "touch tap") {
+        fireEvent.pointerDown(target, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 100,
+          clientY: 20,
+        });
+        fireEvent.pointerUp(rail, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: 100,
+          clientY: 20,
+        });
+        fireEvent.click(target, { detail: 1 });
+      } else {
+        const user = userEvent.setup();
 
-			fireEvent(rail, new Event("scrollend"));
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(150);
-			});
-			expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
-		},
-	);
+        target.focus();
+        await user.keyboard(activation === "Enter" ? "{Enter}" : " ");
+      }
 
-	it("limits a wide date fling to one tile and smoothly centers that tile", () => {
-		render(<DayRailFixture />);
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getDayKey(20),
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        getDayKey(20),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    },
+  );
 
-		const rail = screen.getByRole("radiogroup", {
-			name: "Schedule date selector",
-		});
-		configureDayRail(rail);
-		scrollToMock.mockClear();
+  it.each([
+    ["first", 0],
+    ["last", DAY_BUFFER_LENGTH - 1],
+  ] as const)(
+    "centers an explicitly selected %s buffered date without selecting again when the rail later scrolls",
+    (edge, index) => {
+      render(<DayRailFixture />);
 
-		fireEvent.wheel(rail);
-		rail.scrollLeft = getCenteredDayScrollLeft(22);
-		fireEvent.scroll(rail);
-		fireEvent(rail, new Event("scrollend"));
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      const target = getDayButton(rail, index);
 
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(18),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
-		expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
-		expect(scrollToMock).toHaveBeenLastCalledWith({
-			left: getCenteredDayScrollLeft(18),
-			behavior: "smooth",
-		});
-	});
+      configureDayRail(rail);
+      scrollToMock.mockClear();
+      fireEvent.click(target);
 
-	it("uses a mouse-clicked day as the origin of the next wheel scroll", async () => {
-		vi.useFakeTimers();
-		render(<DayRailFixture />);
+      const selectedButton = rail.querySelector<HTMLButtonElement>(
+        'button[data-selected="true"]',
+      );
 
-		const rail = screen.getByRole("radiogroup", {
-			name: "Schedule date selector",
-		});
-		const passiveFocus = screen.getByRole("button", {
-			name: "Keep passive-scroll focus",
-		});
-		configureDayRail(rail);
+      if (!selectedButton) {
+        throw new Error(`Expected the ${edge} date to be selected.`);
+      }
 
-		const clickedDate = rail.querySelector<HTMLButtonElement>(
-			`button[data-date-key="${getDayKey(20)}"]`,
-		);
+      const centeredScrollLeft = Math.min(
+        Math.max(
+          selectedButton.offsetLeft +
+            selectedButton.offsetWidth / 2 -
+            rail.clientWidth / 2,
+          0,
+        ),
+        rail.scrollWidth - rail.clientWidth,
+      );
 
-		if (!clickedDate) {
-			throw new Error("Expected the clicked day to be present in the rail.");
-		}
+      expect(selectedButton).toHaveAttribute("data-date-key", getDayKey(index));
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getDayKey(index),
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        getDayKey(index),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+      expect(scrollToMock).toHaveBeenLastCalledWith({
+        left: centeredScrollLeft,
+        behavior: "auto",
+      });
 
-		fireEvent.pointerDown(clickedDate, { pointerType: "mouse" });
-		fireEvent.click(clickedDate);
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(20),
-		);
+      rail.scrollLeft = (rail.scrollWidth - rail.clientWidth) / 2;
+      fireEvent.wheel(rail);
+      fireEvent.scroll(rail);
+      fireEvent(rail, new Event("scrollend"));
 
-		passiveFocus.focus();
-		fireEvent.wheel(rail);
-		rail.scrollLeft = getCenteredDayScrollLeft(21);
-		fireEvent.scroll(rail);
-		fireEvent(rail, new Event("scrollend"));
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getDayKey(index),
+      );
+      expect(screen.getByTestId("result-date")).toHaveTextContent(
+        getDayKey(index),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    },
+  );
 
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(21),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
-		expect(passiveFocus).toHaveFocus();
+  it("moves roving focus and the viewport with Arrow and Page keys, then commits only on Enter", async () => {
+    render(<DayRailFixture />);
 
-		fireEvent(rail, new Event("scrollend"));
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(150);
-		});
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
-	});
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const selected = getDayButton(rail, 17);
+    const arrowTarget = getDayButton(rail, 18);
+    const pageTarget = getDayButton(rail, 25);
+    const selectedDate = screen.getByTestId("selected-date").textContent;
 
-	it("starts an independent touch swipe from a just-tapped day", () => {
-		render(<DayRailFixture />);
+    configureDayRail(rail);
+    scrollToMock.mockClear();
+    selected.focus();
+    fireEvent.keyDown(selected, { key: "ArrowRight" });
 
-		const rail = screen.getByRole("radiogroup", {
-			name: "Schedule date selector",
-		});
-		configureDayRail(rail);
+    expect(arrowTarget).toHaveFocus();
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: 18 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
 
-		const tappedDate = rail.querySelector<HTMLButtonElement>(
-			`button[data-date-key="${getDayKey(20)}"]`,
-		);
+    fireEvent.keyDown(arrowTarget, { key: "PageDown" });
 
-		if (!tappedDate) {
-			throw new Error("Expected the tapped day to be present in the rail.");
-		}
+    expect(pageTarget).toHaveFocus();
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: 25 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
 
-		fireEvent.pointerDown(tappedDate, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 100,
-			clientY: 20,
-		});
-		fireEvent.pointerUp(rail, {
-			pointerId: 1,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 100,
-			clientY: 20,
-		});
-		fireEvent.click(tappedDate, { detail: 1 });
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    const user = userEvent.setup();
 
-		fireEvent.pointerDown(rail, {
-			pointerId: 2,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 100,
-			clientY: 20,
-		});
-		rail.scrollLeft = getCenteredDayScrollLeft(21);
-		fireEvent.scroll(rail);
-		fireEvent.pointerUp(rail, {
-			pointerId: 2,
-			pointerType: "touch",
-			isPrimary: true,
-			clientX: 60,
-			clientY: 20,
-		});
-		fireEvent(rail, new Event("scrollend"));
+    await user.keyboard("{Enter}");
 
-		expect(screen.getByTestId("selected-date")).toHaveTextContent(
-			getDayKey(21),
-		);
-		expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
-	});
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      getDayKey(25),
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      getDayKey(25),
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+  });
+
+  it("moves focus into a visible browse target when the selected date falls out of the buffer", async () => {
+    const user = userEvent.setup();
+    render(<DayRailFixture initialIndex={0} />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureDayRail(rail, { scrollLeft: 900 });
+    scrollToMock.mockClear();
+    await user.click(
+      screen.getByRole("button", { name: "Move date buffer forward" }),
+    );
+
+    const browseTarget = rail.querySelector<HTMLButtonElement>(
+      'button[data-date-key][tabindex="0"]',
+    );
+
+    if (!browseTarget) {
+      throw new Error("Expected a visible date browse target.");
+    }
+
+    const browseTargetCenter =
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2;
+
+    expect(
+      rail.querySelector(`button[data-date-key="${selectedDate}"]`),
+    ).toBeNull();
+    expect(browseTargetCenter).toBeGreaterThanOrEqual(rail.scrollLeft);
+    expect(browseTargetCenter).toBeLessThanOrEqual(
+      rail.scrollLeft + rail.clientWidth,
+    );
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    await user.tab();
+
+    expect(browseTarget).toHaveFocus();
+    expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
+  it("does not select after a touch swipe followed by its synthetic click", () => {
+    render(<DayRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const target = getDayButton(rail, 20);
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureDayRail(rail);
+    fireEvent.pointerDown(target, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    rail.scrollLeft = 800;
+    fireEvent.pointerMove(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 80,
+      clientY: 20,
+    });
+    fireEvent.scroll(rail);
+    fireEvent.pointerUp(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 80,
+      clientY: 20,
+    });
+    fireEvent.click(target, { detail: 1 });
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
+  it("waits for native touchend after an iOS pointercancel before settling its inertial tail", async () => {
+    vi.useFakeTimers();
+    render(<DayRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const draggedDate = getDayButton(rail, 17);
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+
+    configureDayRail(rail);
+    fireEvent.touchStart(rail, {
+      changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+      touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+    });
+    fireEvent.pointerDown(draggedDate, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 20,
+    });
+    rail.scrollLeft = 800;
+    fireEvent.pointerMove(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 70,
+      clientY: 20,
+    });
+    fireEvent.scroll(rail);
+    fireEvent.pointerCancel(rail, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 70,
+      clientY: 20,
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(151);
+    });
+
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+
+    rail.scrollLeft = 900;
+    fireEvent.scroll(rail);
+    fireEvent.touchEnd(rail, {
+      changedTouches: [{ clientX: 40, clientY: 20, identifier: 1 }],
+      touches: [],
+    });
+    fireEvent.scroll(rail);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+  });
+
+  it.each(["touchcancel", "blur", "pagehide"] as const)(
+    "discards an interrupted touch swipe after %s and allows the next tap to select once",
+    async (cancellation) => {
+      vi.useFakeTimers();
+      render(<DayRailFixture />);
+
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      const draggedDate = getDayButton(rail, 20);
+      const selectedDate = screen.getByTestId("selected-date").textContent;
+
+      configureDayRail(rail);
+      fireEvent.touchStart(rail, {
+        changedTouches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+        touches: [{ clientX: 100, clientY: 20, identifier: 1 }],
+      });
+      fireEvent.pointerDown(draggedDate, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 100,
+        clientY: 20,
+      });
+      rail.scrollLeft = 800;
+      fireEvent.pointerMove(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 70,
+        clientY: 20,
+      });
+      fireEvent.scroll(rail);
+      fireEvent.pointerCancel(rail, {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 70,
+        clientY: 20,
+      });
+
+      if (cancellation === "touchcancel") {
+        fireEvent.touchCancel(rail, {
+          changedTouches: [{ clientX: 70, clientY: 20, identifier: 1 }],
+          touches: [],
+        });
+      } else if (cancellation === "blur") {
+        fireEvent.blur(window);
+      } else {
+        fireEvent(window, new Event("pagehide"));
+      }
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(151);
+      });
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        selectedDate ?? "",
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+      fireEvent.pointerDown(draggedDate, {
+        pointerId: 2,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 100,
+        clientY: 20,
+      });
+      fireEvent.pointerUp(rail, {
+        pointerId: 2,
+        pointerType: "touch",
+        isPrimary: true,
+        clientX: 100,
+        clientY: 20,
+      });
+      fireEvent.click(draggedDate, { detail: 1 });
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        getDayKey(20),
+      );
+      expect(screen.getByTestId("selection-count")).toHaveTextContent("1");
+    },
+  );
+
+  it("centers the initial layout and preserves a later browsed date viewport through orientation resize", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<DayRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+    const browseTarget = getDayButton(rail, 8);
+    const selectedButton = getDayButton(rail, 17);
+
+    configureDayRail(rail);
+    scrollToMock.mockClear();
+    act(() => {
+      resizeObserver?.trigger();
+    });
+
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: 17 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
+
+    rail.scrollLeft = 500;
+    fireEvent.wheel(rail);
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeGreaterThanOrEqual(rail.scrollLeft);
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeLessThanOrEqual(rail.scrollLeft + rail.clientWidth);
+    expect(selectedButton.offsetLeft).toBeGreaterThan(
+      rail.scrollLeft + rail.clientWidth,
+    );
+    Object.defineProperty(rail, "clientWidth", {
+      configurable: true,
+      value: 400,
+    });
+    scrollToMock.mockClear();
+
+    act(() => {
+      resizeObserver?.trigger();
+    });
+
+    expect(rail.scrollLeft).toBe(500);
+    expect(scrollToMock).not.toHaveBeenCalled();
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeGreaterThanOrEqual(rail.scrollLeft);
+    expect(
+      browseTarget.offsetLeft + browseTarget.offsetWidth / 2,
+    ).toBeLessThanOrEqual(rail.scrollLeft + rail.clientWidth);
+    expect(selectedButton.offsetLeft).toBeGreaterThan(
+      rail.scrollLeft + rail.clientWidth,
+    );
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
+
+  it("defers resize reconciliation until smooth explicit centering settles", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<DayRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    const target = getDayButton(rail, 20);
+
+    configureDayRail(rail);
+    act(() => {
+      resizeObserver?.trigger();
+    });
+    scrollToMock.mockClear();
+    fireEvent.click(target);
+
+    expect(scrollToMock).toHaveBeenCalledExactlyOnceWith({
+      left: 20 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2,
+      behavior: "smooth",
+    });
+
+    rail.scrollLeft = 600;
+    fireEvent.scroll(rail);
+    act(() => {
+      resizeObserver?.trigger();
+      resizeObserver?.trigger();
+    });
+
+    expect(scrollToMock).toHaveBeenCalledTimes(1);
+
+    rail.scrollLeft =
+      20 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2;
+    fireEvent.scroll(rail);
+    fireEvent(rail, new Event("scrollend"));
+
+    expect(scrollToMock).toHaveBeenLastCalledWith({
+      left: 20 * DAY_ITEM_WIDTH + DAY_TILE_WIDTH / 2 - DAY_RAIL_WIDTH / 2,
+      behavior: "auto",
+    });
+    expect(scrollToMock).toHaveBeenCalledTimes(2);
+  });
 });

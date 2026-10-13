@@ -3,7 +3,7 @@ import {
   useId,
   useLayoutEffect,
   useRef,
-  type FocusEvent,
+  useState,
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -29,11 +29,11 @@ export interface WeekViewProps {
     direction: "previous" | "next",
     count?: number,
   ) => void;
-  onRestoreSelectedWeek: () => void;
   centerRequest: {
     id: number;
     behavior: ScrollBehavior;
   };
+  isActive?: boolean;
   className?: string;
 }
 
@@ -105,8 +105,8 @@ export function WeekView({
   selectedDate,
   onDateSelect,
   onExtendWeekBuffer,
-  onRestoreSelectedWeek,
   centerRequest,
+  isActive = true,
   className,
 }: WeekViewProps) {
   const { t } = useTranslation(["schedules"]);
@@ -119,18 +119,20 @@ export function WeekView({
   const pendingAppendStartWeekRef = useRef<number | null>(null);
   const pendingAppendTrackWidthRef = useRef<number | null>(null);
   const pendingExtensionRef = useRef<"previous" | "next" | null>(null);
+  const pendingSelectionEdgeCenterBehaviorRef =
+    useRef<ScrollBehavior | null>(null);
+  const pendingSelectionBufferStartWeekRef = useRef<number | null>(null);
+  const ignoredCompensationScrollLeftRef = useRef<number | null>(null);
   const pendingFocusWeekRef = useRef<string | null>(null);
-  const forcedCenteredWeekRef = useRef<string | null>(null);
   const lastCenteredWeekRef = useRef<string | null>(null);
   const lastCenterRequestRef = useRef<number | null>(null);
   const smoothCenteringRef = useRef(false);
-  const smoothCenterEdgeDirectionRef = useRef<
-    "previous" | "next" | null
-  >(null);
   const resizeDuringSmoothCenteringRef = useRef(false);
+  const hasObservedInitialLayoutRef = useRef(false);
+  const selectionCenterPendingRef = useRef(true);
   const centerSelectedWeekRef = useRef<
-    (behavior?: ScrollBehavior) => void
-  >(() => undefined);
+    (behavior?: ScrollBehavior) => boolean
+  >(() => false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
   const touchScrollSessionRef = useRef(false);
@@ -140,7 +142,7 @@ export function WeekView({
   const touchScrollFallbackTimeoutRef = useRef<number | null>(null);
   const scrollSettlementTimeoutRef = useRef<number | null>(null);
   const scrollSessionActiveRef = useRef(false);
-  const scrollSessionStartIndexRef = useRef<number | null>(null);
+  const didScrollSessionMoveRef = useRef(false);
   const didExtendScrollSessionRef = useRef(false);
   const settleRailScrollRef = useRef<() => void>(() => undefined);
   const lastMousePointerDownAtRef = useRef<number | null>(null);
@@ -153,29 +155,29 @@ export function WeekView({
   const selectedWeekKey = selectedWeekStart
     ? DateTime.from(selectedWeekStart).toDateOnlyString()
     : undefined;
+  const [rovingFocusWeekKey, setRovingFocusWeekKey] = useState<string | null>(
+    null,
+  );
+  const lastSelectedWeekKeyRef = useRef<string | null>(
+    selectedWeekKey ?? null,
+  );
+  const pendingSelectedFocusWeekRef = useRef<string | null>(null);
   const isSelectedWeekInBuffer = selectedWeekStart
     ? weekStarts.some((weekStart) => isSameWeek(weekStart, selectedWeekStart))
     : false;
-  const offscreenSelectedAriaLabel =
-    selectedWeekStart && !isSelectedWeekInBuffer
-      ? [
-          t("schedules:weekSelector.weekLabel", {
-            start: DateTime.formatDate(selectedWeekStart, {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            }),
-            end: DateTime.formatDate(getWeekEnd(selectedWeekStart), {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            }),
-          }),
-          t("schedules:weekSelector.selectedWeek"),
-        ].join(", ")
-      : undefined;
+  const isRovingFocusWeekInBuffer =
+    rovingFocusWeekKey !== null &&
+    weekStarts.some(
+      (weekStart) =>
+        DateTime.from(weekStart).toDateOnlyString() === rovingFocusWeekKey,
+    );
+  const tabbableWeekKey = isRovingFocusWeekInBuffer
+    ? rovingFocusWeekKey
+    : isSelectedWeekInBuffer
+      ? selectedWeekKey
+      : weekStarts[0]
+        ? DateTime.from(weekStarts[0]).toDateOnlyString()
+        : null;
   const selectWeek = useCallback(
     (weekStart: Date) => {
       const weekdayOffset = getWeekdayOffset(selectedDate ?? weekStart);
@@ -185,7 +187,6 @@ export function WeekView({
   );
   const clearSmoothCentering = useCallback(() => {
     smoothCenteringRef.current = false;
-    smoothCenterEdgeDirectionRef.current = null;
 
     if (smoothCenterFallbackTimeoutRef.current !== null) {
       window.clearTimeout(smoothCenterFallbackTimeoutRef.current);
@@ -219,7 +220,7 @@ export function WeekView({
 
   const discardScrollSession = useCallback(() => {
     scrollSessionActiveRef.current = false;
-    scrollSessionStartIndexRef.current = null;
+    didScrollSessionMoveRef.current = false;
     didExtendScrollSessionRef.current = false;
 
     if (scrollSettlementTimeoutRef.current !== null) {
@@ -227,6 +228,17 @@ export function WeekView({
       scrollSettlementTimeoutRef.current = null;
     }
   }, []);
+
+  const discardPendingBrowseSession = useCallback(() => {
+    discardScrollSession();
+    discardTouchScrollSession();
+  }, [discardScrollSession, discardTouchScrollSession]);
+
+  useLayoutEffect(() => {
+    if (!isActive) {
+      discardPendingBrowseSession();
+    }
+  }, [discardPendingBrowseSession, isActive]);
 
   const handleRailScrollEnd = useCallback(() => {
     if (touchScrollPointerActiveRef.current) return;
@@ -423,38 +435,16 @@ export function WeekView({
   const settleSmoothCentering = useCallback(() => {
     if (!smoothCenteringRef.current) return;
 
-    const requestedEdgeDirection = smoothCenterEdgeDirectionRef.current;
     const shouldRecenterAfterResize = resizeDuringSmoothCenteringRef.current;
 
     resizeDuringSmoothCenteringRef.current = false;
 
     clearSmoothCentering();
 
-    const container = containerRef.current;
-    const maxScrollLeft = container
-      ? Math.max(container.scrollWidth - container.clientWidth, 0)
-      : 0;
-    const edgeThreshold = Math.min(
-      EDGE_THRESHOLD,
-      Math.max(maxScrollLeft - (trackItemWidthRef.current ?? 0), 0),
-    );
-    const edgeDirection =
-      requestedEdgeDirection ??
-      (maxScrollLeft > 0 && container && container.scrollLeft <= edgeThreshold
-        ? "previous"
-        : maxScrollLeft > 0 &&
-            container &&
-            container.scrollLeft >= maxScrollLeft - edgeThreshold
-          ? "next"
-          : null);
-    const didRotateBuffer = edgeDirection
-      ? extendClampedWeekBuffer(edgeDirection)
-      : false;
-
-    if (!didRotateBuffer && shouldRecenterAfterResize) {
+    if (shouldRecenterAfterResize) {
       centerSelectedWeekRef.current();
     }
-  }, [clearSmoothCentering, extendClampedWeekBuffer]);
+  }, [clearSmoothCentering]);
 
   const scheduleSmoothCenterFallback = useCallback(() => {
     if (!smoothCenteringRef.current) return;
@@ -513,13 +503,22 @@ export function WeekView({
   }, [handleRailScrollEnd]);
 
   const centerSelectedWeek = useCallback(
-    (behavior: ScrollBehavior = "auto") => {
+    (behavior: ScrollBehavior = "auto"): boolean => {
       const container = containerRef.current;
       const selectedButton = container?.querySelector<HTMLButtonElement>(
-        'button[aria-checked="true"]',
+        'button[data-selected="true"]',
       );
 
-      if (!container || !selectedButton) return;
+      if (
+        !isActive ||
+        !container ||
+        !selectedButton ||
+        container.clientWidth === 0 ||
+        container.scrollWidth === 0 ||
+        selectedButton.offsetWidth === 0
+      ) {
+        return false;
+      }
 
       const maxScrollLeft = Math.max(
         container.scrollWidth - container.clientWidth,
@@ -533,23 +532,46 @@ export function WeekView({
         Math.max(centeredScrollLeft, 0),
         maxScrollLeft,
       );
-      const firstWeekButton = container.querySelector<HTMLButtonElement>(
-        "button[data-week-key]",
-      );
-      const weekButtons = container.querySelectorAll<HTMLButtonElement>(
-        "button[data-week-key]",
-      );
-      const lastWeekButton = weekButtons[weekButtons.length - 1];
-      const clampedEdgeDirection =
-        maxScrollLeft > 0 &&
-        selectedButton === firstWeekButton &&
-        centeredScrollLeft < 0
+      const edgeDirection =
+        maxScrollLeft > 0 && centeredScrollLeft < 0
           ? "previous"
           : maxScrollLeft > 0 &&
-              selectedButton === lastWeekButton &&
               centeredScrollLeft > maxScrollLeft
             ? "next"
             : null;
+
+      if (edgeDirection) {
+        if (pendingExtensionRef.current !== null) {
+          return false;
+        }
+
+        updateTrackItemWidth();
+
+        const trackItemWidth = trackItemWidthRef.current;
+        const distanceToCenter =
+          edgeDirection === "previous"
+            ? -centeredScrollLeft
+            : centeredScrollLeft - maxScrollLeft;
+        const maxWeeksToExtend = weekStarts.length - 1;
+
+        if (trackItemWidth && maxWeeksToExtend > 0) {
+          clearSmoothCentering();
+          resizeDuringSmoothCenteringRef.current = false;
+          pendingExtensionRef.current = edgeDirection;
+          pendingSelectionEdgeCenterBehaviorRef.current = behavior;
+          pendingSelectionBufferStartWeekRef.current =
+            weekStarts[0]?.getTime() ?? null;
+          onExtendWeekBuffer(
+            edgeDirection,
+            Math.min(
+              Math.max(Math.ceil(distanceToCenter / trackItemWidth), 1),
+              maxWeeksToExtend,
+            ),
+          );
+          return false;
+        }
+      }
+
       const shouldSmoothlyCenter =
         behavior === "smooth" &&
         !prefersReducedMotion &&
@@ -559,7 +581,6 @@ export function WeekView({
         clearSmoothCentering();
         resizeDuringSmoothCenteringRef.current = false;
         smoothCenteringRef.current = true;
-        smoothCenterEdgeDirectionRef.current = clampedEdgeDirection;
 
         const handleScrollEnd = () => {
           settleSmoothCentering();
@@ -583,16 +604,17 @@ export function WeekView({
         behavior: shouldSmoothlyCenter ? "smooth" : "auto",
       });
 
-      if (!shouldSmoothlyCenter && clampedEdgeDirection) {
-        extendClampedWeekBuffer(clampedEdgeDirection);
-      }
+      return true;
     },
     [
       clearSmoothCentering,
-      extendClampedWeekBuffer,
+      isActive,
+      onExtendWeekBuffer,
       prefersReducedMotion,
       scheduleSmoothCenterFallback,
       settleSmoothCentering,
+      updateTrackItemWidth,
+      weekStarts.length,
     ],
   );
 
@@ -600,60 +622,149 @@ export function WeekView({
     centerSelectedWeekRef.current = centerSelectedWeek;
   }, [centerSelectedWeek]);
 
-  useLayoutEffect(() => {
-    if (!selectedWeekKey) return;
+  const focusWeekButton = useCallback((weekKey: string): boolean => {
+    const container = containerRef.current;
+    const button = container?.querySelector<HTMLButtonElement>(
+      `[data-week-key="${weekKey}"]`,
+    );
 
-    if (pendingExtensionRef.current !== null) {
-      lastCenteredWeekRef.current = selectedWeekKey;
-      lastCenterRequestRef.current = centerRequest.id;
+    if (!container || !button) return false;
+
+    const maxScrollLeft = Math.max(
+      container.scrollWidth - container.clientWidth,
+      0,
+    );
+    const targetLeft = Math.min(
+      Math.max(
+        button.offsetLeft + button.offsetWidth / 2 - container.clientWidth / 2,
+        0,
+      ),
+      maxScrollLeft,
+    );
+
+    container.scrollTo({ left: targetLeft, behavior: "auto" });
+    button.focus({ preventScroll: true });
+    return true;
+  }, []);
+
+  useLayoutEffect(() => {
+    const nextSelectedWeekKey = selectedWeekKey ?? null;
+
+    if (lastSelectedWeekKeyRef.current !== nextSelectedWeekKey) {
+      lastSelectedWeekKeyRef.current = nextSelectedWeekKey;
+      pendingSelectedFocusWeekRef.current = nextSelectedWeekKey;
+    }
+
+    const pendingSelectedFocusWeek = pendingSelectedFocusWeekRef.current;
+
+    if (
+      pendingSelectedFocusWeek &&
+      weekStarts.some(
+        (weekStart) =>
+          DateTime.from(weekStart).toDateOnlyString() ===
+          pendingSelectedFocusWeek,
+      )
+    ) {
+      setRovingFocusWeekKey(pendingSelectedFocusWeek);
+      pendingSelectedFocusWeekRef.current = null;
+    }
+  }, [selectedWeekKey, weekStarts]);
+
+  useLayoutEffect(() => {
+    if (!selectedWeekKey) {
+      selectionCenterPendingRef.current = false;
+      pendingSelectionEdgeCenterBehaviorRef.current = null;
+      pendingSelectionBufferStartWeekRef.current = null;
       return;
     }
 
-    const shouldForceCenter = forcedCenteredWeekRef.current === selectedWeekKey;
+    const selectedWeekChanged =
+      lastCenteredWeekRef.current !== selectedWeekKey;
+    const centerRequestChanged =
+      lastCenterRequestRef.current !== centerRequest.id;
+
+    if (selectedWeekChanged || centerRequestChanged) {
+      discardPendingBrowseSession();
+    }
+
+    const pendingSelectionEdgeCenterBehavior =
+      pendingSelectionEdgeCenterBehaviorRef.current;
+
+    if (
+      pendingExtensionRef.current !== null &&
+      pendingSelectionEdgeCenterBehavior === null
+    ) {
+      lastCenteredWeekRef.current = selectedWeekKey;
+      lastCenterRequestRef.current = centerRequest.id;
+      selectionCenterPendingRef.current = false;
+      return;
+    }
+
     const shouldCenter =
-      shouldForceCenter ||
       lastCenteredWeekRef.current !== selectedWeekKey ||
       lastCenterRequestRef.current !== centerRequest.id;
+
+    selectionCenterPendingRef.current = shouldCenter;
 
     if (!shouldCenter) return;
 
     const selectedButton = containerRef.current?.querySelector(
-      'button[aria-checked="true"]',
+      'button[data-selected="true"]',
     );
 
     if (!selectedButton) return;
 
     const isInitialCenter = lastCenteredWeekRef.current === null;
-    const selectedWeekChanged = lastCenteredWeekRef.current !== selectedWeekKey;
-    const centerRequestChanged =
-      lastCenterRequestRef.current !== null &&
-      lastCenterRequestRef.current !== centerRequest.id;
-    const behavior = isInitialCenter
-      ? "auto"
-      : shouldForceCenter
-        ? "smooth"
-        : centerRequestChanged
-        ? centerRequest.behavior
-        : selectedWeekChanged
-          ? "smooth"
-          : "auto";
+    const didCenterRequestChange =
+      lastCenterRequestRef.current !== null && centerRequestChanged;
+    const behavior =
+      pendingSelectionEdgeCenterBehavior ??
+      (isInitialCenter
+        ? "auto"
+        : didCenterRequestChange
+          ? centerRequest.behavior
+          : selectedWeekChanged
+            ? "smooth"
+            : "auto");
 
-    centerSelectedWeek(behavior);
-    forcedCenteredWeekRef.current = null;
+    if (!centerSelectedWeek(behavior)) return;
+
     lastCenteredWeekRef.current = selectedWeekKey;
     lastCenterRequestRef.current = centerRequest.id;
-  }, [centerRequest, centerSelectedWeek, selectedWeekKey, weekStarts]);
+    selectionCenterPendingRef.current = false;
+    pendingSelectionEdgeCenterBehaviorRef.current = null;
+    pendingSelectionBufferStartWeekRef.current = null;
+    hasObservedInitialLayoutRef.current = true;
+  }, [
+    centerRequest,
+    centerSelectedWeek,
+    discardPendingBrowseSession,
+    isActive,
+    selectedWeekKey,
+    weekStarts,
+  ]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
 
     if (!container) return;
 
+    if (
+      pendingExtensionRef.current !== null &&
+      pendingSelectionEdgeCenterBehaviorRef.current !== null &&
+      pendingSelectionBufferStartWeekRef.current === weekStarts[0]?.getTime()
+    ) {
+      return;
+    }
+
     updateTrackItemWidth();
+
+    let adjustedForBufferExtension = false;
 
     if (pendingPrependTrackWidthRef.current !== null) {
       container.scrollLeft += pendingPrependTrackWidthRef.current;
       pendingPrependTrackWidthRef.current = null;
+      adjustedForBufferExtension = true;
     }
 
     if (
@@ -662,45 +773,118 @@ export function WeekView({
       weekStarts[0]?.getTime() !== pendingAppendStartWeekRef.current
     ) {
       container.scrollLeft -= pendingAppendTrackWidthRef.current;
+      adjustedForBufferExtension = true;
     }
 
     pendingAppendStartWeekRef.current = null;
     pendingAppendTrackWidthRef.current = null;
     pendingExtensionRef.current = null;
+    pendingSelectionBufferStartWeekRef.current = null;
     lastScrollLeftRef.current = container.scrollLeft;
+
+    if (adjustedForBufferExtension) {
+      ignoredCompensationScrollLeftRef.current = container.scrollLeft;
+    }
 
     const pendingFocusWeek = pendingFocusWeekRef.current;
 
     if (!pendingFocusWeek) return;
 
-    const nextFocusedButton = container.querySelector<HTMLButtonElement>(
-      `[data-week-key="${pendingFocusWeek}"]`,
-    );
-
-    if (nextFocusedButton) {
-      nextFocusedButton.focus({ preventScroll: true });
+    if (focusWeekButton(pendingFocusWeek)) {
       pendingFocusWeekRef.current = null;
     }
-  }, [selectedWeekKey, updateTrackItemWidth, weekStarts]);
+  }, [focusWeekButton, selectedWeekKey, updateTrackItemWidth, weekStarts]);
+
+  useLayoutEffect(() => {
+    if (pendingFocusWeekRef.current !== null || isRovingFocusWeekInBuffer) {
+      return;
+    }
+
+    if (isSelectedWeekInBuffer && selectedWeekKey) {
+      setRovingFocusWeekKey(selectedWeekKey);
+      return;
+    }
+
+    const container = containerRef.current;
+    const buttons = container
+      ? Array.from(
+          container.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
+        )
+      : [];
+
+    const browseTarget = buttons.reduce<HTMLButtonElement | null>(
+      (closestButton, button) => {
+        if (!closestButton || !container) return button;
+
+        const viewportCenter = container.scrollLeft + container.clientWidth / 2;
+        const buttonCenter = button.offsetLeft + button.offsetWidth / 2;
+        const closestButtonCenter =
+          closestButton.offsetLeft + closestButton.offsetWidth / 2;
+
+        return Math.abs(buttonCenter - viewportCenter) <
+          Math.abs(closestButtonCenter - viewportCenter)
+          ? button
+          : closestButton;
+      },
+      null,
+    );
+
+    setRovingFocusWeekKey(
+      browseTarget?.dataset.weekKey ??
+        (weekStarts[0]
+          ? DateTime.from(weekStarts[0]).toDateOnlyString()
+          : null),
+    );
+  }, [
+    isRovingFocusWeekInBuffer,
+    isSelectedWeekInBuffer,
+    selectedWeekKey,
+    weekStarts,
+  ]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
 
-    if (!container) return;
+    if (!isActive || !container) return;
 
     updateTrackItemWidth();
 
     if (typeof ResizeObserver === "undefined") return;
 
     const resizeObserver = new ResizeObserver(() => {
+      const selectedButton = container.querySelector<HTMLButtonElement>(
+        'button[data-selected="true"]',
+      );
+
+      if (
+        container.clientWidth === 0 ||
+        container.scrollWidth === 0 ||
+        !selectedButton ||
+        selectedButton.offsetWidth === 0
+      ) {
+        return;
+      }
+
       updateTrackItemWidth();
+
+      const shouldCenterInitialLayout = !hasObservedInitialLayoutRef.current;
+
+      hasObservedInitialLayoutRef.current = true;
 
       if (smoothCenteringRef.current) {
         resizeDuringSmoothCenteringRef.current = true;
         return;
       }
 
-      centerSelectedWeekRef.current();
+      if (shouldCenterInitialLayout || selectionCenterPendingRef.current) {
+        if (!centerSelectedWeekRef.current() || !selectedWeekKey) return;
+
+        lastCenteredWeekRef.current = selectedWeekKey;
+        lastCenterRequestRef.current = centerRequest.id;
+        selectionCenterPendingRef.current = false;
+        pendingSelectionEdgeCenterBehaviorRef.current = null;
+        pendingSelectionBufferStartWeekRef.current = null;
+      }
     });
 
     resizeObserver.observe(container);
@@ -708,12 +892,26 @@ export function WeekView({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [updateTrackItemWidth]);
+  }, [centerRequest.id, isActive, selectedWeekKey, updateTrackItemWidth]);
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
 
     if (!container) return;
+
+    const ignoredCompensationScrollLeft =
+      ignoredCompensationScrollLeftRef.current;
+
+    if (ignoredCompensationScrollLeft !== null) {
+      ignoredCompensationScrollLeftRef.current = null;
+
+      if (
+        Math.abs(container.scrollLeft - ignoredCompensationScrollLeft) < 0.5
+      ) {
+        lastScrollLeftRef.current = container.scrollLeft;
+        return;
+      }
+    }
 
     if (smoothCenteringRef.current) {
       lastScrollLeftRef.current = container.scrollLeft;
@@ -721,17 +919,16 @@ export function WeekView({
       return;
     }
 
-    if (!scrollSessionActiveRef.current) {
-      const selectedIndex = selectedWeekStart
-        ? weekStarts.findIndex((weekStart) =>
-            isSameWeek(weekStart, selectedWeekStart),
-          )
-        : -1;
-
-      scrollSessionActiveRef.current = true;
-      scrollSessionStartIndexRef.current = selectedIndex >= 0 ? selectedIndex : null;
-      didExtendScrollSessionRef.current = false;
+    if (pendingExtensionRef.current !== null) {
+      lastScrollLeftRef.current = container.scrollLeft;
+      return;
     }
+
+    if (!scrollSessionActiveRef.current && !touchScrollSessionRef.current) {
+      return;
+    }
+
+    didScrollSessionMoveRef.current = true;
 
     if (scrollSettlementTimeoutRef.current !== null) {
       window.clearTimeout(scrollSettlementTimeoutRef.current);
@@ -750,10 +947,7 @@ export function WeekView({
     const previousScrollLeft = lastScrollLeftRef.current;
     lastScrollLeftRef.current = scrollLeft;
 
-    if (
-      queuedTouchEdgeRotationRef.current !== null ||
-      pendingExtensionRef.current
-    ) {
+    if (queuedTouchEdgeRotationRef.current !== null) {
       return;
     }
 
@@ -800,21 +994,8 @@ export function WeekView({
   }, [
     scheduleSmoothCenterFallback,
     scheduleTouchScrollIdleFallback,
-    selectedWeekStart,
     weekStarts,
   ]);
-
-  const handleRailFocus = useCallback(
-    (event: FocusEvent<HTMLDivElement>) => {
-      if (event.target !== event.currentTarget || !selectedWeekStart) return;
-
-      pendingFocusWeekRef.current = DateTime.from(
-        selectedWeekStart,
-      ).toDateOnlyString();
-      onRestoreSelectedWeek();
-    },
-    [onRestoreSelectedWeek, selectedWeekStart],
-  );
 
   const settleRailScroll = useCallback(() => {
     if (smoothCenteringRef.current) {
@@ -838,60 +1019,11 @@ export function WeekView({
       scrollSettlementTimeoutRef.current = null;
     }
 
+    if (!didScrollSessionMoveRef.current) return;
+
     const container = containerRef.current;
 
     if (!container) return;
-
-    const buttons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
-    );
-
-    if (buttons.length === 0) return;
-
-    const centers = buttons.map(
-      (button) => button.offsetLeft + button.offsetWidth / 2,
-    );
-
-    if (new Set(centers).size < 2) return;
-
-    const viewportCenter = container.scrollLeft + container.clientWidth / 2;
-    const centeredIndex = centers.reduce(
-      (closestIndex, center, index) =>
-        Math.abs(center - viewportCenter) <
-        Math.abs(centers[closestIndex]! - viewportCenter)
-          ? index
-          : closestIndex,
-      0,
-    );
-    const selectedIndex = selectedWeekStart
-      ? weekStarts.findIndex((weekStart) =>
-          isSameWeek(weekStart, selectedWeekStart),
-        )
-      : -1;
-    const startIndex =
-      scrollSessionStartIndexRef.current ??
-      (selectedIndex >= 0 ? selectedIndex : centeredIndex);
-    const targetIndex = Math.min(
-      Math.max(centeredIndex, startIndex - 1),
-      startIndex + 1,
-    );
-    const targetWeekStart = weekStarts[targetIndex];
-    const wasLimitedToOneStep = targetIndex !== centeredIndex;
-
-    scrollSessionStartIndexRef.current = null;
-
-    if (!targetWeekStart) return;
-
-    if (!selectedWeekStart || !isSameWeek(targetWeekStart, selectedWeekStart)) {
-      if (wasLimitedToOneStep) {
-        forcedCenteredWeekRef.current = DateTime.from(
-          targetWeekStart,
-        ).toDateOnlyString();
-      }
-      selectWeek(targetWeekStart);
-    }
-
-    if (wasLimitedToOneStep) return;
 
     const maxScrollLeft = Math.max(
       container.scrollWidth - container.clientWidth,
@@ -919,11 +1051,8 @@ export function WeekView({
     }
   }, [
     extendClampedWeekBuffer,
-    selectWeek,
-    selectedWeekStart,
     settleSmoothCentering,
     settleTouchScrollSession,
-    weekStarts,
   ]);
 
   useLayoutEffect(() => {
@@ -934,14 +1063,8 @@ export function WeekView({
     (event: ReactPointerEvent<HTMLDivElement>) => {
       cancelSmoothCentering();
 
-      const selectedIndex = selectedWeekStart
-        ? weekStarts.findIndex((weekStart) =>
-            isSameWeek(weekStart, selectedWeekStart),
-          )
-        : -1;
-
       scrollSessionActiveRef.current = true;
-      scrollSessionStartIndexRef.current = selectedIndex >= 0 ? selectedIndex : null;
+      didScrollSessionMoveRef.current = false;
       didExtendScrollSessionRef.current = false;
 
       if (event.pointerType === "touch" && event.isPrimary) {
@@ -955,8 +1078,6 @@ export function WeekView({
     [
       cancelSmoothCentering,
       discardTouchScrollSession,
-      selectedWeekStart,
-      weekStarts,
     ],
   );
 
@@ -980,17 +1101,11 @@ export function WeekView({
     cancelSmoothCentering();
 
     if (!scrollSessionActiveRef.current) {
-      const selectedIndex = selectedWeekStart
-        ? weekStarts.findIndex((weekStart) =>
-            isSameWeek(weekStart, selectedWeekStart),
-          )
-        : -1;
-
       scrollSessionActiveRef.current = true;
-      scrollSessionStartIndexRef.current = selectedIndex >= 0 ? selectedIndex : null;
+      didScrollSessionMoveRef.current = false;
       didExtendScrollSessionRef.current = false;
     }
-  }, [cancelSmoothCentering, selectedWeekStart, weekStarts]);
+  }, [cancelSmoothCentering]);
 
   const handleTouchPointerDown = useCallback(
     (
@@ -1098,9 +1213,15 @@ export function WeekView({
       }
 
       discardScrollSession();
+      setRovingFocusWeekKey(weekKey);
       selectWeek(weekStart);
     },
-    [clearTouchClickSuppression, discardScrollSession, selectWeek],
+    [
+      clearTouchClickSuppression,
+      discardScrollSession,
+      selectWeek,
+      setRovingFocusWeekKey,
+    ],
   );
 
   const handleKeyDown = useCallback(
@@ -1126,26 +1247,29 @@ export function WeekView({
       const nextWeekStart = DateTime.from(weekStart)
         .addWeeks(weekOffset)
         .toDate();
+      const nextWeekKey = DateTime.from(nextWeekStart).toDateOnlyString();
       const firstWeekStart = weekStarts[0];
       const lastWeekStart = weekStarts.at(-1);
 
       if (firstWeekStart && nextWeekStart < firstWeekStart) {
+        pendingFocusWeekRef.current = nextWeekKey;
+        setRovingFocusWeekKey(nextWeekKey);
         onExtendWeekBuffer("previous", Math.abs(weekOffset));
       } else if (lastWeekStart && nextWeekStart > lastWeekStart) {
+        pendingFocusWeekRef.current = nextWeekKey;
+        setRovingFocusWeekKey(nextWeekKey);
         onExtendWeekBuffer("next", Math.abs(weekOffset));
+      } else {
+        setRovingFocusWeekKey(nextWeekKey);
+        focusWeekButton(nextWeekKey);
       }
-
-      pendingFocusWeekRef.current = DateTime.from(
-        nextWeekStart,
-      ).toDateOnlyString();
-      selectWeek(nextWeekStart);
     },
     [
       cancelSmoothCentering,
       discardScrollSession,
       discardTouchScrollSession,
+      focusWeekButton,
       onExtendWeekBuffer,
-      selectWeek,
       weekStarts,
     ],
   );
@@ -1162,11 +1286,9 @@ export function WeekView({
       </p>
       <div
         ref={containerRef}
-        role="radiogroup"
+        role="group"
         aria-label={t("schedules:weekSelector.weekRailLabel")}
         aria-describedby={instructionsId}
-        tabIndex={isSelectedWeekInBuffer ? -1 : 0}
-        onFocus={handleRailFocus}
         onScroll={handleScroll}
         onWheel={handleRailWheel}
         onPointerDownCapture={handleRailPointerDownCapture}
@@ -1176,14 +1298,6 @@ export function WeekView({
         onPointerCancel={handleTouchPointerCancel}
         className="relative min-w-0 max-w-full snap-x snap-mandatory overflow-x-auto py-1 scroll-px-3 scroll-py-1 overscroll-x-contain touch-pan-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:scroll-px-4 lg:scroll-px-6"
       >
-        {offscreenSelectedAriaLabel && (
-          <span
-            role="radio"
-            aria-checked="true"
-            aria-label={offscreenSelectedAriaLabel}
-            className="sr-only"
-          />
-        )}
         <div className="flex w-max min-w-[max(calc(100%+8rem),114.285714%)] gap-2 px-3 sm:px-4 lg:px-6">
           {weekStarts.map((weekStart) => {
             const weekEnd = getWeekEnd(weekStart);
@@ -1224,13 +1338,15 @@ export function WeekView({
                 key={weekStart.getTime()}
                 type="button"
                 onPointerDown={(event) =>
-                  handleTouchPointerDown(event, weekKey, () =>
-                    selectWeek(weekStart),
-                  )
+                  handleTouchPointerDown(event, weekKey, () => {
+                    setRovingFocusWeekKey(weekKey);
+                    selectWeek(weekStart);
+                  })
                 }
                 onClick={(event) => handleWeekClick(event, weekStart, weekKey)}
                 onKeyDown={(event) => handleKeyDown(event, weekStart)}
                 data-week-key={weekKey}
+                data-selected={isSelected ? "true" : undefined}
                 className={cn(
                   "flex h-14 min-w-32 flex-1 snap-center snap-always items-center justify-center rounded-xl border px-3 py-1.5 text-center text-sm font-medium tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer",
                   isSelected
@@ -1240,9 +1356,8 @@ export function WeekView({
                       : "border-border bg-card text-foreground hover:border-primary hover:bg-muted",
                 )}
                 aria-label={ariaLabel}
-                role="radio"
-                aria-checked={isSelected}
-                tabIndex={isSelected ? 0 : -1}
+                aria-current={isSelected ? "true" : undefined}
+                tabIndex={tabbableWeekKey === weekKey ? 0 : -1}
               >
                 <span className="truncate">{rangeLabel}</span>
               </button>

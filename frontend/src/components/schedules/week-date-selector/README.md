@@ -2,7 +2,7 @@
 
 ## Overview
 
-`WeekDateSelector` is the persistent date navigation component for the schedules screen. Tutors can switch between a day rail and a week rail without the surrounding controls moving. When scrolling settles, the centered date or week becomes selected and updates the schedule query. Direct choices from a tile, keyboard, Today, or the calendar also select a range.
+`WeekDateSelector` is the persistent date navigation component for the schedules screen. Tutors can switch between a day rail and a week rail without the surrounding controls moving. Scrolling moves the rail viewport and can load adjacent ranges without changing the selected range or schedule query. Direct choices from a tile, Enter or Space on a focused tile, Today, or the calendar select a range.
 
 `SchedulesScreen` owns the controlled `viewMode`; the selector reports activated tabs and can render its date rails into that outer Tabs context. Standalone use owns a local Tabs root but still requires the controlled mode and change callback. Switching modes preserves the committed date and changes the schedule query shape.
 
@@ -53,24 +53,25 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 
 ### Day mode
 
-- Keeps a continuous date range around the selected date and loads one week as scrolling approaches either edge. Settling on a centered date selects it and updates the schedule query.
-- Loading at the previous edge preserves the visible dates' screen positions; edge loading is limited to one range per settled gesture.
+- Keeps a continuous date range that can move independently of the selected date and loads one week as scrolling approaches either edge. Settling leaves the selected date and schedule query unchanged.
+- Loading at either edge preserves the visible dates' screen positions. The selected date may fall outside the loaded buffer while browsing continues.
 - Date tiles remain 56px square with 8px gaps at every breakpoint. The track has screen gutters and a one-tile continuation width, does not wrap or hide dates at `md`, and intentionally exposes a partial adjacent tile at an edge.
 
 ### Selection and header controls
 
 - `WeekDateSelector` owns the shared header controls: the calendar period trigger precedes Today and the controlled Day/Week tabs. Today and the tabs stay together on one line. Standalone callers provide `viewMode` and `onViewModeChange`; composed callers provide `viewMode` and a `children` render prop for the two rails, while their parent Tabs root owns mode changes.
 - From 480px, the trigger shows the full period label; from 360px, the localized compact period label, Today, and Day/Week controls share one row. Below 360px, the period label may sit above while Today and the tabs stay paired. The complete month or week range remains in the accessible calendar label. The tab track has a 36px visible surface with 44px tab targets; Today keeps its 32px outlined surface inside a 44px target.
-- The month label remains a `DateField` trigger and reflects the selected centered date or week. When the external date is `null`, the rail and header use today as an internal fallback until a date is selected.
+- The month label remains a `DateField` trigger and reflects the selected date or week. When the external date is `null`, the rail and header use today as an internal fallback until a date is selected.
 - Today and calendar selections call `onDateSelect`; the rail loads around an out-of-range target before centering it.
-- Clicking/tapping a tile, ArrowLeft/ArrowRight, PageUp/PageDown, Today, and date-picker selections smoothly center the selected tile by default. Reduced-motion users receive instant positioning.
-- Parent-driven date or week changes, such as changing the schedule date from another control, also smoothly center the selected tile once it is present in the rail. Initial positioning, explicit restoration, and reduced-motion positioning remain instant.
-- A tile tap selects and smoothly centers its target. Native scrolling settles on centered snap points; the centered item then becomes selected once, without moving keyboard focus during passive touch or trackpad scrolling.
+- Clicking/tapping a tile, Enter or Space on a focused tile, Today, and date-picker selections smoothly center the selected tile by default. Reduced-motion users receive instant positioning.
+- ArrowLeft/ArrowRight and PageUp/PageDown move the roving button focus and viewport without selecting. Day arrows move one day and Page keys move one week; Week arrows move one week and Page keys move four weeks.
+- Parent-driven date or week changes, such as changing the schedule date from another control, also smoothly center the selected tile once it is present in the rail. Initial positioning and reduced-motion positioning remain instant.
+- A tile tap selects and smoothly centers its target. Native scrolling settles on centered snap points and may load an adjacent range after actual user scroll movement near an edge, without changing selection or keyboard focus during passive touch, wheel, or trackpad scrolling. Programmatic centering, mode switches, and resize adjustments never start edge loading.
 - Selected dates use the primary tile treatment. Unselected today has a primary outline only; month boundaries show a compact month marker.
 
 ### Week mode
 
-- Keeps a continuous sequence of complete Monday–Sunday ranges and loads one adjacent week as scrolling approaches either edge. Each swipe or inertial settle advances at most one week, and the centered week becomes selected.
+- Keeps a continuous sequence of complete Monday–Sunday ranges and loads an adjacent week as scrolling approaches either edge. Browsing and settling leave the selected week unchanged.
 - Week buttons are horizontally scrollable at every viewport, keep a 128px minimum width, and show compact ranges (`Aug 10–16`, `Aug 31 – Sep 6`, or both years when needed). The current week keeps its primary border and accessible “Contains today” label without an extra dot.
 - Choosing a week—whether from the rail or calendar—preserves the committed weekday within that target week. A calendar click identifies the target week rather than changing the active weekday.
 - The header keeps the same layout in both modes and updates from the day-mode month label to the current week range directly. The calendar uses a controlled Monday–Sunday range highlight and closes as soon as a day is chosen.
@@ -78,13 +79,13 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 
 ### Accessibility and motion
 
-- Each rail is a named radiogroup with a visually hidden instruction that explains horizontal scrolling and keyboard selection.
+- Each rail is a named group of native buttons with a visually hidden instruction that separates browsing from selection.
 - The Day/Week control is a named `tablist` with associated `tab` and `tabpanel` roles. It uses manual activation: ArrowLeft, ArrowRight, Home, and End move tab focus; Enter and Space activate the focused mode. The active date rail is the only one exposed to assistive technology; a rail retained for its exit animation becomes inert and hidden from accessibility APIs immediately.
-- Roving tab focus keeps only the selected date in the tab order. Arrow keys select and focus the adjacent day; Page Up/Page Down move seven days. The Week rail uses the same focus pattern, with ArrowLeft/ArrowRight moving one week and PageUp/PageDown moving four weeks. Passive scrolling selects the centered range without stealing focus.
+- Roving tab focus uses the selected range when it is buffered; otherwise it uses a visible browse target. Arrow keys and Page keys move focus and the viewport without selection. Enter and Space activate the focused native button. Receiving focus never restores or recenters an older selected range.
 - Tile labels include the localized full date plus Today and Selected state where applicable. All controls meet the 44px target minimum and retain visible focus rings.
-- Explicit selection centering uses native smooth scrolling by default and is instant for reduced-motion users. Range loading and scroll-position compensation are immediate.
-- Rail settlement uses the native `scrollend` event with a quiet-period fallback where needed. Programmatic centering does not trigger another selection or edge load.
-- Week mode uses the same focus restoration pattern: only the selected week is tabbable, ArrowLeft/ArrowRight move one week, and PageUp/PageDown move four weeks. Week labels announce their full Monday–Sunday range plus selected/current-week state.
+- Explicit selection centering uses native smooth scrolling by default and is instant for reduced-motion users. Resize and orientation changes preserve the current browse viewport after initial layout, except while an explicit selection is centering. Range loading and scroll-position compensation are immediate.
+- Rail settlement uses the native `scrollend` event with a quiet-period fallback where needed. Only a user-initiated scroll session that moves the rail can load an adjacent range near an edge; programmatic centering and layout changes do not open or extend such a session. An explicit selection or mode switch cancels any unsettled browse session before centering. Scrolling never selects or focuses a tile. Programmatic centering is reserved for explicit selection.
+- Week labels announce their full Monday–Sunday range plus selected/current-week state. Selecting a week preserves the active weekday, while Today selects the actual current day.
 - The selector exposes one active date rail. `SchedulesScreen` uses its single controlled Animate UI Tabs root to apply matching 180ms transitions to the rail and result panel, so the day list and week timeline change with the rail. The period label and selected rail fills update directly; rails do not share a cross-mode tile morph. `MotionConfig` follows the user’s reduced-motion preference, and the highlight and panels receive zero-duration transitions when motion is reduced.
 
 ## WeekdayView API
@@ -95,7 +96,6 @@ interface WeekdayViewProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
   onExtendDateBuffer: (direction: "previous" | "next") => void;
-  onRestoreSelectedDate: () => void;
   centerRequest: {
     id: number;
     behavior: ScrollBehavior;
@@ -115,9 +115,9 @@ weekSelector: {
   selectedWeek: "Selected week",
   containsToday: "Contains today",
   dateRailLabel: "Schedule date selector",
-  dateRailInstruction: "Scroll horizontally to select the centered date. Use the Left and Right Arrow keys to select a day. Use Page Up and Page Down to move by a week.",
+  dateRailInstruction: "Scroll horizontally to browse dates without changing the selected date. Select a date with its button. Use the Left and Right Arrow keys or Page Up and Page Down to move focus without selecting. Press Enter or Space to select the focused date.",
   weekRailLabel: "Schedule week selector",
-  weekRailInstruction: "Scroll horizontally to select the centered week. Use the Left and Right Arrow keys to select a week. Use Page Up and Page Down to move by four weeks.",
+  weekRailInstruction: "Scroll horizontally to browse weeks without changing the selected week. Select a week with its button. Use the Left and Right Arrow keys or Page Up and Page Down to move focus without selecting. Press Enter or Space to select the focused week.",
   weekLabel: "Week of {{start}} through {{end}}",
 }
 ```

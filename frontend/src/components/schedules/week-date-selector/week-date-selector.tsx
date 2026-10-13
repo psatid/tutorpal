@@ -159,33 +159,38 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
   }, [railSelectedWeekKey, railSelectedWeekStart]);
 
   const handleExtendDateBuffer = useCallback(
-    (direction: "previous" | "next") => {
+    (direction: "previous" | "next", count = 1) => {
       setDates((currentDates) => {
         if (currentDates.length === 0) return currentDates;
 
-        const edgeDate =
-          direction === "previous" ? currentDates[0] : currentDates.at(-1);
+        let nextDates = currentDates;
 
-        if (!edgeDate) return currentDates;
+        for (let index = 0; index < count; index += 1) {
+          const edgeDate =
+            direction === "previous" ? nextDates[0] : nextDates.at(-1);
 
-        const nextWeek = Array.from({ length: WEEK_DAYS }, (_, index) =>
-          getDateByDayOffset(
-            edgeDate,
-            direction === "previous" ? index - WEEK_DAYS : index + 1,
-          ),
-        );
-        const extendedDates =
-          direction === "previous"
-            ? [...nextWeek, ...currentDates]
-            : [...currentDates, ...nextWeek];
+          if (!edgeDate) return nextDates;
 
-        if (extendedDates.length <= MAX_BUFFER_DAYS) {
-          return extendedDates;
+          const nextWeek = Array.from({ length: WEEK_DAYS }, (_, dayIndex) =>
+            getDateByDayOffset(
+              edgeDate,
+              direction === "previous" ? dayIndex - WEEK_DAYS : dayIndex + 1,
+            ),
+          );
+          const extendedDates =
+            direction === "previous"
+              ? [...nextWeek, ...nextDates]
+              : [...nextDates, ...nextWeek];
+
+          nextDates =
+            extendedDates.length <= MAX_BUFFER_DAYS
+              ? extendedDates
+              : direction === "previous"
+                ? extendedDates.slice(0, -WEEK_DAYS)
+                : extendedDates.slice(WEEK_DAYS);
         }
 
-        return direction === "previous"
-          ? extendedDates.slice(0, -WEEK_DAYS)
-          : extendedDates.slice(WEEK_DAYS);
+        return nextDates;
       });
     },
     [],
@@ -232,16 +237,6 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
       behavior,
     }));
   }, []);
-
-  const handleRestoreSelectedDate = useCallback(() => {
-    setDates(createDateBuffer(railSelectedDate));
-    requestCenter(INSTANT_CENTER);
-  }, [railSelectedDateKey, requestCenter]);
-
-  const handleRestoreSelectedWeek = useCallback(() => {
-    setWeekStarts(createWeekBuffer(railSelectedWeekStart));
-    requestCenter(INSTANT_CENTER);
-  }, [railSelectedWeekKey, railSelectedWeekStart, requestCenter]);
 
   const monthLabel = DateTime.formatDate(railSelectedDate, {
     month: "long",
@@ -298,8 +293,8 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
         selectedDate={railSelectedDate}
         onDateSelect={handleCalendarDateSelect}
         onExtendDateBuffer={handleExtendDateBuffer}
-        onRestoreSelectedDate={handleRestoreSelectedDate}
         centerRequest={centerRequest}
+        isActive={viewMode === "day"}
       />
     ),
     week: (
@@ -308,8 +303,8 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
         selectedDate={railSelectedDate}
         onDateSelect={handleCalendarDateSelect}
         onExtendWeekBuffer={handleExtendWeekBuffer}
-        onRestoreSelectedWeek={handleRestoreSelectedWeek}
         centerRequest={centerRequest}
+        isActive={viewMode === "week"}
       />
     ),
   };

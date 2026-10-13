@@ -1,4 +1,11 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { prefersReducedMotion } from "motion-dom";
 import { useState } from "react";
@@ -21,14 +28,69 @@ import {
 
 const INITIAL_DATE = DateTime.fromDateOnlyString("2026-10-14").toDate();
 
+let resizeObservers: ResizeObserverMock[] = [];
+
 class ResizeObserverMock {
-  constructor(_callback: ResizeObserverCallback) {}
+  private observedTarget: Element | null = null;
+
+  constructor(private readonly callback: ResizeObserverCallback) {
+    resizeObservers.push(this);
+  }
 
   disconnect() {}
 
-  observe(_target: Element) {}
+  observe(target: Element) {
+    this.observedTarget = target;
+  }
 
   unobserve(_target: Element) {}
+
+  trigger() {
+    this.callback([], this as unknown as ResizeObserver);
+  }
+
+  observes(target: Element) {
+    return this.observedTarget === target;
+  }
+}
+
+function triggerResizeObserver(target: Element) {
+  for (let index = resizeObservers.length - 1; index >= 0; index -= 1) {
+    const resizeObserver = resizeObservers[index];
+
+    if (resizeObserver?.observes(target)) {
+      resizeObserver.trigger();
+      return;
+    }
+  }
+
+  throw new Error("Expected the active rail to register a ResizeObserver.");
+}
+
+function establishInitialDateRailLayout(rail: HTMLElement) {
+  const initialDate = getDateButton("2026-10-14");
+
+  Object.defineProperties(initialDate, {
+    offsetLeft: { configurable: true, value: 600 },
+    offsetWidth: { configurable: true, value: 56 },
+  });
+
+  act(() => {
+    triggerResizeObserver(rail);
+  });
+}
+
+function establishInitialWeekRailLayout(rail: HTMLElement) {
+  const initialWeek = getWeekButton("2026-10-12");
+
+  Object.defineProperties(initialWeek, {
+    offsetLeft: { configurable: true, value: 400 },
+    offsetWidth: { configurable: true, value: 144 },
+  });
+
+  act(() => {
+    triggerResizeObserver(rail);
+  });
 }
 
 function SelectorFixture() {
@@ -124,34 +186,34 @@ function ParentDrivenWeekDateFixture() {
   );
 }
 
-function getDateRadio(dateKey: string) {
-  const dateRail = screen.getByRole("radiogroup", {
+function getDateButton(dateKey: string) {
+  const dateRail = screen.getByRole("group", {
     name: "Schedule date selector",
   });
-  const radio = dateRail.querySelector<HTMLButtonElement>(
+  const button = dateRail.querySelector<HTMLButtonElement>(
     `button[data-date-key="${dateKey}"]`,
   );
 
-  if (!radio) {
+  if (!button) {
     throw new Error(`Date ${dateKey} is not in the date rail.`);
   }
 
-  return radio;
+  return button;
 }
 
-function getWeekRadio(weekKey: string) {
-  const weekRail = screen.getByRole("radiogroup", {
+function getWeekButton(weekKey: string) {
+  const weekRail = screen.getByRole("group", {
     name: "Schedule week selector",
   });
-  const radio = weekRail.querySelector<HTMLButtonElement>(
+  const button = weekRail.querySelector<HTMLButtonElement>(
     `button[data-week-key="${weekKey}"]`,
   );
 
-  if (!radio) {
+  if (!button) {
     throw new Error(`Week ${weekKey} is not in the week rail.`);
   }
 
-  return radio;
+  return button;
 }
 
 const scrollToMock = vi.fn();
@@ -179,6 +241,7 @@ afterAll(() => {
 });
 
 beforeEach(async () => {
+  resizeObservers = [];
   vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
   scrollToMock.mockClear();
@@ -213,14 +276,14 @@ describe("WeekDateSelector", () => {
     expect(panel).toHaveAttribute("aria-labelledby", dayTab.id);
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
 
-    const dateRail = screen.getByRole("radiogroup", {
+    const dateRail = screen.getByRole("group", {
       name: "Schedule date selector",
     });
     expect(
-      within(dateRail).getAllByRole("radio", { checked: true }),
+      dateRail.querySelectorAll('button[data-selected="true"]'),
     ).toHaveLength(1);
     expect(
-      screen.queryByRole("radiogroup", { name: "Schedule week selector" }),
+      screen.queryByRole("group", { name: "Schedule week selector" }),
     ).not.toBeInTheDocument();
   });
 
@@ -311,22 +374,28 @@ describe("WeekDateSelector", () => {
     });
     expect(weekPanel).toHaveAttribute("aria-labelledby", weekTab.id);
     expect(
-      screen.queryByRole("radiogroup", { name: "Schedule date selector" }),
+      screen.queryByRole("group", { name: "Schedule date selector" }),
     ).not.toBeInTheDocument();
 
-    const weekRail = screen.getByRole("radiogroup", {
+    const weekRail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
     expect(
-      within(weekRail).getAllByRole("radio", { checked: true }),
+      weekRail.querySelectorAll('button[data-selected="true"]'),
     ).toHaveLength(1);
-    expect(getWeekRadio("2026-10-12")).toHaveAttribute("aria-checked", "true");
+    expect(getWeekButton("2026-10-12")).toHaveAttribute(
+      "data-selected",
+      "true",
+    );
 
-    await user.click(getWeekRadio("2026-10-19"));
+    await user.click(getWeekButton("2026-10-19"));
     expect(screen.getByTestId("selected-date")).toHaveTextContent(
       "2026-10-21",
     );
-    expect(getWeekRadio("2026-10-19")).toHaveAttribute("aria-checked", "true");
+    expect(getWeekButton("2026-10-19")).toHaveAttribute(
+      "data-selected",
+      "true",
+    );
 
     await user.click(screen.getByRole("tab", { name: "Day" }));
     await waitFor(() => {
@@ -335,40 +404,50 @@ describe("WeekDateSelector", () => {
     expect(screen.getByTestId("selected-date")).toHaveTextContent(
       "2026-10-21",
     );
-    expect(getDateRadio("2026-10-21")).toHaveAttribute("aria-checked", "true");
+    expect(getDateButton("2026-10-21")).toHaveAttribute(
+      "data-selected",
+      "true",
+    );
   });
 
-  it("keeps the date rail click and Arrow-key selection behavior", async () => {
+  it("keeps date rail browsing separate from explicit activation", async () => {
     const user = userEvent.setup();
     render(<SelectorFixture />);
 
-    const thursday = getDateRadio("2026-10-15");
+    const thursday = getDateButton("2026-10-15");
     await user.click(thursday);
 
     expect(screen.getByTestId("selected-date")).toHaveTextContent(
       "2026-10-15",
     );
-    expect(thursday).toHaveAttribute("aria-checked", "true");
+    expect(thursday).toHaveAttribute("data-selected", "true");
 
     await user.keyboard("{ArrowRight}");
-    await waitFor(() => {
-      expect(screen.getByTestId("selected-date")).toHaveTextContent(
-        "2026-10-16",
-      );
-    });
-    expect(getDateRadio("2026-10-16")).toHaveFocus();
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-15",
+    );
+    expect(getDateButton("2026-10-16")).toHaveFocus();
     expect(
-      within(
-        screen.getByRole("radiogroup", { name: "Schedule date selector" }),
-      ).getAllByRole("radio", { checked: true }),
+      screen
+        .getByRole("group", { name: "Schedule date selector" })
+        .querySelectorAll('button[data-selected="true"]'),
     ).toHaveLength(1);
+
+    await user.keyboard("{Enter}");
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      "2026-10-16",
+    );
+    expect(getDateButton("2026-10-16")).toHaveAttribute(
+      "data-selected",
+      "true",
+    );
   });
 
   it("smoothly centers a date changed by the schedule screen", async () => {
     const user = userEvent.setup();
     render(<ParentDrivenDateFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule date selector",
     });
     Object.defineProperties(rail, {
@@ -377,10 +456,15 @@ describe("WeekDateSelector", () => {
       scrollLeft: { configurable: true, writable: true, value: 0 },
     });
 
-    const selectedDate = getDateRadio("2026-10-16");
+    const selectedDate = getDateButton("2026-10-16");
     Object.defineProperties(selectedDate, {
       offsetLeft: { configurable: true, value: 700 },
       offsetWidth: { configurable: true, value: 56 },
+    });
+    establishInitialDateRailLayout(rail);
+    expect(scrollToMock).toHaveBeenCalledWith({
+      left: 468,
+      behavior: "auto",
     });
     scrollToMock.mockClear();
 
@@ -403,7 +487,7 @@ describe("WeekDateSelector", () => {
     try {
       render(<SelectorFixture />);
 
-      const rail = screen.getByRole("radiogroup", {
+      const rail = screen.getByRole("group", {
         name: "Schedule date selector",
       });
       Object.defineProperties(rail, {
@@ -412,11 +496,12 @@ describe("WeekDateSelector", () => {
         scrollLeft: { configurable: true, writable: true, value: 0 },
       });
 
-      const today = getDateRadio("2026-10-16");
+      const today = getDateButton("2026-10-16");
       Object.defineProperties(today, {
         offsetLeft: { configurable: true, value: 700 },
         offsetWidth: { configurable: true, value: 56 },
       });
+      establishInitialDateRailLayout(rail);
       scrollToMock.mockClear();
 
       fireEvent.click(screen.getByRole("button", { name: "Today" }));
@@ -437,7 +522,7 @@ describe("WeekDateSelector", () => {
     const user = userEvent.setup();
     render(<SelectorFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule date selector",
     });
     Object.defineProperties(rail, {
@@ -446,11 +531,12 @@ describe("WeekDateSelector", () => {
       scrollLeft: { configurable: true, writable: true, value: 0 },
     });
 
-    const selectedDate = getDateRadio("2026-10-16");
+    const selectedDate = getDateButton("2026-10-16");
     Object.defineProperties(selectedDate, {
       offsetLeft: { configurable: true, value: 700 },
       offsetWidth: { configurable: true, value: 56 },
     });
+    establishInitialDateRailLayout(rail);
     scrollToMock.mockClear();
 
     await user.click(
@@ -474,7 +560,7 @@ describe("WeekDateSelector", () => {
     const user = userEvent.setup();
     render(<ParentDrivenWeekDateFixture />);
 
-    const rail = screen.getByRole("radiogroup", {
+    const rail = screen.getByRole("group", {
       name: "Schedule week selector",
     });
     Object.defineProperties(rail, {
@@ -483,11 +569,12 @@ describe("WeekDateSelector", () => {
       scrollLeft: { configurable: true, writable: true, value: 0 },
     });
 
-    const selectedWeek = getWeekRadio("2026-10-19");
+    const selectedWeek = getWeekButton("2026-10-19");
     Object.defineProperties(selectedWeek, {
       offsetLeft: { configurable: true, value: 700 },
       offsetWidth: { configurable: true, value: 144 },
     });
+    establishInitialWeekRailLayout(rail);
     scrollToMock.mockClear();
 
     await user.click(
@@ -503,7 +590,7 @@ describe("WeekDateSelector", () => {
     expect(screen.getByTestId("selected-date")).toHaveTextContent(
       "2026-10-21",
     );
-    expect(selectedWeek).toHaveAttribute("aria-checked", "true");
+    expect(selectedWeek).toHaveAttribute("data-selected", "true");
   });
 
   it("centers parent-driven date changes instantly for reduced-motion users", async () => {
@@ -514,7 +601,7 @@ describe("WeekDateSelector", () => {
       const user = userEvent.setup();
       render(<ParentDrivenDateFixture />);
 
-      const rail = screen.getByRole("radiogroup", {
+      const rail = screen.getByRole("group", {
         name: "Schedule date selector",
       });
       Object.defineProperties(rail, {
@@ -523,11 +610,12 @@ describe("WeekDateSelector", () => {
         scrollLeft: { configurable: true, writable: true, value: 0 },
       });
 
-      const selectedDate = getDateRadio("2026-10-16");
+      const selectedDate = getDateButton("2026-10-16");
       Object.defineProperties(selectedDate, {
         offsetLeft: { configurable: true, value: 700 },
         offsetWidth: { configurable: true, value: 56 },
       });
+      establishInitialDateRailLayout(rail);
       scrollToMock.mockClear();
 
       await user.click(
@@ -548,8 +636,8 @@ describe("WeekDateSelector", () => {
     vi.setSystemTime(new Date(2026, 9, 11, 12));
     render(<SelectorFixture />);
 
-    const selectedDate = getDateRadio("2026-10-14");
-    const today = getDateRadio("2026-10-11");
+    const selectedDate = getDateButton("2026-10-14");
+    const today = getDateButton("2026-10-11");
 
     expect(selectedDate).toHaveClass(
       "border-primary",
@@ -559,35 +647,29 @@ describe("WeekDateSelector", () => {
     expect(
       selectedDate.querySelector("span.pointer-events-none"),
     ).not.toBeInTheDocument();
-    expect(today).toHaveAttribute("aria-checked", "false");
+    expect(today).not.toHaveAttribute("data-selected");
     expect(today).toHaveClass("border-primary", "bg-card", "text-foreground");
     expect(today).not.toHaveClass("bg-primary");
   });
 
   it("shows the newly active panel immediately for reduced-motion users", async () => {
-    vi.spyOn(window, "matchMedia").mockImplementation(
-      (query) =>
-        ({
-          matches: query.includes("prefers-reduced-motion"),
-          media: query,
-          onchange: null,
-          addEventListener: () => undefined,
-          removeEventListener: () => undefined,
-          addListener: () => undefined,
-          removeListener: () => undefined,
-          dispatchEvent: () => false,
-        }) as MediaQueryList,
-    );
-    const user = userEvent.setup();
-    render(<SelectorFixture />);
+    const originalPreference = prefersReducedMotion.current;
+    prefersReducedMotion.current = true;
 
-    await user.click(screen.getByRole("tab", { name: "Week" }));
+    try {
+      const user = userEvent.setup();
+      render(<SelectorFixture />);
 
-    const panel = screen.getByRole("tabpanel", { name: "Week" });
-    expect(panel).toBeVisible();
-    expect(panel).not.toHaveAttribute("hidden");
-    expect(
-      screen.getByRole("radiogroup", { name: "Schedule week selector" }),
-    ).toBeVisible();
+      await user.click(screen.getByRole("tab", { name: "Week" }));
+
+      const panel = screen.getByRole("tabpanel", { name: "Week" });
+      expect(panel).toBeVisible();
+      expect(panel).not.toHaveAttribute("hidden");
+      expect(
+        screen.getByRole("group", { name: "Schedule week selector" }),
+      ).toBeVisible();
+    } finally {
+      prefersReducedMotion.current = originalPreference;
+    }
   });
 });
