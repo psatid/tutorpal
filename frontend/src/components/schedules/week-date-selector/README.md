@@ -53,8 +53,8 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 
 ### Day mode
 
-- Keeps a continuous date range that can move independently of the selected date. Directional user scrolling loads one adjacent week as soon as it enters the edge prefetch zone (`max(128px, one tile stride)`, capped at half the scrollable span); settling leaves the selected date and schedule query unchanged. Wheel, mouse, and trackpad input extend at threshold crossing even when the wheel event arrives after the browser updates its scroll offset; touch queues the rotation until the gesture is safe to settle.
-- Loading at either edge preserves the visible dates' screen positions. The selected date may fall outside the loaded buffer while browsing continues.
+- Starts with 56 consecutive dates and grows by seven dates at the edge the user reaches. During the mounted schedules page, previously loaded dates remain in the rail; loading never removes the opposite edge. Directional scrolling loads an adjacent range when it enters the edge prefetch zone (`max(128px, one tile stride)`, capped at half the scrollable span), while selection and the schedule query stay unchanged. Wheel, mouse, and trackpad input extend at threshold crossing even when the wheel event arrives after the browser updates its scroll offset; touch queues extension until the gesture is safe to settle.
+- Loading either edge preserves a visible date's screen position using its measured position. Explicit navigation to a date outside the range grows the existing contiguous range to include it, so Today can return to a date loaded earlier in the session.
 - Date tiles remain 56px square with 8px gaps at every breakpoint. The track has screen gutters and a one-tile continuation width, does not wrap or hide dates at `md`, and intentionally exposes a partial adjacent tile at an edge.
 
 ### Selection and header controls
@@ -71,7 +71,7 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 
 ### Week mode
 
-- Keeps a continuous sequence of complete Monday–Sunday ranges. Directional user scrolling loads one adjacent week when it enters the edge prefetch zone (`max(128px, one tile stride)`, capped at half the scrollable span); wheel, mouse, and trackpad input extend at threshold crossing even when the wheel event arrives after the browser updates its scroll offset, while touch queues rotation until the gesture is safe to settle. Browsing and settling leave the selected week unchanged.
+- Starts with eight complete Monday–Sunday ranges and grows by one week at the edge the user reaches. Previously loaded weeks remain in the rail for the mounted schedules page. Directional scrolling loads one adjacent week when it enters the edge prefetch zone (`max(128px, one tile stride)`, capped at half the scrollable span); wheel, mouse, and trackpad input extend at threshold crossing even when the wheel event arrives after the browser updates its scroll offset, while touch queues extension until the gesture is safe to settle. Browsing and settling leave the selected week unchanged.
 - Week buttons are horizontally scrollable at every viewport, keep a 128px minimum width, and show compact ranges (`Aug 10–16`, `Aug 31 – Sep 6`, or both years when needed). The current week keeps its primary border and accessible “Contains today” label without an extra dot.
 - Choosing a week—whether from the rail or calendar—preserves the committed weekday within that target week. A calendar click identifies the target week rather than changing the active weekday.
 - The header keeps the same layout in both modes and updates from the day-mode month label to the current week range directly. The calendar uses a controlled Monday–Sunday range highlight and closes as soon as a day is chosen.
@@ -81,7 +81,7 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 
 - Each rail is a named group of native buttons with a visually hidden instruction that separates browsing from selection.
 - The Day/Week control is a named `tablist` with associated `tab` and `tabpanel` roles. It uses manual activation: ArrowLeft, ArrowRight, Home, and End move tab focus; Enter and Space activate the focused mode. The active date rail is the only one exposed to assistive technology; a rail retained for its exit animation becomes inert and hidden from accessibility APIs immediately.
-- Roving tab focus uses the selected range when it is buffered; otherwise it uses a visible browse target. Arrow keys and Page keys move focus and the viewport without selection. Enter and Space activate the focused native button. Receiving focus never restores or recenters an older selected range.
+- Roving tab focus uses the selected range when available, or a visible browse target when there is no selected range. Arrow keys and Page keys move focus and the viewport without selection. Enter and Space activate the focused native button. Receiving focus never restores or recenters an older selected range.
 - Tile labels include the localized full date plus Today and Selected state where applicable. All controls meet the 44px target minimum and retain visible focus rings.
 - Explicit selection centering uses native smooth scrolling by default and is instant for reduced-motion users. Resize and orientation changes preserve the current browse viewport after initial layout, except while an explicit selection is centering. Range loading and scroll-position compensation are immediate.
 - Rail settlement uses the native `scrollend` event with a quiet-period fallback where needed. Only a user-initiated directional scroll session can load an adjacent range, and it does so on entering the edge prefetch zone rather than waiting for the hard edge or settlement. Once the buffer advances, continued scrolling can load another range when it enters the next edge zone; duplicate movement inside the same zone does not rotate the buffer again. Programmatic centering, compensation, click-only input, and layout changes do not trigger edge loading. An explicit selection or mode switch cancels any unsettled browse session before centering. Scrolling never selects or focuses a tile. Programmatic centering is reserved for explicit selection.
@@ -98,6 +98,7 @@ interface WeekdayViewProps {
   onExtendDateBuffer: (direction: "previous" | "next") => void;
   centerRequest: {
     id: number;
+    targetDateKey: string;
     behavior: ScrollBehavior;
   };
   className?: string;

@@ -13,6 +13,7 @@ import { useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
+import type { RailCenterRequest } from "./week-date-selector";
 
 export interface WeekdayViewProps {
   dates: Date[];
@@ -22,10 +23,7 @@ export interface WeekdayViewProps {
     direction: "previous" | "next",
     count?: number,
   ) => void;
-  centerRequest: {
-    id: number;
-    behavior: ScrollBehavior;
-  };
+  centerRequest: RailCenterRequest;
   isActive?: boolean;
   className?: string;
 }
@@ -47,8 +45,11 @@ interface TouchClickSuppression {
 
 interface TouchEdgeRotation {
   direction: "previous" | "next";
-  trackItemWidth: number;
-  appendStartDate: number | null;
+}
+
+interface RailAnchor {
+  key: string;
+  left: number;
 }
 
 type NativeClickEvent = globalThis.MouseEvent & {
@@ -123,17 +124,15 @@ export function WeekdayView({
   const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollLeftRef = useRef<number | null>(null);
-  const lastBufferStartDateRef = useRef<number | null>(
-    dates[0]?.getTime() ?? null,
+  const lastBufferRangeRef = useRef(
+    `${dates[0]?.getTime() ?? ""}:${dates.at(-1)?.getTime() ?? ""}`,
   );
   const trackItemWidthRef = useRef<number | null>(null);
-  const pendingPrependTrackWidthRef = useRef<number | null>(null);
-  const pendingAppendStartDateRef = useRef<number | null>(null);
-  const pendingAppendTrackWidthRef = useRef<number | null>(null);
+  const pendingAnchorRef = useRef<RailAnchor | null>(null);
   const pendingExtensionRef = useRef<"previous" | "next" | null>(null);
   const pendingSelectionEdgeCenterBehaviorRef =
     useRef<ScrollBehavior | null>(null);
-  const pendingSelectionBufferStartDateRef = useRef<number | null>(null);
+  const pendingSelectionBufferLengthRef = useRef<number | null>(null);
   const ignoredCompensationScrollLeftRef = useRef<number | null>(null);
   const pendingFocusDateRef = useRef<string | null>(null);
   const lastCenteredDateRef = useRef<string | null>(null);
@@ -143,7 +142,7 @@ export function WeekdayView({
   const hasObservedInitialLayoutRef = useRef(false);
   const selectionCenterPendingRef = useRef(true);
   const centerSelectedDateRef = useRef<
-    (behavior?: ScrollBehavior) => boolean
+    (behavior?: ScrollBehavior, dateKey?: string | null) => boolean
   >(() => false);
   const smoothCenterFallbackTimeoutRef = useRef<number | null>(null);
   const smoothCenterScrollEndCleanupRef = useRef<(() => void) | null>(null);
@@ -169,6 +168,49 @@ export function WeekdayView({
   const selectedDateKey = selectedDate
     ? DateTime.from(selectedDate).toDateOnlyString()
     : null;
+  const captureRailAnchor = useCallback((): RailAnchor | null => {
+    const container = containerRef.current;
+
+    if (!container) return null;
+
+    const containerRect = container.getBoundingClientRect();
+    const viewportCenter = containerRect.left + container.clientWidth / 2;
+    const buttons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button[data-date-key]"),
+    );
+    const anchorButton = buttons.reduce<HTMLButtonElement | null>(
+      (closestButton, button) => {
+        const rect = button.getBoundingClientRect();
+
+        if (
+          rect.right <= containerRect.left ||
+          rect.left >= containerRect.right
+        ) {
+          return closestButton;
+        }
+
+        if (!closestButton) return button;
+
+        const closestRect = closestButton.getBoundingClientRect();
+        const buttonCenter = rect.left + rect.width / 2;
+        const closestCenter = closestRect.left + closestRect.width / 2;
+
+        return Math.abs(buttonCenter - viewportCenter) <
+          Math.abs(closestCenter - viewportCenter)
+          ? button
+          : closestButton;
+      },
+      null,
+    );
+    const key = anchorButton?.dataset.dateKey;
+
+    if (!anchorButton || !key) return null;
+
+    return {
+      key,
+      left: anchorButton.getBoundingClientRect().left - containerRect.left,
+    };
+  }, []);
   const lastSelectedDateKeyRef = useRef<string | null>(selectedDateKey);
   const pendingSelectedFocusDateRef = useRef<string | null>(null);
   const isSelectedDateInBuffer = selectedDate
@@ -267,18 +309,11 @@ export function WeekdayView({
 
     pendingExtensionRef.current = queuedRotation.direction;
 
-    if (queuedRotation.direction === "previous") {
-      pendingPrependTrackWidthRef.current =
-        queuedRotation.trackItemWidth * WEEK_DAYS;
-    } else {
-      pendingAppendStartDateRef.current = queuedRotation.appendStartDate;
-      pendingAppendTrackWidthRef.current =
-        queuedRotation.trackItemWidth * WEEK_DAYS;
-    }
+    pendingAnchorRef.current = captureRailAnchor();
 
     onExtendDateBuffer(queuedRotation.direction);
     settleRailScrollRef.current();
-  }, [discardTouchScrollSession, onExtendDateBuffer]);
+  }, [captureRailAnchor, discardTouchScrollSession, onExtendDateBuffer]);
 
   const scheduleTouchScrollIdleFallback = useCallback(() => {
     if (
@@ -459,11 +494,16 @@ export function WeekdayView({
   }, [handleRailScrollEnd]);
 
   const centerSelectedDate = useCallback(
-    (behavior: ScrollBehavior = "auto"): boolean => {
+    (
+      behavior: ScrollBehavior = "auto",
+      dateKey: string | null = selectedDateKey,
+    ): boolean => {
       const container = containerRef.current;
-      const selectedButton = container?.querySelector<HTMLButtonElement>(
-        'button[data-selected="true"]',
-      );
+      const selectedButton = dateKey
+        ? container?.querySelector<HTMLButtonElement>(
+            `button[data-date-key="${dateKey}"]`,
+          )
+        : null;
 
       if (
         !isActive ||
@@ -520,8 +560,7 @@ export function WeekdayView({
             resizeDuringSmoothCenteringRef.current = false;
             pendingExtensionRef.current = edgeDirection;
             pendingSelectionEdgeCenterBehaviorRef.current = behavior;
-            pendingSelectionBufferStartDateRef.current =
-              dates[0]?.getTime() ?? null;
+            pendingSelectionBufferLengthRef.current = dates.length;
             onExtendDateBuffer(
               edgeDirection,
               Math.min(
@@ -580,6 +619,7 @@ export function WeekdayView({
       onExtendDateBuffer,
       prefersReducedMotion,
       scheduleSmoothCenterFallback,
+      selectedDateKey,
       settleSmoothCentering,
     ],
   );
@@ -638,7 +678,7 @@ export function WeekdayView({
     if (!selectedDate || !selectedDateKey) {
       selectionCenterPendingRef.current = false;
       pendingSelectionEdgeCenterBehaviorRef.current = null;
-      pendingSelectionBufferStartDateRef.current = null;
+      pendingSelectionBufferLengthRef.current = null;
       return;
     }
 
@@ -667,13 +707,16 @@ export function WeekdayView({
     const shouldCenter =
       lastCenteredDateRef.current !== selectedDateKey ||
       lastCenterRequestRef.current !== centerRequest.id;
+    const centerDateKey = centerRequestChanged
+      ? (centerRequest.targetDateKey ?? selectedDateKey)
+      : selectedDateKey;
 
     selectionCenterPendingRef.current = shouldCenter;
 
     if (!shouldCenter) return;
 
     const selectedButton = containerRef.current?.querySelector(
-      'button[data-selected="true"]',
+      `button[data-date-key="${centerDateKey}"]`,
     );
 
     if (!selectedButton) return;
@@ -691,13 +734,13 @@ export function WeekdayView({
             ? "smooth"
             : "auto");
 
-    if (!centerSelectedDate(behavior)) return;
+    if (!centerSelectedDate(behavior, centerDateKey)) return;
 
-    lastCenteredDateRef.current = selectedDateKey;
+    lastCenteredDateRef.current = centerDateKey;
     lastCenterRequestRef.current = centerRequest.id;
     selectionCenterPendingRef.current = false;
     pendingSelectionEdgeCenterBehaviorRef.current = null;
-    pendingSelectionBufferStartDateRef.current = null;
+    pendingSelectionBufferLengthRef.current = null;
     hasObservedInitialLayoutRef.current = true;
   }, [
     centerRequest,
@@ -717,38 +760,39 @@ export function WeekdayView({
     if (
       pendingExtensionRef.current !== null &&
       pendingSelectionEdgeCenterBehaviorRef.current !== null &&
-      pendingSelectionBufferStartDateRef.current === dates[0]?.getTime()
+      pendingSelectionBufferLengthRef.current === dates.length
     ) {
       return;
     }
 
-    const bufferStartDate = dates[0]?.getTime() ?? null;
-    const didAdvanceBuffer =
-      lastBufferStartDateRef.current !== bufferStartDate;
-
-    lastBufferStartDateRef.current = bufferStartDate;
+    const bufferRange = `${dates[0]?.getTime() ?? ""}:${dates.at(-1)?.getTime() ?? ""}`;
+    const didAdvanceBuffer = lastBufferRangeRef.current !== bufferRange;
+    lastBufferRangeRef.current = bufferRange;
     let adjustedForBufferExtension = false;
+    const pendingAnchor = pendingAnchorRef.current;
 
-    if (pendingPrependTrackWidthRef.current !== null) {
-      container.scrollLeft += pendingPrependTrackWidthRef.current;
-      pendingPrependTrackWidthRef.current = null;
-      adjustedForBufferExtension = true;
+    if (pendingAnchor) {
+      const anchorButton = container.querySelector<HTMLButtonElement>(
+        `button[data-date-key="${pendingAnchor.key}"]`,
+      );
+
+      if (anchorButton) {
+        const containerLeft = container.getBoundingClientRect().left;
+        const nextLeft =
+          anchorButton.getBoundingClientRect().left - containerLeft;
+        const offsetDelta = nextLeft - pendingAnchor.left;
+
+        if (Math.abs(offsetDelta) > 0.5) {
+          container.scrollLeft += offsetDelta;
+          adjustedForBufferExtension = true;
+        }
+      }
     }
 
-    if (
-      pendingAppendStartDateRef.current !== null &&
-      pendingAppendTrackWidthRef.current !== null &&
-      dates[0]?.getTime() !== pendingAppendStartDateRef.current
-    ) {
-      container.scrollLeft -= pendingAppendTrackWidthRef.current;
-      adjustedForBufferExtension = true;
-    }
-
-    pendingAppendStartDateRef.current = null;
-    pendingAppendTrackWidthRef.current = null;
+    pendingAnchorRef.current = null;
 
     pendingExtensionRef.current = null;
-    pendingSelectionBufferStartDateRef.current = null;
+    pendingSelectionBufferLengthRef.current = null;
     lastScrollLeftRef.current = container.scrollLeft;
 
     if (adjustedForBufferExtension) {
@@ -759,14 +803,36 @@ export function WeekdayView({
       didExtendScrollSessionRef.current = false;
     }
 
+    const pendingSelectionCenterBehavior =
+      pendingSelectionEdgeCenterBehaviorRef.current;
+
+    if (pendingSelectionCenterBehavior !== null) {
+      const centerDateKey =
+        lastCenterRequestRef.current !== centerRequest.id
+          ? (centerRequest.targetDateKey ?? selectedDateKey)
+          : selectedDateKey;
+
+      if (
+        centerDateKey &&
+        centerSelectedDateRef.current(
+          pendingSelectionCenterBehavior,
+          centerDateKey,
+        )
+      ) {
+        lastCenteredDateRef.current = centerDateKey;
+        lastCenterRequestRef.current = centerRequest.id;
+        selectionCenterPendingRef.current = false;
+        pendingSelectionEdgeCenterBehaviorRef.current = null;
+        pendingSelectionBufferLengthRef.current = null;
+      }
+    }
+
     const pendingFocusDate = pendingFocusDateRef.current;
 
-    if (!pendingFocusDate) return;
-
-    if (focusDateButton(pendingFocusDate)) {
+    if (pendingFocusDate && focusDateButton(pendingFocusDate)) {
       pendingFocusDateRef.current = null;
     }
-  }, [dates, focusDateButton, selectedDate]);
+  }, [centerRequest, dates, focusDateButton, selectedDate, selectedDateKey]);
 
   useLayoutEffect(() => {
     if (pendingFocusDateRef.current !== null || isRovingFocusDateInBuffer) {
@@ -826,7 +892,7 @@ export function WeekdayView({
 
     const resizeObserver = new ResizeObserver(() => {
       const selectedButton = container.querySelector<HTMLButtonElement>(
-        'button[data-selected="true"]',
+        `button[data-date-key="${lastCenteredDateRef.current ?? selectedDateKey}"]`,
       );
 
       if (
@@ -848,13 +914,21 @@ export function WeekdayView({
       }
 
       if (shouldCenterInitialLayout || selectionCenterPendingRef.current) {
-        if (!centerSelectedDateRef.current() || !selectedDateKey) return;
+        const centerDateKey =
+          lastCenteredDateRef.current ?? selectedDateKey;
 
-        lastCenteredDateRef.current = selectedDateKey;
+        if (
+          !centerDateKey ||
+          !centerSelectedDateRef.current("auto", centerDateKey)
+        ) {
+          return;
+        }
+
+        lastCenteredDateRef.current = centerDateKey;
         lastCenterRequestRef.current = centerRequest.id;
         selectionCenterPendingRef.current = false;
         pendingSelectionEdgeCenterBehaviorRef.current = null;
-        pendingSelectionBufferStartDateRef.current = null;
+        pendingSelectionBufferLengthRef.current = null;
       }
     });
 
@@ -911,18 +985,12 @@ export function WeekdayView({
       if (!isAtBufferedEdge) return false;
 
       pendingExtensionRef.current = direction;
-
-      if (direction === "previous") {
-        pendingPrependTrackWidthRef.current = trackItemWidth * WEEK_DAYS;
-      } else {
-        pendingAppendStartDateRef.current = dates[0]?.getTime() ?? null;
-        pendingAppendTrackWidthRef.current = trackItemWidth * WEEK_DAYS;
-      }
+      pendingAnchorRef.current = captureRailAnchor();
 
       onExtendDateBuffer(direction);
       return true;
     },
-    [dates, onExtendDateBuffer, updateTrackItemWidth],
+    [captureRailAnchor, onExtendDateBuffer, updateTrackItemWidth],
   );
 
   const settleRailScroll = useCallback(() => {
@@ -1058,9 +1126,6 @@ export function WeekdayView({
     if (touchScrollSessionRef.current) {
       queuedTouchEdgeRotationRef.current = {
         direction: edgeDirection,
-        trackItemWidth,
-        appendStartDate:
-          edgeDirection === "next" ? dates[0]?.getTime() ?? null : null,
       };
       didExtendScrollSessionRef.current = true;
       return;

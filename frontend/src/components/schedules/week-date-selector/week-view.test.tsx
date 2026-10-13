@@ -115,7 +115,7 @@ function configureWeekRail(
 
   rail
     .querySelector("button[data-week-key]")
-    ?.parentElement?.style.setProperty("column-gap", "0px");
+    ?.parentElement?.style.setProperty("column-gap", `${WEEK_TILE_GAP}px`);
 }
 
 function WeekRailFixture({
@@ -142,6 +142,7 @@ function WeekRailFixture({
   const [externalCenterRequest, setExternalCenterRequest] = useState<{
     id: number;
     behavior: ScrollBehavior;
+    targetDateKey: string;
   } | null>(null);
 
   const selectDate = (date: Date) => {
@@ -152,6 +153,7 @@ function WeekRailFixture({
     setExternalCenterRequest((currentRequest) => ({
       id: (currentRequest?.id ?? 0) + 1,
       behavior: "smooth",
+      targetDateKey: getDateKey(getWeekdayDate(index)),
     }));
     selectDate(getWeekdayDate(index));
   };
@@ -211,7 +213,13 @@ function WeekRailFixture({
         selectedDate={selectedDate}
         onDateSelect={selectDate}
         onExtendWeekBuffer={extendWeekBuffer}
-        centerRequest={externalCenterRequest ?? { id: 0, behavior: "auto" }}
+        centerRequest={
+          externalCenterRequest ?? {
+            id: 0,
+            behavior: "auto",
+            targetDateKey: getDateKey(selectedDate),
+          }
+        }
         isActive={isActive}
       />
       <output data-testid="selected-date">{getDateKey(selectedDate)}</output>
@@ -271,16 +279,23 @@ describe("WeekView rail behavior", () => {
     });
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
-        const width = this.matches("button[data-week-key]")
+        const rail = this.closest<HTMLElement>('[role="group"]');
+        const isWeekButton = this.matches("button[data-week-key]");
+        const width = isWeekButton
           ? WEEK_TILE_WIDTH
+          : this.getAttribute("role") === "group"
+            ? this.clientWidth
+            : 0;
+        const left = isWeekButton
+          ? this.offsetLeft - (rail?.scrollLeft ?? 0)
           : 0;
 
         return {
-          x: 0,
+          x: left,
           y: 0,
-          left: 0,
+          left,
           top: 0,
-          right: width,
+          right: left + width,
           bottom: 56,
           width,
           height: 56,
@@ -457,37 +472,37 @@ describe("WeekView rail behavior", () => {
       "mouse wheel",
       "previous",
       WEEK_TILE_WIDTH - 1,
-      WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH,
+      WEEK_TILE_WIDTH - 1 + WEEK_ITEM_WIDTH,
     ],
     [
       "trackpad",
       "previous",
       WEEK_TILE_WIDTH - 1,
-      WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH,
+      WEEK_TILE_WIDTH - 1 + WEEK_ITEM_WIDTH,
     ],
     [
       "mouse drag",
       "previous",
       WEEK_TILE_WIDTH - 1,
-      WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH,
+      WEEK_TILE_WIDTH - 1 + WEEK_ITEM_WIDTH,
     ],
     [
       "mouse wheel",
       "next",
       WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_ITEM_WIDTH,
     ],
     [
       "trackpad",
       "next",
       WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_ITEM_WIDTH,
     ],
     [
       "mouse drag",
       "next",
       WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_ITEM_WIDTH,
     ],
   ] as const)(
     "prefetches the %s Week range once when %s movement enters the zone before the hard edge",
@@ -572,7 +587,7 @@ describe("WeekView rail behavior", () => {
     const selectedDate = screen.getByTestId("selected-date").textContent;
     const maxScrollLeft = WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH;
     const edgeThreshold = Math.min(
-      Math.max(128, WEEK_TILE_WIDTH),
+      Math.max(128, WEEK_ITEM_WIDTH),
       maxScrollLeft / 2,
     );
     const beforeEdgeScrollLeft = maxScrollLeft - edgeThreshold - 1;
@@ -659,7 +674,7 @@ describe("WeekView rail behavior", () => {
       0,
     );
     const nextEdgeThreshold = Math.min(
-      Math.max(128, WEEK_TILE_WIDTH),
+      Math.max(128, WEEK_ITEM_WIDTH),
       nextMaxScrollLeft / 2,
     );
     const nextPrefetchScrollLeft = nextMaxScrollLeft - nextEdgeThreshold;
@@ -753,11 +768,11 @@ describe("WeekView rail behavior", () => {
   });
 
   it.each([
-    ["previous", WEEK_TILE_WIDTH - 1, WEEK_TILE_WIDTH - 1 + WEEK_TILE_WIDTH],
+    ["previous", WEEK_TILE_WIDTH - 1, WEEK_TILE_WIDTH - 1 + WEEK_ITEM_WIDTH],
     [
       "next",
       WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1),
-      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_TILE_WIDTH,
+      WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH - (WEEK_TILE_WIDTH - 1) - WEEK_ITEM_WIDTH,
     ],
   ] as const)(
     "queues a touch prefetch at the %s zone until touch end, then extends once",

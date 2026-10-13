@@ -97,7 +97,7 @@ function configureDayRail(
 
   rail
     .querySelector("button[data-date-key]")
-    ?.parentElement?.style.setProperty("column-gap", "0px");
+    ?.parentElement?.style.setProperty("column-gap", `${DAY_TILE_GAP}px`);
 }
 
 function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
@@ -169,7 +169,11 @@ function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
         selectedDate={selectedDate}
         onDateSelect={selectDate}
         onExtendDateBuffer={extendDateBuffer}
-        centerRequest={{ id: 0, behavior: "auto" }}
+        centerRequest={{
+          id: 0,
+          behavior: "auto",
+          targetDateKey: getDateKey(selectedDate),
+        }}
       />
       <output data-testid="selected-date">{getDateKey(selectedDate)}</output>
       <output data-testid="result-date">{getDateKey(selectedDate)}</output>
@@ -215,16 +219,23 @@ describe("WeekdayView rail behavior", () => {
     });
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
-        const width = this.matches("button[data-date-key]")
+        const rail = this.closest<HTMLElement>('[role="group"]');
+        const isDateButton = this.matches("button[data-date-key]");
+        const width = isDateButton
           ? DAY_TILE_WIDTH
+          : this.getAttribute("role") === "group"
+            ? this.clientWidth
+            : 0;
+        const left = isDateButton
+          ? this.offsetLeft - (rail?.scrollLeft ?? 0)
           : 0;
 
         return {
-          x: 0,
+          x: left,
           y: 0,
-          left: 0,
+          left,
           top: 0,
-          right: width,
+          right: left + width,
           bottom: DAY_TILE_WIDTH,
           width,
           height: DAY_TILE_WIDTH,
@@ -405,19 +416,19 @@ describe("WeekdayView rail behavior", () => {
       "mouse wheel",
       "previous",
       DAY_TILE_WIDTH,
-      DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7,
+      DAY_TILE_WIDTH + DAY_ITEM_WIDTH * 7,
     ],
     [
       "trackpad",
       "previous",
       DAY_TILE_WIDTH,
-      DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7,
+      DAY_TILE_WIDTH + DAY_ITEM_WIDTH * 7,
     ],
     [
       "mouse drag",
       "previous",
       DAY_TILE_WIDTH,
-      DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7,
+      DAY_TILE_WIDTH + DAY_ITEM_WIDTH * 7,
     ],
     [
       "mouse wheel",
@@ -426,7 +437,7 @@ describe("WeekdayView rail behavior", () => {
       DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
         DAY_RAIL_WIDTH -
         DAY_TILE_WIDTH -
-        DAY_TILE_WIDTH * 7,
+        DAY_ITEM_WIDTH * 7,
     ],
     [
       "trackpad",
@@ -435,7 +446,7 @@ describe("WeekdayView rail behavior", () => {
       DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
         DAY_RAIL_WIDTH -
         DAY_TILE_WIDTH -
-        DAY_TILE_WIDTH * 7,
+        DAY_ITEM_WIDTH * 7,
     ],
     [
       "mouse drag",
@@ -444,7 +455,7 @@ describe("WeekdayView rail behavior", () => {
       DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
         DAY_RAIL_WIDTH -
         DAY_TILE_WIDTH -
-        DAY_TILE_WIDTH * 7,
+        DAY_ITEM_WIDTH * 7,
     ],
   ] as const)(
     "prefetches the %s Day range once when %s movement enters the zone before the hard edge",
@@ -693,14 +704,14 @@ describe("WeekdayView rail behavior", () => {
   });
 
   it.each([
-    ["previous", DAY_TILE_WIDTH, DAY_TILE_WIDTH + DAY_TILE_WIDTH * 7],
+    ["previous", DAY_TILE_WIDTH, DAY_TILE_WIDTH + DAY_ITEM_WIDTH * 7],
     [
       "next",
       DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH - DAY_RAIL_WIDTH - DAY_TILE_WIDTH,
       DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH -
         DAY_RAIL_WIDTH -
         DAY_TILE_WIDTH -
-        DAY_TILE_WIDTH * 7,
+        DAY_ITEM_WIDTH * 7,
     ],
   ] as const)(
     "queues a touch prefetch at the %s zone until touch end, then extends once",

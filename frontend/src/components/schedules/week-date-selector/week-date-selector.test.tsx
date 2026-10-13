@@ -93,9 +93,15 @@ function establishInitialWeekRailLayout(rail: HTMLElement) {
   });
 }
 
-function SelectorFixture() {
-  const [selectedDate, setSelectedDate] = useState(INITIAL_DATE);
-  const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
+function SelectorFixture({
+  initialDate = INITIAL_DATE,
+  initialViewMode = "day",
+}: {
+  initialDate?: Date;
+  initialViewMode?: ScheduleViewMode;
+} = {}) {
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [viewMode, setViewMode] = useState<ScheduleViewMode>(initialViewMode);
 
   return (
     <>
@@ -214,6 +220,77 @@ function getWeekButton(weekKey: string) {
   }
 
   return button;
+}
+
+function getDateRailKeys(rail: HTMLElement) {
+  return Array.from(
+    rail.querySelectorAll<HTMLButtonElement>("button[data-date-key]"),
+  ).map((button) => {
+    const key = button.dataset.dateKey;
+
+    if (!key) {
+      throw new Error("Expected every date button to have a date key.");
+    }
+
+    return key;
+  });
+}
+
+function getWeekRailKeys(rail: HTMLElement) {
+  return Array.from(
+    rail.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
+  ).map((button) => {
+    const key = button.dataset.weekKey;
+
+    if (!key) {
+      throw new Error("Expected every week button to have a week key.");
+    }
+
+    return key;
+  });
+}
+
+function extendDateRailAtBoundary(
+  rail: HTMLElement,
+  direction: "previous" | "next",
+) {
+  const buttons = Array.from(
+    rail.querySelectorAll<HTMLButtonElement>("button[data-date-key]"),
+  );
+  const boundaryButton =
+    direction === "previous" ? buttons[0] : buttons.at(-1);
+
+  if (!boundaryButton) {
+    throw new Error("Expected a date button at the active rail boundary.");
+  }
+
+  fireEvent.keyDown(boundaryButton, {
+    key: direction === "previous" ? "ArrowLeft" : "ArrowRight",
+  });
+}
+
+function extendWeekRailAtBoundary(
+  rail: HTMLElement,
+  direction: "previous" | "next",
+) {
+  const buttons = Array.from(
+    rail.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
+  );
+  const boundaryButton =
+    direction === "previous" ? buttons[0] : buttons.at(-1);
+
+  if (!boundaryButton) {
+    throw new Error("Expected a week button at the active rail boundary.");
+  }
+
+  fireEvent.keyDown(boundaryButton, {
+    key: direction === "previous" ? "ArrowLeft" : "ArrowRight",
+  });
+}
+
+function expectUniqueChronologicalKeys(keys: string[]) {
+  expect(new Set(keys)).toHaveLength(keys.length);
+  expect(keys).toEqual([...keys].sort());
 }
 
 const scrollToMock = vi.fn();
@@ -442,6 +519,142 @@ describe("WeekDateSelector", () => {
       "true",
     );
   });
+
+  it.each([
+    ["next", "2026-09-16", "2026-11-24"],
+    ["previous", "2026-09-02", "2026-11-10"],
+  ] as const)(
+    "keeps a contiguous growing Day rail after two %s extensions",
+    (direction, expectedFirstKey, expectedLastKey) => {
+      render(<SelectorFixture />);
+
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      const initialKeys = getDateRailKeys(rail);
+      const retainedBoundaryKey =
+        direction === "next" ? initialKeys[0] : initialKeys.at(-1);
+
+      extendDateRailAtBoundary(rail, direction);
+      extendDateRailAtBoundary(rail, direction);
+
+      const renderedKeys = getDateRailKeys(rail);
+
+      expect(renderedKeys).toHaveLength(initialKeys.length + 14);
+      expect(renderedKeys).toHaveLength(70);
+      expect(renderedKeys).toContain(retainedBoundaryKey);
+      expect(renderedKeys.at(0)).toBe(expectedFirstKey);
+      expect(renderedKeys.at(-1)).toBe(expectedLastKey);
+      expectUniqueChronologicalKeys(renderedKeys);
+    },
+  );
+
+  it.each([
+    ["next", "2026-09-14", "2026-11-16"],
+    ["previous", "2026-08-31", "2026-11-02"],
+  ] as const)(
+    "keeps a contiguous growing Week rail after two %s extensions",
+    (direction, expectedFirstKey, expectedLastKey) => {
+      render(<SelectorFixture initialViewMode="week" />);
+
+      const rail = screen.getByRole("group", {
+        name: "Schedule week selector",
+      });
+      const initialKeys = getWeekRailKeys(rail);
+      const retainedBoundaryKey =
+        direction === "next" ? initialKeys[0] : initialKeys.at(-1);
+
+      extendWeekRailAtBoundary(rail, direction);
+      extendWeekRailAtBoundary(rail, direction);
+
+      const renderedKeys = getWeekRailKeys(rail);
+
+      expect(renderedKeys).toHaveLength(initialKeys.length + 2);
+      expect(renderedKeys).toHaveLength(10);
+      expect(renderedKeys).toContain(retainedBoundaryKey);
+      expect(renderedKeys.at(0)).toBe(expectedFirstKey);
+      expect(renderedKeys.at(-1)).toBe(expectedLastKey);
+      expectUniqueChronologicalKeys(renderedKeys);
+    },
+  );
+
+  it.each([
+    {
+      viewMode: "day" as const,
+      railName: "Schedule date selector",
+      itemSelector: 'button[data-date-key="2026-10-16"]',
+      targetLeft: 568,
+      targetWidth: 56,
+      extend: extendDateRailAtBoundary,
+    },
+    {
+      viewMode: "week" as const,
+      railName: "Schedule week selector",
+      itemSelector: 'button[data-week-key="2026-10-12"]',
+      targetLeft: 612,
+      targetWidth: 144,
+      extend: extendWeekRailAtBoundary,
+    },
+  ])(
+    "recenters Today in the $viewMode rail when the controlled date key is unchanged",
+    ({
+      viewMode,
+      railName,
+      itemSelector,
+      targetLeft,
+      targetWidth,
+      extend,
+    }) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 9, 16, 12));
+      render(
+        <SelectorFixture
+          initialDate={DateTime.fromDateOnlyString("2026-10-16").toDate()}
+          initialViewMode={viewMode}
+        />,
+      );
+
+      const rail = screen.getByRole("group", { name: railName });
+      const currentTarget = rail.querySelector<HTMLButtonElement>(itemSelector);
+
+      if (!currentTarget) {
+        throw new Error("Expected Today to be present before browsing the rail.");
+      }
+
+      Object.defineProperties(rail, {
+        clientWidth: { configurable: true, value: 320 },
+        scrollWidth: { configurable: true, value: 1600 },
+        scrollLeft: { configurable: true, writable: true, value: 0 },
+      });
+      Object.defineProperties(currentTarget, {
+        offsetLeft: { configurable: true, value: 700 },
+        offsetWidth: { configurable: true, value: targetWidth },
+      });
+      scrollToMock.mockImplementation(function (
+        this: HTMLElement,
+        options: ScrollToOptions,
+      ) {
+        this.scrollLeft = options.left ?? this.scrollLeft;
+      });
+
+      for (let index = 0; index < 5; index += 1) {
+        extend(rail, "next");
+      }
+
+      rail.scrollLeft = 0;
+      scrollToMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: "Today" }));
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        "2026-10-16",
+      );
+      expect(rail.querySelector(itemSelector)).not.toBeNull();
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: targetLeft,
+        behavior: "smooth",
+      });
+    },
+  );
 
   it("smoothly centers a date changed by the schedule screen", async () => {
     const user = userEvent.setup();

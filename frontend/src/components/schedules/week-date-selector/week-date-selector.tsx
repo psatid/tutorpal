@@ -26,10 +26,15 @@ import {
   getDateInWeek,
   getWeekStart,
   getWeekdayOffset,
-  isSameWeek,
 } from "./week-utils";
 
 export type ScheduleViewMode = "day" | "week";
+
+export type RailCenterRequest = {
+  id: number;
+  targetDateKey: string;
+  behavior: ScrollBehavior;
+};
 
 type WeekDateSelectorRails = {
   day: ReactNode;
@@ -59,9 +64,9 @@ export type WeekDateSelectorProps =
   | WeekDateSelectorStandaloneProps
   | WeekDateSelectorExternalRootProps;
 
-const MAX_BUFFER_DAYS = 56;
+const INITIAL_BUFFER_DAYS = 56;
 const BUFFER_DAYS_BEFORE_SELECTED = 28;
-const MAX_BUFFER_WEEKS = 8;
+const INITIAL_BUFFER_WEEKS = 8;
 const BUFFER_WEEKS_BEFORE_SELECTED = 4;
 const WEEK_DAYS = 7;
 const INSTANT_CENTER: ScrollBehavior = "auto";
@@ -96,7 +101,7 @@ function createDateBuffer(selectedDate: Date): Date[] {
     -BUFFER_DAYS_BEFORE_SELECTED,
   );
 
-  return Array.from({ length: MAX_BUFFER_DAYS }, (_, index) =>
+  return Array.from({ length: INITIAL_BUFFER_DAYS }, (_, index) =>
     getDateByDayOffset(startDate, index),
   );
 }
@@ -104,9 +109,63 @@ function createDateBuffer(selectedDate: Date): Date[] {
 function createWeekBuffer(selectedDate: Date): Date[] {
   const selectedWeekStart = DateTime.from(selectedDate).startOfWeek();
 
-  return Array.from({ length: MAX_BUFFER_WEEKS }, (_, index) =>
+  return Array.from({ length: INITIAL_BUFFER_WEEKS }, (_, index) =>
     selectedWeekStart.addWeeks(index - BUFFER_WEEKS_BEFORE_SELECTED).toDate(),
   );
+}
+
+function growDateRangeToInclude(dates: Date[], targetDate: Date): Date[] {
+  if (dates.length === 0) return createDateBuffer(targetDate);
+
+  let nextDates = dates;
+
+  while (targetDate < nextDates[0]!) {
+    const firstDate = nextDates[0]!;
+    const previousWeek = Array.from(
+      { length: WEEK_DAYS },
+      (_, index) => getDateByDayOffset(firstDate, index - WEEK_DAYS),
+    );
+
+    nextDates = [...previousWeek, ...nextDates];
+  }
+
+  while (targetDate > nextDates.at(-1)!) {
+    const lastDate = nextDates.at(-1)!;
+    const nextWeek = Array.from(
+      { length: WEEK_DAYS },
+      (_, index) => getDateByDayOffset(lastDate, index + 1),
+    );
+
+    nextDates = [...nextDates, ...nextWeek];
+  }
+
+  return nextDates;
+}
+
+function growWeekRangeToInclude(weekStarts: Date[], targetDate: Date): Date[] {
+  const targetWeekStart = getWeekStart(targetDate);
+
+  if (weekStarts.length === 0) return createWeekBuffer(targetWeekStart);
+
+  let nextWeekStarts = weekStarts;
+
+  while (targetWeekStart < nextWeekStarts[0]!) {
+    const previousWeekStart = DateTime.from(nextWeekStarts[0]!)
+      .subWeeks(1)
+      .toDate();
+
+    nextWeekStarts = [previousWeekStart, ...nextWeekStarts];
+  }
+
+  while (targetWeekStart > nextWeekStarts.at(-1)!) {
+    const nextWeekStart = DateTime.from(nextWeekStarts.at(-1)!)
+      .addWeeks(1)
+      .toDate();
+
+    nextWeekStarts = [...nextWeekStarts, nextWeekStart];
+  }
+
+  return nextWeekStarts;
 }
 
 export function WeekDateSelector(props: WeekDateSelectorProps) {
@@ -129,34 +188,37 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
   const [weekStarts, setWeekStarts] = useState<Date[]>(() =>
     createWeekBuffer(railSelectedDate),
   );
-  const [centerRequest, setCenterRequest] = useState({
+  const [centerRequest, setCenterRequest] = useState<RailCenterRequest>({
     id: 0,
+    targetDateKey: railSelectedDateKey,
     behavior: INSTANT_CENTER,
   });
+  const centerTargetDate = useMemo(
+    () => DateTime.fromDateOnlyString(centerRequest.targetDateKey).toDate(),
+    [centerRequest.targetDateKey],
+  );
 
   useLayoutEffect(() => {
     setDates((currentDates) => {
-      const includesSelectedDate = currentDates.some((date) =>
-        DateTime.from(date).isSameDay(railSelectedDate),
+      const withSelectedDate = growDateRangeToInclude(
+        currentDates,
+        railSelectedDate,
       );
 
-      return includesSelectedDate
-        ? currentDates
-        : createDateBuffer(railSelectedDate);
+      return growDateRangeToInclude(withSelectedDate, centerTargetDate);
     });
-  }, [railSelectedDateKey]);
+  }, [centerTargetDate, railSelectedDate, railSelectedDateKey]);
 
   useLayoutEffect(() => {
     setWeekStarts((currentWeekStarts) => {
-      const includesSelectedWeek = currentWeekStarts.some((weekStart) =>
-        isSameWeek(weekStart, railSelectedWeekStart),
+      const withSelectedWeek = growWeekRangeToInclude(
+        currentWeekStarts,
+        railSelectedWeekStart,
       );
 
-      return includesSelectedWeek
-        ? currentWeekStarts
-        : createWeekBuffer(railSelectedWeekStart);
+      return growWeekRangeToInclude(withSelectedWeek, centerTargetDate);
     });
-  }, [railSelectedWeekKey, railSelectedWeekStart]);
+  }, [centerTargetDate, railSelectedWeekKey, railSelectedWeekStart]);
 
   const handleExtendDateBuffer = useCallback(
     (direction: "previous" | "next", count = 1) => {
@@ -177,17 +239,10 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               direction === "previous" ? dayIndex - WEEK_DAYS : dayIndex + 1,
             ),
           );
-          const extendedDates =
+          nextDates =
             direction === "previous"
               ? [...nextWeek, ...nextDates]
               : [...nextDates, ...nextWeek];
-
-          nextDates =
-            extendedDates.length <= MAX_BUFFER_DAYS
-              ? extendedDates
-              : direction === "previous"
-                ? extendedDates.slice(0, -WEEK_DAYS)
-                : extendedDates.slice(WEEK_DAYS);
         }
 
         return nextDates;
@@ -214,15 +269,10 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
           const adjacentWeekStart = DateTime.from(edgeWeekStart)
             .addWeeks(direction === "previous" ? -1 : 1)
             .toDate();
-          const extendedWeekStarts =
+          nextWeekStarts =
             direction === "previous"
               ? [adjacentWeekStart, ...nextWeekStarts]
               : [...nextWeekStarts, adjacentWeekStart];
-
-          nextWeekStarts =
-            direction === "previous"
-              ? extendedWeekStarts.slice(0, -1)
-              : extendedWeekStarts.slice(1);
         }
 
         return nextWeekStarts;
@@ -231,9 +281,10 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
     [],
   );
 
-  const requestCenter = useCallback((behavior: ScrollBehavior) => {
+  const requestCenter = useCallback((date: Date, behavior: ScrollBehavior) => {
     setCenterRequest((request) => ({
       id: request.id + 1,
+      targetDateKey: DateTime.from(date).toDateOnlyString(),
       behavior,
     }));
   }, []);
@@ -260,12 +311,14 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
     : { duration: 0.18, ease: [0.25, 1, 0.5, 1] };
 
   const handleToday = () => {
-    requestCenter(SMOOTH_CENTER);
-    onDateSelect(DateTime.today().toDate());
+    const today = DateTime.today().toDate();
+
+    requestCenter(today, SMOOTH_CENTER);
+    onDateSelect(today);
   };
 
   const handleCalendarDateSelect = (date: Date) => {
-    requestCenter(SMOOTH_CENTER);
+    requestCenter(date, SMOOTH_CENTER);
     onDateSelect(date);
   };
 
