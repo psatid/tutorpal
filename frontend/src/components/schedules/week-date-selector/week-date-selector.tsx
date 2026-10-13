@@ -121,9 +121,8 @@ function growDateRangeToInclude(dates: Date[], targetDate: Date): Date[] {
 
   while (targetDate < nextDates[0]!) {
     const firstDate = nextDates[0]!;
-    const previousWeek = Array.from(
-      { length: WEEK_DAYS },
-      (_, index) => getDateByDayOffset(firstDate, index - WEEK_DAYS),
+    const previousWeek = Array.from({ length: WEEK_DAYS }, (_, index) =>
+      getDateByDayOffset(firstDate, index - WEEK_DAYS),
     );
 
     nextDates = [...previousWeek, ...nextDates];
@@ -131,9 +130,8 @@ function growDateRangeToInclude(dates: Date[], targetDate: Date): Date[] {
 
   while (targetDate > nextDates.at(-1)!) {
     const lastDate = nextDates.at(-1)!;
-    const nextWeek = Array.from(
-      { length: WEEK_DAYS },
-      (_, index) => getDateByDayOffset(lastDate, index + 1),
+    const nextWeek = Array.from({ length: WEEK_DAYS }, (_, index) =>
+      getDateByDayOffset(lastDate, index + 1),
     );
 
     nextDates = [...nextDates, ...nextWeek];
@@ -383,7 +381,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               trigger={
                 <button
                   type="button"
-                  className="group flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-card"
+                  className="group flex min-h-11 items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors focus-visible:outline-none hover:cursor-pointer"
                 >
                   <span className="block min-w-0 truncate">
                     <span className="min-[480px]:hidden">
@@ -417,9 +415,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               transition={tabTransition}
             >
               <TabsTab value="day">{t("schedules:viewMode.day")}</TabsTab>
-              <TabsTab value="week">
-                {t("schedules:viewMode.week")}
-              </TabsTab>
+              <TabsTab value="week">{t("schedules:viewMode.week")}</TabsTab>
             </TabsList>
             {viewMode === "week" && weekAction ? (
               <div className="flex shrink-0 items-center gap-2">
@@ -430,11 +426,10 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
         </div>
       </div>
 
-      {isExternalRootMode(props) ? props.children(rails) : (
-        <TabsPanels
-          className="mb-2 w-full shrink-0"
-          transition={tabTransition}
-        >
+      {isExternalRootMode(props) ? (
+        props.children(rails)
+      ) : (
+        <TabsPanels className="mb-2 w-full shrink-0" transition={tabTransition}>
           <TabsPanel transition={tabTransition} value="day">
             {rails.day}
           </TabsPanel>
