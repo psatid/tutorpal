@@ -281,25 +281,24 @@ function RecurringWeekdayTimeSelector({
 				});
 
 				return (
-					<div className="grid gap-3 sm:grid-cols-2">
+					<div className="grid grid-cols-2 gap-3">
 						<RHFTimeField
 							control={control}
 							inputProps={{
+								"aria-label": t("schedules:drawer.weekdayTime.timeLabel", {
+									interval: intervalLabel,
+								}),
 								"aria-describedby": overlapDescriptionId,
 								"aria-invalid": Boolean(overlapDescriptionId),
 								id: `recurring-weekday-time-${item.id}`,
 							}}
-							label={t("schedules:drawer.weekdayTime.timeLabel", {
-								interval: intervalLabel,
-							})}
+							label={t("schedules:drawer.time.label")}
 							name={`scheduleItems.${item.index}.time`}
 							required
 						/>
 						<RHFSelectField
 							control={control}
-							label={t("schedules:drawer.weekdayTime.durationSelectLabel", {
-								interval: intervalLabel,
-							})}
+							label={t("schedules:drawer.duration.label")}
 							name={`scheduleItems.${item.index}.durationMinutes`}
 							options={durationOptions}
 							required

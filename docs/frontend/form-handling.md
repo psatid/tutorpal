@@ -123,14 +123,18 @@ picker.
 
 In the one-time Schedule drawer, Time and Duration share an equal-width row at
 all viewport sizes. Keep each label, required state, and validation error with
-its own field. The recurring editor keeps its existing weekday/time layout.
+its own field. In the recurring editor, each weekday session also places Time
+and Duration in an equal-width row at all viewport sizes. Their visible labels
+stay short; accessible names include the localized weekday and session number
+to distinguish repeated controls.
 
 In Add New Schedule, one-time duration and each selected recurring weekday use
 numeric selects with 30-minute choices from 30 minutes through 3 hours; each
 weekday keeps its own duration, defaulting to 60 minutes. Edit mode also offers
 the stored duration when an older schedule falls outside those choices. The
 select trigger is linked to its visible label, caption, and error. Each
-recurring duration also includes its weekday in the accessible name.
+recurring Time and Duration control includes its weekday and session number in
+the accessible name.
 
 Its trigger exposes the controlled picker state as `data-state="open"` or
 `"closed"` in both presentations, so custom triggers can style their open

@@ -76,6 +76,62 @@ describe("WeekdayTimeSelector", () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    [
+      "en",
+      "Time",
+      "Duration",
+      "Time — Monday, session 1",
+      "Duration — Monday, session 1",
+    ],
+    [
+      "th",
+      "เวลา",
+      "ระยะเวลา",
+      "เวลา — วันจันทร์ ช่วงเรียนที่ 1",
+      "ระยะเวลา — วันจันทร์ ช่วงเรียนที่ 1",
+    ],
+  ])(
+    "keeps localized short labels, contextual names, and a two-column session row in %s",
+    async (
+      language,
+      timeLabel,
+      durationLabel,
+      timeAccessibleName,
+      durationAccessibleName,
+    ) => {
+      await i18n.changeLanguage(language);
+      render(
+        <WeekdaySelectorFixture
+          scheduleItems={[
+            { weekday: "MONDAY", time: "09:00", durationMinutes: 60 },
+          ]}
+        />,
+      );
+
+      const time = screen.getByLabelText(timeAccessibleName);
+      const duration = screen.getByRole("combobox", {
+        name: durationAccessibleName,
+      });
+      const timeField = time.closest<HTMLElement>('[data-slot="field"]');
+      const durationField = duration.closest<HTMLElement>('[data-slot="field"]');
+      const row = timeField?.parentElement;
+
+      expect(within(row as HTMLElement).getByText(timeLabel, { selector: "label" })).toBeVisible();
+      expect(
+        within(row as HTMLElement).getByText(durationLabel, { selector: "label" }),
+      ).toBeVisible();
+      expect(time.id).toMatch(/^weekday-time-/);
+      expect(time).toHaveAttribute("aria-required", "true");
+      expect(duration).toHaveAttribute("aria-required", "true");
+      expect(timeField).toHaveClass("w-full");
+      expect(durationField).toHaveClass("w-full");
+      expect(row).toBe(durationField?.parentElement);
+      expect(row).toHaveClass("grid", "grid-cols-2", "gap-3");
+      expect(row?.className).not.toContain("sm:grid-cols");
+    },
+  );
+
   it("keeps focus on Select All after revealing every weekday's session fields", async () => {
     const user = userEvent.setup();
     render(<WeekdaySelectorFixture />);
@@ -128,7 +184,8 @@ describe("WeekdayTimeSelector", () => {
       />,
     );
 
-	expect(screen.getByRole("alert")).toHaveTextContent("Recurring sessions cannot overlap");
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Recurring sessions cannot overlap");
     const firstTime = screen.getByLabelText("Time — Monday, session 1");
     const secondTime = screen.getByLabelText("Time — Monday, session 2");
     expect(firstTime).toHaveAttribute(
@@ -139,17 +196,19 @@ describe("WeekdayTimeSelector", () => {
       "aria-invalid",
       "true",
     );
+    expect(firstTime).toHaveAttribute("aria-describedby", alert.id);
+    expect(secondTime).toHaveAttribute("aria-describedby", alert.id);
     expect(firstTime).toHaveClass("aria-invalid:border-destructive");
-    expect(
-      screen.getByRole("combobox", {
-        name: "Duration — Monday, session 1",
-      }),
-    ).toHaveAttribute("aria-invalid", "true");
-    expect(
-      screen.getByRole("combobox", {
-        name: "Duration — Monday, session 2",
-      }),
-    ).toHaveAttribute("aria-invalid", "true");
+    const firstDuration = screen.getByRole("combobox", {
+      name: "Duration — Monday, session 1",
+    });
+    const secondDuration = screen.getByRole("combobox", {
+      name: "Duration — Monday, session 2",
+    });
+    expect(firstDuration).toHaveAttribute("aria-invalid", "true");
+    expect(secondDuration).toHaveAttribute("aria-invalid", "true");
+    expect(firstDuration).toHaveAttribute("aria-describedby", alert.id);
+    expect(secondDuration).toHaveAttribute("aria-describedby", alert.id);
   });
 
   it("disables Add session at midnight and explains why", () => {

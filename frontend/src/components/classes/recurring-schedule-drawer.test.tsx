@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "@/lib/i18n/config";
@@ -99,6 +99,73 @@ describe("RecurringScheduleDrawer", () => {
       screen.getByRole("button", { name: "สร้างตารางเรียนซ้ำ" }),
     ).toBeDisabled();
   });
+
+  it.each([
+    [
+      "en",
+      "Time",
+      "Duration",
+      "Time — Monday, session 1",
+      "Duration — Monday, session 1",
+    ],
+    [
+      "th",
+      "เวลา",
+      "ระยะเวลา",
+      "เวลา — วันจันทร์ ช่วงเรียนที่ 1",
+      "ระยะเวลา — วันจันทร์ ช่วงเรียนที่ 1",
+    ],
+  ])(
+    "keeps localized short labels, contextual names, and a two-column session row in %s",
+    async (
+      language,
+      timeLabel,
+      durationLabel,
+      timeAccessibleName,
+      durationAccessibleName,
+    ) => {
+      await i18n.changeLanguage(language);
+      render(
+        <RecurringScheduleDrawer
+          classId="class-1"
+          hasNoAvailableHours={false}
+          isOpen
+          onAddHours={vi.fn()}
+          onOpenChange={vi.fn()}
+          schedules={[]}
+          recurringSchedule={{
+            id: "recurring-1",
+            startDate: "2026-10-08",
+            type: "ONLINE",
+            scheduleItems: [
+              { id: "monday", weekday: "MONDAY", time: 540, durationMinutes: 60 },
+            ],
+          }}
+        />,
+      );
+
+      const time = screen.getByLabelText(timeAccessibleName);
+      const duration = screen.getByRole("combobox", {
+        name: durationAccessibleName,
+      });
+      const timeField = time.closest<HTMLElement>('[data-slot="field"]');
+      const durationField = duration.closest<HTMLElement>('[data-slot="field"]');
+      const row = timeField?.parentElement;
+
+      expect(within(row as HTMLElement).getByText(timeLabel, { selector: "label" })).toBeVisible();
+      expect(
+        within(row as HTMLElement).getByText(durationLabel, { selector: "label" }),
+      ).toBeVisible();
+      expect(time.id).toMatch(/^recurring-weekday-time-/);
+      expect(time).toHaveAttribute("aria-required", "true");
+      expect(duration).toHaveAttribute("aria-required", "true");
+      expect(timeField).toHaveClass("w-full");
+      expect(durationField).toHaveClass("w-full");
+      expect(row).toBe(durationField?.parentElement);
+      expect(row).toHaveClass("grid", "grid-cols-2", "gap-3");
+      expect(row?.className).not.toContain("sm:grid-cols");
+    },
+  );
 
   it("keeps repeated weekday values and appends the next class interval after the latest end", async () => {
     const user = userEvent.setup();
@@ -223,16 +290,19 @@ describe("RecurringScheduleDrawer", () => {
     expect(secondTime).toHaveValue("09:30");
 
     await user.click(screen.getByRole("button", { name: "Create recurring schedule" }));
-	expect(screen.getByRole("alert")).toHaveTextContent("Recurring sessions cannot overlap");
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Recurring sessions cannot overlap");
     expect(mutations.create).not.toHaveBeenCalled();
     expect(firstTime).toHaveFocus();
     expect(firstTime).toHaveAttribute("aria-invalid", "true");
     expect(secondTime).toHaveAttribute("aria-invalid", "true");
-    expect(
-      screen.getByLabelText("Duration — Monday, session 1"),
-    ).toHaveAttribute("aria-invalid", "true");
-    expect(
-      screen.getByLabelText("Duration — Monday, session 2"),
-    ).toHaveAttribute("aria-invalid", "true");
+    expect(firstTime).toHaveAttribute("aria-describedby", alert.id);
+    expect(secondTime).toHaveAttribute("aria-describedby", alert.id);
+    const firstDuration = screen.getByLabelText("Duration — Monday, session 1");
+    const secondDuration = screen.getByLabelText("Duration — Monday, session 2");
+    expect(firstDuration).toHaveAttribute("aria-invalid", "true");
+    expect(secondDuration).toHaveAttribute("aria-invalid", "true");
+    expect(firstDuration).toHaveAttribute("aria-describedby", alert.id);
+    expect(secondDuration).toHaveAttribute("aria-describedby", alert.id);
   });
 });

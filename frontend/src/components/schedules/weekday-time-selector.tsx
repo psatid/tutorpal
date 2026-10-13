@@ -140,27 +140,26 @@ export function WeekdayTimeSelector({
         });
 
         return (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
             <RHFTimeField
               control={control}
               disabled={disabled}
               inputProps={{
+                "aria-label": t("schedules:drawer.weekdayTime.timeLabel", {
+                  interval: intervalLabel,
+                }),
                 "aria-describedby": overlapDescriptionId,
                 "aria-invalid": Boolean(overlapDescriptionId),
                 id: `weekday-time-${item.id}`,
               }}
-              label={t("schedules:drawer.weekdayTime.timeLabel", {
-                interval: intervalLabel,
-              })}
+              label={t("schedules:drawer.time.label")}
               name={timeFieldName}
               required
             />
             <RHFSelectField
               control={control}
               disabled={disabled}
-              label={t("schedules:drawer.weekdayTime.durationSelectLabel", {
-                interval: intervalLabel,
-              })}
+              label={t("schedules:drawer.duration.label")}
               name={durationFieldName}
               options={durationOptions}
               required
