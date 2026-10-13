@@ -13,7 +13,15 @@ import {
   type TabsPanelProps as TabsPanelPrimitiveProps,
   type TabsPanelsProps as TabsPanelsPrimitiveProps,
 } from '@/components/animate-ui/primitives/base/tabs';
+import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+const TABS_PANELS_TRANSITION = {
+  type: 'spring',
+  stiffness: 200,
+  damping: 25,
+} as const;
+const TABS_PANEL_TRANSITION = { duration: 0.5, ease: 'easeInOut' } as const;
 
 type TabsProps = TabsPrimitiveProps;
 
@@ -69,16 +77,30 @@ function TabsTab({ className, ...props }: TabsTabProps) {
 
 type TabsPanelsProps = TabsPanelsPrimitiveProps;
 
-function TabsPanels(props: TabsPanelsProps) {
-  return <TabsPanelsPrimitive {...props} />;
+function TabsPanels({ transition, ...props }: TabsPanelsProps) {
+  const prefersReducedMotion = useReducedMotion() === true;
+
+  return (
+    <TabsPanelsPrimitive
+      transition={
+        prefersReducedMotion ? { duration: 0 } : transition ?? TABS_PANELS_TRANSITION
+      }
+      {...props}
+    />
+  );
 }
 
 type TabsPanelProps = TabsPanelPrimitiveProps;
 
-function TabsPanel({ className, ...props }: TabsPanelProps) {
+function TabsPanel({ className, transition, ...props }: TabsPanelProps) {
+  const prefersReducedMotion = useReducedMotion() === true;
+
   return (
     <TabsPanelPrimitive
       className={cn('flex-1 outline-none', className)}
+      transition={
+        prefersReducedMotion ? { duration: 0 } : transition ?? TABS_PANEL_TRANSITION
+      }
       {...props}
     />
   );

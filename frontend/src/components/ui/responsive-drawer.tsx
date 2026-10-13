@@ -92,7 +92,9 @@ export function ResponsiveDrawer({
             layer={layer}
             className="pointer-events-auto"
           >
-            <DrawerOverlayPortalContext.Provider value={overlayPortalContextValue}>
+            <DrawerOverlayPortalContext.Provider
+              value={overlayPortalContextValue}
+            >
               <DrawerHeader className="px-5 pt-5 pb-4 md:px-6 md:pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -116,9 +118,7 @@ export function ResponsiveDrawer({
                   <div className="mt-4">{headerContent}</div>
                 ) : null}
               </DrawerHeader>
-              <DrawerContent className="px-5 py-5 md:px-6">
-                {children}
-              </DrawerContent>
+              <DrawerContent className="px-5 md:px-6">{children}</DrawerContent>
               {footer ? (
                 <DrawerFooter className="items-stretch border-t border-border bg-popover px-5 py-4 md:items-end md:px-6">
                   {footer}

@@ -43,10 +43,7 @@ const TIME_SLOTS = Array.from(
   { length: MINUTES_PER_DAY / MINUTES_PER_SLOT },
   (_, index) => index * MINUTES_PER_SLOT,
 );
-const statusBlockClasses: Record<
-  GetV1Schedules200Item["status"],
-  string
-> = {
+const statusBlockClasses: Record<GetV1Schedules200Item["status"], string> = {
   SCHEDULED:
     "border-info/25 bg-info-container text-info-container-foreground dark:border-info/40",
   COMPLETED:
@@ -128,8 +125,10 @@ function hasTouchGestureExceededTapThreshold(
   point: { clientX: number; clientY: number },
 ): boolean {
   return (
-    Math.hypot(point.clientX - gesture.startX, point.clientY - gesture.startY) >=
-    TOUCH_SCROLL_THRESHOLD
+    Math.hypot(
+      point.clientX - gesture.startX,
+      point.clientY - gesture.startY,
+    ) >= TOUCH_SCROLL_THRESHOLD
   );
 }
 
@@ -234,9 +233,9 @@ function ScheduleBlock({
       onClick={(event) => onView(event.currentTarget)}
       style={{
         height: `${height}px`,
-        left: `calc(${left}% + 2px)`,
+        left: `calc(${left}%)`,
         top: `${top}px`,
-        width: `calc(${width}% - 4px)`,
+        width: `calc(${width}%)`,
       }}
       type="button"
     >
@@ -247,9 +246,11 @@ function ScheduleBlock({
         <span className="min-w-0 truncate tabular-nums">
           {startTime}–{endTime}
         </span>
+      </span>
+      <div className="mt-0.5 flex min-w-0 items-center gap-1">
         <StatusIcon aria-hidden="true" className="size-3 shrink-0" />
         <ScheduleTypeIcon aria-hidden="true" className="size-3 shrink-0" />
-      </span>
+      </div>
     </button>
   );
 }
@@ -313,7 +314,10 @@ export function WeeklyScheduleTimeline({
       (now.getSeconds() * 1000 + now.getMilliseconds());
     const timeoutId = window.setTimeout(() => {
       updateCurrentTime();
-      intervalId = window.setInterval(updateCurrentTime, MILLISECONDS_PER_MINUTE);
+      intervalId = window.setInterval(
+        updateCurrentTime,
+        MILLISECONDS_PER_MINUTE,
+      );
     }, delay);
 
     return () => {
@@ -408,20 +412,14 @@ export function WeeklyScheduleTimeline({
   ) => {
     const gesture = touchGestureRef.current;
 
-    if (
-      !gesture ||
-      gesture.pointerId !== event.pointerId ||
-      gesture.hasMoved
-    ) {
+    if (!gesture || gesture.pointerId !== event.pointerId || gesture.hasMoved) {
       return;
     }
 
     gesture.hasMoved = hasTouchGestureExceededTapThreshold(gesture, event);
   };
 
-  const handleCellPointerUp = (
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => {
+  const handleCellPointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const gesture = touchGestureRef.current;
 
     if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -458,7 +456,7 @@ export function WeeklyScheduleTimeline({
       </p>
       <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain border-y border-border bg-card">
         <div
-          className="min-w-[784px] [--day-column-min-width:104px] [--timeline-min-width:784px] sm:min-w-[1064px] sm:[--day-column-min-width:144px] sm:[--timeline-min-width:1064px]"
+          className="min-w-196 [--day-column-min-width:104px] [--timeline-min-width:784px] sm:min-w-266 sm:[--day-column-min-width:144px] sm:[--timeline-min-width:1064px]"
           style={{
             width: "max(100%, var(--timeline-min-width))",
           }}
@@ -523,9 +521,7 @@ export function WeeklyScheduleTimeline({
                   <span
                     className={cn(
                       "absolute right-2 text-[11px] tabular-nums text-muted-foreground",
-                      minutes === 0
-                        ? "translate-y-1"
-                        : "-translate-y-1/2",
+                      minutes === 0 ? "translate-y-1" : "-translate-y-1/2",
                     )}
                     key={minutes}
                     style={{ top: `${top}px` }}
@@ -587,7 +583,11 @@ export function WeeklyScheduleTimeline({
                               return;
                             }
 
-                            onCreateSchedule(date, minutes, event.currentTarget);
+                            onCreateSchedule(
+                              date,
+                              minutes,
+                              event.currentTarget,
+                            );
                           }}
                           onFocus={() => setActiveCell(cell)}
                           onKeyDown={(event) => handleCellKeyDown(event, cell)}
@@ -637,9 +637,7 @@ export function WeeklyScheduleTimeline({
                       className="pointer-events-none absolute inset-x-0 border-t border-dashed border-border/45"
                       key={minutes}
                       style={{
-                        top: `${
-                          (minutes / MINUTES_PER_HOUR) * HOUR_HEIGHT
-                        }px`,
+                        top: `${(minutes / MINUTES_PER_HOUR) * HOUR_HEIGHT}px`,
                       }}
                     />
                   ))}
@@ -648,7 +646,9 @@ export function WeeklyScheduleTimeline({
                       bounds={bounds}
                       item={item}
                       key={item.schedule.id}
-                      onView={(trigger) => onViewSchedule(item.schedule, trigger)}
+                      onView={(trigger) =>
+                        onViewSchedule(item.schedule, trigger)
+                      }
                     />
                   ))}
                   {isTodayColumn ? (

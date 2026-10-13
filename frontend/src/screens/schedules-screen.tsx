@@ -1,13 +1,6 @@
 import { CalendarDays, Plus, Search } from "lucide-react";
-import { useMemo, useRef, useState, type ReactNode } from "react";
-import {
-  AnimatePresence,
-  MotionConfig,
-  motion,
-  useIsPresent,
-  useReducedMotion,
-  type Transition,
-} from "framer-motion";
+import { useMemo, useRef, useState } from "react";
+import { MotionConfig } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
@@ -33,6 +26,7 @@ import { WeeklyScheduleTimeline } from "@/components/schedules/weekly-schedule-t
 import {
   Tabs,
   TabsPanel,
+  TabsPanels,
 } from "@/components/animate-ui/components/base/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,40 +36,6 @@ import { cn } from "@/lib/utils";
 
 function isScheduleViewMode(value: string): value is ScheduleViewMode {
   return value === "day" || value === "week";
-}
-
-function AnimatedModeContent({
-  children,
-  prefersReducedMotion,
-  transition,
-}: {
-  children: ReactNode;
-  prefersReducedMotion: boolean;
-  transition: Transition;
-}) {
-  const isPresent = useIsPresent();
-  const exitTransition: Transition = {
-    duration: 0.1,
-    ease: [0.25, 1, 0.5, 1],
-  };
-
-  return (
-    <motion.div
-      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-      aria-hidden={isPresent ? undefined : true}
-      className="flex min-h-0 flex-1 flex-col"
-      exit={
-        prefersReducedMotion
-          ? undefined
-          : { opacity: 0, y: -4, transition: exitTransition }
-      }
-      inert={!isPresent}
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 4 }}
-      transition={transition}
-    >
-      {children}
-    </motion.div>
-  );
 }
 
 export function SchedulesScreen() {
@@ -100,10 +60,6 @@ export function SchedulesScreen() {
     useState<GetV1Schedules200Item | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
-  const prefersReducedMotion = useReducedMotion() === true;
-  const modeTransition: Transition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.16, ease: [0.25, 1, 0.5, 1] };
 
   const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
   const weekDates = useMemo(
@@ -421,110 +377,101 @@ export function SchedulesScreen() {
             }
           >
             {({ day, week }) => (
-              <AnimatePresence initial={false} mode="wait">
-                <AnimatedModeContent
-                  key={viewMode}
-                  prefersReducedMotion={prefersReducedMotion}
-                  transition={modeTransition}
+              <TabsPanels
+                className="flex min-h-0 flex-1 flex-col"
+                mode="layout"
+              >
+                <TabsPanel
+                  className="flex min-h-0 flex-1 flex-col"
+                  value="day"
                 >
                   <div className="mb-2 w-full shrink-0">
-                    {viewMode === "day" ? day : week}
+                    {day}
                   </div>
 
-                  {viewMode === "day" ? (
-                    <>
-                      <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                          <div className="min-w-0 flex-1">
-                            <Input
-                              ref={scheduleSearchRef}
-                              value={searchQuery}
-                              onChange={(event) =>
-                                setSearchQuery(event.target.value)
-                              }
-                              placeholder={t("schedules:searchPlaceholder")}
-                              leftIcon={Search}
-                            />
-                          </div>
-                          <Button
-                            className="hidden sm:inline-flex"
-                            leftIcon={Plus}
-                            onClick={(event) =>
-                              handleAddSchedule(event.currentTarget)
-                            }
-                            ref={triggerRef}
-                          >
-                            {t("schedules:addSchedule")}
-                          </Button>
-                        </div>
+                  <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <div className="min-w-0 flex-1">
+                        <Input
+                          ref={scheduleSearchRef}
+                          value={searchQuery}
+                          onChange={(event) => setSearchQuery(event.target.value)}
+                          placeholder={t("schedules:searchPlaceholder")}
+                          leftIcon={Search}
+                        />
                       </div>
+                      <Button
+                        className="hidden sm:inline-flex"
+                        leftIcon={Plus}
+                        onClick={(event) =>
+                          handleAddSchedule(event.currentTarget)
+                        }
+                        ref={triggerRef}
+                      >
+                        {t("schedules:addSchedule")}
+                      </Button>
+                    </div>
+                  </div>
 
-                      {schedules && schedules.length > 0 ? (
-                        <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
-                          <div className="flex gap-2 overflow-x-auto">
-                            {(
-                              [
-                                "ALL",
-                                "SCHEDULED",
-                                "COMPLETED",
-                                "NO_SHOW",
-                                "CANCELLED",
-                              ] as const
-                            ).map((status) => (
-                              <button
-                                aria-pressed={statusFilter === status}
-                                className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                key={status}
-                                onClick={() => setStatusFilter(status)}
-                                type="button"
-                              >
-                                <span
-                                  className={cn(
-                                    "rounded-full px-3 py-1.5 leading-5 transition-colors",
-                                    statusFilter === status
-                                      ? "bg-primary text-primary-foreground"
-                                      : "bg-muted text-foreground group-hover:bg-accent",
-                                  )}
-                                >
-                                  {status === "ALL"
-                                    ? t("schedules:filter.all")
-                                    : t(`schedules:status.${status}`)}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </>
+                  {schedules && schedules.length > 0 ? (
+                    <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
+                      <div className="flex gap-2 overflow-x-auto">
+                        {(
+                          [
+                            "ALL",
+                            "SCHEDULED",
+                            "COMPLETED",
+                            "NO_SHOW",
+                            "CANCELLED",
+                          ] as const
+                        ).map((status) => (
+                          <button
+                            aria-pressed={statusFilter === status}
+                            className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            key={status}
+                            onClick={() => setStatusFilter(status)}
+                            type="button"
+                          >
+                            <span
+                              className={cn(
+                                "rounded-full px-3 py-1.5 leading-5 transition-colors",
+                                statusFilter === status
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-foreground group-hover:bg-accent",
+                              )}
+                            >
+                              {status === "ALL"
+                                ? t("schedules:filter.all")
+                                : t(`schedules:status.${status}`)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ) : null}
 
-                  <TabsPanel
-                    animate={prefersReducedMotion ? undefined : { opacity: 1 }}
-                    className="flex min-h-0 flex-1 flex-col"
-                    exit={prefersReducedMotion ? undefined : { opacity: 1 }}
-                    initial={false}
-                    layout={false}
-                    transition={{ duration: 0 }}
-                    value={viewMode}
-                  >
-                    {viewMode === "day" ? (
-                      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
-                        {renderScheduleContent("day")}
-                      </div>
-                    ) : (
-                      <div
-                        className={cn(
-                          "flex min-h-0 flex-1 flex-col px-3 pb-0 sm:px-4 lg:px-6",
-                          isWeeklyTimelineVisible &&
-                            "relative left-1/2 w-screen max-w-none -translate-x-1/2 px-0 sm:static sm:left-auto sm:w-auto sm:translate-x-0 sm:px-0 lg:px-0",
-                        )}
-                      >
-                        {renderScheduleContent("week")}
-                      </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
+                    {renderScheduleContent("day")}
+                  </div>
+                </TabsPanel>
+
+                <TabsPanel
+                  className="flex min-h-0 flex-1 flex-col"
+                  value="week"
+                >
+                  <div className="mb-2 w-full shrink-0">{week}</div>
+
+                  <div
+                    className={cn(
+                      "flex min-h-0 flex-1 flex-col px-3 pb-0 sm:px-4 lg:px-6",
+                      isWeeklyTimelineVisible &&
+                        "relative left-1/2 w-screen max-w-none -translate-x-1/2 px-0 sm:static sm:left-auto sm:w-auto sm:translate-x-0 sm:px-0 lg:px-0",
                     )}
-                  </TabsPanel>
-                </AnimatedModeContent>
-              </AnimatePresence>
+                  >
+                    {renderScheduleContent("week")}
+                  </div>
+                </TabsPanel>
+              </TabsPanels>
             )}
           </WeekDateSelector>
         </Tabs>

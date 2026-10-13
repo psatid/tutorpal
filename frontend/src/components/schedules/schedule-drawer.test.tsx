@@ -20,7 +20,7 @@ const drawerState = vi.hoisted(() => ({
 }));
 
 const noShowDialogState = vi.hoisted(() => ({
-	finalFocus: undefined as { current: HTMLElement | null } | undefined,
+	finalFocus: undefined as (() => HTMLElement | null) | undefined,
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -58,7 +58,7 @@ vi.mock("@/components/schedules/no-show-schedule-dialog", () => ({
 		open,
 		schedule,
 	}: {
-		finalFocus?: { current: HTMLElement | null };
+		finalFocus?: () => HTMLElement | null;
 		open: boolean;
 		schedule: { id: string } | null;
 	}) => {
@@ -180,11 +180,17 @@ describe("ScheduleDrawer", () => {
 			/>,
 		);
 
-		await user.click(screen.getByRole("button", { name: "Class" }));
+		await user.click(screen.getByRole("button", { name: /^Class/ }));
 		await user.click(screen.getByRole("button", { name: "Choose class one" }));
 		await user.click(screen.getByRole("radio", { name: "Online" }));
 		await user.click(screen.getByRole("checkbox", { name: "Make this recurring" }));
+		expect(
+			screen.queryByRole("combobox", { name: /^Duration/ }),
+		).not.toBeInTheDocument();
 		await user.click(screen.getByRole("checkbox", { name: "Monday" }));
+		expect(
+			screen.getByRole("button", { name: "Add a session on Monday" }),
+		).toBeInTheDocument();
 		await user.click(screen.getByRole("button", { name: "Add Schedule" }));
 
 		expect(mutations.create).toHaveBeenCalledWith(
@@ -217,7 +223,7 @@ describe("ScheduleDrawer", () => {
 		const duration = screen.getByRole("combobox", { name: "Duration" });
 		expect(duration).toHaveTextContent("Select duration");
 
-		await user.click(screen.getByRole("button", { name: "Class" }));
+		await user.click(screen.getByRole("button", { name: /^Class/ }));
 		await user.click(screen.getByRole("button", { name: "Choose class one" }));
 		await user.click(screen.getByRole("radio", { name: "Online" }));
 		await user.click(duration);
@@ -331,15 +337,15 @@ describe("ScheduleDrawer", () => {
 			/>,
 		);
 
-		await user.click(screen.getByRole("button", { name: "Class" }));
+		await user.click(screen.getByRole("button", { name: /^Class/ }));
 		await user.click(screen.getByRole("button", { name: "Choose class one" }));
 		await user.click(screen.getByRole("radio", { name: "Online" }));
 		await user.click(screen.getByRole("checkbox", { name: "Make this recurring" }));
 		await user.click(screen.getByRole("checkbox", { name: "Monday" }));
 		await user.click(screen.getByRole("button", { name: "Add a session on Monday" }));
 
-		const firstTime = screen.getByLabelText("Time — Monday, session 1");
-		const secondTime = screen.getByLabelText("Time — Monday, session 2");
+		const firstTime = screen.getByLabelText(/^Time — Monday, session 1/);
+		const secondTime = screen.getByLabelText(/^Time — Monday, session 2/);
 		await user.clear(secondTime);
 		await user.type(secondTime, "09:30");
 		await user.click(screen.getByRole("button", { name: "Add Schedule" }));
@@ -350,10 +356,10 @@ describe("ScheduleDrawer", () => {
 	});
 
 	it.each([
-		["SCHEDULED", ["Complete", "No Show", "Delete"], ["Restore"]],
-		["COMPLETED", ["Restore", "Delete"], ["Complete", "No Show"]],
-		["NO_SHOW", ["Restore", "Delete"], ["Complete", "No Show"]],
-		["CANCELLED", ["Delete"], ["Complete", "No Show", "Restore"]],
+		["SCHEDULED", ["Complete", "No Show"], ["Restore"]],
+		["COMPLETED", ["Restore"], ["Complete", "No Show"]],
+		["NO_SHOW", ["Restore"], ["Complete", "No Show"]],
+		["CANCELLED", [], ["Complete", "No Show", "Restore"]],
 	] as const)(
 		"renders the %s view-mode action matrix and status badge",
 		(status, visibleActions, hiddenActions) => {
@@ -373,11 +379,9 @@ describe("ScheduleDrawer", () => {
 			}
 
 			expect(actions).toHaveClass("grid-cols-1", "sm:grid-cols-2");
-			expect(
-				within(actions).getByRole("button", { name: "Delete" }),
-			).toHaveClass("sm:col-span-2");
-			expect(screen.getByText("Status").parentElement).toHaveTextContent(
-				scheduleStatusLabels[status],
+			expect(screen.getByText(scheduleStatusLabels[status])).toHaveAttribute(
+				"data-slot",
+				"badge",
 			);
 
 			const footer = within(
@@ -420,8 +424,9 @@ describe("ScheduleDrawer", () => {
 		expect(
 			within(actions).queryByRole("button", { name: "No Show" }),
 		).not.toBeInTheDocument();
-		expect(screen.getByText("Status").parentElement).toHaveTextContent(
-			"No Show",
+		expect(screen.getByText("No Show")).toHaveAttribute(
+			"data-slot",
+			"badge",
 		);
 	});
 
@@ -442,18 +447,18 @@ describe("ScheduleDrawer", () => {
 		expect(dialog).toHaveAttribute("data-open", "true");
 	});
 
-	it("provides the Edit button as the dialog's focus-return target", () => {
+	it("provides the No Show trigger as the dialog's default focus-return target", () => {
 		renderScheduleDrawer("SCHEDULED");
 
-		expect(noShowDialogState.finalFocus?.current).toBe(
-			screen.getByRole("button", { name: "Edit" }),
+		expect(noShowDialogState.finalFocus?.()).toBe(
+			screen.getByRole("button", { name: "No Show" }),
 		);
 	});
 
 	it("hides the status display and action group in edit mode", () => {
 		renderScheduleDrawer("NO_SHOW", "edit");
 
-		expect(screen.queryByText("Status")).not.toBeInTheDocument();
+		expect(screen.queryByText("No Show")).not.toBeInTheDocument();
 		expect(screen.queryByLabelText("Schedule actions")).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole("combobox", { name: "Status" }),
@@ -471,9 +476,6 @@ describe("ScheduleDrawer", () => {
 		).toBeDisabled();
 		expect(
 			within(actions).getByRole("button", { name: "No Show" }),
-		).toBeDisabled();
-		expect(
-			within(actions).getByRole("button", { name: "Delete" }),
 		).toBeDisabled();
 	});
 });

@@ -82,7 +82,7 @@ vi.mock("@/hooks/queries/use-get-schedule", () => ({
 
 import { ScheduleDrawer } from "@/components/schedules/schedule-drawer";
 
-async function selectClass(classButtonName: string) {
+async function selectClass(classButtonName: RegExp) {
 	const user = userEvent.setup();
 
 	render(
@@ -126,7 +126,7 @@ describe("ScheduleDrawer availability", () => {
 			availability.hasNoAvailableHours = true;
 			availability.state = state;
 
-			await selectClass("Class");
+			await selectClass(/^Class/);
 
 			expect(
 				screen.getByRole("button", { name: "Add Schedule" }),
@@ -155,7 +155,7 @@ describe("ScheduleDrawer availability", () => {
 			availability.hasNoAvailableHours = true;
 			availability.state = state;
 
-			await selectClass("ชั้นเรียน");
+			await selectClass(/^ชั้นเรียน/);
 
 			expect(
 				screen.getByRole("button", { name: "เพิ่มช่วงเรียน" }),
@@ -165,7 +165,7 @@ describe("ScheduleDrawer availability", () => {
 	);
 
 	it("leaves creation enabled when the selected class still has capacity", async () => {
-		await selectClass("Class");
+		await selectClass(/^Class/);
 
 		expect(screen.getByRole("button", { name: "Add Schedule" })).toBeEnabled();
 	});

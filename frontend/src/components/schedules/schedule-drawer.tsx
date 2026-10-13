@@ -430,23 +430,12 @@ export function ScheduleDrawer({
       >
         <FieldGroup className="gap-5">
           {mode === "view" && scheduleData && scheduleStatus ? (
-            <Field
-              className="min-w-0 items-center gap-3"
-              orientation="horizontal"
-            >
-              <FieldLabel className="grow-0 shrink-0">
-                {t("schedules:drawer.status.label")}
-              </FieldLabel>
-              <Badge
-                className="min-w-0 flex-1 justify-start gap-1"
-                variant={scheduleStatus.badgeVariant}
-              >
-                {ScheduleStatusIcon ? (
-                  <ScheduleStatusIcon aria-hidden="true" className="size-3" />
-                ) : null}
-                {t(`schedules:status.${scheduleData.status}`)}
-              </Badge>
-            </Field>
+            <Badge variant={scheduleStatus.badgeVariant}>
+              {ScheduleStatusIcon ? (
+                <ScheduleStatusIcon aria-hidden="true" className="size-3" />
+              ) : null}
+              {t(`schedules:status.${scheduleData.status}`)}
+            </Badge>
           ) : null}
 
           <FormField
@@ -465,9 +454,7 @@ export function ScheduleDrawer({
               aria-expanded={isClassDrawerOpen}
               aria-invalid={!!errors.classId}
               aria-describedby={
-                [
-                  errors.classId ? "schedule-class-error" : null,
-                ]
+                [errors.classId ? "schedule-class-error" : null]
                   .filter(Boolean)
                   .join(" ") || undefined
               }
@@ -674,12 +661,10 @@ export function ScheduleDrawer({
             render={({ field, fieldState }) => {
               const descriptionId = "schedule-notes-description";
               const errorId = "schedule-notes-error";
-              const describedBy = [
-                descriptionId,
-                fieldState.error ? errorId : undefined,
-              ]
-                .filter(Boolean)
-                .join(" ") || undefined;
+              const describedBy =
+                [descriptionId, fieldState.error ? errorId : undefined]
+                  .filter(Boolean)
+                  .join(" ") || undefined;
 
               return (
                 <FormField
@@ -694,9 +679,7 @@ export function ScheduleDrawer({
                   <textarea
                     {...field}
                     aria-describedby={describedBy}
-                    aria-errormessage={
-                      fieldState.error ? errorId : undefined
-                    }
+                    aria-errormessage={fieldState.error ? errorId : undefined}
                     aria-invalid={!!fieldState.error}
                     className="min-h-24 w-full min-w-0 resize-y rounded-md border border-input bg-card px-3 py-2 text-base text-card-foreground transition-colors outline-none placeholder:text-muted-foreground hover:border-input-hover focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 md:text-sm"
                     disabled={isDisabled}

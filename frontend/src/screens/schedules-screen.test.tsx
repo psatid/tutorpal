@@ -236,7 +236,7 @@ describe("SchedulesScreen weekly timeline integration", () => {
     expect(screen.getByTestId("drawer-time")).toHaveTextContent("default");
   });
 
-  it("keeps Week Add beside the view tabs and preserves the Day Add and FAB", async () => {
+	it("keeps the desktop Week Add beside the view tabs and preserves the Day Add and FAB", async () => {
     const user = userEvent.setup();
     render(<SchedulesScreen />);
 
@@ -253,17 +253,13 @@ describe("SchedulesScreen weekly timeline integration", () => {
       ).not.toBeInTheDocument();
     });
 
-    const mobileWeekAdd = getAddButtonWithClass("sm:hidden");
     const desktopWeekAdd = getAddButtonWithClass("sm:inline-flex");
 
-    expect(sharedControls).toContainElement(mobileWeekAdd);
     expect(sharedControls).toContainElement(desktopWeekAdd);
     expect(
       screen.getAllByRole("button", { name: "Add Schedule" }),
-    ).toEqual([mobileWeekAdd, desktopWeekAdd]);
-    expect(mobileWeekAdd).toHaveAttribute("aria-haspopup", "dialog");
-    expect(mobileWeekAdd).toHaveClass("sm:hidden", "size-11");
-    expect(mobileWeekAdd).not.toHaveTextContent("Add Schedule");
+		).toEqual([desktopWeekAdd]);
+		expect(desktopWeekAdd).toHaveAttribute("aria-haspopup", "dialog");
     expect(desktopWeekAdd).toHaveClass("hidden", "sm:inline-flex");
     expect(desktopWeekAdd).toHaveTextContent("Add Schedule");
     expect(screen.queryByTestId("workspace-fab")).not.toBeInTheDocument();
@@ -279,7 +275,7 @@ describe("SchedulesScreen weekly timeline integration", () => {
     );
   });
 
-  it("transitions the active mode block while keeping shared controls outside it", async () => {
+	it("renders the active mode panel while keeping shared controls outside it", async () => {
     const user = userEvent.setup();
     queryState.schedules = [makeSchedule()];
     render(<SchedulesScreen />);
@@ -310,21 +306,14 @@ describe("SchedulesScreen weekly timeline integration", () => {
 
     await user.click(screen.getByRole("tab", { name: "Week" }));
 
-    const exitingSearch = document.querySelector<HTMLInputElement>(
-      'input[placeholder="Search by class..."]',
-    );
-    const exitingModeContent = exitingSearch?.closest(
-      ".flex.min-h-0.flex-1.flex-col",
-    );
-
-    expect(exitingModeContent).toHaveAttribute("aria-hidden", "true");
-    expect(exitingModeContent).toHaveAttribute("inert");
-
     await waitFor(() => {
       expect(
         screen.getByRole("region", { name: "Weekly schedule timeline" }),
       ).toBeInTheDocument();
     });
+		expect(
+			screen.queryByPlaceholderText("Search by class..."),
+		).not.toBeInTheDocument();
     expect(getSharedHeaderControls()).toContainElement(
       getAddButtonWithClass("sm:inline-flex"),
     );
