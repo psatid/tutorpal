@@ -1,8 +1,13 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, ScheduleStatus } from "@prisma/client";
 import { secondsToHours } from "../lib/teaching-time";
-import { CAPACITY_RESERVING_SCHEDULE_STATUSES } from "../models/schedule.model";
+import {
+	CAPACITY_RESERVING_SCHEDULE_STATUSES,
+	ClassHourBalance,
+} from "../models/class-hour-balance.model";
 
-export const ACTIVE_SCHEDULE_STATUSES = CAPACITY_RESERVING_SCHEDULE_STATUSES;
+export const ACTIVE_SCHEDULE_STATUSES: ScheduleStatus[] = [
+	...CAPACITY_RESERVING_SCHEDULE_STATUSES,
+];
 
 type ClassHours = {
 	id: string;
@@ -14,11 +19,7 @@ type ClassHourAccountingReader = Pick<
 	"schedule" | "classHourDeduction"
 >;
 
-export type ClassHourAccounting = {
-	remainingHours: number;
-	scheduledHours: number;
-	usedHours: number;
-};
+export type ClassHourAccounting = ClassHourBalance;
 
 export async function getClassHourAccountingMap(
 	client: ClassHourAccountingReader,
@@ -32,7 +33,7 @@ export async function getClassHourAccountingMap(
 		classes.map((classData) => [classData.id, classData.totalSeconds]),
 	);
 	const classIds = [...uniqueClasses.keys()];
-	const [scheduleSecondsByClass, usedSecondsByClass] = await Promise.all([
+	const [scheduleAggregateRows, usedSecondsByClass] = await Promise.all([
 		client.schedule.groupBy({
 			by: ["classId", "status"],
 			where: {
@@ -55,17 +56,31 @@ export async function getClassHourAccountingMap(
 		}),
 	]);
 
-	const reservedSecondsByClass = new Map<string, bigint>();
-	const scheduledSecondsByClass = new Map<string, bigint>();
-	for (const schedule of scheduleSecondsByClass) {
-		const seconds = schedule._sum.durationSeconds ?? 0n;
-		reservedSecondsByClass.set(
-			schedule.classId,
-			(reservedSecondsByClass.get(schedule.classId) ?? 0n) + seconds,
-		);
-		if (schedule.status === "SCHEDULED") {
-			scheduledSecondsByClass.set(schedule.classId, seconds);
+	const scheduleSecondsByClass = new Map<
+		string,
+		{
+			scheduledSeconds: bigint;
+			completedSeconds: bigint;
+			noShowSeconds: bigint;
 		}
+	>();
+	for (const schedule of scheduleAggregateRows) {
+		const seconds = schedule._sum.durationSeconds ?? 0n;
+		const classScheduleSeconds = scheduleSecondsByClass.get(
+			schedule.classId,
+		) ?? {
+			scheduledSeconds: 0n,
+			completedSeconds: 0n,
+			noShowSeconds: 0n,
+		};
+		if (schedule.status === "SCHEDULED") {
+			classScheduleSeconds.scheduledSeconds += seconds;
+		} else if (schedule.status === "COMPLETED") {
+			classScheduleSeconds.completedSeconds += seconds;
+		} else if (schedule.status === "NO_SHOW") {
+			classScheduleSeconds.noShowSeconds += seconds;
+		}
+		scheduleSecondsByClass.set(schedule.classId, classScheduleSeconds);
 	}
 
 	const usedSecondsMap = new Map(
@@ -78,15 +93,11 @@ export async function getClassHourAccountingMap(
 	return new Map(
 		[...uniqueClasses].map(([classId, totalSeconds]) => [
 			classId,
-			{
-				remainingHours: secondsToHours(
-					totalSeconds - (reservedSecondsByClass.get(classId) ?? 0n),
-				),
-				scheduledHours: secondsToHours(
-					scheduledSecondsByClass.get(classId) ?? 0n,
-				),
-				usedHours: secondsToHours(usedSecondsMap.get(classId) ?? 0n),
-			},
+			ClassHourBalance.fromSeconds({
+				totalSeconds,
+				...(scheduleSecondsByClass.get(classId) ?? {}),
+				usedSeconds: usedSecondsMap.get(classId) ?? 0n,
+			}),
 		]),
 	);
 }
@@ -133,7 +144,10 @@ export async function getRemainingSecondsMap(
 	return new Map(
 		classes.map((classData) => [
 			classData.id,
-			classData.totalSeconds - (reservedSecondsMap.get(classData.id) ?? 0n),
+			ClassHourBalance.fromReservedSeconds({
+				totalSeconds: classData.totalSeconds,
+				reservedSeconds: reservedSecondsMap.get(classData.id) ?? 0n,
+			}).remainingSeconds,
 		]),
 	);
 }

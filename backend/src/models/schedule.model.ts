@@ -6,6 +6,10 @@ import type {
 	RecurringScheduleUpdateResultDTO,
 	ScheduleDTO,
 } from "../types/schedule.types";
+import {
+	CAPACITY_RESERVING_SCHEDULE_STATUSES as capacityReservingScheduleStatuses,
+	isCapacityReservingScheduleStatus,
+} from "./class-hour-balance.model";
 
 type ClassContext = {
 	name: string;
@@ -45,9 +49,7 @@ type RecurringSchedulePrismaRecord = {
 };
 
 export const CAPACITY_RESERVING_SCHEDULE_STATUSES: ScheduleStatus[] = [
-	"SCHEDULED",
-	"COMPLETED",
-	"NO_SHOW",
+	...capacityReservingScheduleStatuses,
 ];
 
 export type ScheduleTransitionPlan = {
@@ -120,7 +122,7 @@ export class ScheduleModel {
 	}
 
 	static isCapacityReservingStatus(status: ScheduleStatus): boolean {
-		return CAPACITY_RESERVING_SCHEDULE_STATUSES.includes(status);
+		return isCapacityReservingScheduleStatus(status);
 	}
 
 	static isRestorableStatus(status: ScheduleStatus): boolean {

@@ -9,6 +9,7 @@ import { DateTime } from "../lib/date-time";
 import { prisma as defaultPrisma } from "../lib/db";
 import { AppError } from "../lib/error";
 import { minutesToSeconds } from "../lib/teaching-time";
+import { ClassHourBalance } from "../models/class-hour-balance.model";
 import {
 	RecurringScheduleModel,
 	RecurringScheduleUpdateResultModel,
@@ -835,7 +836,10 @@ export class ScheduleRepository implements IScheduleRepository {
 			0n,
 		);
 
-		return classData.totalSeconds - reservedSeconds;
+		return ClassHourBalance.fromReservedSeconds({
+			totalSeconds: classData.totalSeconds,
+			reservedSeconds,
+		}).remainingSeconds;
 	}
 
 	private matchesRecurringScheduleItem(

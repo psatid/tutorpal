@@ -91,16 +91,17 @@ describe("getClassHourAccountingMap", () => {
 			{ id: "class-2", totalSeconds: 18_000n },
 		]);
 
-		expect(accounting.get("class-1")).toEqual({
-			remainingHours: 6,
-			scheduledHours: 1.5,
-			usedHours: 2,
-		});
-		expect(accounting.get("class-2")).toEqual({
-			remainingHours: 4.5,
-			scheduledHours: 0.5,
-			usedHours: 0,
-		});
+		const firstBalance = accounting.get("class-1");
+		expect(firstBalance?.totalSeconds).toBe(36_000n);
+		expect(firstBalance?.reservedSeconds).toBe(14_400n);
+		expect(firstBalance?.remainingHours).toBe(6);
+		expect(firstBalance?.scheduledHours).toBe(1.5);
+		expect(firstBalance?.usedHours).toBe(2);
+
+		const secondBalance = accounting.get("class-2");
+		expect(secondBalance?.remainingHours).toBe(4.5);
+		expect(secondBalance?.scheduledHours).toBe(0.5);
+		expect(secondBalance?.usedHours).toBe(0);
 		expect(fixture.getScheduleGroupByArgs()).toEqual({
 			by: ["classId", "status"],
 			where: {
@@ -126,11 +127,10 @@ describe("getClassHourAccountingMap", () => {
 			{ id: "class-1", totalSeconds: 5_400n },
 		]);
 
-		expect(accounting.get("class-1")).toEqual({
-			remainingHours: 1.5,
-			scheduledHours: 0,
-			usedHours: 0,
-		});
+		const balance = accounting.get("class-1");
+		expect(balance?.remainingHours).toBe(1.5);
+		expect(balance?.scheduledHours).toBe(0);
+		expect(balance?.usedHours).toBe(0);
 		expect(fixture.getRecurringTemplateReads()).toBe(0);
 	});
 

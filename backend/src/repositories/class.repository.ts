@@ -1,24 +1,19 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { MAX_CLASS_HOURS, MAX_CLASS_SECONDS } from "../lib/class-hour-addition";
 import { prisma as defaultPrisma } from "../lib/db";
 import { AppError } from "../lib/error";
-import {
-	hasAtMostTwoDecimalPlaces,
-	MAX_CURRENCY_AMOUNT,
-	normalizeCurrencyAmount,
-} from "../lib/money";
-import { hoursToSeconds, secondsToHours } from "../lib/teaching-time";
-import { ClassModel } from "../models/class.model";
+import { type ClassHourAdditionPlan, ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
-import type {
-	ClassDeleteOutcome,
-	ClassDetail,
-	ClassHourAdditionResult,
-	ClassListParams,
-	CreateClassDTO,
-	CreateClassHourAdditionDTO,
-	IClassRepository,
-	UpdateClassDTO,
+import { ClassHourBalance } from "../models/class-hour-balance.model";
+import {
+	type ClassDeleteOutcome,
+	type ClassDetail,
+	ClassHourAdditionPersistenceError,
+	type ClassHourAdditionResult,
+	type ClassHourAdditionTransaction,
+	type ClassListParams,
+	type CreateClassDTO,
+	type IClassRepository,
+	type UpdateClassDTO,
 } from "../types/class.types";
 import type {
 	PaginatedResponse,
@@ -37,72 +32,6 @@ const classInclude = {
 	},
 } as const;
 
-type DecimalLike = { toNumber(): number };
-type SecondsValue = bigint;
-type MoneyValue = DecimalLike | number;
-
-function toHoursNumber(value: SecondsValue): number {
-	return secondsToHours(value);
-}
-
-function toDecimalNumber(value: DecimalLike | number): number {
-	return typeof value === "number" ? value : value.toNumber();
-}
-
-function hourAdditionLimitExceeded(message: string) {
-	return AppError.badRequest("HOUR_ADDITION_LIMIT_EXCEEDED", message);
-}
-
-function normalizePositiveHoursToSeconds(hours: number): bigint {
-	if (
-		!Number.isFinite(hours) ||
-		hours <= 0 ||
-		!hasAtMostTwoDecimalPlaces(hours)
-	) {
-		throw AppError.badRequest(
-			"INVALID_HOUR_ADDITION",
-			"Hours must be a positive value with at most two decimal places",
-		);
-	}
-
-	const seconds = hoursToSeconds(hours);
-	if (seconds <= 0n) {
-		throw AppError.badRequest(
-			"INVALID_HOUR_ADDITION",
-			"Hours must be at least 0.01",
-		);
-	}
-	return seconds;
-}
-
-function normalizeRevenueAmount(
-	revenueAmount: number | null | undefined,
-): number | null {
-	if (revenueAmount === null || revenueAmount === undefined) return null;
-
-	if (
-		!Number.isFinite(revenueAmount) ||
-		revenueAmount < 0 ||
-		revenueAmount > MAX_CURRENCY_AMOUNT ||
-		!hasAtMostTwoDecimalPlaces(revenueAmount)
-	) {
-		throw AppError.badRequest(
-			"INVALID_REVENUE_AMOUNT",
-			"Revenue amount must be a non-negative value with at most two decimal places",
-		);
-	}
-
-	return normalizeCurrencyAmount(revenueAmount);
-}
-
-function assertHoursFitClassTotal(seconds: bigint) {
-	if (seconds > MAX_CLASS_SECONDS) {
-		throw hourAdditionLimitExceeded(
-			`Hours must not exceed ${MAX_CLASS_HOURS.toFixed(2)}`,
-		);
-	}
-}
-
 async function assertStudentsBelongToTutor(
 	tx: Prisma.TransactionClient,
 	studentIds: string[],
@@ -120,54 +49,6 @@ async function assertStudentsBelongToTutor(
 		);
 }
 
-function isMatchingHourAddition(
-	existing: {
-		source: "COURSE" | "CUSTOM";
-		secondsAdded: bigint;
-		revenueAmount: MoneyValue | null;
-		sourceCourseId: string | null;
-	},
-	data: CreateClassHourAdditionDTO,
-): boolean {
-	if (
-		normalizeRevenueAmount(
-			existing.revenueAmount === null
-				? null
-				: toDecimalNumber(existing.revenueAmount),
-		) !== normalizeRevenueAmount(data.revenueAmount)
-	) {
-		return false;
-	}
-
-	if (data.source === "course") {
-		return (
-			existing.source === "COURSE" && existing.sourceCourseId === data.courseId
-		);
-	}
-
-	return (
-		existing.source === "CUSTOM" &&
-		existing.secondsAdded === normalizePositiveHoursToSeconds(data.hours)
-	);
-}
-
-function assertMatchingHourAddition(
-	existing: {
-		source: "COURSE" | "CUSTOM";
-		secondsAdded: bigint;
-		revenueAmount: MoneyValue | null;
-		sourceCourseId: string | null;
-	},
-	data: CreateClassHourAdditionDTO,
-) {
-	if (!isMatchingHourAddition(existing, data)) {
-		throw AppError.conflict(
-			"HOUR_ADDITION_REQUEST_CONFLICT",
-			"This request ID was already used for a different hour addition",
-		);
-	}
-}
-
 async function getRemainingHoursInTransaction(
 	tx: Prisma.TransactionClient,
 	classId: string,
@@ -177,7 +58,10 @@ async function getRemainingHoursInTransaction(
 		where: { classId, status: { in: ACTIVE_SCHEDULE_STATUSES } },
 		_sum: { durationSeconds: true },
 	});
-	return secondsToHours(totalSeconds - (reserved._sum.durationSeconds ?? 0n));
+	return ClassHourBalance.fromReservedSeconds({
+		totalSeconds,
+		reservedSeconds: reserved._sum.durationSeconds ?? 0n,
+	}).remainingHours;
 }
 
 export class ClassRepository implements IClassRepository {
@@ -270,15 +154,9 @@ export class ClassRepository implements IClassRepository {
 				);
 				const totalPages = Math.ceil(total / limit);
 				return {
-					data: classes.map((item) => {
-						const hours = accounting.get(item.id);
-						return ClassModel.fromClassPrisma(
-							item,
-							hours?.remainingHours,
-							hours?.scheduledHours,
-							hours?.usedHours,
-						);
-					}),
+					data: classes.map((item) =>
+						ClassModel.fromClassPrisma(item, accounting.get(item.id)),
+					),
 					pagination: {
 						total,
 						page,
@@ -349,13 +227,7 @@ export class ClassRepository implements IClassRepository {
 		const accounting = await getClassHourAccountingMap(tx, [
 			{ id: item.id, totalSeconds: item.totalSeconds },
 		]);
-		const hours = accounting.get(item.id);
-		return ClassModel.fromClassPrisma(
-			item,
-			hours?.remainingHours,
-			hours?.scheduledHours,
-			hours?.usedHours,
-		);
+		return ClassModel.fromClassPrisma(item, accounting.get(item.id));
 	}
 
 	async update(
@@ -404,163 +276,196 @@ export class ClassRepository implements IClassRepository {
 		return updated;
 	}
 
-	async addHourAddition(
-		id: string,
-		tutorId: string,
-		data: CreateClassHourAdditionDTO,
-	): Promise<ClassHourAdditionResult> {
-		const normalizedData =
-			data.source === "custom"
-				? {
-						...data,
-						hours: secondsToHours(normalizePositiveHoursToSeconds(data.hours)),
-						revenueAmount: normalizeRevenueAmount(data.revenueAmount),
-					}
-				: {
-						...data,
-						revenueAmount: normalizeRevenueAmount(data.revenueAmount),
-					};
+	withHourAdditionTransaction<T>(
+		work: (transaction: ClassHourAdditionTransaction) => Promise<T>,
+	): Promise<T> {
+		let appliedPlan:
+			| { tutorId: string; plan: ClassHourAdditionPlan }
+			| undefined;
 
-		try {
-			return await this.prisma.$transaction(async (tx) => {
-				const classData = await tx.class.findFirst({
-					where: { id, tutorId },
-					select: { id: true, totalSeconds: true },
-				});
-				if (!classData) {
-					throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
-				}
-
-				const existing = await tx.classHourAddition.findUnique({
-					where: {
-						classId_requestId: { classId: id, requestId: data.requestId },
+		return this.prisma
+			.$transaction((tx) =>
+				work({
+					loadOwnedClass: async (classId, tutorId) => {
+						const classData = await tx.class.findFirst({
+							where: { id: classId, tutorId },
+							include: classInclude,
+						});
+						return classData ? ClassModel.fromClassPrisma(classData) : null;
 					},
-				});
-				if (existing) {
-					assertMatchingHourAddition(existing, normalizedData);
-					return {
-						addition: ClassHourAdditionModel.fromPrisma(existing),
-						totalHours: toHoursNumber(classData.totalSeconds),
-						remainingHours: await getRemainingHoursInTransaction(
-							tx,
-							id,
-							classData.totalSeconds,
-						),
-					};
+					findByRequestId: async (classId, requestId) => {
+						const addition = await tx.classHourAddition.findUnique({
+							where: { classId_requestId: { classId, requestId } },
+						});
+						return addition
+							? ClassHourAdditionModel.fromPrisma(addition)
+							: null;
+					},
+					loadOwnedCourse: (courseId, tutorId) =>
+						tx.course.findFirst({
+							where: { id: courseId, tutorId },
+							select: { id: true, name: true, defaultTotalSeconds: true },
+						}),
+					resultForExisting: (classData, addition) =>
+						this.toHourAdditionResult(tx, classData.totalSeconds, addition),
+					apply: async (tutorId, plan) => {
+						appliedPlan = { tutorId, plan };
+						return this.applyHourAdditionPlan(tx, tutorId, plan);
+					},
+				}),
+			)
+			.catch(async (error) => {
+				if (
+					error instanceof Prisma.PrismaClientKnownRequestError &&
+					error.code === "P2002" &&
+					appliedPlan
+				) {
+					return this.recoverConcurrentHourAddition(
+						appliedPlan.tutorId,
+						appliedPlan.plan,
+					) as Promise<T>;
 				}
+				throw error;
+			});
+	}
 
-				let secondsAdded: bigint;
-				let sourceCourseId: string | null = null;
-				let sourceCourseName: string | null = null;
-				if (normalizedData.source === "course") {
-					const course = await tx.course.findFirst({
-						where: { id: normalizedData.courseId, tutorId },
-						select: { id: true, name: true, defaultTotalSeconds: true },
-					});
-					if (!course) {
-						throw AppError.badRequest(
-							"COURSE_NOT_FOUND",
-							"The selected course is unavailable",
-						);
-					}
-					secondsAdded = course.defaultTotalSeconds;
-					if (secondsAdded <= 0n) {
-						throw AppError.badRequest(
-							"INVALID_HOUR_ADDITION",
-							"Course hours must be greater than 0",
-						);
-					}
-					sourceCourseId = course.id;
-					sourceCourseName = course.name;
-				} else {
-					secondsAdded = normalizePositiveHoursToSeconds(normalizedData.hours);
-				}
-				assertHoursFitClassTotal(secondsAdded);
-
-				const updateResult = await tx.class.updateMany({
+	private async applyHourAdditionPlan(
+		tx: Prisma.TransactionClient,
+		tutorId: string,
+		plan: ClassHourAdditionPlan,
+	): Promise<ClassHourAdditionResult> {
+		const updateResult = await tx.class.updateMany({
+			where: {
+				id: plan.classId,
+				tutorId,
+				totalSeconds: { lte: plan.maximumCurrentTotalSeconds },
+			},
+			data: { totalSeconds: { increment: plan.incrementSeconds } },
+		});
+		if (updateResult.count !== 1) {
+			const [currentClass, concurrentAddition] = await Promise.all([
+				tx.class.findFirst({
+					where: { id: plan.classId, tutorId },
+					select: { totalSeconds: true },
+				}),
+				tx.classHourAddition.findUnique({
 					where: {
-						id,
-						tutorId,
-						totalSeconds: {
-							lte: MAX_CLASS_SECONDS - secondsAdded,
+						classId_requestId: {
+							classId: plan.classId,
+							requestId: plan.draft.requestId,
 						},
 					},
-					data: { totalSeconds: { increment: secondsAdded } },
-				});
-				if (updateResult.count !== 1) {
-					const [currentClass, concurrentAddition] = await Promise.all([
-						tx.class.findFirst({
-							where: { id, tutorId },
-							select: { totalSeconds: true },
-						}),
-						tx.classHourAddition.findUnique({
-							where: {
-								classId_requestId: {
-									classId: id,
-									requestId: normalizedData.requestId,
-								},
-							},
-						}),
-					]);
-					if (!currentClass) {
-						throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
-					}
-					if (concurrentAddition) {
-						assertMatchingHourAddition(concurrentAddition, normalizedData);
-						return {
-							addition: ClassHourAdditionModel.fromPrisma(concurrentAddition),
-							totalHours: toHoursNumber(currentClass.totalSeconds),
-							remainingHours: await getRemainingHoursInTransaction(
-								tx,
-								id,
-								currentClass.totalSeconds,
-							),
-						};
-					}
-					throw hourAdditionLimitExceeded(
-						"Adding these hours would exceed the class total hour limit",
-					);
-				}
-
-				const updatedClass = await tx.class.findUnique({
-					where: { id },
-					select: { totalSeconds: true },
-				});
-				if (!updatedClass) {
-					throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
-				}
-
-				const addition = await tx.classHourAddition.create({
-					data: {
-						classId: id,
-						source: normalizedData.source === "course" ? "COURSE" : "CUSTOM",
-						secondsAdded,
-						revenueAmount: normalizedData.revenueAmount,
-						sourceCourseId,
-						sourceCourseName,
-						requestId: normalizedData.requestId,
-					},
-				});
-
-				return {
-					addition: ClassHourAdditionModel.fromPrisma(addition),
-					totalHours: toHoursNumber(updatedClass.totalSeconds),
-					remainingHours: await getRemainingHoursInTransaction(
-						tx,
-						id,
-						updatedClass.totalSeconds,
-					),
-				};
-			});
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === "P2002"
-			) {
-				return this.getExistingHourAdditionResult(id, tutorId, normalizedData);
+				}),
+			]);
+			if (!currentClass) {
+				throw new ClassHourAdditionPersistenceError(
+					"class_not_found",
+					"Class not found",
+				);
 			}
-			throw error;
+			if (concurrentAddition) {
+				const addition = ClassHourAdditionModel.fromPrisma(concurrentAddition);
+				plan.request.assertMatches(addition);
+				return this.toHourAdditionResult(
+					tx,
+					currentClass.totalSeconds,
+					addition,
+				);
+			}
+			throw new ClassHourAdditionPersistenceError(
+				"limit_exceeded",
+				"Adding these hours would exceed the class total hour limit",
+			);
 		}
+
+		const updatedClass = await tx.class.findUnique({
+			where: { id: plan.classId },
+			select: { totalSeconds: true },
+		});
+		if (!updatedClass) {
+			throw new ClassHourAdditionPersistenceError(
+				"class_not_found",
+				"Class not found",
+			);
+		}
+
+		const addition = await tx.classHourAddition.create({
+			data: {
+				classId: plan.classId,
+				source: plan.draft.source === "course" ? "COURSE" : "CUSTOM",
+				secondsAdded: plan.draft.secondsAdded,
+				revenueAmount: plan.draft.revenueAmount,
+				sourceCourseId: plan.draft.sourceCourseId,
+				sourceCourseName: plan.draft.sourceCourseName,
+				requestId: plan.draft.requestId,
+			},
+		});
+
+		return this.toHourAdditionResult(
+			tx,
+			updatedClass.totalSeconds,
+			ClassHourAdditionModel.fromPrisma(addition),
+		);
+	}
+
+	private async toHourAdditionResult(
+		tx: Prisma.TransactionClient,
+		totalSeconds: bigint,
+		addition: ClassHourAdditionModel,
+	): Promise<ClassHourAdditionResult> {
+		return {
+			addition,
+			totalHours: ClassHourBalance.fromSeconds({ totalSeconds }).totalHours,
+			remainingHours: await getRemainingHoursInTransaction(
+				tx,
+				addition.classId,
+				totalSeconds,
+			),
+		};
+	}
+
+	private async recoverConcurrentHourAddition(
+		tutorId: string,
+		plan: ClassHourAdditionPlan,
+	): Promise<ClassHourAdditionResult> {
+		const [classData, existing] = await Promise.all([
+			this.prisma.class.findFirst({
+				where: { id: plan.classId, tutorId },
+				select: { totalSeconds: true },
+			}),
+			this.prisma.classHourAddition.findUnique({
+				where: {
+					classId_requestId: {
+						classId: plan.classId,
+						requestId: plan.draft.requestId,
+					},
+				},
+			}),
+		]);
+		if (!classData) {
+			throw new ClassHourAdditionPersistenceError(
+				"class_not_found",
+				"Class not found",
+			);
+		}
+		if (!existing) {
+			throw new Error(
+				"Hour addition was not found after a unique constraint conflict",
+			);
+		}
+
+		const addition = ClassHourAdditionModel.fromPrisma(existing);
+		plan.request.assertMatches(addition);
+		return {
+			addition,
+			totalHours: ClassHourBalance.fromSeconds({
+				totalSeconds: classData.totalSeconds,
+			}).totalHours,
+			remainingHours: await getRemainingHoursForClass(
+				this.prisma,
+				plan.classId,
+			),
+		};
 	}
 
 	async findHourAdditions(
@@ -615,39 +520,6 @@ export class ClassRepository implements IClassRepository {
 			}
 			throw error;
 		}
-	}
-
-	private async getExistingHourAdditionResult(
-		id: string,
-		tutorId: string,
-		data: CreateClassHourAdditionDTO,
-	): Promise<ClassHourAdditionResult> {
-		const [classData, existing] = await Promise.all([
-			this.prisma.class.findFirst({
-				where: { id, tutorId },
-				select: { totalSeconds: true },
-			}),
-			this.prisma.classHourAddition.findUnique({
-				where: {
-					classId_requestId: { classId: id, requestId: data.requestId },
-				},
-			}),
-		]);
-		if (!classData) {
-			throw AppError.notFound("CLASS_NOT_FOUND", "Class not found");
-		}
-		if (!existing) {
-			throw new Error(
-				"Hour addition was not found after a unique constraint conflict",
-			);
-		}
-
-		assertMatchingHourAddition(existing, data);
-		return {
-			addition: ClassHourAdditionModel.fromPrisma(existing),
-			totalHours: toHoursNumber(classData.totalSeconds),
-			remainingHours: await getRemainingHoursForClass(this.prisma, id),
-		};
 	}
 }
 

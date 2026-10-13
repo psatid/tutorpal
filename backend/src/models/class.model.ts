@@ -1,11 +1,18 @@
+import { MAX_CLASS_SECONDS } from "../lib/class-hour-addition";
 import { DateTime } from "../lib/date-time";
-import { secondsToHours, secondsToMinutes } from "../lib/teaching-time";
+import { secondsToMinutes } from "../lib/teaching-time";
 import type {
 	ClassDetailDTO,
 	ClassDTO,
 	StudentInClassDTO,
 } from "../types/class.types";
 import type { RecurringScheduleDTO } from "../types/schedule.types";
+import type {
+	ClassHourAdditionDraft,
+	ClassHourAdditionRequest,
+} from "./class-hour-addition.model";
+import { ClassHourAdditionLimitError } from "./class-hour-addition.model";
+import { ClassHourBalance } from "./class-hour-balance.model";
 
 type ClassPrismaRecord = {
 	id: string;
@@ -36,28 +43,30 @@ type ClassModelProps = {
 	id: string;
 	tutorId: string;
 	name: string;
-	totalHours: number;
 	students: StudentInClassDTO[];
 	createdAt: Date;
 	updatedAt: Date;
-	remainingHours: number;
-	scheduledHours: number;
-	usedHours: number;
+	hourBalance: ClassHourBalance;
 	recurringSchedule?: RecurringScheduleDTO | null;
 };
+
+export type ClassHourAdditionPlan = Readonly<{
+	classId: string;
+	request: ClassHourAdditionRequest;
+	draft: ClassHourAdditionDraft;
+	incrementSeconds: bigint;
+	maximumCurrentTotalSeconds: bigint;
+}>;
 
 export class ClassModel {
 	readonly id: string;
 	readonly tutorId: string;
 	readonly name: string;
 	readonly displayName: string;
-	readonly totalHours: number;
 	readonly students: StudentInClassDTO[];
 	readonly createdAt: Date;
 	readonly updatedAt: Date;
-	readonly remainingHours: number;
-	readonly scheduledHours: number;
-	readonly usedHours: number;
+	readonly hourBalance: ClassHourBalance;
 	readonly recurringSchedule?: RecurringScheduleDTO | null;
 
 	constructor(props: ClassModelProps) {
@@ -66,37 +75,67 @@ export class ClassModel {
 		this.name = props.name;
 		this.students = props.students;
 		this.displayName = props.name;
-		this.totalHours = props.totalHours;
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
-		this.remainingHours = props.remainingHours;
-		this.scheduledHours = props.scheduledHours;
-		this.usedHours = props.usedHours;
+		this.hourBalance = props.hourBalance;
 		this.recurringSchedule = props.recurringSchedule;
+	}
+
+	get totalSeconds(): bigint {
+		return this.hourBalance.totalSeconds;
+	}
+
+	get totalHours(): number {
+		return this.hourBalance.totalHours;
+	}
+
+	get remainingHours(): number {
+		return this.hourBalance.remainingHours;
+	}
+
+	get scheduledHours(): number {
+		return this.hourBalance.scheduledHours;
+	}
+
+	get usedHours(): number {
+		return this.hourBalance.usedHours;
 	}
 
 	static fromClassPrisma(
 		classData: ClassPrismaRecord,
-		remainingHours = secondsToHours(classData.totalSeconds),
-		scheduledHours = 0,
-		usedHours = 0,
+		hourBalance = ClassHourBalance.fromSeconds({
+			totalSeconds: classData.totalSeconds,
+		}),
 	): ClassModel {
 		const students = classData.students.map((enrollment) => enrollment.student);
 		return new ClassModel({
 			id: classData.id,
 			tutorId: classData.tutorId,
 			name: classData.name,
-			totalHours: secondsToHours(classData.totalSeconds),
 			students,
 			createdAt: classData.createdAt,
 			updatedAt: classData.updatedAt,
-			remainingHours,
-			scheduledHours,
-			usedHours,
+			hourBalance,
 			recurringSchedule: toLatestRecurringScheduleDTO(
 				classData,
 				classData.name,
 			),
+		});
+	}
+
+	planHourAddition(draft: ClassHourAdditionDraft): ClassHourAdditionPlan {
+		if (this.totalSeconds + draft.secondsAdded > MAX_CLASS_SECONDS) {
+			throw new ClassHourAdditionLimitError(
+				"Adding these hours would exceed the class total hour limit",
+			);
+		}
+
+		return Object.freeze({
+			classId: this.id,
+			request: draft.request,
+			draft,
+			incrementSeconds: draft.secondsAdded,
+			maximumCurrentTotalSeconds: MAX_CLASS_SECONDS - draft.secondsAdded,
 		});
 	}
 

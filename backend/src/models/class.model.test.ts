@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { MAX_CLASS_SECONDS } from "../lib/class-hour-addition";
 import { ClassModel } from "./class.model";
+import {
+	ClassHourAdditionLimitError,
+	ClassHourAdditionModel,
+} from "./class-hour-addition.model";
+import { ClassHourBalance } from "./class-hour-balance.model";
 
 const createdAt = new Date("2026-06-28T10:00:00.000Z");
 const updatedAt = new Date("2026-06-28T10:30:00.000Z");
@@ -23,9 +29,17 @@ const prismaClass = {
 	],
 };
 
+const hourBalance = ClassHourBalance.fromSeconds({
+	totalSeconds: prismaClass.totalSeconds,
+	scheduledSeconds: 8_100n,
+	completedSeconds: 8_100n,
+	noShowSeconds: 1_800n,
+	usedSeconds: 6_300n,
+});
+
 describe("ClassModel", () => {
 	test("converts a standalone Prisma class record into a model", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5, 2.25, 1.75);
+		const classModel = ClassModel.fromClassPrisma(prismaClass, hourBalance);
 
 		expect(classModel.id).toBe("class-1");
 		expect(classModel.tutorId).toBe("tutor-1");
@@ -52,7 +66,7 @@ describe("ClassModel", () => {
 	});
 
 	test("serializes a standalone class without course context", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5, 2.25, 1.75);
+		const classModel = ClassModel.fromClassPrisma(prismaClass, hourBalance);
 
 		expect(classModel.toClassDTO()).toEqual({
 			id: "class-1",
@@ -78,7 +92,7 @@ describe("ClassModel", () => {
 	});
 
 	test("adds recorded revenue only to the class detail DTO", () => {
-		const classModel = ClassModel.fromClassPrisma(prismaClass, 7.5, 2.25, 1.75);
+		const classModel = ClassModel.fromClassPrisma(prismaClass, hourBalance);
 
 		expect(classModel.toClassDTO()).not.toHaveProperty("recordedRevenue");
 		expect(classModel.toClassDetailDTO(1_250)).toMatchObject({
@@ -113,7 +127,7 @@ describe("ClassModel", () => {
 					},
 				],
 			},
-			7.5,
+			hourBalance,
 		);
 
 		expect(classModel.toClassDTO().recurringSchedule).toEqual({
@@ -134,5 +148,29 @@ describe("ClassModel", () => {
 				},
 			],
 		});
+	});
+
+	test("produces a guarded hour-addition plan at the class total boundary", () => {
+		const addition = ClassHourAdditionModel.prepare({
+			source: "custom",
+			hours: 0.01,
+			requestId: "0cfd69ef-6b4b-4a57-9f4a-c5ac83c2494c",
+		}).toDraft();
+		const classAtLimit = ClassModel.fromClassPrisma({
+			...prismaClass,
+			totalSeconds: MAX_CLASS_SECONDS - 36n,
+		});
+
+		const plan = classAtLimit.planHourAddition(addition);
+		expect(plan.incrementSeconds).toBe(36n);
+		expect(plan.maximumCurrentTotalSeconds).toBe(MAX_CLASS_SECONDS - 36n);
+
+		const fullClass = ClassModel.fromClassPrisma({
+			...prismaClass,
+			totalSeconds: MAX_CLASS_SECONDS,
+		});
+		expect(() => fullClass.planHourAddition(addition)).toThrow(
+			ClassHourAdditionLimitError,
+		);
 	});
 });

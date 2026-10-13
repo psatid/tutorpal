@@ -27,10 +27,25 @@ For class data, use `ClassModel.fromClassPrisma(...)` when converting
 persistence records and `classModel.toClassDTO()` when returning API responses.
 Classes are standalone: require a non-empty `name`, allow zero or more enrolled
 students, and start at zero total hours. Use the class name as its display name.
-Hour changes are immutable `ClassHourAddition` records; add course presets by
-resolving the tutor-owned course inside the transaction and snapshotting its id,
-name, and current configured hours. The ledger never retains a Course relation,
-so course edits or deletion cannot change historical additions.
+
+Class hour accounting uses `ClassHourBalance` with exact integer seconds through
+the model and converts to numbers only for DTOs. Concrete `SCHEDULED`,
+`COMPLETED`, and `NO_SHOW` schedules reserve capacity; `scheduledHours` counts
+only `SCHEDULED` schedules. `usedHours` sums unreversed
+`ClassHourDeduction` records. Recurring templates do not reserve capacity, and
+remaining hours may be negative when historical data exceeds a class total.
+
+Hour changes are immutable `ClassHourAddition` records. Normalize an addition
+request before entering the transaction, resolve a course preset only after a
+request-id replay check, and snapshot its id, name, and current configured
+hours in the ledger. A custom replay matches exact normalized seconds and
+revenue; a course replay matches the source course id and revenue, without
+consulting mutable course data. `null` revenue and zero revenue remain distinct.
+`ClassModel` produces the total-hours cap plan, while the repository applies its
+guarded atomic increment and ledger write. `ClassService` coordinates that
+narrow transaction and maps domain and persistence failures to application
+errors. The ledger never retains a Course relation, so course edits or deletion
+cannot change historical additions.
 
 For course data, use `CourseModel.fromPrisma(...)` when converting persistence
 records and `course.toCourseDTO()` when returning API responses. Courses are

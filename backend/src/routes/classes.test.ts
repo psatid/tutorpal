@@ -5,6 +5,7 @@ import { errorHandler } from "../middleware/error-handler";
 import { ClassModel } from "../models/class.model";
 import { ClassHourAdditionModel } from "../models/class-hour-addition.model";
 import { ClassService } from "../services/class.service";
+import type { ClassHourAdditionTransaction } from "../types/class.types";
 import type { AppEnv } from "../types/hono-env";
 import { createClassRoutes } from "./classes";
 
@@ -73,15 +74,35 @@ const classService = new ClassService({
 		createData = data;
 		return classModel;
 	},
-	addHourAddition: async (id: string, tutorId: string, data: unknown) => {
-		addHourOwnership = { id, tutorId };
-		addHourData = data;
-		return {
-			addition: customAddition,
-			totalHours: 2.5,
-			remainingHours: 1.5,
-		};
-	},
+	withHourAdditionTransaction: async (
+		work: (transaction: ClassHourAdditionTransaction) => Promise<unknown>,
+	) =>
+		work({
+			loadOwnedClass: async (id, tutorId) => {
+				addHourOwnership = { id, tutorId };
+				return classModel;
+			},
+			findByRequestId: async () => null,
+			loadOwnedCourse: async () => {
+				throw new Error("custom additions must not load a course");
+			},
+			resultForExisting: async () => {
+				throw new Error("new additions must not replay an existing request");
+			},
+			apply: async (_tutorId, plan) => {
+				addHourData = {
+					source: plan.draft.source,
+					hours: Number(plan.draft.secondsAdded) / 3_600,
+					revenueAmount: plan.draft.revenueAmount,
+					requestId: plan.draft.requestId,
+				};
+				return {
+					addition: customAddition,
+					totalHours: 2.5,
+					remainingHours: 1.5,
+				};
+			},
+		}),
 	findHourAdditions: async (id: string, tutorId: string, params: unknown) => {
 		historyOwnership = { id, tutorId };
 		historyParams = params;
@@ -209,6 +230,7 @@ describe("class routes", () => {
 		expect(addHourData).toEqual({
 			source: "custom",
 			hours: 2.5,
+			revenueAmount: null,
 			requestId,
 		});
 	});

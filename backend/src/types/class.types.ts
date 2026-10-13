@@ -1,5 +1,8 @@
-import type { ClassModel } from "../models/class.model";
-import type { ClassHourAdditionModel } from "../models/class-hour-addition.model";
+import type { ClassHourAdditionPlan, ClassModel } from "../models/class.model";
+import type {
+	ClassHourAdditionCourseSnapshot,
+	ClassHourAdditionModel,
+} from "../models/class-hour-addition.model";
 import type { PaginatedResponse, PaginationParams } from "./pagination.types";
 import type { RecurringScheduleDTO } from "./schedule.types";
 
@@ -89,6 +92,41 @@ export interface ClassHourAdditionResultDTO {
 	remainingHours: number;
 }
 
+export type ClassHourAdditionPersistenceFailureReason =
+	| "class_not_found"
+	| "course_not_found"
+	| "limit_exceeded";
+
+export class ClassHourAdditionPersistenceError extends Error {
+	constructor(
+		readonly reason: ClassHourAdditionPersistenceFailureReason,
+		message: string,
+	) {
+		super(message);
+		this.name = "ClassHourAdditionPersistenceError";
+	}
+}
+
+export interface ClassHourAdditionTransaction {
+	loadOwnedClass(classId: string, tutorId: string): Promise<ClassModel | null>;
+	findByRequestId(
+		classId: string,
+		requestId: string,
+	): Promise<ClassHourAdditionModel | null>;
+	loadOwnedCourse(
+		courseId: string,
+		tutorId: string,
+	): Promise<ClassHourAdditionCourseSnapshot | null>;
+	resultForExisting(
+		classData: ClassModel,
+		addition: ClassHourAdditionModel,
+	): Promise<ClassHourAdditionResult>;
+	apply(
+		tutorId: string,
+		plan: ClassHourAdditionPlan,
+	): Promise<ClassHourAdditionResult>;
+}
+
 export interface IClassRepository {
 	create(data: CreateClassDTO): Promise<ClassModel>;
 	findAll(
@@ -102,11 +140,9 @@ export interface IClassRepository {
 		tutorId: string,
 		data: UpdateClassDTO,
 	): Promise<ClassModel>;
-	addHourAddition(
-		id: string,
-		tutorId: string,
-		data: CreateClassHourAdditionDTO,
-	): Promise<ClassHourAdditionResult>;
+	withHourAdditionTransaction<T>(
+		work: (transaction: ClassHourAdditionTransaction) => Promise<T>,
+	): Promise<T>;
 	findHourAdditions(
 		id: string,
 		tutorId: string,
