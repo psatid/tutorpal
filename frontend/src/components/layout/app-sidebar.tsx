@@ -279,7 +279,7 @@ const CollapsibleMenu = ({ menu }: { menu: GroupedNavigationItem }) => {
           </div>
           <ChevronDown
             className={cn(
-              "absolute right-2 size-4 transition-transform",
+              "jun-sidebarText pointer-events-none absolute right-2 size-4 transition-transform",
               open && "rotate-180",
             )}
             aria-hidden="true"
