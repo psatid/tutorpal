@@ -7,9 +7,15 @@ import {
   getAdminImpersonationRecoveryUrl,
   hasImpersonationRecoveryMarker,
 } from "@/lib/impersonation-recovery";
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { ContentReveal } from "@/components/animate-ui/components/base/content-reveal";
 
 export const Route = createFileRoute("/_layout")({
   component: LayoutRoute,
@@ -19,6 +25,7 @@ export const Route = createFileRoute("/_layout")({
 function LayoutRoute() {
   const { isAuthenticated, isLoading, isImpersonating, user } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const stopImpersonation = useStopImpersonation();
 
   const exitTutorView = () => {
@@ -69,7 +76,9 @@ function LayoutRoute() {
             userName={user?.name}
           />
         ) : null}
-        <Outlet />
+        <ContentReveal key={pathname} className="block h-full min-h-0 min-w-0">
+          <Outlet />
+        </ContentReveal>
       </main>
     </div>
   );

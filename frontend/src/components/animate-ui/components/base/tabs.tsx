@@ -15,14 +15,13 @@ import {
 } from '@/components/animate-ui/primitives/base/tabs';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { CONTENT_REVEAL_TRANSITION } from '@/components/animate-ui/reveal';
 
 const TABS_PANELS_TRANSITION = {
   type: 'spring',
   stiffness: 200,
   damping: 25,
 } as const;
-const TABS_PANEL_TRANSITION = { duration: 0.5, ease: 'easeInOut' } as const;
-
 type TabsProps = TabsPrimitiveProps;
 
 function Tabs({ className, ...props }: TabsProps) {
@@ -99,7 +98,9 @@ function TabsPanel({ className, transition, ...props }: TabsPanelProps) {
     <TabsPanelPrimitive
       className={cn('flex-1 outline-none', className)}
       transition={
-        prefersReducedMotion ? { duration: 0 } : transition ?? TABS_PANEL_TRANSITION
+        prefersReducedMotion
+          ? { duration: 0 }
+          : transition ?? CONTENT_REVEAL_TRANSITION
       }
       {...props}
     />

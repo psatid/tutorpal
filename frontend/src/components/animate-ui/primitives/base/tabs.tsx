@@ -21,6 +21,12 @@ import {
   AutoHeight,
   type AutoHeightProps,
 } from '@/components/animate-ui/primitives/effects/auto-height';
+import {
+  CONTENT_REVEAL_ANIMATE,
+  CONTENT_REVEAL_EXIT,
+  CONTENT_REVEAL_INITIAL,
+  CONTENT_REVEAL_TRANSITION,
+} from '@/components/animate-ui/reveal';
 
 type TabsContextType = {
   value: string | undefined;
@@ -96,20 +102,20 @@ type TabsPanelProps = React.ComponentProps<typeof TabsPrimitive.Panel> &
 function TabsPanel({
   value,
   keepMounted,
-  transition = { duration: 0.5, ease: 'easeInOut' },
+  transition = CONTENT_REVEAL_TRANSITION,
   ...props
 }: TabsPanelProps) {
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence initial={false} mode="wait">
       <TabsPrimitive.Panel
         render={
           <motion.div
             data-slot="tabs-panel"
             layout
             layoutDependency={value}
-            initial={{ opacity: 0, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(4px)' }}
+            initial={CONTENT_REVEAL_INITIAL}
+            animate={CONTENT_REVEAL_ANIMATE}
+            exit={CONTENT_REVEAL_EXIT}
             transition={transition}
             {...props}
           />

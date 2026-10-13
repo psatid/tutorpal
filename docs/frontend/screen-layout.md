@@ -4,6 +4,21 @@ Screens rendered under the `/_layout` route use `ScreenLayout` from
 `frontend/src/components/layout/screen-layout.tsx`. The authenticated route
 shell owns only navigation, geometry, and its background.
 
+Authenticated route content is wrapped in `ContentReveal`, which shares the
+opacity and 4px blur reveal used by Tabs panels. Each pathname change replaces
+the current `Outlet` wrapper and reveals the new page over 500 ms; the sidebar
+and impersonation banner stay stationary. The wrapper is keyed by pathname,
+so search-parameter changes do not replay the page reveal. It fills the
+available content height and honors the user's reduced-motion setting. Nested
+Tabs panels skip their first reveal to avoid stacking a second entrance
+animation, while later tab changes keep the shared transition. Mobile Add
+buttons render through a body portal so the page blur does not change their
+fixed viewport positioning; they use the same reveal transition. Reuse
+`ContentReveal` from
+`frontend/src/components/animate-ui/components/base/content-reveal.tsx` for
+other components that need the same entrance and exit behavior; wrap keyed
+children with `AnimatePresence` when an exit animation is needed.
+
 - Use the default `ScreenLayout` padding (`p-3 sm:p-4 lg:p-6`) for regular
   authenticated screens.
 - Use `padding="none"` only when a screen deliberately owns its local gutters
