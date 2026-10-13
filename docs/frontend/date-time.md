@@ -88,3 +88,13 @@ Gregorian calendar and Latin digits; for example, August 12, 2026 is rendered
 as `วันพุธที่ 12 สิงหาคม 2026`, never as a Buddhist Era year. This affects
 display only: storage and API contracts remain ISO `YYYY-MM-DD`, and weeks
 continue to start on Monday.
+
+## DateField calendar presentation
+
+`DateField` keeps its desktop calendar popover at its natural height. On mobile,
+it opens a nested drawer with a stable six-week calendar grid so month changes
+do not alter the calendar height. The drawer uses the small viewport height and
+safe-area insets; on genuinely short viewports, its single calendar body
+scrolls with bottom safe-area breathing room rather than clipping date rows. At
+the narrowest mobile widths, its reduced side inset leaves at least 44px for
+each seven-column date target.

@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type CSSProperties, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import {
 import { DrawerOverlayPortalContext } from "@/components/ui/drawer-overlay-portal-context";
 import { overlayLayers } from "@/components/ui/overlay-layers";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 
 export type DrawerMode = "create" | "view" | "edit";
 type DrawerLayer = "base" | "nested";
@@ -38,6 +39,8 @@ interface ResponsiveDrawerProps {
   layer?: DrawerLayer;
   onCloseAutoFocus?: () => void;
   coverContent?: boolean;
+  popupStyle?: CSSProperties;
+  contentClassName?: string;
 }
 
 export function ResponsiveDrawer({
@@ -51,6 +54,8 @@ export function ResponsiveDrawer({
   layer = "base",
   onCloseAutoFocus,
   coverContent = false,
+  popupStyle,
+  contentClassName,
 }: ResponsiveDrawerProps) {
   const { t } = useTranslation("common");
   const [drawerPopup, setDrawerPopup] = useState<HTMLDivElement | null>(null);
@@ -91,6 +96,7 @@ export function ResponsiveDrawer({
             ref={setDrawerPopup}
             layer={layer}
             className="pointer-events-auto"
+            style={popupStyle}
           >
             <DrawerOverlayPortalContext.Provider
               value={overlayPortalContextValue}
@@ -118,7 +124,9 @@ export function ResponsiveDrawer({
                   <div className="mt-4">{headerContent}</div>
                 ) : null}
               </DrawerHeader>
-              <DrawerContent className="px-5 md:px-6">{children}</DrawerContent>
+              <DrawerContent className={cn("px-5 md:px-6", contentClassName)}>
+                {children}
+              </DrawerContent>
               {footer ? (
                 <DrawerFooter className="items-stretch border-t border-border bg-popover px-5 py-4 md:items-end md:px-6">
                   {footer}

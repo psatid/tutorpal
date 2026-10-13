@@ -2,6 +2,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import {
   cloneElement,
   forwardRef,
+  type CSSProperties,
   type ComponentProps,
   type MouseEventHandler,
   type ReactElement,
@@ -26,6 +27,13 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "./form-field";
 
 type DateFieldTriggerElement = ReactElement<ComponentProps<"button">>;
+
+const mobileCalendarDrawerPopupStyle = {
+  maxHeight:
+    "calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
+} satisfies CSSProperties;
+const mobileCalendarDrawerContentClassName =
+  "min-h-0 overflow-y-auto overscroll-contain px-1 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-5 md:px-6";
 
 interface DateFieldProps {
   value?: string;
@@ -198,6 +206,8 @@ function DateField({
           <ResponsiveDrawer
             open={isOpen}
             onOpenChange={setIsOpen}
+            popupStyle={mobileCalendarDrawerPopupStyle}
+            contentClassName={mobileCalendarDrawerContentClassName}
             onCloseAutoFocus={() => {
               (trigger ? triggerRef.current : inputTriggerRef.current)?.focus();
             }}
@@ -211,6 +221,7 @@ function DateField({
             {selectionMode === "week" ? (
               <Calendar
                 fullWidth
+                fixedWeeks
                 mode="range"
                 selected={weekRange}
                 onSelect={(_range, triggerDate) => handleSelect(triggerDate)}
@@ -221,6 +232,7 @@ function DateField({
             ) : (
               <Calendar
                 fullWidth
+                fixedWeeks
                 mode="single"
                 selected={date}
                 onSelect={handleSelect}
