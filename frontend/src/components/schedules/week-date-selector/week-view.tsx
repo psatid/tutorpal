@@ -121,6 +121,9 @@ export function WeekView({
   const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollLeftRef = useRef<number | null>(null);
+  const lastBufferStartWeekRef = useRef<number | null>(
+    weekStarts[0]?.getTime() ?? null,
+  );
   const trackItemWidthRef = useRef<number | null>(null);
   const pendingPrependTrackWidthRef = useRef<number | null>(null);
   const pendingAppendStartWeekRef = useRef<number | null>(null);
@@ -762,6 +765,11 @@ export function WeekView({
       return;
     }
 
+    const bufferStartWeek = weekStarts[0]?.getTime() ?? null;
+    const didAdvanceBuffer =
+      lastBufferStartWeekRef.current !== bufferStartWeek;
+
+    lastBufferStartWeekRef.current = bufferStartWeek;
     updateTrackItemWidth();
 
     let adjustedForBufferExtension = false;
@@ -789,6 +797,10 @@ export function WeekView({
 
     if (adjustedForBufferExtension) {
       ignoredCompensationScrollLeftRef.current = container.scrollLeft;
+    }
+
+    if (didAdvanceBuffer) {
+      didExtendScrollSessionRef.current = false;
     }
 
     const pendingFocusWeek = pendingFocusWeekRef.current;
@@ -1110,6 +1122,9 @@ export function WeekView({
   );
 
   const handleRailWheel = useCallback(() => {
+    const previousScrollLeft = lastScrollLeftRef.current;
+    const wasSmoothCentering = smoothCenteringRef.current;
+
     cancelSmoothCentering();
 
     if (!scrollSessionActiveRef.current) {
@@ -1119,7 +1134,28 @@ export function WeekView({
       updateTrackItemWidth();
     }
 
-    lastScrollLeftRef.current = containerRef.current?.scrollLeft ?? null;
+    const container = containerRef.current;
+    const trackItemWidth = trackItemWidthRef.current;
+    const maxScrollLeft = container
+      ? Math.max(container.scrollWidth - container.clientWidth, 0)
+      : 0;
+    const edgeThreshold =
+      trackItemWidth === null
+        ? 0
+        : getEdgeThreshold(maxScrollLeft, trackItemWidth);
+    const didScrollIntoEdgeZone =
+      !wasSmoothCentering &&
+      container !== null &&
+      previousScrollLeft !== null &&
+      trackItemWidth !== null &&
+      Math.abs(container.scrollLeft - previousScrollLeft) >= 0.5 &&
+      maxScrollLeft > 0 &&
+      (container.scrollLeft <= edgeThreshold ||
+        container.scrollLeft >= maxScrollLeft - edgeThreshold);
+
+    if (!didScrollIntoEdgeZone) {
+      lastScrollLeftRef.current = container?.scrollLeft ?? null;
+    }
   }, [cancelSmoothCentering, updateTrackItemWidth]);
 
   const handleTouchPointerDown = useCallback(

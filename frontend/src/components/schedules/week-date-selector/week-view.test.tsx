@@ -560,6 +560,132 @@ describe("WeekView rail behavior", () => {
     },
   );
 
+  it("extends the Week buffer when wheel handling follows a native right-edge position update", () => {
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const passiveFocus = screen.getByRole("button", {
+      name: "Keep passive-scroll focus",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+    const maxScrollLeft = WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH;
+    const edgeThreshold = Math.min(
+      Math.max(128, WEEK_TILE_WIDTH),
+      maxScrollLeft / 2,
+    );
+    const beforeEdgeScrollLeft = maxScrollLeft - edgeThreshold - 1;
+    const expectedFirstWeek = DateTime.fromDateOnlyString(getWeekKey(0))
+      .addWeeks(1)
+      .toDateOnlyString();
+    const expectedLastWeek = DateTime.fromDateOnlyString(
+      getWeekKey(WEEK_BUFFER_LENGTH - 1),
+    )
+      .addWeeks(1)
+      .toDateOnlyString();
+
+    configureWeekRail(rail, { scrollLeft: beforeEdgeScrollLeft });
+    scrollToMock.mockClear();
+    passiveFocus.focus();
+    fireEvent.scroll(rail);
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("0");
+
+    rail.scrollLeft = maxScrollLeft;
+    fireEvent.wheel(rail, { deltaX: edgeThreshold + 1 });
+    fireEvent.scroll(rail);
+
+    const renderedWeekKeys = Array.from(
+      rail.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
+    ).map((button) => button.dataset.weekKey);
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+    expect(renderedWeekKeys.at(0)).toBe(expectedFirstWeek);
+    expect(renderedWeekKeys.at(-1)).toBe(expectedLastWeek);
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(passiveFocus).toHaveFocus();
+    expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
+  it("extends the Week buffer again when uninterrupted rightward scrolling reaches the next edge zone", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    render(<WeekRailFixture />);
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule week selector",
+    });
+    const passiveFocus = screen.getByRole("button", {
+      name: "Keep passive-scroll focus",
+    });
+    const selectedDate = screen.getByTestId("selected-date").textContent;
+    const maxScrollLeft = WEEK_SCROLL_WIDTH - WEEK_RAIL_WIDTH;
+    const prefetchScrollLeft = maxScrollLeft - (WEEK_TILE_WIDTH - 1);
+    const expectedFirstWeek = DateTime.fromDateOnlyString(getWeekKey(0))
+      .addWeeks(2)
+      .toDateOnlyString();
+    const expectedLastWeek = DateTime.fromDateOnlyString(
+      getWeekKey(WEEK_BUFFER_LENGTH - 1),
+    )
+      .addWeeks(2)
+      .toDateOnlyString();
+
+    configureWeekRail(rail);
+    scrollToMock.mockImplementation(function (
+      this: HTMLElement,
+      options: ScrollToOptions,
+    ) {
+      this.scrollLeft = options.left ?? this.scrollLeft;
+    });
+    act(() => {
+      resizeObserver?.trigger();
+    });
+    scrollToMock.mockClear();
+    passiveFocus.focus();
+    fireEvent.wheel(rail, { deltaX: WEEK_TILE_WIDTH });
+
+    rail.scrollLeft = prefetchScrollLeft;
+    fireEvent.scroll(rail);
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("1");
+
+    const nextMaxScrollLeft = Math.max(
+      rail.scrollWidth - rail.clientWidth,
+      0,
+    );
+    const nextEdgeThreshold = Math.min(
+      Math.max(128, WEEK_TILE_WIDTH),
+      nextMaxScrollLeft / 2,
+    );
+    const nextPrefetchScrollLeft = nextMaxScrollLeft - nextEdgeThreshold;
+
+    expect(nextPrefetchScrollLeft).toBeGreaterThan(rail.scrollLeft);
+    rail.scrollLeft = nextPrefetchScrollLeft;
+    fireEvent.scroll(rail);
+
+    const renderedWeekKeys = Array.from(
+      rail.querySelectorAll<HTMLButtonElement>("button[data-week-key]"),
+    ).map((button) => button.dataset.weekKey);
+
+    expect(screen.getByTestId("extension-count")).toHaveTextContent("2");
+    expect(renderedWeekKeys.at(0)).toBe(expectedFirstWeek);
+    expect(renderedWeekKeys.at(-1)).toBe(expectedLastWeek);
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("result-date")).toHaveTextContent(
+      selectedDate ?? "",
+    );
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    expect(passiveFocus).toHaveFocus();
+    expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
   it("extends the Week buffer once after activation when native scroll enters an edge zone", async () => {
     vi.useFakeTimers();
     render(<HiddenWeekRailFixture />);
