@@ -1,6 +1,12 @@
 import type { ScheduleStatus, ScheduleType, Weekday } from "@prisma/client";
 import type {
-	RecurringScheduleModel,
+	RecurringScheduleCandidate,
+	RecurringScheduleCreatePlan,
+	RecurringScheduleExistingSchedule,
+	RecurringScheduleSeriesSnapshot,
+	RecurringScheduleUpdatePlan,
+} from "../models/recurring-schedule-planner.model";
+import type {
 	RecurringScheduleUpdateResultModel,
 	ScheduleModel,
 	ScheduleTransitionPlan,
@@ -24,6 +30,37 @@ export class ScheduleLifecyclePersistenceError extends Error {
 export interface ScheduleLifecycleTransaction {
 	loadOwned(scheduleId: string, tutorId: string): Promise<ScheduleModel | null>;
 	apply(tutorId: string, plan: ScheduleTransitionPlan): Promise<ScheduleModel>;
+}
+
+export type RecurringScheduleCreateContext = Readonly<{
+	classId: string;
+	remainingSeconds: bigint;
+}>;
+
+export type RecurringScheduleUpdateContext = Readonly<{
+	existingSeries: RecurringScheduleSeriesSnapshot;
+	remainingSeconds: bigint;
+	replaceableSchedules: readonly RecurringScheduleCandidate[];
+}>;
+
+export interface RecurringScheduleTransaction {
+	loadCreateContext(
+		classId: string,
+		tutorId: string,
+	): Promise<RecurringScheduleCreateContext | null>;
+	loadUpdateContext(
+		recurringScheduleId: string,
+		tutorId: string,
+		effectiveDate: string,
+	): Promise<RecurringScheduleUpdateContext | null>;
+	loadExistingSchedules(
+		classId: string,
+		dates: readonly string[],
+	): Promise<readonly RecurringScheduleExistingSchedule[]>;
+	applyCreate(plan: RecurringScheduleCreatePlan): Promise<ScheduleModel>;
+	applyUpdate(
+		plan: RecurringScheduleUpdatePlan,
+	): Promise<RecurringScheduleUpdateResultModel>;
 }
 
 // DTOs for clean data transfer between layers
@@ -123,17 +160,13 @@ export interface RecurringScheduleUpdateResultDTO {
 	createdSchedulesCount: number;
 }
 
-export interface RecurringScheduleCreationData {
-	classId: string;
-	type: ScheduleType;
-	notes?: string;
-	recurring: RecurringPattern;
-}
-
 // Repository interface - abstract data access
 export interface IScheduleRepository {
 	withLifecycleTransaction<T>(
 		work: (transaction: ScheduleLifecycleTransaction) => Promise<T>,
+	): Promise<T>;
+	withRecurringScheduleTransaction<T>(
+		work: (transaction: RecurringScheduleTransaction) => Promise<T>,
 	): Promise<T>;
 	create(data: CreateScheduleDTO): Promise<ScheduleModel>;
 	createMany(
@@ -154,16 +187,4 @@ export interface IScheduleRepository {
 	delete(id: string): Promise<void>;
 	getRemainingSeconds(classId: string): Promise<bigint>;
 	getRemainingHours(classId: string): Promise<number>;
-	createRecurringSchedule(
-		data: RecurringScheduleCreationData,
-	): Promise<ScheduleModel>;
-	findRecurringScheduleById(
-		recurringScheduleId: string,
-		tutorId: string,
-	): Promise<RecurringScheduleModel | null>;
-	updateRecurringSchedule(
-		recurringScheduleId: string,
-		data: UpdateRecurringScheduleDTO,
-		tutorId: string,
-	): Promise<RecurringScheduleUpdateResultModel>;
 }

@@ -1,17 +1,25 @@
 import { describe, expect, test } from "bun:test";
-import { ScheduleModel } from "../models/schedule.model";
-import { classRepository } from "../repositories";
+import { DateTime } from "../lib/date-time";
+import type {
+	RecurringScheduleCreatePlan,
+	RecurringScheduleSeriesSnapshot,
+} from "../models/recurring-schedule-planner.model";
 import {
+	type RecurringScheduleUpdateResultModel,
+	ScheduleModel,
+} from "../models/schedule.model";
+import {
+	type IClassRepository,
 	type IScheduleRepository,
-	type RecurringScheduleCreationData,
+	type RecurringScheduleTransaction,
 	ScheduleLifecyclePersistenceError,
 	type ScheduleLifecycleTransaction,
 } from "../types";
 import { ScheduleService } from "./schedule.service";
 
-const lifecycleCreatedAt = new Date("2026-08-01T00:00:00.000Z");
+const createdAt = new Date("2026-08-01T00:00:00.000Z");
 
-function makeLifecycleSchedule(
+function schedule(
 	status: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED" = "SCHEDULED",
 ) {
 	return ScheduleModel.fromSchedulePrisma({
@@ -24,13 +32,69 @@ function makeLifecycleSchedule(
 		noShowNote: null,
 		status,
 		type: "ON_SITE",
-		createdAt: lifecycleCreatedAt,
-		updatedAt: lifecycleCreatedAt,
+		createdAt,
+		updatedAt: createdAt,
 		class: { name: "Algebra" },
 	});
 }
 
-function makeLifecycleRepository(transaction: ScheduleLifecycleTransaction) {
+function existingSeries(
+	overrides: Partial<RecurringScheduleSeriesSnapshot> = {},
+): RecurringScheduleSeriesSnapshot {
+	return {
+		id: "recurring-old",
+		classId: "class-1",
+		startDate: "2026-08-10",
+		notes: "Existing note",
+		type: "ON_SITE",
+		scheduleItems: [{ weekday: "MONDAY", time: 540, durationSeconds: 3_600n }],
+		...overrides,
+	};
+}
+
+function recurringTransaction(
+	overrides: Partial<RecurringScheduleTransaction> = {},
+): RecurringScheduleTransaction {
+	return {
+		loadCreateContext: async () => ({
+			classId: "class-1",
+			remainingSeconds: 3_600n,
+		}),
+		loadUpdateContext: async () => ({
+			existingSeries: existingSeries(),
+			remainingSeconds: 3_600n,
+			replaceableSchedules: [],
+		}),
+		loadExistingSchedules: async () => [],
+		applyCreate: async () => schedule(),
+		applyUpdate: async () => ({}) as RecurringScheduleUpdateResultModel,
+		...overrides,
+	};
+}
+
+function recurringRepository(transaction: RecurringScheduleTransaction) {
+	let transactionCalls = 0;
+	const repository = {
+		withRecurringScheduleTransaction: async <T>(
+			work: (transaction: RecurringScheduleTransaction) => Promise<T>,
+		): Promise<T> => {
+			transactionCalls += 1;
+			return work(transaction);
+		},
+	} as unknown as IScheduleRepository;
+
+	return { repository, getTransactionCalls: () => transactionCalls };
+}
+
+function unexpectedClassRepository(): IClassRepository {
+	return {
+		findById: async () => {
+			throw new Error("Recurring scheduling must use the transaction context");
+		},
+	} as unknown as IClassRepository;
+}
+
+function lifecycleRepository(transaction: ScheduleLifecycleTransaction) {
 	return {
 		withLifecycleTransaction: <T>(
 			work: (transaction: ScheduleLifecycleTransaction) => Promise<T>,
@@ -48,6 +112,7 @@ describe("ScheduleService ownership", () => {
 			new ScheduleService(repository).getScheduleById("schedule-1", "tutor-2"),
 		).rejects.toMatchObject({
 			errorCode: "SCHEDULE_NOT_FOUND",
+			message: "Schedule not found",
 			status: 404,
 		});
 	});
@@ -63,29 +128,74 @@ describe("ScheduleService ownership", () => {
 
 		await expect(
 			new ScheduleService(repository).deleteSchedule("schedule-1", "tutor-2"),
-		).rejects.toMatchObject({ errorCode: "SCHEDULE_NOT_FOUND", status: 404 });
+		).rejects.toMatchObject({
+			errorCode: "SCHEDULE_NOT_FOUND",
+			message: "Schedule not found",
+			status: 404,
+		});
 		expect(deleted).toBe(false);
 	});
 
-	test("passes the selected type when creating a recurring schedule", async () => {
-		const originalFindById = classRepository.findById;
-		let receivedData:
-			| Parameters<IScheduleRepository["createRecurringSchedule"]>[0]
-			| undefined;
+	test("continues to block a one-time schedule when the class has no remaining hours", async () => {
+		let createCalls = 0;
+		const repository = {
+			getRemainingSeconds: async () => 0n,
+			create: async () => {
+				createCalls += 1;
+				return schedule();
+			},
+		} as unknown as IScheduleRepository;
+		const classRepository = {
+			findById: async () => ({}),
+		} as unknown as IClassRepository;
 
-		classRepository.findById = async () => ({}) as never;
-
-		try {
-			const repository = {
-				createRecurringSchedule: async (
-					data: RecurringScheduleCreationData,
-				) => {
-					receivedData = data;
-					return {} as ScheduleModel;
+		await expect(
+			new ScheduleService(repository, classRepository).createSchedule(
+				{
+					classId: "class-1",
+					date: "2026-08-10",
+					type: "ON_SITE",
+					time: 600,
+					durationMinutes: 60,
 				},
-			} as unknown as IScheduleRepository;
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "INSUFFICIENT_HOURS",
+			status: 400,
+		});
+		expect(createCalls).toBe(0);
+	});
+});
 
-			await new ScheduleService(repository).createSchedule(
+describe("ScheduleService recurring scheduling", () => {
+	test("coordinates recurring creation through the tutor-scoped transaction port", async () => {
+		let createContextArgs: [string, string] | undefined;
+		let conflictArgs: [string, readonly string[]] | undefined;
+		let appliedPlan: RecurringScheduleCreatePlan | undefined;
+		const result = schedule();
+		const fixture = recurringRepository(
+			recurringTransaction({
+				loadCreateContext: async (classId, tutorId) => {
+					createContextArgs = [classId, tutorId];
+					return { classId, remainingSeconds: 3_600n };
+				},
+				loadExistingSchedules: async (classId, dates) => {
+					conflictArgs = [classId, dates];
+					return [];
+				},
+				applyCreate: async (plan) => {
+					appliedPlan = plan;
+					return result;
+				},
+			}),
+		);
+
+		await expect(
+			new ScheduleService(
+				fixture.repository,
+				unexpectedClassRepository(),
+			).createSchedule(
 				{
 					classId: "class-1",
 					date: "2026-08-10",
@@ -93,68 +203,306 @@ describe("ScheduleService ownership", () => {
 					recurring: {
 						startDate: "2026-08-10",
 						scheduleItems: [
-							{
-								weekday: "MONDAY",
-								time: 600,
-								durationMinutes: 60,
-							},
+							{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
 						],
 					},
 				},
 				"tutor-1",
-			);
+			),
+		).resolves.toBe(result);
 
-			expect(receivedData?.type).toBe("ONLINE");
-		} finally {
-			classRepository.findById = originalFindById;
-		}
+		expect(fixture.getTransactionCalls()).toBe(1);
+		expect(createContextArgs).toEqual(["class-1", "tutor-1"]);
+		expect(conflictArgs).toEqual(["class-1", ["2026-08-10"]]);
+		expect(appliedPlan).toMatchObject({
+			series: { classId: "class-1", notes: null, type: "ONLINE" },
+			generatedSchedules: [
+				{ date: "2026-08-10", time: 540, durationSeconds: 3_600n },
+			],
+		});
 	});
 
-	test("continues to block scheduling until a standalone class has added hours", async () => {
-		const originalFindById = classRepository.findById;
-		let createCalls = 0;
-		classRepository.findById = async () => ({}) as never;
-
-		try {
-			const repository = {
-				getRemainingSeconds: async () => 0n,
-				create: async () => {
-					createCalls += 1;
-					return {} as ScheduleModel;
+	test("maps missing class ownership to 400 without applying", async () => {
+		let applyCalls = 0;
+		const fixture = recurringRepository(
+			recurringTransaction({
+				loadCreateContext: async () => null,
+				applyCreate: async () => {
+					applyCalls += 1;
+					return schedule();
 				},
-			} as unknown as IScheduleRepository;
+			}),
+		);
 
-			await expect(
-				new ScheduleService(repository).createSchedule(
-					{
-						classId: "class-1",
-						date: "2026-08-10",
-						type: "ON_SITE",
-						time: 600,
-						durationMinutes: 60,
+		await expect(
+			new ScheduleService(fixture.repository).createSchedule(
+				{
+					classId: "foreign-class",
+					date: "2026-08-10",
+					type: "ON_SITE",
+					recurring: {
+						startDate: "2026-08-10",
+						scheduleItems: [
+							{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+						],
 					},
-					"tutor-1",
-				),
-			).rejects.toMatchObject({ errorCode: "INSUFFICIENT_HOURS", status: 400 });
-			expect(createCalls).toBe(0);
-		} finally {
-			classRepository.findById = originalFindById;
+				},
+				"tutor-2",
+			),
+		).rejects.toMatchObject({
+			errorCode: "CLASS_NOT_FOUND",
+			message: "The specified class does not exist",
+			status: 400,
+		});
+		expect(applyCalls).toBe(0);
+	});
+
+	test("keeps create insufficient-hours and conflict failures out of transaction application", async () => {
+		let conflictReads = 0;
+		let insufficientApplyCalls = 0;
+		const insufficient = recurringRepository(
+			recurringTransaction({
+				loadCreateContext: async () => ({
+					classId: "class-1",
+					remainingSeconds: 0n,
+				}),
+				loadExistingSchedules: async () => {
+					conflictReads += 1;
+					return [];
+				},
+				applyCreate: async () => {
+					insufficientApplyCalls += 1;
+					return schedule();
+				},
+			}),
+		);
+		const createData = {
+			classId: "class-1",
+			date: "2026-08-10",
+			type: "ON_SITE" as const,
+			recurring: {
+				startDate: "2026-08-10",
+				scheduleItems: [
+					{ weekday: "MONDAY" as const, time: 540, durationMinutes: 60 },
+				],
+			},
+		};
+
+		await expect(
+			new ScheduleService(insufficient.repository).createSchedule(
+				createData,
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "INSUFFICIENT_HOURS",
+			message:
+				"The class does not have enough remaining hours to create any schedule",
+			status: 400,
+		});
+		expect(conflictReads).toBe(0);
+		expect(insufficientApplyCalls).toBe(0);
+
+		let conflictApplyCalls = 0;
+		const conflict = recurringRepository(
+			recurringTransaction({
+				loadExistingSchedules: async () => [
+					{
+						id: "conflict",
+						date: "2026-08-10",
+						time: 540,
+						durationSeconds: 3_600n,
+						status: "SCHEDULED",
+					},
+				],
+				applyCreate: async () => {
+					conflictApplyCalls += 1;
+					return schedule();
+				},
+			}),
+		);
+		await expect(
+			new ScheduleService(conflict.repository).createSchedule(
+				createData,
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "RECURRING_CONFLICT",
+			message:
+				"Recurring schedule conflicts with existing schedules on 2026-08-10",
+			status: 400,
+		});
+		expect(conflictApplyCalls).toBe(0);
+	});
+
+	test("maps missing series, past dates, and update insufficient-hours without applying", async () => {
+		let missingApplyCalls = 0;
+		const missing = recurringRepository(
+			recurringTransaction({
+				loadUpdateContext: async () => null,
+				applyUpdate: async () => {
+					missingApplyCalls += 1;
+					return {} as RecurringScheduleUpdateResultModel;
+				},
+			}),
+		);
+		const today = DateTime.todayDateOnlyString();
+		const updateData = {
+			effectiveDate: today,
+			scheduleItems: [
+				{ weekday: "MONDAY" as const, time: 540, durationMinutes: 60 },
+			],
+		};
+		await expect(
+			new ScheduleService(missing.repository).updateRecurringSchedule(
+				"foreign-series",
+				updateData,
+				"tutor-2",
+			),
+		).rejects.toMatchObject({
+			errorCode: "RECURRING_SCHEDULE_NOT_FOUND",
+			message: "Recurring schedule not found",
+			status: 404,
+		});
+		expect(missingApplyCalls).toBe(0);
+
+		let pastConflictReads = 0;
+		let pastApplyCalls = 0;
+		const past = recurringRepository(
+			recurringTransaction({
+				loadExistingSchedules: async () => {
+					pastConflictReads += 1;
+					return [];
+				},
+				applyUpdate: async () => {
+					pastApplyCalls += 1;
+					return {} as RecurringScheduleUpdateResultModel;
+				},
+			}),
+		);
+		const yesterday = DateTime.fromDateOnlyString(today)
+			.addDays(-1)
+			.toDateOnlyString();
+		await expect(
+			new ScheduleService(past.repository).updateRecurringSchedule(
+				"recurring-old",
+				{ ...updateData, effectiveDate: yesterday },
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "INVALID_EFFECTIVE_DATE",
+			message: "Effective date must be today or later",
+			status: 400,
+		});
+		expect(pastConflictReads).toBe(0);
+		expect(pastApplyCalls).toBe(0);
+
+		let insufficientApplyCalls = 0;
+		const insufficient = recurringRepository(
+			recurringTransaction({
+				loadUpdateContext: async () => ({
+					existingSeries: existingSeries(),
+					remainingSeconds: 0n,
+					replaceableSchedules: [],
+				}),
+				applyUpdate: async () => {
+					insufficientApplyCalls += 1;
+					return {} as RecurringScheduleUpdateResultModel;
+				},
+			}),
+		);
+		await expect(
+			new ScheduleService(insufficient.repository).updateRecurringSchedule(
+				"recurring-old",
+				updateData,
+				"tutor-1",
+			),
+		).rejects.toMatchObject({
+			errorCode: "INSUFFICIENT_HOURS",
+			message:
+				"The class does not have enough remaining hours to recreate any recurring schedule",
+			status: 400,
+		});
+		expect(insufficientApplyCalls).toBe(0);
+	});
+
+	test("maps update conflicts and leaves impossible post-write refresh failures unmodified", async () => {
+		let conflictDate: string | undefined;
+		const conflict = recurringRepository(
+			recurringTransaction({
+				loadExistingSchedules: async (_classId, dates) => {
+					conflictDate = dates[0];
+					return [
+						{
+							id: "conflict",
+							date: dates[0] ?? "",
+							time: 540,
+							durationSeconds: 3_600n,
+							status: "NO_SHOW",
+						},
+					];
+				},
+			}),
+		);
+		const updateData = {
+			effectiveDate: DateTime.todayDateOnlyString(),
+			scheduleItems: [
+				{ weekday: "MONDAY" as const, time: 540, durationMinutes: 60 },
+			],
+		};
+		let conflictError: unknown;
+		try {
+			await new ScheduleService(conflict.repository).updateRecurringSchedule(
+				"recurring-old",
+				updateData,
+				"tutor-1",
+			);
+		} catch (error) {
+			conflictError = error;
 		}
+		expect(conflictDate).toBeDefined();
+		expect(conflictError).toMatchObject({
+			errorCode: "RECURRING_CONFLICT",
+			message: `Recurring schedule conflicts with existing schedules on ${conflictDate}`,
+			status: 400,
+		});
+
+		const refreshFailure = new Error("No schedules were created");
+		const failure = recurringRepository(
+			recurringTransaction({
+				applyCreate: async () => {
+					throw refreshFailure;
+				},
+			}),
+		);
+		await expect(
+			new ScheduleService(failure.repository).createSchedule(
+				{
+					classId: "class-1",
+					date: "2026-08-10",
+					type: "ON_SITE",
+					recurring: {
+						startDate: "2026-08-10",
+						scheduleItems: [
+							{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
+						],
+					},
+				},
+				"tutor-1",
+			),
+		).rejects.toBe(refreshFailure);
 	});
 });
 
 describe("ScheduleService lifecycle transitions", () => {
 	test("loads the owner-scoped schedule and applies the model plan in one transaction", async () => {
-		const schedule = makeLifecycleSchedule();
-		const result = makeLifecycleSchedule("NO_SHOW");
+		const current = schedule();
+		const result = schedule("NO_SHOW");
 		let loadArgs: [string, string] | undefined;
-		let applyArgs:
-			| [string, ReturnType<ScheduleModel["planNoShow"]>]
-			| undefined;
-		const repository = makeLifecycleRepository({
+		let applyArgs: unknown;
+		const repository = lifecycleRepository({
 			loadOwned: async (id, tutorId) => {
 				loadArgs = [id, tutorId];
-				return schedule;
+				return current;
 			},
 			apply: async (tutorId, plan) => {
 				applyArgs = [tutorId, plan];
@@ -180,39 +528,51 @@ describe("ScheduleService lifecycle transitions", () => {
 					durationSeconds: 1_800n,
 				},
 				patch: { status: "NO_SHOW", noShowNote: "Absent" },
-				deduction: {
-					kind: "upsert",
-					classId: "class-1",
-					seconds: 1_800n,
-				},
+				deduction: { kind: "upsert", classId: "class-1", seconds: 1_800n },
 			},
 		]);
 	});
 
-	test("maps a missing owner-scoped schedule to not found without applying a plan", async () => {
+	test("maps missing and stale lifecycle transactions to established AppErrors", async () => {
 		let applyCalls = 0;
-		const repository = makeLifecycleRepository({
+		const missing = lifecycleRepository({
 			loadOwned: async () => null,
 			apply: async () => {
 				applyCalls += 1;
-				return makeLifecycleSchedule();
+				return schedule();
 			},
 		});
-
 		await expect(
-			new ScheduleService(repository).completeSchedule("schedule-1", "tutor-2"),
+			new ScheduleService(missing).completeSchedule("schedule-1", "tutor-2"),
 		).rejects.toMatchObject({
 			errorCode: "SCHEDULE_NOT_FOUND",
 			message: "Schedule not found",
 			status: 404,
 		});
 		expect(applyCalls).toBe(0);
+
+		const stale = lifecycleRepository({
+			loadOwned: async () => schedule(),
+			apply: async () => {
+				throw new ScheduleLifecyclePersistenceError(
+					"stale",
+					"The schedule status changed before this action",
+				);
+			},
+		});
+		await expect(
+			new ScheduleService(stale).completeSchedule("schedule-1", "tutor-1"),
+		).rejects.toMatchObject({
+			errorCode: "SCHEDULE_STATUS_CONFLICT",
+			message: "The schedule status changed before this action",
+			status: 409,
+		});
 	});
 
-	test("maps transition and persistence failures to the established AppErrors", async () => {
-		const invalidStatusRepository = makeLifecycleRepository({
-			loadOwned: async () => makeLifecycleSchedule("COMPLETED"),
-			apply: async () => makeLifecycleSchedule("COMPLETED"),
+	test("maps invalid transitions and lifecycle persistence failures to established AppErrors", async () => {
+		const invalidStatusRepository = lifecycleRepository({
+			loadOwned: async () => schedule("COMPLETED"),
+			apply: async () => schedule("COMPLETED"),
 		});
 
 		await expect(
@@ -261,8 +621,8 @@ describe("ScheduleService lifecycle transitions", () => {
 				},
 			],
 		] as const) {
-			const repository = makeLifecycleRepository({
-				loadOwned: async () => makeLifecycleSchedule(),
+			const repository = lifecycleRepository({
+				loadOwned: async () => schedule(),
 				apply: async () => {
 					throw error;
 				},
@@ -277,10 +637,10 @@ describe("ScheduleService lifecycle transitions", () => {
 		}
 	});
 
-	test("propagates unexpected transaction failures unchanged", async () => {
+	test("propagates unexpected lifecycle transaction failures unchanged", async () => {
 		const unexpected = new Error("database connection ended");
-		const repository = makeLifecycleRepository({
-			loadOwned: async () => makeLifecycleSchedule(),
+		const repository = lifecycleRepository({
+			loadOwned: async () => schedule(),
 			apply: async () => {
 				throw unexpected;
 			},

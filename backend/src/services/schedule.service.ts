@@ -3,6 +3,10 @@ import { DateTime } from "../lib/date-time";
 import { AppError } from "../lib/error";
 import { minutesToSeconds } from "../lib/teaching-time";
 import {
+	RecurringSchedulePlanner,
+	RecurringSchedulePlanningError,
+} from "../models/recurring-schedule-planner.model";
+import {
 	type RecurringScheduleUpdateResultModel,
 	ScheduleModel,
 	type ScheduleTransitionPlan,
@@ -59,6 +63,10 @@ export class ScheduleService {
 		data: CreateScheduleDTO,
 		tutorId: string,
 	): Promise<ScheduleModel> {
+		if (data.recurring) {
+			return this.createRecurringSchedule(data, tutorId);
+		}
+
 		// Verify that the class exists and belongs to this tutor
 		const classData = await this.classRepository.findById(
 			data.classId,
@@ -69,11 +77,6 @@ export class ScheduleService {
 				"CLASS_NOT_FOUND",
 				"The specified class does not exist",
 			);
-		}
-
-		// If recurring pattern is provided
-		if (data.recurring) {
-			return this.createRecurringSchedule(data, tutorId);
 		}
 
 		if (data.time === undefined || data.durationMinutes === undefined) {
@@ -109,21 +112,40 @@ export class ScheduleService {
 			throw new Error("Recurring pattern is required");
 		}
 
-		// Validate class exists and belongs to this tutor
-		const classData = await this.classRepository.findById(classId, tutorId);
-		if (!classData) {
-			throw AppError.badRequest(
-				"CLASS_NOT_FOUND",
-				"The specified class does not exist",
-			);
-		}
+		try {
+			return await this.repository.withRecurringScheduleTransaction(
+				async (transaction) => {
+					const context = await transaction.loadCreateContext(classId, tutorId);
+					if (!context) {
+						throw AppError.badRequest(
+							"CLASS_NOT_FOUND",
+							"The specified class does not exist",
+						);
+					}
 
-		return this.repository.createRecurringSchedule({
-			classId,
-			type,
-			notes,
-			recurring,
-		});
+					const plan = RecurringSchedulePlanner.planCreate({
+						classId: context.classId,
+						startDate: recurring.startDate,
+						type,
+						notes,
+						scheduleItems: recurring.scheduleItems,
+						remainingSeconds: context.remainingSeconds,
+					});
+					const existingSchedules = await transaction.loadExistingSchedules(
+						context.classId,
+						plan.generatedSchedules.map((schedule) => schedule.date),
+					);
+					RecurringSchedulePlanner.assertNoOverlap(
+						plan.generatedSchedules,
+						existingSchedules,
+					);
+
+					return transaction.applyCreate(plan);
+				},
+			);
+		} catch (error) {
+			this.rethrowRecurringScheduleFailure(error, "create");
+		}
 	}
 
 	async getAllSchedules(
@@ -196,34 +218,84 @@ export class ScheduleService {
 		data: UpdateRecurringScheduleDTO,
 		tutorId: string,
 	): Promise<RecurringScheduleUpdateResultModel> {
-		const existingRecurringSchedule =
-			await this.repository.findRecurringScheduleById(
-				recurringScheduleId,
-				tutorId,
+		try {
+			return await this.repository.withRecurringScheduleTransaction(
+				async (transaction) => {
+					const context = await transaction.loadUpdateContext(
+						recurringScheduleId,
+						tutorId,
+						data.effectiveDate,
+					);
+					if (!context) {
+						throw AppError.notFound(
+							"RECURRING_SCHEDULE_NOT_FOUND",
+							"Recurring schedule not found",
+						);
+					}
+
+					if (
+						DateTime.fromDateOnlyString(data.effectiveDate).isBefore(
+							DateTime.fromDateOnlyString(DateTime.todayDateOnlyString()),
+						)
+					) {
+						throw AppError.badRequest(
+							"INVALID_EFFECTIVE_DATE",
+							"Effective date must be today or later",
+						);
+					}
+
+					const plan = RecurringSchedulePlanner.planUpdate({
+						existingSeries: context.existingSeries,
+						effectiveDate: data.effectiveDate,
+						type: data.type,
+						notes: data.notes,
+						scheduleItems: data.scheduleItems,
+						remainingSeconds: context.remainingSeconds,
+						replaceableSchedules: context.replaceableSchedules,
+					});
+					const existingSchedules = await transaction.loadExistingSchedules(
+						plan.series.classId,
+						plan.generatedSchedules.map((schedule) => schedule.date),
+					);
+					RecurringSchedulePlanner.assertNoOverlap(
+						plan.generatedSchedules,
+						existingSchedules,
+						plan.replacementScheduleIds,
+					);
+
+					return transaction.applyUpdate(plan);
+				},
 			);
-		if (!existingRecurringSchedule) {
-			throw AppError.notFound(
-				"RECURRING_SCHEDULE_NOT_FOUND",
-				"Recurring schedule not found",
-			);
+		} catch (error) {
+			this.rethrowRecurringScheduleFailure(error, "update");
+		}
+	}
+
+	private rethrowRecurringScheduleFailure(
+		error: unknown,
+		operation: "create" | "update",
+	): never {
+		if (error instanceof AppError) {
+			throw error;
 		}
 
-		if (
-			DateTime.fromDateOnlyString(data.effectiveDate).isBefore(
-				DateTime.fromDateOnlyString(DateTime.todayDateOnlyString()),
-			)
-		) {
+		if (error instanceof RecurringSchedulePlanningError) {
+			if (error.reason === "insufficient_hours") {
+				throw AppError.badRequest(
+					"INSUFFICIENT_HOURS",
+					operation === "create"
+						? "The class does not have enough remaining hours to create any schedule"
+						: "The class does not have enough remaining hours to recreate any recurring schedule",
+				);
+			}
+
 			throw AppError.badRequest(
-				"INVALID_EFFECTIVE_DATE",
-				"Effective date must be today or later",
+				"RECURRING_CONFLICT",
+				`Recurring schedule conflicts with existing schedules on ${error.conflictDates.join(", ")}`,
 			);
 		}
 
-		return this.repository.updateRecurringSchedule(
-			recurringScheduleId,
-			data,
-			tutorId,
-		);
+		throw error;
 	}
 
 	async deleteSchedule(id: string, tutorId: string): Promise<void> {

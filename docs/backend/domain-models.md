@@ -70,6 +70,18 @@ application errors. `ScheduleRepository` applies the plan with an owner-scoped
 compare-and-set, writes the deduction effect, and refreshes the result inside
 the same Prisma transaction so a failure rolls back the full transition.
 
+Recurring schedule creation and effective-date edits follow the same split.
+`RecurringSchedulePlanner` owns deterministic weekly generation, replacement
+selection, exact-second capacity planning, and same-date overlap decisions. It
+returns immutable plans and typed planning failures without accessing Prisma or
+creating application errors. `ScheduleService` opens the recurrence-specific
+transaction, maps planner and persistence failures to the established API
+errors, and passes the completed plan back to the repository. The recurrence
+transaction adapter loads tutor-owned context and conflict candidates, then
+creates or replaces persisted rows and refreshes the response within one
+Prisma transaction. This preserves historical schedules and keeps legacy
+unlinked replacement matching at the domain seam.
+
 ## Tutor-owned integrations
 
 Tutor-owned credentials belong in a dedicated one-to-one integration model,

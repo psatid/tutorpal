@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { PrismaClient } from "@prisma/client";
-import { prisma } from "../lib/db";
-import { hoursToSeconds, minutesToSeconds } from "../lib/teaching-time";
+import type {
+	RecurringScheduleCreatePlan,
+	RecurringScheduleUpdatePlan,
+} from "../models/recurring-schedule-planner.model";
 import type {
 	ScheduleModel,
 	ScheduleTransitionPlan,
@@ -11,559 +13,575 @@ import { ScheduleRepository } from "./schedule.repository";
 
 const createdAt = new Date("2026-08-01T00:00:00.000Z");
 const updatedAt = new Date("2026-08-01T00:30:00.000Z");
-const classContext = {
-	name: "Algebra",
-};
+const classContext = { name: "Algebra" };
 
-type CreatedScheduleData = {
+type ScheduleStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
+type ScheduleType = "ON_SITE" | "ONLINE";
+
+type ScheduleRow = {
+	id: string;
 	classId: string;
-	recurringScheduleId: string;
+	recurringScheduleId: string | null;
 	date: Date;
 	time: number;
 	durationSeconds: bigint;
 	notes: string | null;
-	status: "SCHEDULED";
-	type: "ON_SITE" | "ONLINE";
+	noShowNote: null;
+	status: ScheduleStatus;
+	type: ScheduleType;
+	createdAt: Date;
+	updatedAt: Date;
+	class: typeof classContext;
 };
 
-function makeCreatedScheduleRecord(data: CreatedScheduleData, index: number) {
+type RecurringItemRow = {
+	id: string;
+	recurringScheduleId: string;
+	weekday: "MONDAY" | "TUESDAY";
+	time: number;
+	durationSeconds: bigint;
+};
+
+type RecurringRow = {
+	id: string;
+	classId: string;
+	startDate: Date;
+	notes: string | null;
+	type: ScheduleType;
+	createdAt: Date;
+	updatedAt: Date;
+	class: typeof classContext;
+	scheduleItems: RecurringItemRow[];
+};
+
+type State = {
+	recurring: RecurringRow[];
+	schedules: ScheduleRow[];
+};
+
+type ScheduleFindManyArgs = {
+	where?: {
+		classId?: string;
+		date?: { gte?: Date; in?: Date[] };
+		status?: unknown;
+	};
+	select?: { recurringScheduleId?: boolean; status?: boolean };
+	include?: unknown;
+	orderBy?: unknown;
+};
+
+function cloneState(state: State): State {
 	return {
-		id: `generated-${index}`,
-		noShowNote: null,
-		...data,
-		createdAt,
-		updatedAt,
-		class: classContext,
+		recurring: state.recurring.map((series) => ({
+			...series,
+			scheduleItems: series.scheduleItems.map((item) => ({ ...item })),
+		})),
+		schedules: state.schedules.map((schedule) => ({ ...schedule })),
 	};
 }
 
-function makeCreateRepositoryFixture(remainingHours: number) {
-	let createdScheduleData: CreatedScheduleData[] = [];
-	let scheduleFindManyCalls = 0;
-	const recurringSchedule = {
-		id: "recurring-created",
+function scheduleRow(overrides: Partial<ScheduleRow> = {}): ScheduleRow {
+	return {
+		id: "schedule-1",
 		classId: "class-1",
-		startDate: new Date("2026-08-10T00:00:00.000Z"),
-		notes: null,
-		type: "ON_SITE" as const,
+		recurringScheduleId: "recurring-old",
+		date: new Date("2026-08-10T00:00:00.000Z"),
+		time: 540,
+		durationSeconds: 3_600n,
+		notes: "Existing note",
+		noShowNote: null,
+		status: "SCHEDULED",
+		type: "ON_SITE",
 		createdAt,
-		updatedAt,
+		updatedAt: createdAt,
 		class: classContext,
+		...overrides,
 	};
-	const transaction = {
-		schedule: {
-			findMany: async () => {
-				scheduleFindManyCalls += 1;
-				if (scheduleFindManyCalls === 1) {
-					return [];
-				}
-				return createdScheduleData.map(makeCreatedScheduleRecord);
-			},
-			createMany: async ({ data }: { data: CreatedScheduleData[] }) => {
-				createdScheduleData = data;
-				return { count: data.length };
-			},
-		},
-		recurringSchedule: {
-			create: async () => recurringSchedule,
-		},
-		recurringScheduleItem: {
-			createMany: async () => ({ count: 0 }),
-		},
-	};
-	const client = {
-		class: {
-			findMany: async () => [
-				{ id: "class-1", totalSeconds: hoursToSeconds(remainingHours) },
+}
+
+function createPlan(): RecurringScheduleCreatePlan {
+	return {
+		series: {
+			classId: "class-1",
+			startDate: "2026-08-10",
+			notes: null,
+			type: "ONLINE",
+			scheduleItems: [
+				{ weekday: "MONDAY", time: 600, durationSeconds: 3_600n },
 			],
 		},
-		schedule: {
-			groupBy: async () => {
-				const durationSeconds = createdScheduleData.reduce(
-					(total, schedule) => total + schedule.durationSeconds,
-					0n,
-				);
-				return durationSeconds > 0n
-					? [{ classId: "class-1", _sum: { durationSeconds } }]
-					: [];
-			},
-		},
-		$transaction: async (
-			callback: (tx: typeof transaction) => Promise<unknown>,
-		) => callback(transaction),
-	} as unknown as PrismaClient;
-
-	return {
-		repository: new ScheduleRepository(client),
-		getCreatedScheduleData: () => createdScheduleData,
-	};
-}
-
-function makeUpdateRepositoryFixture(remainingHours: number) {
-	let createdScheduleData: CreatedScheduleData[] = [];
-	let recurringItemData: Array<{
-		weekday: "MONDAY";
-		time: number;
-		durationSeconds: bigint;
-	}> = [];
-	const existingRecurringSchedule = {
-		id: "recurring-existing",
-		classId: "class-1",
-		startDate: new Date("2026-08-03T00:00:00.000Z"),
-		notes: null,
-		type: "ON_SITE" as const,
-		createdAt,
-		updatedAt,
-		class: classContext,
-		scheduleItems: [
+		generatedSchedules: [
 			{
-				id: "item-existing",
-				weekday: "MONDAY" as const,
-				time: 540,
+				classId: "class-1",
+				date: "2026-08-10",
+				time: 600,
 				durationSeconds: 3_600n,
+				type: "ONLINE",
 			},
 		],
 	};
-	const newRecurringSchedule = {
-		...existingRecurringSchedule,
-		id: "recurring-updated",
-		startDate: new Date("2026-08-10T00:00:00.000Z"),
+}
+
+function updatePlan(): RecurringScheduleUpdatePlan {
+	return {
+		...createPlan(),
+		effectiveDate: "2026-08-10",
+		replacementScheduleIds: ["replace-scheduled", "replace-cancelled"],
 	};
-	const transaction = {
-		schedule: {
-			findMany: async () => [],
-			deleteMany: async () => ({ count: 0 }),
-			createMany: async ({ data }: { data: CreatedScheduleData[] }) => {
-				createdScheduleData = data;
-				return { count: data.length };
+}
+
+function makeRecurringRepositoryFixture({
+	failItemWrite = false,
+}: {
+	failItemWrite?: boolean;
+} = {}) {
+	let committed: State = {
+		recurring: [
+			{
+				id: "recurring-old",
+				classId: "class-1",
+				startDate: new Date("2026-08-10T00:00:00.000Z"),
+				notes: "Existing note",
+				type: "ON_SITE",
+				createdAt,
+				updatedAt: createdAt,
+				class: classContext,
+				scheduleItems: [
+					{
+						id: "old-item",
+						recurringScheduleId: "recurring-old",
+						weekday: "MONDAY",
+						time: 540,
+						durationSeconds: 3_600n,
+					},
+				],
 			},
-		},
-		class: {
-			findUnique: async () => ({
-				totalSeconds: hoursToSeconds(remainingHours),
-				schedules: [],
-			}),
-		},
-		recurringSchedule: {
-			create: async () => newRecurringSchedule,
-			findUnique: async () => ({
-				...newRecurringSchedule,
-				scheduleItems: recurringItemData.map((item, index) => ({
-					id: `item-${index + 1}`,
-					...item,
-				})),
-			}),
-		},
-		recurringScheduleItem: {
-			createMany: async ({ data }: { data: typeof recurringItemData }) => {
-				recurringItemData = data;
-				return { count: data.length };
-			},
-		},
+		],
+		schedules: [
+			scheduleRow({ id: "replace-scheduled" }),
+			scheduleRow({ id: "replace-cancelled", status: "CANCELLED" }),
+		],
 	};
+	let transactionCalls = 0;
+	let seriesNumber = 0;
+	const classFindFirstQueries: unknown[] = [];
+	const recurringFindFirstQueries: unknown[] = [];
+	const scheduleFindManyQueries: ScheduleFindManyArgs[] = [];
+	const deleteManyQueries: unknown[] = [];
+	const writeEvents: string[] = [];
+	const conflictRows = [
+		scheduleRow({ id: "active", status: "SCHEDULED" }),
+		scheduleRow({ id: "completed", status: "COMPLETED" }),
+		scheduleRow({ id: "no-show", status: "NO_SHOW" }),
+		scheduleRow({ id: "cancelled", status: "CANCELLED" }),
+	];
+	const replacementCandidates = [
+		scheduleRow({ id: "candidate-scheduled" }),
+		scheduleRow({ id: "candidate-completed", status: "COMPLETED" }),
+		scheduleRow({ id: "candidate-no-show", status: "NO_SHOW" }),
+		scheduleRow({ id: "candidate-cancelled", status: "CANCELLED" }),
+	];
+
+	function transactionFor(working: State) {
+		return {
+			class: {
+				findFirst: async (args: unknown) => {
+					classFindFirstQueries.push(args);
+					const where = args as { where: { id: string; tutorId: string } };
+					return where.where.id === "class-1" &&
+						where.where.tutorId === "tutor-1"
+						? { id: "class-1" }
+						: null;
+				},
+				findMany: async () => [{ id: "class-1", totalSeconds: 14_400n }],
+			},
+			schedule: {
+				groupBy: async () => {
+					const reservedSeconds = working.schedules.reduce(
+						(total, row) =>
+							["SCHEDULED", "COMPLETED", "NO_SHOW"].includes(row.status)
+								? total + row.durationSeconds
+								: total,
+						0n,
+					);
+					return reservedSeconds === 0n
+						? []
+						: [
+								{
+									classId: "class-1",
+									_sum: { durationSeconds: reservedSeconds },
+								},
+							];
+				},
+				findMany: async (args: ScheduleFindManyArgs) => {
+					scheduleFindManyQueries.push(args);
+					if (args.select?.recurringScheduleId) {
+						return replacementCandidates;
+					}
+					if (args.include) {
+						return working.schedules
+							.filter((row) =>
+								row.recurringScheduleId?.startsWith("recurring-new"),
+							)
+							.toSorted((left, right) => left.time - right.time);
+					}
+					if (args.select?.status) {
+						return conflictRows;
+					}
+					return [];
+				},
+				createMany: async ({
+					data,
+				}: {
+					data: Array<{
+						classId: string;
+						recurringScheduleId: string;
+						date: Date;
+						time: number;
+						durationSeconds: bigint;
+						notes: string | null;
+						status: "SCHEDULED";
+						type: ScheduleType;
+					}>;
+				}) => {
+					writeEvents.push("schedule.createMany");
+					for (const [index, row] of data.entries()) {
+						working.schedules.push({
+							id: `generated-${working.schedules.length + index + 1}`,
+							...row,
+							noShowNote: null,
+							createdAt,
+							updatedAt: createdAt,
+							class: classContext,
+						});
+					}
+					return { count: data.length };
+				},
+				deleteMany: async (args: {
+					where: { id: { in: string[] }; classId: string };
+				}) => {
+					writeEvents.push("schedule.deleteMany");
+					deleteManyQueries.push(args);
+					const ids = new Set(args.where.id.in);
+					working.schedules = working.schedules.filter(
+						(row) => !ids.has(row.id),
+					);
+					return { count: args.where.id.in.length };
+				},
+			},
+			recurringSchedule: {
+				findFirst: async (args: unknown) => {
+					recurringFindFirstQueries.push(args);
+					const where = args as {
+						where: { id: string; class: { tutorId: string } };
+					};
+					if (
+						where.where.id !== "recurring-old" ||
+						where.where.class.tutorId !== "tutor-1"
+					) {
+						return null;
+					}
+					return (
+						working.recurring.find((row) => row.id === "recurring-old") ?? null
+					);
+				},
+				create: async ({
+					data,
+				}: {
+					data: {
+						classId: string;
+						startDate: Date;
+						notes: string | null;
+						type: ScheduleType;
+					};
+				}) => {
+					writeEvents.push("recurringSchedule.create");
+					seriesNumber += 1;
+					const id = `recurring-new-${seriesNumber}`;
+					working.recurring.push({
+						id,
+						...data,
+						createdAt,
+						updatedAt: createdAt,
+						class: classContext,
+						scheduleItems: [],
+					});
+					return { id };
+				},
+				findUnique: async (args: { where: { id: string } }) =>
+					working.recurring.find((row) => row.id === args.where.id) ?? null,
+			},
+			recurringScheduleItem: {
+				createMany: async ({
+					data,
+				}: {
+					data: Array<{
+						recurringScheduleId: string;
+						weekday: "MONDAY" | "TUESDAY";
+						time: number;
+						durationSeconds: bigint;
+					}>;
+				}) => {
+					writeEvents.push("recurringScheduleItem.createMany");
+					if (failItemWrite) {
+						throw new Error("item write failed");
+					}
+					for (const [index, item] of data.entries()) {
+						const series = working.recurring.find(
+							(row) => row.id === item.recurringScheduleId,
+						);
+						if (series) {
+							series.scheduleItems.push({ id: `item-${index + 1}`, ...item });
+						}
+					}
+					return { count: data.length };
+				},
+			},
+		};
+	}
+
 	const client = {
-		recurringSchedule: {
-			findFirst: async () => existingRecurringSchedule,
+		$transaction: async <T>(
+			work: (transaction: never) => Promise<T>,
+		): Promise<T> => {
+			transactionCalls += 1;
+			const working = cloneState(committed);
+			const result = await work(transactionFor(working) as never);
+			committed = working;
+			return result;
 		},
-		$transaction: async (
-			callback: (tx: typeof transaction) => Promise<unknown>,
-		) => callback(transaction),
 	} as unknown as PrismaClient;
 
 	return {
 		repository: new ScheduleRepository(client),
-		getCreatedScheduleData: () => createdScheduleData,
+		getTransactionCalls: () => transactionCalls,
+		getClassFindFirstQueries: () => classFindFirstQueries,
+		getRecurringFindFirstQueries: () => recurringFindFirstQueries,
+		getScheduleFindManyQueries: () => scheduleFindManyQueries,
+		getDeleteManyQueries: () => deleteManyQueries,
+		getWriteEvents: () => writeEvents,
+		getCommittedState: () => cloneState(committed),
 	};
 }
 
-describe("ScheduleRepository recurring schedule types", () => {
-	test("propagates type to regenerated sessions and leaves historical statuses outside replacement", async () => {
-		const existingRecurringSchedule = {
-			id: "recurring-1",
-			classId: "class-1",
-			startDate: new Date("2026-08-01T00:00:00.000Z"),
-			notes: null,
-			type: "ON_SITE" as const,
-			createdAt,
-			updatedAt,
-			class: classContext,
-			scheduleItems: [
-				{
-					id: "item-1",
-					weekday: "MONDAY" as const,
-					time: 600,
-					durationSeconds: 3_600n,
-				},
-			],
-		};
-		const newRecurringSchedule = {
-			...existingRecurringSchedule,
-			id: "recurring-2",
-			type: "ONLINE" as const,
-			startDate: new Date("2026-08-10T00:00:00.000Z"),
-		};
-		const replacementCandidate = {
-			id: "scheduled-1",
+describe("ScheduleRepository recurring transaction adapter", () => {
+	test("loads tutor-scoped context and supplies status-bearing conflict rows to the planner", async () => {
+		const fixture = makeRecurringRepositoryFixture();
+
+		await fixture.repository.withRecurringScheduleTransaction(async (tx) => {
+			expect(await tx.loadCreateContext("class-1", "tutor-1")).toEqual({
+				classId: "class-1",
+				remainingSeconds: 10_800n,
+			});
+			expect(await tx.loadCreateContext("class-1", "tutor-2")).toBeNull();
+
+			const update = await tx.loadUpdateContext(
+				"recurring-old",
+				"tutor-1",
+				"2026-08-10",
+			);
+			expect(update?.existingSeries).toMatchObject({
+				id: "recurring-old",
+				classId: "class-1",
+				startDate: "2026-08-10",
+			});
+			expect(update?.replaceableSchedules).toEqual([
+				expect.objectContaining({
+					id: "candidate-scheduled",
+					status: "SCHEDULED",
+					date: "2026-08-10",
+				}),
+				expect.objectContaining({
+					id: "candidate-completed",
+					status: "COMPLETED",
+				}),
+				expect.objectContaining({
+					id: "candidate-no-show",
+					status: "NO_SHOW",
+				}),
+				expect.objectContaining({
+					id: "candidate-cancelled",
+					status: "CANCELLED",
+				}),
+			]);
+			expect(
+				await tx.loadUpdateContext("recurring-old", "tutor-2", "2026-08-10"),
+			).toBeNull();
+
+			const conflicts = await tx.loadExistingSchedules("class-1", [
+				"2026-08-10",
+				"2026-08-10",
+			]);
+			expect(conflicts.map((row) => row.status)).toEqual([
+				"SCHEDULED",
+				"COMPLETED",
+				"NO_SHOW",
+				"CANCELLED",
+			]);
+		});
+
+		expect(fixture.getClassFindFirstQueries()).toEqual([
+			expect.objectContaining({ where: { id: "class-1", tutorId: "tutor-1" } }),
+			expect.objectContaining({ where: { id: "class-1", tutorId: "tutor-2" } }),
+		]);
+		expect(fixture.getRecurringFindFirstQueries()).toEqual([
+			expect.objectContaining({
+				where: { id: "recurring-old", class: { tutorId: "tutor-1" } },
+			}),
+			expect.objectContaining({
+				where: { id: "recurring-old", class: { tutorId: "tutor-2" } },
+			}),
+		]);
+
+		const candidateQuery = fixture
+			.getScheduleFindManyQueries()
+			.find((query) => query.select?.recurringScheduleId);
+		expect(candidateQuery).toMatchObject({
+			where: {
+				classId: "class-1",
+				date: { gte: new Date("2026-08-10T00:00:00.000Z") },
+			},
+			select: {
+				id: true,
+				date: true,
+				time: true,
+				durationSeconds: true,
+				status: true,
+				recurringScheduleId: true,
+			},
+		});
+		expect(candidateQuery?.where?.status).toBeUndefined();
+		const conflictQuery = fixture
+			.getScheduleFindManyQueries()
+			.find(
+				(query) => query.select?.status && !query.select.recurringScheduleId,
+			);
+		expect(conflictQuery).toMatchObject({
+			where: {
+				classId: "class-1",
+				date: { in: [new Date("2026-08-10T00:00:00.000Z")] },
+			},
+			select: { id: true, status: true },
+		});
+		expect(conflictQuery?.where?.status).toBeUndefined();
+	});
+
+	test("persists a create plan in one transaction and refreshes the first generated schedule", async () => {
+		const fixture = makeRecurringRepositoryFixture();
+		const result = await fixture.repository.withRecurringScheduleTransaction(
+			async (tx) => tx.applyCreate(createPlan()),
+		);
+
+		expect(fixture.getTransactionCalls()).toBe(1);
+		expect(fixture.getWriteEvents()).toEqual([
+			"recurringSchedule.create",
+			"recurringScheduleItem.createMany",
+			"schedule.createMany",
+		]);
+		const state = fixture.getCommittedState();
+		expect(state.recurring).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ id: "recurring-old" }),
+				expect.objectContaining({
+					id: "recurring-new-1",
+					notes: null,
+					type: "ONLINE",
+				}),
+			]),
+		);
+		expect(
+			state.schedules.find(
+				(row) => row.recurringScheduleId === "recurring-new-1",
+			),
+		).toMatchObject({
 			date: new Date("2026-08-10T00:00:00.000Z"),
 			time: 600,
 			durationSeconds: 3_600n,
-			recurringScheduleId: "recurring-1",
-		};
-
-		let candidateQuery: unknown;
-		let deleteManyIds: string[] = [];
-		let createdScheduleData: Array<{ type: string }> = [];
-		let scheduleFindManyCalls = 0;
-
-		const transaction = {
-			schedule: {
-				findMany: async (args: unknown) => {
-					scheduleFindManyCalls += 1;
-					if (scheduleFindManyCalls === 1) {
-						candidateQuery = args;
-						return [replacementCandidate];
-					}
-					return [];
-				},
-				deleteMany: async (args: { where: { id: { in: string[] } } }) => {
-					deleteManyIds = args.where.id.in;
-					return { count: deleteManyIds.length };
-				},
-				createMany: async (args: { data: Array<{ type: string }> }) => {
-					createdScheduleData = args.data;
-					return { count: createdScheduleData.length };
-				},
-			},
-			class: {
-				findUnique: async () => ({ totalSeconds: 36_000n, schedules: [] }),
-			},
-			recurringSchedule: {
-				create: async () => newRecurringSchedule,
-				findUnique: async () => ({
-					...newRecurringSchedule,
-					scheduleItems: newRecurringSchedule.scheduleItems,
-				}),
-			},
-			recurringScheduleItem: {
-				createMany: async () => ({ count: 1 }),
-			},
-		};
-
-		const recurringDelegate = prisma.recurringSchedule as unknown as {
-			findFirst: (...args: never[]) => Promise<unknown>;
-		};
-		const prismaClient = prisma as unknown as {
-			$transaction: (
-				callback: (tx: typeof transaction) => Promise<unknown>,
-			) => Promise<unknown>;
-		};
-		const originalFindFirst = recurringDelegate.findFirst;
-		const originalTransaction = prismaClient.$transaction;
-
-		recurringDelegate.findFirst = async () => existingRecurringSchedule;
-		prismaClient.$transaction = async (callback) => callback(transaction);
-
-		try {
-			const result = await new ScheduleRepository().updateRecurringSchedule(
-				"recurring-1",
-				{
-					effectiveDate: "2026-08-10",
-					type: "ONLINE",
-					scheduleItems: [
-						{
-							weekday: "MONDAY",
-							time: 600,
-							durationMinutes: 60,
-						},
-					],
-				},
-				"tutor-1",
-			);
-
-			expect(candidateQuery).toMatchObject({
-				where: {
-					status: { in: ["SCHEDULED", "CANCELLED"] },
-				},
-			});
-			expect(deleteManyIds).toEqual(["scheduled-1"]);
-			expect(createdScheduleData.length).toBeGreaterThan(0);
-			expect(createdScheduleData.every((item) => item.type === "ONLINE")).toBe(
-				true,
-			);
-			expect(result.recurringSchedule.toRecurringScheduleDTO().type).toBe(
-				"ONLINE",
-			);
-		} finally {
-			recurringDelegate.findFirst = originalFindFirst;
-			prismaClient.$transaction = originalTransaction;
-		}
-	});
-
-	test("uses inclusive date bounds when listing a date range", async () => {
-		const schedule = {
-			id: "schedule-1",
-			classId: "class-1",
-			date: new Date("2026-08-16T00:00:00.000Z"),
-			time: 600,
-			durationSeconds: 3_600n,
-			notes: null,
-			noShowNote: null,
-			status: "SCHEDULED" as const,
-			type: "ON_SITE" as const,
-			createdAt,
-			updatedAt,
-			class: classContext,
-		};
-		let listQuery: unknown;
-
-		const scheduleDelegate = prisma.schedule as unknown as {
-			findMany: (args: unknown) => Promise<unknown[]>;
-			groupBy: (...args: never[]) => Promise<unknown[]>;
-		};
-		const classDelegate = prisma.class as unknown as {
-			findMany: (...args: never[]) => Promise<unknown[]>;
-		};
-		const originalFindMany = scheduleDelegate.findMany;
-		const originalGroupBy = scheduleDelegate.groupBy;
-		const originalClassFindMany = classDelegate.findMany;
-
-		scheduleDelegate.findMany = async (args) => {
-			listQuery = args;
-			return [schedule];
-		};
-		scheduleDelegate.groupBy = async () => [
-			{ classId: "class-1", _sum: { durationSeconds: 3_600n } },
-		];
-		classDelegate.findMany = async () => [
-			{ id: "class-1", totalSeconds: 36_000n },
-		];
-
-		try {
-			const schedules = await new ScheduleRepository().findAll("tutor-1", {
-				startDate: "2026-08-10",
-				endDate: "2026-08-16",
-			});
-
-			expect(listQuery).toMatchObject({
-				where: {
-					date: {
-						gte: new Date("2026-08-10T00:00:00.000Z"),
-						lte: new Date("2026-08-16T00:00:00.000Z"),
-					},
-				},
-				orderBy: [{ date: "asc" }, { time: "asc" }],
-			});
-			expect(schedules).toHaveLength(1);
-		} finally {
-			scheduleDelegate.findMany = originalFindMany;
-			scheduleDelegate.groupBy = originalGroupBy;
-			classDelegate.findMany = originalClassFindMany;
-		}
-	});
-});
-
-describe("ScheduleRepository repeated weekday schedules", () => {
-	test("creates repeated weekday sessions in chronological order", async () => {
-		const fixture = makeCreateRepositoryFixture(2);
-		const result = await fixture.repository.createRecurringSchedule({
-			classId: "class-1",
-			type: "ON_SITE",
-			recurring: {
-				startDate: "2026-08-10",
-				scheduleItems: [
-					{ weekday: "MONDAY", time: 660, durationMinutes: 60 },
-					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-				],
-			},
 		});
-
-		expect(fixture.getCreatedScheduleData()).toEqual([
-			{
-				classId: "class-1",
-				recurringScheduleId: "recurring-created",
-				date: new Date("2026-08-10T00:00:00.000Z"),
-				time: 540,
-				durationSeconds: 3_600n,
-				notes: null,
-				status: "SCHEDULED",
-				type: "ON_SITE",
-			},
-			{
-				classId: "class-1",
-				recurringScheduleId: "recurring-created",
-				date: new Date("2026-08-10T00:00:00.000Z"),
-				time: 660,
-				durationSeconds: 3_600n,
-				notes: null,
-				status: "SCHEDULED",
-				type: "ON_SITE",
-			},
-		]);
-		expect(result.toScheduleDTO()).toEqual({
-			id: "generated-0",
+		expect(result.toScheduleDTO()).toMatchObject({
 			classId: "class-1",
 			className: "Algebra",
-			recurringScheduleId: "recurring-created",
+			recurringScheduleId: "recurring-new-1",
 			date: "2026-08-10",
-			time: 540,
-			durationMinutes: 60,
-			notes: null,
-			noShowNote: null,
-			status: "SCHEDULED",
-			type: "ON_SITE",
-			createdAt: createdAt.toISOString(),
-			updatedAt: updatedAt.toISOString(),
-			remainingHours: 0,
+			time: 600,
+			type: "ONLINE",
+			remainingHours: 2,
 		});
-	});
-
-	test("regenerates repeated weekday sessions when editing a recurrence", async () => {
-		const fixture = makeUpdateRepositoryFixture(2);
-		const result = await fixture.repository.updateRecurringSchedule(
-			"recurring-existing",
-			{
-				effectiveDate: "2026-08-10",
-				scheduleItems: [
-					{ weekday: "MONDAY", time: 660, durationMinutes: 60 },
-					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-				],
-			},
-			"tutor-1",
-		);
-
 		expect(
 			fixture
-				.getCreatedScheduleData()
-				.map(({ date, time, durationSeconds }) => ({
-					date,
-					time,
-					durationSeconds,
-				})),
-		).toEqual([
-			{
-				date: new Date("2026-08-10T00:00:00.000Z"),
-				time: 540,
-				durationSeconds: 3_600n,
+				.getScheduleFindManyQueries()
+				.find((query) => Boolean(query.include)),
+		).toMatchObject({
+			where: {
+				classId: "class-1",
+				date: { in: [new Date("2026-08-10T00:00:00.000Z")] },
 			},
+			orderBy: [{ date: "asc" }, { time: "asc" }],
+		});
+	});
+
+	test("deletes exactly the planned replacements, preserves history, and returns compatible update counts", async () => {
+		const fixture = makeRecurringRepositoryFixture();
+		const result = await fixture.repository.withRecurringScheduleTransaction(
+			async (tx) => tx.applyUpdate(updatePlan()),
+		);
+
+		expect(fixture.getTransactionCalls()).toBe(1);
+		expect(fixture.getDeleteManyQueries()).toEqual([
 			{
-				date: new Date("2026-08-10T00:00:00.000Z"),
-				time: 660,
-				durationSeconds: 3_600n,
+				where: {
+					id: { in: ["replace-scheduled", "replace-cancelled"] },
+					classId: "class-1",
+				},
 			},
 		]);
-		expect(result.createdSchedulesCount).toBe(2);
-	});
-
-	test("stops at the first session that exceeds the remaining class hours", async () => {
-		const fixture = makeCreateRepositoryFixture(2.5);
-		await fixture.repository.createRecurringSchedule({
-			classId: "class-1",
-			type: "ON_SITE",
-			recurring: {
+		expect(
+			fixture.getCommittedState().schedules.map((row) => row.id),
+		).not.toContain("replace-scheduled");
+		expect(
+			fixture.getCommittedState().schedules.map((row) => row.id),
+		).not.toContain("replace-cancelled");
+		expect(fixture.getCommittedState().recurring.map((row) => row.id)).toEqual([
+			"recurring-old",
+			"recurring-new-1",
+		]);
+		expect(fixture.getWriteEvents()).toEqual([
+			"schedule.deleteMany",
+			"recurringSchedule.create",
+			"recurringScheduleItem.createMany",
+			"schedule.createMany",
+		]);
+		expect(result.toRecurringScheduleUpdateResultDTO()).toMatchObject({
+			effectiveDate: "2026-08-10",
+			deletedSchedulesCount: 2,
+			createdSchedulesCount: 1,
+			recurringSchedule: {
+				id: "recurring-new-1",
+				classId: "class-1",
+				className: "Algebra",
 				startDate: "2026-08-10",
-				scheduleItems: [
-					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-					{ weekday: "MONDAY", time: 600, durationMinutes: 120 },
-					{ weekday: "MONDAY", time: 720, durationMinutes: 30 },
-				],
+				notes: null,
+				type: "ONLINE",
 			},
 		});
-
-		expect(
-			fixture.getCreatedScheduleData().map(({ time, durationSeconds }) => ({
-				time,
-				durationSeconds,
-			})),
-		).toEqual([{ time: 540, durationSeconds: 3_600n }]);
 	});
 
-	test("uses exact seconds for an exact recurring balance and a one-hundredth-hour short balance", async () => {
-		const exactFixture = makeCreateRepositoryFixture(1.5);
-		await exactFixture.repository.createRecurringSchedule({
-			classId: "class-1",
-			type: "ON_SITE",
-			recurring: {
-				startDate: "2026-08-10",
-				scheduleItems: [
-					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-					{ weekday: "MONDAY", time: 600, durationMinutes: 30 },
-				],
-			},
-		});
-
-		expect(
-			exactFixture
-				.getCreatedScheduleData()
-				.reduce((total, schedule) => total + schedule.durationSeconds, 0n),
-		).toBe(5_400n);
-		expect(
-			exactFixture
-				.getCreatedScheduleData()
-				.map((schedule) => schedule.durationSeconds),
-		).toEqual([minutesToSeconds(60), minutesToSeconds(30)]);
-
-		const shortFixture = makeCreateRepositoryFixture(1.49);
-		await shortFixture.repository.createRecurringSchedule({
-			classId: "class-1",
-			type: "ON_SITE",
-			recurring: {
-				startDate: "2026-08-10",
-				scheduleItems: [
-					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-					{ weekday: "MONDAY", time: 600, durationMinutes: 30 },
-				],
-			},
-		});
-
-		expect(
-			shortFixture
-				.getCreatedScheduleData()
-				.map((schedule) => schedule.durationSeconds),
-		).toEqual([minutesToSeconds(60)]);
-	});
-
-	test("rejects overlapping generated sessions", async () => {
-		const fixture = makeCreateRepositoryFixture(2);
+	test("rolls back the series write when a later item write fails", async () => {
+		const fixture = makeRecurringRepositoryFixture({ failItemWrite: true });
 
 		await expect(
-			fixture.repository.createRecurringSchedule({
-				classId: "class-1",
-				type: "ON_SITE",
-				recurring: {
-					startDate: "2026-08-10",
-					scheduleItems: [
-						{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-						{ weekday: "MONDAY", time: 570, durationMinutes: 30 },
-					],
-				},
-			}),
-		).rejects.toMatchObject({ errorCode: "RECURRING_CONFLICT", status: 400 });
+			fixture.repository.withRecurringScheduleTransaction(async (tx) =>
+				tx.applyCreate(createPlan()),
+			),
+		).rejects.toThrow("item write failed");
 
-		expect(fixture.getCreatedScheduleData()).toEqual([]);
-	});
-
-	test("accepts sessions whose endpoints touch", async () => {
-		const fixture = makeCreateRepositoryFixture(1.75);
-		await fixture.repository.createRecurringSchedule({
-			classId: "class-1",
-			type: "ON_SITE",
-			recurring: {
-				startDate: "2026-08-10",
-				scheduleItems: [
-					{ weekday: "MONDAY", time: 540, durationMinutes: 60 },
-					{ weekday: "MONDAY", time: 600, durationMinutes: 45 },
-				],
-			},
-		});
-
-		expect(
-			fixture.getCreatedScheduleData().map(({ time, durationSeconds }) => ({
-				time,
-				durationSeconds,
-			})),
-		).toEqual([
-			{ time: 540, durationSeconds: 3_600n },
-			{ time: 600, durationSeconds: 2_700n },
+		expect(fixture.getTransactionCalls()).toBe(1);
+		expect(fixture.getCommittedState().recurring.map((row) => row.id)).toEqual([
+			"recurring-old",
+		]);
+		expect(fixture.getCommittedState().schedules.map((row) => row.id)).toEqual([
+			"replace-scheduled",
+			"replace-cancelled",
 		]);
 	});
 });
