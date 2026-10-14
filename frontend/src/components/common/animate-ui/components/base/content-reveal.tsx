@@ -3,18 +3,18 @@ import {
   useIsPresent,
   useReducedMotion,
   type HTMLMotionProps,
-} from 'framer-motion';
-import { cn } from '@/lib/utils';
+} from "framer-motion";
+import { cn } from "@/lib/utils";
 import {
   CONTENT_REVEAL_ANIMATE,
   CONTENT_REVEAL_EXIT,
   CONTENT_REVEAL_INITIAL,
   CONTENT_REVEAL_TRANSITION,
-} from '@/components/ui/animate-ui/reveal';
+} from "@/components/common/animate-ui/reveal";
 
 type ContentRevealProps = Omit<
-  HTMLMotionProps<'div'>,
-  'initial' | 'animate' | 'exit' | 'transition' | 'aria-hidden' | 'inert'
+  HTMLMotionProps<"div">,
+  "initial" | "animate" | "exit" | "transition" | "aria-hidden" | "inert"
 >;
 
 function ContentReveal({ className, style, ...props }: ContentRevealProps) {
@@ -33,9 +33,9 @@ function ContentReveal({ className, style, ...props }: ContentRevealProps) {
       inert={isPresent ? undefined : true}
       style={{
         ...style,
-        pointerEvents: isPresent ? style?.pointerEvents : 'none',
+        pointerEvents: isPresent ? style?.pointerEvents : "none",
       }}
-      className={cn('min-w-0', className)}
+      className={cn("min-w-0", className)}
       {...props}
     />
   );

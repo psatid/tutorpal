@@ -1,40 +1,40 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Tabs as TabsPrimitive } from '@base-ui/react/tabs';
+import * as React from "react";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import {
   motion,
   AnimatePresence,
   type HTMLMotionProps,
   type Transition,
-} from 'framer-motion';
+} from "framer-motion";
 
 import {
   Highlight,
   HighlightItem,
   type HighlightProps,
   type HighlightItemProps,
-} from '@/components/ui/animate-ui/primitives/effects/highlight';
-import { getStrictContext } from '@/lib/get-strict-context';
-import { useControlledState } from '@/hooks/use-controlled-state';
+} from "@/components/common/animate-ui/primitives/effects/highlight";
+import { getStrictContext } from "@/lib/get-strict-context";
+import { useControlledState } from "@/hooks/use-controlled-state";
 import {
   AutoHeight,
   type AutoHeightProps,
-} from '@/components/ui/animate-ui/primitives/effects/auto-height';
+} from "@/components/common/animate-ui/primitives/effects/auto-height";
 import {
   CONTENT_REVEAL_ANIMATE,
   CONTENT_REVEAL_EXIT,
   CONTENT_REVEAL_INITIAL,
   CONTENT_REVEAL_TRANSITION,
-} from '@/components/ui/animate-ui/reveal';
+} from "@/components/common/animate-ui/reveal";
 
 type TabsContextType = {
   value: string | undefined;
-  setValue: TabsProps['onValueChange'];
+  setValue: TabsProps["onValueChange"];
 };
 
 const [TabsProvider, useTabs] =
-  getStrictContext<TabsContextType>('TabsContext');
+  getStrictContext<TabsContextType>("TabsContext");
 
 type TabsProps = React.ComponentProps<typeof TabsPrimitive.Root>;
 
@@ -56,10 +56,10 @@ function Tabs(props: TabsProps) {
   );
 }
 
-type TabsHighlightProps = Omit<HighlightProps, 'controlledItems' | 'value'>;
+type TabsHighlightProps = Omit<HighlightProps, "controlledItems" | "value">;
 
 function TabsHighlight({
-  transition = { type: 'spring', stiffness: 200, damping: 25 },
+  transition = { type: "spring", stiffness: 200, damping: 25 },
   ...props
 }: TabsHighlightProps) {
   const { value } = useTabs();
@@ -97,7 +97,7 @@ function TabsTab(props: TabsTabProps) {
 }
 
 type TabsPanelProps = React.ComponentProps<typeof TabsPrimitive.Panel> &
-  HTMLMotionProps<'div'>;
+  HTMLMotionProps<"div">;
 
 function TabsPanel({
   value,
@@ -127,14 +127,14 @@ function TabsPanel({
   );
 }
 
-type TabsPanelsAutoProps = Omit<AutoHeightProps, 'children'> & {
-  mode?: 'auto-height';
+type TabsPanelsAutoProps = Omit<AutoHeightProps, "children"> & {
+  mode?: "auto-height";
   children: React.ReactNode;
   transition?: Transition;
 };
 
-type TabsPanelsLayoutProps = Omit<HTMLMotionProps<'div'>, 'children'> & {
-  mode: 'layout';
+type TabsPanelsLayoutProps = Omit<HTMLMotionProps<"div">, "children"> & {
+  mode: "layout";
   children: React.ReactNode;
   transition?: Transition;
 };
@@ -142,13 +142,13 @@ type TabsPanelsLayoutProps = Omit<HTMLMotionProps<'div'>, 'children'> & {
 type TabsPanelsProps = TabsPanelsAutoProps | TabsPanelsLayoutProps;
 
 const defaultTransition: Transition = {
-  type: 'spring',
+  type: "spring",
   stiffness: 200,
   damping: 30,
 };
 
 function isAutoMode(props: TabsPanelsProps): props is TabsPanelsAutoProps {
-  return !props.mode || props.mode === 'auto-height';
+  return !props.mode || props.mode === "auto-height";
 }
 
 function TabsPanels(props: TabsPanelsProps) {
@@ -182,7 +182,7 @@ function TabsPanels(props: TabsPanelsProps) {
       layout="size"
       layoutDependency={value}
       transition={{ layout: transition }}
-      style={{ overflow: 'hidden', ...style }}
+      style={{ overflow: "hidden", ...style }}
       {...layoutProps}
     >
       <React.Fragment key={value}>{children}</React.Fragment>

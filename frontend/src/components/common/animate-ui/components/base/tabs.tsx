@@ -12,27 +12,27 @@ import {
   type TabsTabProps as TabsTabPrimitiveProps,
   type TabsPanelProps as TabsPanelPrimitiveProps,
   type TabsPanelsProps as TabsPanelsPrimitiveProps,
-} from '@/components/ui/animate-ui/primitives/base/tabs';
-import { createContext, useContext } from 'react';
-import { useReducedMotion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { CONTENT_REVEAL_TRANSITION } from '@/components/ui/animate-ui/reveal';
+} from "@/components/common/animate-ui/primitives/base/tabs";
+import { createContext, useContext } from "react";
+import { useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { CONTENT_REVEAL_TRANSITION } from "@/components/common/animate-ui/reveal";
 
 const TABS_PANELS_TRANSITION = {
-  type: 'spring',
+  type: "spring",
   stiffness: 200,
   damping: 25,
 } as const;
 type TabsProps = TabsPrimitiveProps;
 
-type TabsListVariant = 'default' | 'subtle';
+type TabsListVariant = "default" | "subtle";
 
-const TabsListVariantContext = createContext<TabsListVariant>('default');
+const TabsListVariantContext = createContext<TabsListVariant>("default");
 
 function Tabs({ className, ...props }: TabsProps) {
   return (
     <TabsPrimitive
-      className={cn('flex flex-col gap-2', className)}
+      className={cn("flex flex-col gap-2", className)}
       {...props}
     />
   );
@@ -46,11 +46,11 @@ type TabsListProps = TabsListPrimitiveProps & {
 function TabsList({
   className,
   transition,
-  variant = 'default',
+  variant = "default",
   ...props
 }: TabsListProps) {
   const prefersReducedMotion = useReducedMotion() === true;
-  const isSubtle = variant === 'subtle';
+  const isSubtle = variant === "subtle";
 
   return (
     <TabsListVariantContext.Provider value={variant}>
@@ -60,15 +60,15 @@ function TabsList({
         }
         className={
           isSubtle
-            ? 'absolute inset-x-0 inset-y-1 z-0 rounded-full bg-primary'
-            : 'absolute inset-x-0 inset-y-1.5 z-0 rounded-full bg-primary'
+            ? "absolute inset-x-0 inset-y-1 z-0 rounded-full bg-primary"
+            : "absolute inset-x-0 inset-y-1.5 z-0 rounded-full bg-primary"
         }
       >
         <TabsListPrimitive
           className={cn(
             isSubtle
-              ? 'relative isolate inline-flex h-11 w-max max-w-none items-center justify-start rounded-full'
-              : 'relative isolate inline-flex h-11 w-fit items-center justify-center rounded-full before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1 before:z-[-1] before:rounded-full before:border before:border-border before:bg-card',
+              ? "relative isolate inline-flex h-11 w-max max-w-none items-center justify-start rounded-full"
+              : "relative isolate inline-flex h-11 w-fit items-center justify-center rounded-full before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1 before:z-[-1] before:rounded-full before:border before:border-border before:bg-card",
             className,
           )}
           {...props}
@@ -86,12 +86,12 @@ function TabsTab({ className, ...props }: TabsTabProps) {
   return (
     <TabsHighlightItemPrimitive
       value={props.value}
-      className={variant === 'subtle' ? 'flex-none' : 'flex-1'}
+      className={variant === "subtle" ? "flex-none" : "flex-1"}
       suppressStateAttributes
     >
       <TabsTabPrimitive
         className={cn(
-          variant === 'subtle'
+          variant === "subtle"
             ? "inline-flex h-11 min-w-11 w-auto shrink-0 items-center justify-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground transition-[color,font-weight,background-color] duration-200 motion-reduce:transition-none hover:bg-muted hover:text-foreground data-[active]:font-semibold data-[active]:text-primary-foreground data-[active]:hover:bg-transparent data-[active]:hover:text-primary-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[active]:focus-visible:ring-primary-foreground disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
             : "data-[active]:text-primary-foreground inline-flex h-11 min-w-11 w-full flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
           className,
@@ -110,7 +110,9 @@ function TabsPanels({ transition, ...props }: TabsPanelsProps) {
   return (
     <TabsPanelsPrimitive
       transition={
-        prefersReducedMotion ? { duration: 0 } : transition ?? TABS_PANELS_TRANSITION
+        prefersReducedMotion
+          ? { duration: 0 }
+          : (transition ?? TABS_PANELS_TRANSITION)
       }
       {...props}
     />
@@ -124,11 +126,11 @@ function TabsPanel({ className, transition, ...props }: TabsPanelProps) {
 
   return (
     <TabsPanelPrimitive
-      className={cn('flex-1 outline-none', className)}
+      className={cn("flex-1 outline-none", className)}
       transition={
         prefersReducedMotion
           ? { duration: 0 }
-          : transition ?? CONTENT_REVEAL_TRANSITION
+          : (transition ?? CONTENT_REVEAL_TRANSITION)
       }
       {...props}
     />

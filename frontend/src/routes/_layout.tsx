@@ -15,7 +15,7 @@ import {
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { ContentReveal } from "@/components/ui/animate-ui/components/base/content-reveal";
+import { ContentReveal } from "@/components/common/animate-ui/components/base/content-reveal";
 
 export const Route = createFileRoute("/_layout")({
   component: LayoutRoute,
@@ -25,7 +25,9 @@ export const Route = createFileRoute("/_layout")({
 function LayoutRoute() {
   const { isAuthenticated, isLoading, isImpersonating, user } = useAuth();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   const stopImpersonation = useStopImpersonation();
 
   const exitTutorView = () => {

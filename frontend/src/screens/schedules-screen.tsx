@@ -29,7 +29,7 @@ import {
   TabsPanel,
   TabsPanels,
   TabsTab,
-} from "@/components/ui/animate-ui/components/base/tabs";
+} from "@/components/common/animate-ui/components/base/tabs";
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";

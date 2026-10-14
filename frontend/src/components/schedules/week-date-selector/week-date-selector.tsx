@@ -16,7 +16,7 @@ import {
   TabsPanel,
   TabsPanels,
   TabsTab,
-} from "@/components/ui/animate-ui/components/base/tabs";
+} from "@/components/common/animate-ui/components/base/tabs";
 import { DateField } from "@/components/common/form/date-field";
 import { DateTime } from "@/lib/date-time";
 import { WeekView } from "./week-view";
