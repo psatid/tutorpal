@@ -4,8 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "@/lib/i18n/config";
 
 const responsiveDrawerProps = vi.hoisted(() => ({
-  contentClassName: undefined as string | undefined,
-  popupStyle: undefined as React.CSSProperties | undefined,
+  useVisualViewportSizing: undefined as boolean | undefined,
 }));
 
 const calendarProps = vi.hoisted(() => ({
@@ -16,17 +15,14 @@ const calendarProps = vi.hoisted(() => ({
 vi.mock("@/components/ui/responsive-drawer", () => ({
   ResponsiveDrawer: ({
     children,
-    contentClassName,
     open,
-    popupStyle,
+    useVisualViewportSizing,
   }: {
     children: React.ReactNode;
-    contentClassName?: string;
     open: boolean;
-    popupStyle?: React.CSSProperties;
+    useVisualViewportSizing?: boolean;
   }) => {
-    responsiveDrawerProps.contentClassName = contentClassName;
-    responsiveDrawerProps.popupStyle = popupStyle;
+    responsiveDrawerProps.useVisualViewportSizing = useVisualViewportSizing;
 
     return open ? <div data-testid="responsive-drawer">{children}</div> : null;
   },
@@ -65,8 +61,7 @@ function mockViewport(desktop: boolean) {
 describe("DateField", () => {
   beforeEach(async () => {
     await i18n.changeLanguage("en");
-    responsiveDrawerProps.contentClassName = undefined;
-    responsiveDrawerProps.popupStyle = undefined;
+    responsiveDrawerProps.useVisualViewportSizing = undefined;
     calendarProps.fixedWeeks = undefined;
     calendarProps.fullWidth = undefined;
   });
@@ -79,17 +74,7 @@ describe("DateField", () => {
     await user.click(screen.getByRole("button", { name: "Date" }));
 
     expect(screen.getByTestId("responsive-drawer")).toBeInTheDocument();
-    expect(responsiveDrawerProps.popupStyle).toEqual({
-      maxHeight:
-        "calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
-    });
-    expect(responsiveDrawerProps.contentClassName).toContain("min-h-0");
-    expect(responsiveDrawerProps.contentClassName).toContain("overflow-y-auto");
-    expect(responsiveDrawerProps.contentClassName).toContain("overscroll-contain");
-    expect(responsiveDrawerProps.contentClassName).toContain("px-1");
-    expect(responsiveDrawerProps.contentClassName).toContain(
-      "safe-area-inset-bottom",
-    );
+    expect(responsiveDrawerProps.useVisualViewportSizing).toBe(true);
     expect(calendarProps.fullWidth).toBe(true);
     expect(calendarProps.fixedWeeks).toBe(true);
   });
@@ -102,8 +87,7 @@ describe("DateField", () => {
     await user.click(screen.getByRole("button", { name: "Date" }));
 
     expect(screen.getByTestId("calendar")).toBeInTheDocument();
-    expect(responsiveDrawerProps.popupStyle).toBeUndefined();
-    expect(responsiveDrawerProps.contentClassName).toBeUndefined();
+    expect(responsiveDrawerProps.useVisualViewportSizing).toBeUndefined();
     expect(calendarProps.fullWidth).toBeUndefined();
     expect(calendarProps.fixedWeeks).toBeUndefined();
   });

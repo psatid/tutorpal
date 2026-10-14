@@ -124,7 +124,7 @@ const DrawerPopup = React.forwardRef<
       )}
       {...props}
     >
-      <div className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-muted md:hidden" />
+      <div className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-input-hover md:hidden" />
       {children}
     </Drawer.Popup>
   );

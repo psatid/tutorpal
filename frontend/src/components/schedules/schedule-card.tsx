@@ -73,10 +73,7 @@ export function ScheduleCard({
             <span className="min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-on-surface">
               {schedule.className}
             </span>
-            <Badge
-              className="shrink-0 gap-1"
-              variant={scheduleStatus.badgeVariant}
-            >
+            <Badge variant={scheduleStatus.badgeVariant}>
               {StatusIcon ? <StatusIcon aria-hidden="true" /> : null}
               {t(`schedules:status.${schedule.status}`)}
             </Badge>

@@ -1,4 +1,4 @@
-import { AlertCircle, Check, X } from "lucide-react";
+import { AlertCircle, Calendar, Check, X } from "lucide-react";
 import type { TFunction } from "i18next";
 
 export const SCHEDULE_DURATION_OPTIONS: readonly number[] = [
@@ -26,23 +26,22 @@ type ScheduleStatusPresentation = {
   icon?: React.ComponentType<{ className?: string }>;
 };
 
-export const statusColors: Record<
-  ScheduleStatus,
-  ScheduleStatusPresentation
-> = {
-  SCHEDULED: {
-    badgeVariant: "info",
-  },
-  COMPLETED: {
-    badgeVariant: "success",
-    icon: Check,
-  },
-  NO_SHOW: {
-    badgeVariant: "warning",
-    icon: AlertCircle,
-  },
-  CANCELLED: {
-    badgeVariant: "destructive",
-    icon: X,
-  },
-};
+export const statusColors: Record<ScheduleStatus, ScheduleStatusPresentation> =
+  {
+    SCHEDULED: {
+      badgeVariant: "info",
+      icon: Calendar,
+    },
+    COMPLETED: {
+      badgeVariant: "success",
+      icon: Check,
+    },
+    NO_SHOW: {
+      badgeVariant: "warning",
+      icon: AlertCircle,
+    },
+    CANCELLED: {
+      badgeVariant: "destructive",
+      icon: X,
+    },
+  };

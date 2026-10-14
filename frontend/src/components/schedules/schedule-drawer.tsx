@@ -432,7 +432,7 @@ export function ScheduleDrawer({
           {mode === "view" && scheduleData && scheduleStatus ? (
             <Badge variant={scheduleStatus.badgeVariant}>
               {ScheduleStatusIcon ? (
-                <ScheduleStatusIcon aria-hidden="true" className="size-3" />
+                <ScheduleStatusIcon aria-hidden="true" />
               ) : null}
               {t(`schedules:status.${scheduleData.status}`)}
             </Badge>

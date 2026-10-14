@@ -45,7 +45,6 @@ type WeekDateSelectorCommonProps = {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
   className?: string;
-  weekAction?: ReactNode;
 };
 
 type WeekDateSelectorStandaloneProps = WeekDateSelectorCommonProps & {
@@ -167,7 +166,7 @@ function growWeekRangeToInclude(weekStarts: Date[], targetDate: Date): Date[] {
 }
 
 export function WeekDateSelector(props: WeekDateSelectorProps) {
-  const { selectedDate, onDateSelect, viewMode, className, weekAction } = props;
+  const { selectedDate, onDateSelect, viewMode, className } = props;
   const { t } = useTranslation(["schedules"]);
   const prefersReducedMotion = useReducedMotion() === true;
   const railSelectedDate = selectedDate ?? DateTime.today().toDate();
@@ -417,11 +416,6 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               <TabsTab value="day">{t("schedules:viewMode.day")}</TabsTab>
               <TabsTab value="week">{t("schedules:viewMode.week")}</TabsTab>
             </TabsList>
-            {viewMode === "week" && weekAction ? (
-              <div className="flex shrink-0 items-center gap-2">
-                {weekAction}
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

@@ -223,12 +223,8 @@ export function SchedulesScreen() {
   };
 
   const hasActiveFilters = (mode: ScheduleViewMode) =>
-    mode === "day" &&
-    (Boolean(searchQuery.trim()) || statusFilter !== "ALL");
-  const isWeeklyTimelineVisible =
-    viewMode === "week" &&
-    !isLoading &&
-    !isError;
+    mode === "day" && (Boolean(searchQuery.trim()) || statusFilter !== "ALL");
+  const isWeeklyTimelineVisible = viewMode === "week" && !isLoading && !isError;
 
   const renderScheduleContent = (mode: ScheduleViewMode) => {
     const isWeekMode = mode === "week";
@@ -275,9 +271,7 @@ export function SchedulesScreen() {
             <CalendarDays className="size-10 text-primary" />
           </div>
           <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
-            {hasFilters
-              ? t("schedules:noResults")
-              : t("schedules:noSchedules")}
+            {hasFilters ? t("schedules:noResults") : t("schedules:noSchedules")}
           </h2>
           {!hasFilters ? (
             <>
@@ -310,9 +304,7 @@ export function SchedulesScreen() {
 
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-muted-foreground">
-            {t("schedules:noResults")}
-          </p>
+          <p className="text-muted-foreground">{t("schedules:noResults")}</p>
         </div>
       );
     }
@@ -363,31 +355,14 @@ export function SchedulesScreen() {
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
             viewMode={viewMode}
-            weekAction={
-              <Button
-                aria-haspopup="dialog"
-                className="hidden sm:inline-flex"
-                leftIcon={Plus}
-                onClick={(event) => handleAddSchedule(event.currentTarget)}
-                ref={weekAddRef}
-                type="button"
-              >
-                {t("schedules:addSchedule")}
-              </Button>
-            }
           >
             {({ day, week }) => (
               <TabsPanels
                 className="flex min-h-0 flex-1 flex-col"
                 mode="layout"
               >
-                <TabsPanel
-                  className="flex min-h-0 flex-1 flex-col"
-                  value="day"
-                >
-                  <div className="mb-2 w-full shrink-0">
-                    {day}
-                  </div>
+                <TabsPanel className="flex min-h-0 flex-1 flex-col" value="day">
+                  <div className="mb-2 w-full shrink-0">{day}</div>
 
                   <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -395,7 +370,9 @@ export function SchedulesScreen() {
                         <Input
                           ref={scheduleSearchRef}
                           value={searchQuery}
-                          onChange={(event) => setSearchQuery(event.target.value)}
+                          onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                          }
                           placeholder={t("schedules:searchPlaceholder")}
                           leftIcon={Search}
                         />

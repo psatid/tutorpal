@@ -93,8 +93,12 @@ continue to start on Monday.
 
 `DateField` keeps its desktop calendar popover at its natural height. On mobile,
 it opens a nested drawer with a stable six-week calendar grid so month changes
-do not alter the calendar height. The drawer uses the small viewport height and
-safe-area insets; on genuinely short viewports, its single calendar body
-scrolls with bottom safe-area breathing room rather than clipping date rows. At
-the narrowest mobile widths, its reduced side inset leaves at least 44px for
-each seven-column date target.
+do not alter the calendar height. This drawer opts into live visual-viewport
+sizing: its bottom follows browser-chrome changes, and its preferred height
+fits the header, full calendar, and bottom padding. The live safe-area viewport
+and 44rem cap limit the sheet; on shorter viewports, only the calendar body
+scrolls, with contained overscroll. Without `visualViewport`, the same measured
+height is capped by `85dvh` minus the safe-area insets. Other
+`ResponsiveDrawer` callers keep their default sizing. At the narrowest mobile
+widths, the calendar's reduced side inset leaves at least 44px for each
+seven-column date target.
