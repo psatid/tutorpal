@@ -4,14 +4,14 @@ import { useSession } from "@/hooks/use-session";
 import { Loader2, LogOut, UserRound } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../common/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "../common/dropdown-menu";
 import { APP_ROUTES } from "@/constants/routes";
 
 type UserSettingProps = {

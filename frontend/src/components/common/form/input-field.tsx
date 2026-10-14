@@ -1,55 +1,49 @@
-import { Input, type InputProps } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { Clock3 } from "lucide-react";
-import { useId } from "react";
+import { Input, type InputProps } from "@/components/common/input";
 import { FormField } from "./form-field";
 
-type TimeFieldProps = Omit<InputProps, "type"> & {
+export interface InputFieldProps extends InputProps {
   label?: string;
   caption?: string;
+  captionId?: string;
   error?: string | string[];
+  errorId?: string;
   required?: boolean;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
-};
+}
 
-function TimeField({
+function InputField({
   label,
   caption,
+  captionId,
   error,
+  errorId,
   required,
   disabled,
   orientation,
   className,
   ...inputProps
-}: TimeFieldProps) {
-  const generatedId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const inputId = inputProps.id ?? `time-${generatedId}`;
-
+}: InputFieldProps) {
   return (
     <FormField
       label={label}
-      htmlFor={inputId}
       caption={caption}
+      captionId={captionId}
       error={error}
+      errorId={errorId}
+      htmlFor={inputProps.id}
       required={required}
       disabled={disabled}
       orientation={orientation}
     >
       <Input
-        type="time"
-        className={cn(
-          "w-full min-w-0 max-w-full box-border [&::-webkit-calendar-picker-indicator]:hidden",
-          className,
-        )}
+        className={className}
         disabled={disabled}
         {...inputProps}
-        id={inputId}
-        leftIcon={Clock3}
         aria-required={required ? true : inputProps["aria-required"]}
       />
     </FormField>
   );
 }
 
-export { TimeField };
+export { InputField };

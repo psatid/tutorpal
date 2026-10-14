@@ -8,7 +8,7 @@ import {
   StudentDrawer,
   type DrawerMode,
 } from "@/components/students/student-drawer";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/common/skeleton";
 
 interface StudentDetailScreenProps {
   studentId: string;

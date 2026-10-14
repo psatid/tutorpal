@@ -1,5 +1,5 @@
 import { AuthShell } from "@/components/auth/auth-shell";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/common/button";
 import { APP_ROUTES } from "@/constants/routes";
 import { Link, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";

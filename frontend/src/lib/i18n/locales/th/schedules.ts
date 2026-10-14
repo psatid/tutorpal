@@ -176,6 +176,7 @@ const th = {
 		},
 		time: {
 			label: "เวลา",
+			placeholder: "เลือกเวลา",
 		},
 		duration: {
 			label: "ระยะเวลา",

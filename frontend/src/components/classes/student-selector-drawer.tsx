@@ -1,10 +1,10 @@
 import { Check, Search, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
+import { Skeleton } from "@/components/common/skeleton";
 import { useStudents } from "@/hooks/queries/use-students";
 import { cn } from "@/lib/utils";
 

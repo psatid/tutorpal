@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
+import { RHFInputField, RHFSelectField } from "@/components/common/form/rhf";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { createStudentSchema, type StudentFormData } from "@/types/student";
 

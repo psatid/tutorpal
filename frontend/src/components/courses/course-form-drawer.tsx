@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { CourseForm } from "@/components/courses/course-form";
-import { Button } from "@/components/ui/button";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { Button } from "@/components/common/button";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import type { Course } from "@/models/course";
 
 interface CourseFormDrawerProps {

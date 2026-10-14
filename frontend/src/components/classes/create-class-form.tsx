@@ -5,15 +5,15 @@ import { useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { StudentSelectorDrawer } from "@/components/classes/student-selector-drawer";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/common/avatar";
+import { Button } from "@/components/common/button";
 import {
 	Field,
 	FieldDescription,
 	FieldGroup,
 	FieldLabel,
-} from "@/components/ui/field";
-import { RHFInputField } from "@/components/ui/form/rhf";
+} from "@/components/common/field";
+import { RHFInputField } from "@/components/common/form/rhf";
 import { useCreateClass } from "@/hooks/mutations/use-create-class";
 import { useUpdateClass } from "@/hooks/mutations/use-update-class";
 import { useStudents } from "@/hooks/queries/use-students";

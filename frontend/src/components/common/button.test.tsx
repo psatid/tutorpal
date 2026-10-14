@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { ArrowRight, Plus } from "lucide-react";
 import { describe, expect, it } from "vitest";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 
 describe("Button", () => {
   it("replaces loading content with three dots while preserving its accessible label and width placeholder", () => {

@@ -4,8 +4,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { useTranslation } from "react-i18next";
 import { CourseFormDrawer } from "@/components/courses/course-form-drawer";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/common/button";
+import { Skeleton } from "@/components/common/skeleton";
 import { APP_ROUTES } from "@/constants/routes";
 import { useCourseDetails } from "@/hooks/queries/use-course-details";
 

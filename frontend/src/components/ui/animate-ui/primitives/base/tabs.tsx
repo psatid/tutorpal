@@ -14,19 +14,19 @@ import {
   HighlightItem,
   type HighlightProps,
   type HighlightItemProps,
-} from '@/components/animate-ui/primitives/effects/highlight';
+} from '@/components/ui/animate-ui/primitives/effects/highlight';
 import { getStrictContext } from '@/lib/get-strict-context';
 import { useControlledState } from '@/hooks/use-controlled-state';
 import {
   AutoHeight,
   type AutoHeightProps,
-} from '@/components/animate-ui/primitives/effects/auto-height';
+} from '@/components/ui/animate-ui/primitives/effects/auto-height';
 import {
   CONTENT_REVEAL_ANIMATE,
   CONTENT_REVEAL_EXIT,
   CONTENT_REVEAL_INITIAL,
   CONTENT_REVEAL_TRANSITION,
-} from '@/components/animate-ui/reveal';
+} from '@/components/ui/animate-ui/reveal';
 
 type TabsContextType = {
   value: string | undefined;

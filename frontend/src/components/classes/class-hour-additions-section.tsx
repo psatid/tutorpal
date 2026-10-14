@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Clock3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/common/button";
+import { Skeleton } from "@/components/common/skeleton";
 import { useInfiniteClassHourAdditions } from "@/hooks/queries/use-infinite-class-hour-additions";
 
 export function ClassHourAdditionsSection({ classId }: { classId: string }) {

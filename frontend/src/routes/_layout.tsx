@@ -15,7 +15,7 @@ import {
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { ContentReveal } from "@/components/animate-ui/components/base/content-reveal";
+import { ContentReveal } from "@/components/ui/animate-ui/components/base/content-reveal";
 
 export const Route = createFileRoute("/_layout")({
   component: LayoutRoute,

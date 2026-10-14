@@ -22,9 +22,9 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+} from "@/components/common/alert-dialog";
+import { Button } from "@/components/common/button";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import {
 	WorkspaceHeader,
 	WorkspaceList,

@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 import {
 	FieldLegend,
 	FieldSet,
-} from "@/components/ui/field";
-import { RHFInputField } from "@/components/ui/form/rhf";
+} from "@/components/common/field";
+import { RHFInputField } from "@/components/common/form/rhf";
 import {
 	useCreateCourse,
 	useUpdateCourse,

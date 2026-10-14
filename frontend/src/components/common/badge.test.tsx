@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Badge, badgeVariants } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/common/badge";
 
 const variants = [
 	["primary", "border-primary/25", "bg-primary-container", "text-primary-pressed"],

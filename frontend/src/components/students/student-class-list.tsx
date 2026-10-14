@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { BookOpen, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
 import type { StudentEnrollmentClass } from "@/models/student";
 
 interface StudentClassListProps {

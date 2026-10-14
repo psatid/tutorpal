@@ -7,9 +7,9 @@ import {
   X,
 } from "lucide-react";
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import {
   Select,
   SelectContent,
@@ -17,7 +17,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/common/select";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 

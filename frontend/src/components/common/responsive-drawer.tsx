@@ -13,9 +13,9 @@ import {
   DrawerPortal,
   DrawerTitle,
   DrawerViewport,
-} from "@/components/ui/drawer";
-import { DrawerOverlayPortalContext } from "@/components/ui/drawer-overlay-portal-context";
-import { overlayLayers } from "@/components/ui/overlay-layers";
+} from "@/components/common/drawer";
+import { DrawerOverlayPortalContext } from "@/components/common/drawer-overlay-portal-context";
+import { overlayLayers } from "@/components/common/overlay-layers";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 

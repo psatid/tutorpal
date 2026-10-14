@@ -9,15 +9,15 @@ import {
   Monitor,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import {
   formatDuration,
   formatTime24Hour,

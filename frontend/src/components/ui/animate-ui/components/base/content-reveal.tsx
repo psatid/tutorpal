@@ -10,7 +10,7 @@ import {
   CONTENT_REVEAL_EXIT,
   CONTENT_REVEAL_INITIAL,
   CONTENT_REVEAL_TRANSITION,
-} from '@/components/animate-ui/reveal';
+} from '@/components/ui/animate-ui/reveal';
 
 type ContentRevealProps = Omit<
   HTMLMotionProps<'div'>,

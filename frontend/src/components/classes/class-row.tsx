@@ -7,8 +7,8 @@ import {
 	AvatarFallback,
 	AvatarGroup,
 	AvatarGroupCount,
-} from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+} from "@/components/common/avatar";
+import { Button } from "@/components/common/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -16,7 +16,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 import { cn } from "@/lib/utils";
 import { Class } from "@/models/class";

@@ -25,8 +25,8 @@ import {
   type DrawerMode as ScheduleDrawerMode,
 } from "@/components/schedules/schedule-drawer";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/common/button";
+import { Skeleton } from "@/components/common/skeleton";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import { DateTime } from "@/lib/date-time";
 

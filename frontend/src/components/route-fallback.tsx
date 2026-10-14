@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/common/button";
 import { APP_ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 

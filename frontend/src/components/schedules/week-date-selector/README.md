@@ -17,8 +17,8 @@ src/components/schedules/week-date-selector/
 ```
 
 The header composes the vendored Animate UI Base Tabs wrapper at
-`src/components/animate-ui/components/base/tabs.tsx`. Its primitives remain
-local under `src/components/animate-ui/` so the selector uses the project's
+`src/components/ui/animate-ui/components/base/tabs.tsx`. Its primitives remain
+local under `src/components/ui/animate-ui/` so the selector uses the project's
 existing Base UI and Framer Motion dependencies.
 
 ## Component API

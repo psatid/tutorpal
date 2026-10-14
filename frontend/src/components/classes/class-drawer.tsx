@@ -4,11 +4,11 @@ import {
   ClassForm,
   type ClassFormMode,
 } from "@/components/classes/create-class-form";
-import { Button } from "@/components/ui/button";
-import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-drawer";
+import { Button } from "@/components/common/button";
+import { ResponsiveDrawer, type DrawerMode } from "@/components/common/responsive-drawer";
 import type { Class } from "@/models/class";
 
-export type { DrawerMode } from "@/components/ui/responsive-drawer";
+export type { DrawerMode } from "@/components/common/responsive-drawer";
 
 interface ClassDrawerProps {
   classData: Class | null;

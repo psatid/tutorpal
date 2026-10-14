@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import { apiClient } from "@/lib/api-client";
 import { validateLineAuthorizationUrl } from "@/lib/line-authorization-url";
 

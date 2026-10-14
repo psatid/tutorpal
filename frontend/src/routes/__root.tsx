@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/common/sonner";
 import { RouteNotFound } from "@/components/route-fallback";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/common/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 
 // Create a client

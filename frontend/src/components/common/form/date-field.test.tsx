@@ -12,7 +12,7 @@ const calendarProps = vi.hoisted(() => ({
   fullWidth: undefined as boolean | undefined,
 }));
 
-vi.mock("@/components/ui/responsive-drawer", () => ({
+vi.mock("@/components/common/responsive-drawer", () => ({
   ResponsiveDrawer: ({
     children,
     open,
@@ -28,7 +28,7 @@ vi.mock("@/components/ui/responsive-drawer", () => ({
   },
 }));
 
-vi.mock("@/components/ui/calendar", () => ({
+vi.mock("@/components/common/calendar", () => ({
   Calendar: ({ fixedWeeks, fullWidth }: {
     fixedWeeks?: boolean;
     fullWidth?: boolean;

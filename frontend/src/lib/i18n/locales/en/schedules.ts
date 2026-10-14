@@ -172,6 +172,7 @@ export default {
 		},
 		time: {
 			label: "Time",
+			placeholder: "Select time",
 		},
 		duration: {
 			label: "Duration",

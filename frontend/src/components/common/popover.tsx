@@ -4,7 +4,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
   DrawerOverlayPortalContext,
   resolveDrawerOverlayPortalContainer,
-} from "@/components/ui/drawer-overlay-portal-context";
+} from "@/components/common/drawer-overlay-portal-context";
 import { cn } from "@/lib/utils";
 
 const Popover = PopoverPrimitive.Root;

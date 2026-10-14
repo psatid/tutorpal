@@ -27,7 +27,7 @@ vi.mock("@tanstack/react-router", () => ({
 	useNavigate: () => vi.fn(),
 }));
 
-vi.mock("@/components/ui/responsive-drawer", () => ({
+vi.mock("@/components/common/responsive-drawer", () => ({
 	ResponsiveDrawer: ({ children, footer, title }: {
 		children: React.ReactNode;
 		footer?: React.ReactNode;
@@ -239,7 +239,7 @@ describe("ScheduleDrawer", () => {
 		);
 	});
 
-	it("uses 09:00 when create opens without a timeline cell time", () => {
+	it("leaves Time empty with its localized placeholder when create opens without a timeline cell time", () => {
 		render(
 			<ScheduleDrawer
 				isOpen
@@ -251,10 +251,13 @@ describe("ScheduleDrawer", () => {
 			/>,
 		);
 
-		expect(screen.getByDisplayValue("09:00")).toHaveAttribute(
-			"type",
-			"time",
-		);
+		const time = screen.getByLabelText(/^Time/);
+
+		expect(time).toHaveAttribute("type", "time");
+		expect(time).toHaveValue("");
+		expect(
+			screen.getByText(i18n.t("schedules:drawer.time.placeholder")),
+		).toBeVisible();
 	});
 
 	it("associates the one-time Time label with its native input", () => {
@@ -286,13 +289,17 @@ describe("ScheduleDrawer", () => {
 			/>,
 		);
 
-		const time = screen.getByDisplayValue("09:00");
+		const time = screen.getByLabelText(/^Time/);
 		const duration = screen.getByRole("combobox", { name: /^Duration/ });
 		const timeField = time.closest<HTMLElement>('[data-slot="field"]');
 		const durationField = duration.closest<HTMLElement>('[data-slot="field"]');
 		const row = timeField?.parentElement;
 
 		expect(time).toHaveAttribute("type", "time");
+		expect(time).toHaveValue("");
+		expect(
+			screen.getByText(i18n.t("schedules:drawer.time.placeholder")),
+		).toBeVisible();
 		expect(timeField).toHaveClass("w-full");
 		expect(durationField).toHaveClass("w-full");
 		expect(row).toBe(durationField?.parentElement);

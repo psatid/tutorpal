@@ -9,7 +9,7 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/common/alert-dialog";
 
 interface CourseDeleteDialogProps {
 	course: Course | null;

@@ -18,15 +18,15 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/common/alert-dialog";
+import { Button } from "@/components/common/button";
 import {
 	GroupedWeekdayEditor,
 	type GroupedWeekdayScheduleItem,
 } from "@/components/schedules/grouped-weekday-editor";
-import { RHFDateField, RHFSelectField, RHFTimeField } from "@/components/ui/form/rhf";
+import { RHFDateField, RHFSelectField, RHFTimeField } from "@/components/common/form/rhf";
 import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import { useCreateSchedule, useUpdateRecurringSchedule } from "@/hooks/mutations/use-schedules";
 import { DateTime } from "@/lib/date-time";
 import { formatDuration, SCHEDULE_DURATION_OPTIONS } from "@/lib/schedule-utils";

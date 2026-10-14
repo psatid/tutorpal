@@ -10,21 +10,21 @@ import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { FormField } from "@/components/ui/form/form-field";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
+import { Checkbox } from "@/components/common/checkbox";
+import { Field, FieldGroup, FieldLabel } from "@/components/common/field";
+import { FormField } from "@/components/common/form/form-field";
+import { Input } from "@/components/common/input";
 import {
   RHFDateField,
   RHFSelectField,
   RHFTimeField,
-} from "@/components/ui/form/rhf";
+} from "@/components/common/form/rhf";
 import {
   type DrawerMode,
   ResponsiveDrawer,
-} from "@/components/ui/responsive-drawer";
+} from "@/components/common/responsive-drawer";
 import {
   useCompleteSchedule,
   useCreateSchedule,
@@ -49,7 +49,7 @@ import {
   timeStringToMinutes,
 } from "@/types/schedule";
 
-export type { DrawerMode } from "@/components/ui/responsive-drawer";
+export type { DrawerMode } from "@/components/common/responsive-drawer";
 
 const SCHEDULE_DRAWER_FORM_ID = "schedule-drawer-form";
 function getScheduleDefaultValues(
@@ -61,7 +61,7 @@ function getScheduleDefaultValues(
     date,
     type: undefined,
     time:
-      initialTime === undefined ? "09:00" : minutesToTimeString(initialTime),
+      initialTime === undefined ? "" : minutesToTimeString(initialTime),
     durationMinutes: undefined,
     notes: "",
     recurring: undefined,
@@ -632,6 +632,9 @@ export function ScheduleDrawer({
                 label={t("schedules:drawer.time.label")}
                 required={mode !== "view"}
                 disabled={isDisabled}
+                inputProps={{
+                  placeholder: t("schedules:drawer.time.placeholder"),
+                }}
               />
               <RHFSelectField
                 control={control}

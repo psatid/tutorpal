@@ -1,6 +1,6 @@
 import { Search, ArrowUpDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/common/input";
 import { cn } from "@/lib/utils";
 import type { StudentSortBy, StudentSortOrder } from "@/types/student-query";
 

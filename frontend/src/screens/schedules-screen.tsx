@@ -25,11 +25,13 @@ import {
 import { WeeklyScheduleTimeline } from "@/components/schedules/weekly-schedule-timeline";
 import {
   Tabs,
+  TabsList,
   TabsPanel,
   TabsPanels,
-} from "@/components/animate-ui/components/base/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+  TabsTab,
+} from "@/components/ui/animate-ui/components/base/tabs";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
 import { DateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,14 @@ import { cn } from "@/lib/utils";
 function isScheduleViewMode(value: string): value is ScheduleViewMode {
   return value === "day" || value === "week";
 }
+
+const SCHEDULE_STATUS_FILTERS = [
+  "ALL",
+  "SCHEDULED",
+  "COMPLETED",
+  "NO_SHOW",
+  "CANCELLED",
+] as const;
 
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
@@ -225,6 +235,7 @@ export function SchedulesScreen() {
   const hasActiveFilters = (mode: ScheduleViewMode) =>
     mode === "day" && (Boolean(searchQuery.trim()) || statusFilter !== "ALL");
   const isWeeklyTimelineVisible = viewMode === "week" && !isLoading && !isError;
+  const hasStatusTabs = !isLoading && !isError && Boolean(schedules?.length);
 
   const renderScheduleContent = (mode: ScheduleViewMode) => {
     const isWeekMode = mode === "week";
@@ -337,6 +348,12 @@ export function SchedulesScreen() {
     );
   };
 
+  const renderDayScheduleResults = () => (
+    <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
+      {renderScheduleContent("day")}
+    </div>
+  );
+
   return (
     <div
       className={
@@ -390,46 +407,49 @@ export function SchedulesScreen() {
                     </div>
                   </div>
 
-                  {schedules && schedules.length > 0 ? (
-                    <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
-                      <div className="flex gap-2 overflow-x-auto">
-                        {(
-                          [
-                            "ALL",
-                            "SCHEDULED",
-                            "COMPLETED",
-                            "NO_SHOW",
-                            "CANCELLED",
-                          ] as const
-                        ).map((status) => (
-                          <button
-                            aria-pressed={statusFilter === status}
-                            className="group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-1 text-sm font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            key={status}
-                            onClick={() => setStatusFilter(status)}
-                            type="button"
-                          >
-                            <span
-                              className={cn(
-                                "rounded-full px-3 py-1.5 leading-5 transition-colors",
-                                statusFilter === status
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-foreground group-hover:bg-accent",
-                              )}
-                            >
+                  {hasStatusTabs ? (
+                    <Tabs
+                      className="flex min-h-0 flex-1 flex-col gap-0"
+                      onValueChange={setStatusFilter}
+                      value={statusFilter}
+                    >
+                      <div className="mb-2 shrink-0 overflow-x-auto px-3 sm:px-4 lg:px-6">
+                        <TabsList
+                          activateOnFocus={false}
+                          aria-label={t("schedules:drawer.status.label")}
+                          variant="subtle"
+                        >
+                          {SCHEDULE_STATUS_FILTERS.map((status) => (
+                            <TabsTab key={status} value={status}>
                               {status === "ALL"
                                 ? t("schedules:filter.all")
                                 : t(`schedules:status.${status}`)}
-                            </span>
-                          </button>
-                        ))}
+                            </TabsTab>
+                          ))}
+                        </TabsList>
                       </div>
-                    </div>
-                  ) : null}
 
-                  <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
-                    {renderScheduleContent("day")}
-                  </div>
+                      <TabsPanels
+                        className="flex min-h-0 flex-1 flex-col"
+                        mode="layout"
+                      >
+                        {SCHEDULE_STATUS_FILTERS.map((status) => (
+                          <TabsPanel
+                            className="flex min-h-0 flex-1 flex-col"
+                            keepMounted
+                            key={status}
+                            value={status}
+                          >
+                            {status === statusFilter
+                              ? renderDayScheduleResults()
+                              : null}
+                          </TabsPanel>
+                        ))}
+                      </TabsPanels>
+                    </Tabs>
+                  ) : (
+                    renderDayScheduleResults()
+                  )}
                 </TabsPanel>
 
                 <TabsPanel

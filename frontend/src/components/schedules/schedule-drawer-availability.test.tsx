@@ -16,7 +16,7 @@ vi.mock("@tanstack/react-router", () => ({
 	useNavigate: () => vi.fn(),
 }));
 
-vi.mock("@/components/ui/responsive-drawer", () => ({
+vi.mock("@/components/common/responsive-drawer", () => ({
 	ResponsiveDrawer: ({
 		children,
 		footer,

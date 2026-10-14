@@ -8,7 +8,7 @@ const mutations = vi.hoisted(() => ({
   updateRecurring: vi.fn(),
 }));
 
-vi.mock("@/components/ui/responsive-drawer", () => ({
+vi.mock("@/components/common/responsive-drawer", () => ({
   ResponsiveDrawer: ({ children, footer, title }: {
     children: React.ReactNode;
     footer?: React.ReactNode;

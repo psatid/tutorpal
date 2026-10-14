@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Copy, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/common/dialog";
 
 interface LineLinkModalProps {
   isOpen: boolean;

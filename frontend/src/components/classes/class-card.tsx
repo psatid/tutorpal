@@ -3,16 +3,16 @@ import {
 	AvatarFallback,
 	AvatarGroup,
 	AvatarGroupCount,
-} from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { InfoCard } from "@/components/ui/info-card";
+} from "@/components/common/avatar";
+import { Badge } from "@/components/common/badge";
+import { InfoCard } from "@/components/common/info-card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import { Clock, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Class } from "@/models/class";

@@ -6,7 +6,7 @@ import {
   GroupedWeekdayEditor,
   type GroupedWeekdayScheduleItem,
 } from "@/components/schedules/grouped-weekday-editor";
-import { RHFSelectField, RHFTimeField } from "@/components/ui/form/rhf";
+import { RHFSelectField, RHFTimeField } from "@/components/common/form/rhf";
 import {
   formatDuration,
   SCHEDULE_DURATION_OPTIONS,

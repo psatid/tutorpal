@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Search, Users, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
+import { Checkbox } from "@/components/common/checkbox";
 import { useStudents } from "@/hooks/queries/use-students";
 
 interface StudentSelectorAccordionProps {

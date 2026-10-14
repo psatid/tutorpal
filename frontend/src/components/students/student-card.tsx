@@ -1,15 +1,15 @@
 import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { InfoCard } from "@/components/ui/info-card";
+import { Avatar, AvatarFallback } from "@/components/common/avatar";
+import { Badge } from "@/components/common/badge";
+import { InfoCard } from "@/components/common/info-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import { Student } from "@/models/student";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 

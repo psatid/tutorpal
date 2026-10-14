@@ -2,7 +2,7 @@ import { Edit3, MoreVertical, Trash2 } from "lucide-react";
 import type { Ref } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import { APP_ROUTES } from "@/constants/routes";
 import { Course } from "@/models/course";
 

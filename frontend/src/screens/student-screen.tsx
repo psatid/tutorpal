@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StudentForm } from "@/components/students/student-form";
 import { StudentList } from "@/components/students/student-list";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
   WorkspaceHeader,
   WorkspaceList,
@@ -16,7 +16,7 @@ import {
   WorkspaceSearchControls,
   type WorkspaceControlChoice,
 } from "@/components/workspaces/workspace-search-controls";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import { useInfiniteStudents } from "@/hooks/queries/use-infinite-students";
 import { useWorkspaceSearchControls } from "@/hooks/use-workspace-search-controls";
 import { Student } from "@/models/student";

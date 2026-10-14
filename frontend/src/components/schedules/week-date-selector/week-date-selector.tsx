@@ -9,15 +9,15 @@ import { MotionConfig, useReducedMotion, type Transition } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { CalendarDays, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
   Tabs,
   TabsList,
   TabsPanel,
   TabsPanels,
   TabsTab,
-} from "@/components/animate-ui/components/base/tabs";
-import { DateField } from "@/components/ui/form/date-field";
+} from "@/components/ui/animate-ui/components/base/tabs";
+import { DateField } from "@/components/common/form/date-field";
 import { DateTime } from "@/lib/date-time";
 import { WeekView } from "./week-view";
 import { WeekdayView } from "./weekday-view";

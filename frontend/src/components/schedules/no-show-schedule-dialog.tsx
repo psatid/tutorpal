@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
   Dialog,
   DialogDescription,
@@ -16,8 +16,8 @@ import {
   DialogOverlay,
   DialogPortal,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { overlayLayers } from "@/components/ui/overlay-layers";
+} from "@/components/common/dialog";
+import { overlayLayers } from "@/components/common/overlay-layers";
 import { useNoShowSchedule } from "@/hooks/mutations/use-schedules";
 import { DateTime } from "@/lib/date-time";
 import { formatDuration, formatTime24Hour } from "@/lib/schedule-utils";

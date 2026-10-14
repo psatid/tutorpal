@@ -15,7 +15,7 @@ animation, while later tab changes keep the shared transition. Mobile Add
 buttons render through a body portal so the page blur does not change their
 fixed viewport positioning; they use the same reveal transition. Reuse
 `ContentReveal` from
-`frontend/src/components/animate-ui/components/base/content-reveal.tsx` for
+`frontend/src/components/ui/animate-ui/components/base/content-reveal.tsx` for
 other components that need the same entrance and exit behavior; wrap keyed
 children with `AnimatePresence` when an exit animation is needed.
 

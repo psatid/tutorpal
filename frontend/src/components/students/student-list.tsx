@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { LineLinkModal } from "@/components/students/line-link-modal";
 import { StudentRow } from "@/components/students/student-row";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
   WorkspaceEmptyState,
   WorkspaceErrorState,

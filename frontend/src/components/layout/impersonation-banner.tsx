@@ -1,6 +1,6 @@
 import { TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/common/button";
 import type { StopImpersonationErrorCategory } from "@/hooks/mutations/use-stop-impersonation";
 import { getAdminImpersonationRecoveryUrl } from "@/lib/impersonation-recovery";
 import { cn } from "@/lib/utils";

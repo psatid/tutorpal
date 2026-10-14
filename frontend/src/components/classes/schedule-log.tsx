@@ -11,16 +11,16 @@ import {
   Trash2,
 } from "lucide-react";
 import { DateTime } from "@/lib/date-time";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
+import { Skeleton } from "@/components/common/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import {
   formatTime24Hour,
   statusColors,

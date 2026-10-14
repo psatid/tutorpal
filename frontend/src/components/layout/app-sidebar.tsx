@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/common/avatar";
+import { Button } from "@/components/common/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import { APP_ROUTES } from "@/constants/routes";
 import { useSession } from "@/hooks/use-session";
 import { getAppLanguage, setAppLanguage } from "@/lib/i18n/config";

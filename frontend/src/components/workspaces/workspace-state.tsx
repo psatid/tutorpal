@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/common/button";
+import { Skeleton } from "@/components/common/skeleton";
 
 export function WorkspaceListSkeleton({ rows = 4 }: { rows?: number }) {
 	const { t } = useTranslation("common");

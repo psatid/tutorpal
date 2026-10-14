@@ -1,8 +1,8 @@
 import { CalendarRange, MapPin, Monitor, Pencil, Repeat2 } from "lucide-react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
 import { DateTime } from "@/lib/date-time";
 import { formatDuration } from "@/lib/schedule-utils";
 import {

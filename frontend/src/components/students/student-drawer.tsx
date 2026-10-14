@@ -2,15 +2,15 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
-import { RHFInputField, RHFSelectField } from "@/components/ui/form/rhf";
-import { ResponsiveDrawer, type DrawerMode } from "@/components/ui/responsive-drawer";
-import { Button } from "@/components/ui/button";
+import { RHFInputField, RHFSelectField } from "@/components/common/form/rhf";
+import { ResponsiveDrawer, type DrawerMode } from "@/components/common/responsive-drawer";
+import { Button } from "@/components/common/button";
 import { useCreateStudent } from "@/hooks/mutations/use-create-student";
 import { useUpdateStudent } from "@/hooks/mutations/use-update-student";
 import { Student } from "@/models/student";
 import { createStudentSchema, type StudentFormData } from "@/types/student";
 
-export type { DrawerMode } from "@/components/ui/responsive-drawer";
+export type { DrawerMode } from "@/components/common/responsive-drawer";
 
 interface StudentDrawerProps {
   isOpen: boolean;

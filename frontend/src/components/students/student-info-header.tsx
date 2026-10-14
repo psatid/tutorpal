@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/common/avatar";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
 import { ArrowLeft, Pencil, Phone, CheckCircle2, TriangleAlert } from "lucide-react";
 import { Student } from "@/models/student";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";

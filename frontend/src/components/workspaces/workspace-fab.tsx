@@ -1,8 +1,8 @@
 import type { Ref } from "react";
 import { createPortal } from "react-dom";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ContentReveal } from "@/components/animate-ui/components/base/content-reveal";
+import { Button } from "@/components/common/button";
+import { ContentReveal } from "@/components/ui/animate-ui/components/base/content-reveal";
 import { cn } from "@/lib/utils";
 
 interface WorkspaceFabProps {

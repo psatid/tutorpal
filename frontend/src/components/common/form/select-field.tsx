@@ -1,7 +1,7 @@
 import {
   SelectInput,
   type SelectInputProps,
-} from "@/components/ui/select";
+} from "@/components/common/select";
 import { useId } from "react";
 import { FormField } from "./form-field";
 

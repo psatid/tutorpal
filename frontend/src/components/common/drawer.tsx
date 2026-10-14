@@ -2,7 +2,7 @@ import * as React from "react";
 import { Drawer } from "@base-ui/react/drawer";
 
 import { cn } from "@/lib/utils";
-import { overlayLayers } from "@/components/ui/overlay-layers";
+import { overlayLayers } from "@/components/common/overlay-layers";
 
 type DrawerLayer = "base" | "nested";
 

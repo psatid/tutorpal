@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/common/avatar";
+import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/common/dropdown-menu";
 import { Student } from "@/models/student";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 import {

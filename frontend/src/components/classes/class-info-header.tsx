@@ -1,8 +1,8 @@
 import { AlertTriangle, ArrowLeft, Clock3, Pencil, UsersRound } from "lucide-react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/common/avatar";
+import { Button } from "@/components/common/button";
 import { cn } from "@/lib/utils";
 import { Class } from "@/models/class";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";

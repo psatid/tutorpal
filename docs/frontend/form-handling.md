@@ -1,7 +1,7 @@
 # Frontend Form Handling
 
 TutorPal forms use Zod for validation and normalization, React Hook Form for
-state, and the adapters in `frontend/src/components/ui/form/` for consistent
+state, and the adapters in `frontend/src/components/common/form/` for consistent
 labels, descriptions, errors, disabled states, and controls.
 
 Use `frontend/src/components/schedules/schedule-drawer.tsx` as the reference
@@ -69,7 +69,7 @@ the validated, normalized object received by the submit handler.
 
 ## 2. Use the shared React Hook Form adapters
 
-Prefer the adapters exported from `frontend/src/components/ui/form/rhf.tsx`:
+Prefer the adapters exported from `frontend/src/components/common/form/rhf.tsx`:
 
 - `RHFInputField`
 - `RHFPasswordField`
@@ -116,10 +116,16 @@ week selector.
 
 `RHFTimeField` keeps the browser's native `type="time"` control and picker, with
 the shared decorative clock icon on the left and enough input padding to keep
-the value clear of the icon. The control fills its available width without an
-iOS intrinsic-width override. Hide a competing native clock indicator when it
-would create a duplicate icon; tapping the time input still opens the platform
-picker.
+the value clear of the icon. The control fills its available width, including
+on iOS Safari, where WebKit can otherwise constrain a padded native time input
+to its intrinsic 44px width despite its full-width field. `TimeField` applies
+`appearance-none` while retaining `type="time"` so WebKit uses the field's
+available width. Hide a competing native clock indicator when it would create
+a duplicate icon. A caller can pass a localized `placeholder` through
+`RHFTimeField`'s `inputProps`; `TimeField` renders it as an aria-hidden,
+noninteractive overlay after the clock only while the value is empty and the
+field is unfocused. It does not forward that value as a native time-input
+placeholder.
 
 In the one-time Schedule drawer, Time and Duration share an equal-width row at
 all viewport sizes. Keep each label, required state, and validation error with

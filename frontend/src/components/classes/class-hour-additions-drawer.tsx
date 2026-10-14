@@ -4,7 +4,7 @@ import { type ComponentProps, useEffect, useId, useMemo, useRef, useState } from
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
 	Field,
 	FieldDescription,
@@ -13,8 +13,8 @@ import {
 	FieldLabel,
 	FieldLegend,
 	FieldSet,
-} from "@/components/ui/field";
-import { RHFInputField } from "@/components/ui/form/rhf";
+} from "@/components/common/field";
+import { RHFInputField } from "@/components/common/form/rhf";
 import {
 	Select,
 	SelectContent,
@@ -22,8 +22,8 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+} from "@/components/common/select";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import {
 	ClassHourAdditionError,
 	useAddClassHours,

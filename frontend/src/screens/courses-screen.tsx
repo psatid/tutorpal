@@ -9,7 +9,7 @@ import {
 	CourseToolbar,
 	type CourseSort,
 } from "@/components/courses/course-toolbar";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/common/button";
 import {
 	WorkspaceHeader,
 	WorkspaceList,

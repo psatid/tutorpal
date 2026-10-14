@@ -1,8 +1,8 @@
 import { BookOpen, Check, Clock, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
-import { ResponsiveDrawer } from "@/components/ui/responsive-drawer";
+import { Input } from "@/components/common/input";
+import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import { useInfiniteClasses } from "@/hooks/queries/use-infinite-classes";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { cn } from "@/lib/utils";

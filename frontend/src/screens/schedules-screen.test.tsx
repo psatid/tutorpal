@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { RefObject } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -133,7 +133,9 @@ function getSharedHeaderControls() {
   return controls;
 }
 
-function makeSchedule(): GetV1Schedules200Item {
+function makeSchedule(
+  overrides: Partial<GetV1Schedules200Item> = {},
+): GetV1Schedules200Item {
   return {
     classId: "class-1",
     className: "Mathematics",
@@ -147,6 +149,7 @@ function makeSchedule(): GetV1Schedules200Item {
     time: 9 * 60,
     type: "ONLINE",
     updatedAt: "2026-10-01T00:00:00.000Z",
+    ...overrides,
   };
 }
 
@@ -253,7 +256,9 @@ describe("SchedulesScreen weekly timeline integration", () => {
       ).not.toBeInTheDocument();
     });
 
-    const desktopWeekAdd = getAddButtonWithClass("sm:inline-flex");
+    const desktopWeekAdd = await waitFor(() =>
+      getAddButtonWithClass("sm:inline-flex"),
+    );
 
     expect(sharedControls).toContainElement(desktopWeekAdd);
     expect(
@@ -291,7 +296,7 @@ describe("SchedulesScreen weekly timeline integration", () => {
       screen.getByRole("group", { name: "Schedule date selector" }),
     );
     expect(modeContent).toContainElement(
-      screen.getByRole("button", { name: "All" }),
+      screen.getByRole("tab", { name: "All" }),
     );
     expect(modeContent).toContainElement(screen.getByText("Mathematics"));
     const sharedControls = getSharedHeaderControls();
@@ -317,6 +322,78 @@ describe("SchedulesScreen weekly timeline integration", () => {
     expect(getSharedHeaderControls()).toContainElement(
       getAddButtonWithClass("sm:inline-flex"),
     );
+  });
+
+  it("filters Day schedules through manual-activation status tabs and preserves the selection across Week", async () => {
+    const user = userEvent.setup();
+    queryState.schedules = [
+      makeSchedule({ className: "Scheduled algebra", id: "schedule-scheduled" }),
+      makeSchedule({
+        className: "Completed geometry",
+        id: "schedule-completed",
+        status: "COMPLETED",
+      }),
+    ];
+    render(<SchedulesScreen />);
+
+    const statusTabs = screen.getByRole("tablist", { name: "Status" });
+    const allTab = within(statusTabs).getByRole("tab", { name: "All" });
+    const scheduledTab = within(statusTabs).getByRole("tab", {
+      name: "Scheduled",
+    });
+    const completedTab = within(statusTabs).getByRole("tab", {
+      name: "Completed",
+    });
+
+    for (const tab of within(statusTabs).getAllByRole("tab")) {
+      const panelId = tab.getAttribute("aria-controls");
+
+      expect(panelId).not.toBeNull();
+
+      const panel = document.getElementById(panelId!);
+      expect(panel).toHaveAttribute("role", "tabpanel");
+      expect(panel).toHaveAttribute("aria-labelledby", tab.id);
+    }
+
+    expect(allTab).toHaveAttribute("aria-selected", "true");
+    scheduledTab.focus();
+    await user.keyboard("{ArrowRight}");
+
+    expect(completedTab).toHaveFocus();
+    expect(allTab).toHaveAttribute("aria-selected", "true");
+
+    await user.keyboard(" ");
+
+    await waitFor(() => {
+      expect(completedTab).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByText("Completed geometry")).toBeInTheDocument();
+      expect(screen.queryByText("Scheduled algebra")).not.toBeInTheDocument();
+    });
+
+    const cancelledTab = within(statusTabs).getByRole("tab", {
+      name: "Cancelled",
+    });
+    await user.click(cancelledTab);
+
+    const cancelledPanel = screen.getByRole("tabpanel", { name: "Cancelled" });
+    expect(cancelledPanel).toHaveTextContent("No schedules found");
+
+    await user.click(screen.getByRole("tab", { name: "Week" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("tablist", { name: "Status" }),
+      ).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("tab", { name: "Day" }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole("tab", { name: "Cancelled" }),
+      ).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tabpanel", { name: "Cancelled" })).toHaveTextContent(
+        "No schedules found",
+      );
+    });
   });
 
   it("switches mode without retaining exiting content for reduced-motion users", async () => {

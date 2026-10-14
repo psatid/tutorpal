@@ -11,10 +11,10 @@ import {
 import { toast } from "sonner";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
+import { Label } from "@/components/common/label";
+import { Skeleton } from "@/components/common/skeleton";
 import { lineQueryKeys } from "@/constants/query-keys/line-query-keys";
 import { useLineConnection } from "@/hooks/queries/use-line-connection";
 import { DateTime } from "@/lib/date-time";
