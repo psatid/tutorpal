@@ -1,4 +1,7 @@
-import { Check } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Tick02Icon as CheckHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import {
@@ -130,7 +133,7 @@ export function GroupedWeekdayEditor({
                       : "flex size-4 shrink-0 items-center justify-center rounded-[6px] border border-input"
                   }
                 >
-                  {isSelected ? <Check className="size-3.5" /> : null}
+                  {isSelected ? <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-3.5" /> : null}
                 </span>
                 <span className="text-sm font-medium">{weekdayLabel}</span>
               </button>

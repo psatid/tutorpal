@@ -1,6 +1,9 @@
 import { type CSSProperties, type ReactNode, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon as XHugeIcon,
+} from "@hugeicons/core-free-icons";
 import {
   Drawer,
   DrawerBackdrop,
@@ -227,7 +230,7 @@ export function ResponsiveDrawer({
                     aria-label={t("accessibility.closeNamed", { title })}
                     className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   >
-                    <X className="size-5" />
+                    <HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
                   </DrawerClose>
                 </div>
                 {headerContent ? (

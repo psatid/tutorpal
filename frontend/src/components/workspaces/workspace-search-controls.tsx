@@ -1,11 +1,12 @@
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
-  ArrowUpDown,
-  Check,
-  ChevronDown,
-  Search,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+  ArrowUpDownIcon as ArrowUpDownHugeIcon,
+  Tick02Icon as CheckHugeIcon,
+  ArrowDown01Icon as ChevronDownHugeIcon,
+  Search01Icon as SearchHugeIcon,
+  SlidersHorizontalIcon as SlidersHorizontalHugeIcon,
+  Cancel01Icon as XHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useRef, useState } from "react";
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
@@ -33,7 +34,7 @@ type WorkspaceControlSelectProps<T extends string> = {
   onValueChange: (value: T) => void;
   disabled?: boolean;
   isActive?: boolean;
-  icon: typeof ArrowUpDown;
+  icon: IconSvgElement;
 };
 
 type WorkspaceSearchControlsProps<
@@ -76,7 +77,12 @@ function WorkspaceControlSelect<T extends string>({
   const [isOpen, setIsOpen] = useState(false);
   const valueContent = (
     <>
-      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      <HugeiconsIcon
+        aria-hidden="true"
+        className="size-4 shrink-0"
+        icon={Icon}
+        strokeWidth={2}
+      />
       <span className="shrink-0 font-medium">{label}:</span>
       <span className="min-w-0 truncate">{choice.label}</span>
     </>
@@ -105,7 +111,7 @@ function WorkspaceControlSelect<T extends string>({
           size="sm"
         >
           {valueContent}
-          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+          <HugeiconsIcon icon={ChevronDownHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4 shrink-0" />
         </Button>
         <ResponsiveDrawer
           onCloseAutoFocus={() => triggerRef.current?.focus()}
@@ -133,7 +139,7 @@ function WorkspaceControlSelect<T extends string>({
                 >
                   <span className="min-w-0 text-left">{option.label}</span>
                   {isSelected ? (
-                    <Check aria-hidden="true" className="size-4 shrink-0" />
+                    <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4 shrink-0" />
                   ) : null}
                 </Button>
               );
@@ -207,7 +213,7 @@ export function WorkspaceSearchControls<
       <div className="w-full">
         <Input
           aria-label={searchLabel}
-          leftIcon={Search}
+          leftIcon={SearchHugeIcon}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder={searchPlaceholder}
           ref={searchInputRef}
@@ -220,7 +226,7 @@ export function WorkspaceSearchControls<
                 type="button"
                 variant="ghost"
               >
-                <X aria-hidden="true" className="size-4" />
+                <HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
               </Button>
             ) : null
           }
@@ -232,7 +238,7 @@ export function WorkspaceSearchControls<
           {filter ? (
             <WorkspaceControlSelect
               choices={filter.choices}
-              icon={SlidersHorizontal}
+              icon={SlidersHorizontalHugeIcon}
               label={filter.label}
               onValueChange={filter.onValueChange}
               isActive={filter.isActive}
@@ -242,7 +248,7 @@ export function WorkspaceSearchControls<
           ) : null}
           <WorkspaceControlSelect
             choices={sortChoices}
-            icon={ArrowUpDown}
+            icon={ArrowUpDownHugeIcon}
             label={sortLabel}
             onValueChange={onSortChange}
             choice={sort}

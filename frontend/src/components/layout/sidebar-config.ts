@@ -1,59 +1,63 @@
 import { APP_ROUTES } from "@/constants/routes";
 import {
-  BookOpenIcon,
-  CalendarCheck2Icon,
-  HomeIcon,
-  MessageCircleIcon,
-  SchoolIcon,
-  SettingsIcon,
-  UsersIcon,
-} from "lucide-react";
-import { ReactNode } from "react";
+  BookOpen01Icon as BookOpenIconHugeIcon,
+  Calendar03Icon as Calendar03IconIconHugeIcon,
+  Home01Icon as HomeIconHugeIcon,
+  Message01Icon as MessageCircleIconHugeIcon,
+  BoardMathIcon as BoardMathIconHugeIcon,
+  Settings01Icon as SettingsIconHugeIcon,
+  UserGroupIcon as UsersIconHugeIcon,
+} from "@hugeicons/core-free-icons";
+import type { IconSvgElement } from "@hugeicons/react";
 
 export type SingleNavigationItem = {
   labelKey: string;
   href: string;
-  icon: (props: React.SVGProps<SVGSVGElement>) => ReactNode;
+  icon: IconSvgElement;
 };
 
 export type GroupedNavigationItem = {
   labelKey: string;
-  icon: (props: React.SVGProps<SVGSVGElement>) => ReactNode;
+  icon: IconSvgElement;
   items: SingleNavigationItem[];
 };
 
 export type NavigationItem = SingleNavigationItem | GroupedNavigationItem;
 
 export const SIDE_BAR_CONFIG: readonly NavigationItem[] = [
-  { labelKey: "navigation:home", href: APP_ROUTES.HOME, icon: HomeIcon },
+  {
+    labelKey: "navigation:home",
+    href: APP_ROUTES.HOME,
+    icon: HomeIconHugeIcon,
+  },
   {
     labelKey: "navigation:classes",
     href: APP_ROUTES.CLASSES,
-    icon: SchoolIcon,
+    icon: BoardMathIconHugeIcon,
   },
   {
     labelKey: "navigation:schedules",
     href: APP_ROUTES.SCHEDULES,
-    icon: CalendarCheck2Icon,
+    icon: Calendar03IconIconHugeIcon,
   },
   {
     labelKey: "navigation:courses",
     href: APP_ROUTES.COURSES,
-    icon: BookOpenIcon,
+    icon: BookOpenIconHugeIcon,
   },
   {
     labelKey: "navigation:students",
     href: APP_ROUTES.STUDENTS,
-    icon: UsersIcon,
+    icon: UsersIconHugeIcon,
   },
   {
     labelKey: "navigation:settings",
-    icon: SettingsIcon,
+    icon: SettingsIconHugeIcon,
     items: [
       {
         labelKey: "navigation:lineConnection",
         href: APP_ROUTES.LINE_SETTINGS,
-        icon: MessageCircleIcon,
+        icon: MessageCircleIconHugeIcon,
       },
     ],
   },

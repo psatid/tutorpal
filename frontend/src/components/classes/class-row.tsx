@@ -1,4 +1,12 @@
-import { ChevronRight, Clock3, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight01Icon as ChevronRightHugeIcon,
+  Clock03Icon as Clock3HugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  Add01Icon as PlusHugeIcon,
+  Delete02Icon as Trash2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useCallback, useId, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -154,7 +162,7 @@ export function ClassRow({
 				</Button>
 				<Button
 					className="hidden shrink-0 sm:inline-flex"
-					leftIcon={Clock3}
+					leftIcon={Clock3HugeIcon}
 					onClick={() => onAddHours(addHoursButtonRef.current)}
 					ref={addHoursButtonRef}
 					size="sm"
@@ -177,32 +185,32 @@ export function ClassRow({
 							/>
 						}
 					>
-						<MoreVertical aria-hidden="true" />
+						<HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" />
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuGroup className="sm:hidden">
 							<DropdownMenuItem
 								onClick={() => onAddHours(actionButtonRef.current)}
 							>
-								<Plus />
+								<HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" />
 								{t("classes:hourAdditions.addAction")}
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator className="sm:hidden" />
 						<DropdownMenuGroup>
 							<DropdownMenuItem onClick={onOpen}>
-								<ChevronRight />
+								<HugeiconsIcon icon={ChevronRightHugeIcon} strokeWidth={2} aria-hidden="true" />
 								{t("classes:view")}
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={onEdit}>
-								<Pencil />
+								<HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" />
 								{t("classes:editClass")}
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
 							<DropdownMenuItem onClick={onDelete} variant="destructive">
-								<Trash2 />
+								<HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" />
 								{t("classes:delete.deleteClass")}
 							</DropdownMenuItem>
 						</DropdownMenuGroup>

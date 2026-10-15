@@ -1,4 +1,8 @@
-import { Monitor, MapPin } from "lucide-react";
+import {
+  ComputerIcon as MonitorHugeIcon,
+  MapPinIcon as MapPinHugeIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { ScheduleType } from "@/types/schedule";
@@ -6,10 +10,10 @@ import { cn } from "@/lib/utils";
 
 const SCHEDULE_TYPE_OPTIONS: Array<{
   value: ScheduleType;
-  icon: typeof MapPin;
+  icon: IconSvgElement;
 }> = [
-  { value: "ON_SITE", icon: MapPin },
-  { value: "ONLINE", icon: Monitor },
+  { value: "ON_SITE", icon: MapPinHugeIcon },
+  { value: "ONLINE", icon: MonitorHugeIcon },
 ];
 
 interface ScheduleTypeFieldProps {
@@ -45,13 +49,18 @@ export function ScheduleTypeField({
     const selectedOption = SCHEDULE_TYPE_OPTIONS.find(
       (option) => option.value === value,
     );
-    const Icon = selectedOption?.icon ?? MapPin;
+    const Icon = selectedOption?.icon ?? MapPinHugeIcon;
 
     return (
       <div className="space-y-2" aria-label={labelText} role="group">
         <p className="text-sm font-medium text-on-surface">{labelText}</p>
         <div className="flex min-h-11 items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 text-sm text-on-surface">
-          <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-primary"
+            icon={Icon}
+            strokeWidth={2}
+          />
           <span>
             {value
               ? t(`schedules:type.${value}`)
@@ -102,7 +111,12 @@ export function ScheduleTypeField({
                 type="radio"
                 value={optionValue}
               />
-              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0"
+                icon={Icon}
+                strokeWidth={2}
+              />
               <span>{t(`schedules:type.${optionValue}`)}</span>
             </label>
           );

@@ -13,7 +13,10 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect } from "react";
 import { ContentReveal } from "@/components/common/animate-ui/components/base/content-reveal";
 
@@ -51,7 +54,7 @@ function LayoutRoute() {
   if (isLoading) {
     return (
       <div className="min-h-dvh bg-surface flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }

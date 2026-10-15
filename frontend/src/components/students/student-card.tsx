@@ -1,4 +1,14 @@
-import { Trash2, Phone, Eye, MoreVertical, Link2, CheckCircle2, MessageSquare, TriangleAlert } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete02Icon as Trash2HugeIcon,
+  CallIcon as PhoneHugeIcon,
+  ViewIcon as EyeHugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  Link02Icon as Link2HugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  Message01Icon as MessageSquareHugeIcon,
+  Alert01Icon as TriangleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/common/avatar";
 import { Badge } from "@/components/common/badge";
@@ -43,20 +53,20 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
           </Badge>
           {isLineLinked && (
             <Badge variant="success" className="shrink-0 gap-1">
-              <CheckCircle2 className="w-3 h-3" />
+              <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
               LINE
             </Badge>
           )}
           {needsLineRelink && (
             <Badge variant="warning" className="shrink-0 gap-1">
-              <TriangleAlert className="w-3 h-3" />
+              <HugeiconsIcon icon={TriangleAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
               {t("students:line.needsRelink")}
             </Badge>
           )}
         </div>
         {data.phoneNumber && (
           <span className="flex items-center gap-1 text-sm text-on-surface-variant mt-0.5">
-            <Phone className="w-3 h-3" />
+            <HugeiconsIcon icon={PhoneHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
             {data.phoneNumber}
           </span>
         )}
@@ -64,28 +74,28 @@ export function StudentCard({ student, onView, onDelete, onLinkLine, onSendTestM
 
       <DropdownMenu>
         <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
-          <MoreVertical className="w-4 h-4 text-on-surface-variant" />
+          <HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4 text-on-surface-variant" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onView}>
-            <Eye className="w-4 h-4" />
+            <HugeiconsIcon icon={EyeHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
             {t("students:view")}
           </DropdownMenuItem>
           {!isLineLinked && (
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onLinkLine(); }}>
-              <Link2 className="w-4 h-4" />
+              <HugeiconsIcon icon={Link2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
               {t(needsLineRelink ? "students:line.relinkLabel" : "students:line.linkLabel")}
             </DropdownMenuItem>
           )}
           {isLineLinked && (
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendTestMessage(); }}>
-              <MessageSquare className="w-4 h-4" />
+              <HugeiconsIcon icon={MessageSquareHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
               {t("students:line.testMessage")}
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
-            <Trash2 className="w-4 h-4" />
+            <HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
             {t("students:delete.confirmButton")}
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -1,4 +1,11 @@
-import { CalendarRange, MapPin, Monitor, Pencil, Repeat2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Calendar03Icon as CalendarRangeHugeIcon,
+  MapPinIcon as MapPinHugeIcon,
+  ComputerIcon as MonitorHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  RepeatIcon as Repeat2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/common/badge";
@@ -98,7 +105,7 @@ export function RecurringScheduleSection({
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex min-w-0 items-start gap-3 sm:flex-1">
 						<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
-							<Repeat2 className="h-4 w-4 text-on-surface" />
+							<HugeiconsIcon icon={Repeat2HugeIcon} strokeWidth={2} aria-hidden="true" className="h-4 w-4 text-on-surface" />
 						</div>
 						<div className="min-w-0 flex-1 space-y-1">
 							<h2 id="recurring-schedule-title" className="text-base font-semibold text-on-surface">
@@ -135,7 +142,7 @@ export function RecurringScheduleSection({
 		>
 			<div className="flex min-w-0 items-start gap-3">
 				<div className="mt-0.5 rounded-full bg-surface-container-low p-2">
-					<Repeat2 aria-hidden="true" className="h-4 w-4 text-on-surface" />
+					<HugeiconsIcon icon={Repeat2HugeIcon} strokeWidth={2} aria-hidden="true" className="h-4 w-4 text-on-surface" />
 				</div>
 					<div className="min-w-0 flex-1 space-y-3">
 					<div className="min-w-0 space-y-2">
@@ -150,7 +157,7 @@ export function RecurringScheduleSection({
 								className="inline-flex max-w-full gap-1 self-start whitespace-normal text-left"
 								variant="info"
 							>
-								<CalendarRange className="mt-0.5 h-3 w-3 shrink-0" />
+								<HugeiconsIcon icon={CalendarRangeHugeIcon} strokeWidth={2} aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
 								<span>
 									{t("schedules:recurring.startsOn", {
 										date: DateTime.formatDate(recurringSchedule.startDate, {
@@ -163,9 +170,9 @@ export function RecurringScheduleSection({
 							</Badge>
 							<Badge className="inline-flex gap-1" variant="info">
 								{recurringSchedule.type === "ONLINE" ? (
-									<Monitor aria-hidden="true" className="h-3 w-3 shrink-0" />
+									<HugeiconsIcon icon={MonitorHugeIcon} strokeWidth={2} aria-hidden="true" className="h-3 w-3 shrink-0" />
 								) : (
-									<MapPin aria-hidden="true" className="h-3 w-3 shrink-0" />
+									<HugeiconsIcon icon={MapPinHugeIcon} strokeWidth={2} aria-hidden="true" className="h-3 w-3 shrink-0" />
 								)}
 								<span>{t(`schedules:type.${recurringSchedule.type}`)}</span>
 							</Badge>
@@ -196,7 +203,7 @@ export function RecurringScheduleSection({
 					type="button"
 					variant="ghost"
 				>
-					<Pencil aria-hidden="true" className="size-4" />
+					<HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
 				</Button>
 			</div>
 		</section>

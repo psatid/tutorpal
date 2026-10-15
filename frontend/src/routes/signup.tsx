@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Navigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { SignupScreen } from "@/screens/signup-screen";
 import { usePublicConfig } from "@/lib/public-config";
 
@@ -14,7 +17,7 @@ function SignupRoute() {
 	if (isPending) {
 		return (
 			<div className="flex min-h-dvh items-center justify-center bg-background">
-				<Loader2 className="size-8 animate-spin text-primary" />
+				<HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="size-8 animate-spin text-primary" />
 			</div>
 		);
 	}

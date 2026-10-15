@@ -1,6 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate } from "@tanstack/react-router";
-import { Lock, Mail } from "lucide-react";
+import {
+  LockPasswordIcon as LockHugeIcon,
+  Mail01Icon as MailHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -65,7 +68,7 @@ export function AdminLoginScreen() {
 						inputProps={{
 							type: "email",
 							placeholder: adminT("login.emailPlaceholder"),
-							leftIcon: Mail,
+							leftIcon: MailHugeIcon,
 						}}
 					/>
 					<RHFPasswordField
@@ -74,7 +77,7 @@ export function AdminLoginScreen() {
 						label={commonT("form.password")}
 						inputProps={{
 							placeholder: adminT("login.passwordPlaceholder"),
-							leftIcon: Lock,
+							leftIcon: LockHugeIcon,
 						}}
 					/>
 					<Button

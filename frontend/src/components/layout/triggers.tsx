@@ -1,8 +1,9 @@
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  PanelLeftClose,
-  PanelRightClose,
-  SquareChevronRightIcon,
-} from "lucide-react";
+  SidebarLeft01Icon,
+  SidebarRight01Icon,
+  SquareArrowRight01Icon as SquareChevronRightIconHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { triggerEdgeCollapse, triggerEdgeDrawer } from "tailwindcss-jun-layout";
 
@@ -15,7 +16,12 @@ export const TriggerMobileSidebar = () => {
       className="jun-edgeDrawerTrigger"
       onClick={() => triggerEdgeDrawer()}
     >
-      <SquareChevronRightIcon className="h-5 w-5" />
+      <HugeiconsIcon
+        icon={SquareChevronRightIconHugeIcon}
+        strokeWidth={2}
+        aria-hidden="true"
+        className="h-5 w-5"
+      />
     </button>
   );
 };
@@ -44,8 +50,18 @@ export const TriggerLeftSidebarCollapse = () => {
       onClick={(event) => triggerEdgeCollapse({ event })}
       title={t("accessibility.toggleSidebar")}
     >
-      <PanelLeftClose className="jun-edgeUncollapsed-visible" />
-      <PanelRightClose className="jun-edgeCollapsed-visible" />
+      <HugeiconsIcon
+        icon={SidebarLeft01Icon}
+        strokeWidth={2}
+        aria-hidden="true"
+        className="jun-edgeUncollapsed-visible"
+      />
+      <HugeiconsIcon
+        icon={SidebarRight01Icon}
+        strokeWidth={2}
+        aria-hidden="true"
+        className="jun-edgeCollapsed-visible"
+      />
     </button>
   );
 };

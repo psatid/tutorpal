@@ -29,6 +29,9 @@ help:
 dev:
 	$(BUN) run dev
 
+dev-host:
+	$(BUN) run dev -- --host
+
 generate-api:
 	$(BUN) run generate:api
 

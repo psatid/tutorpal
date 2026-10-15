@@ -2,7 +2,10 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
-import { Loader2, LucideIcon } from "lucide-react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+} from "@hugeicons/core-free-icons";
 
 const buttonVariants = cva(
   `group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent
@@ -48,8 +51,8 @@ const buttonVariants = cva(
 type ButtonProps = ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     loading?: boolean;
-    leftIcon?: LucideIcon;
-    rightIcon?: LucideIcon;
+    leftIcon?: IconSvgElement;
+    rightIcon?: IconSvgElement;
   };
 
 function Button({
@@ -70,10 +73,10 @@ function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Loader2 className={cn("animate-spin")} />}
-      {LeftIcon && <LeftIcon className="size-4" />}
+      {loading && <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className={cn("animate-spin")} />}
+      {LeftIcon && <HugeiconsIcon className="size-4" icon={LeftIcon} strokeWidth={2} aria-hidden="true" />}
       {children}
-      {RightIcon && <RightIcon className="size-4" />}
+      {RightIcon && <HugeiconsIcon className="size-4" icon={RightIcon} strokeWidth={2} aria-hidden="true" />}
     </ButtonPrimitive>
   );
 }

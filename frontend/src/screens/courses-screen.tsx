@@ -1,4 +1,8 @@
-import { BookOpen, Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BookOpen01Icon as BookOpenHugeIcon,
+  Add01Icon as PlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -196,7 +200,7 @@ export function CoursesScreen() {
 							onClick={() => openCreate(emptyActionRef.current)}
 							ref={emptyActionRef}
 						>
-							<Plus data-icon="inline-start" />
+							<HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
 							{t("courses:createCourse")}
 						</Button>
 					) : undefined
@@ -206,7 +210,7 @@ export function CoursesScreen() {
 						? t("courses:noMatchesDescription")
 						: t("courses:noCoursesDescription")
 				}
-				icon={<BookOpen />}
+				icon={<HugeiconsIcon icon={BookOpenHugeIcon} strokeWidth={2} aria-hidden="true" />}
 				title={search ? t("courses:noMatches") : t("courses:noCourses")}
 			/>
 		);
@@ -236,7 +240,7 @@ export function CoursesScreen() {
 						size="icon"
 						type="button"
 					>
-						<Plus data-icon="inline-start" />
+						<HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
 						<span className="hidden sm:inline">{t("courses:newCourse")}</span>
 					</Button>
 				}

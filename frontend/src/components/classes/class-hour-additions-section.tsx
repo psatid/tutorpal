@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Clock3 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Clock03Icon as Clock3HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/common/button";
 import { Skeleton } from "@/components/common/skeleton";
 import { useInfiniteClassHourAdditions } from "@/hooks/queries/use-infinite-class-hour-additions";
@@ -21,7 +24,7 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 		>
 			<div className="flex items-center gap-3">
 				<div className="rounded-full bg-surface-container-low p-2">
-					<Clock3 aria-hidden="true" className="size-4 text-on-surface" />
+					<HugeiconsIcon icon={Clock3HugeIcon} strokeWidth={2} aria-hidden="true" className="size-4 text-on-surface" />
 				</div>
 				<h2
 					className="text-base font-medium tracking-[-0.01em] text-foreground"

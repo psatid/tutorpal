@@ -1,4 +1,10 @@
-import { AlertCircle, Calendar, Check, X } from "lucide-react";
+import {
+  AlertCircleIcon as AlertCircleHugeIcon,
+  Calendar03Icon as CalendarHugeIcon,
+  Tick02Icon as CheckHugeIcon,
+  Cancel01Icon as XHugeIcon,
+} from "@hugeicons/core-free-icons";
+import type { IconSvgElement } from "@hugeicons/react";
 import type { TFunction } from "i18next";
 
 export const SCHEDULE_DURATION_OPTIONS: readonly number[] = [
@@ -23,25 +29,25 @@ type ScheduleStatus = "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
 
 type ScheduleStatusPresentation = {
   badgeVariant: "info" | "success" | "warning" | "destructive";
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: IconSvgElement;
 };
 
 export const statusColors: Record<ScheduleStatus, ScheduleStatusPresentation> =
   {
     SCHEDULED: {
       badgeVariant: "info",
-      icon: Calendar,
+      icon: CalendarHugeIcon,
     },
     COMPLETED: {
       badgeVariant: "success",
-      icon: Check,
+      icon: CheckHugeIcon,
     },
     NO_SHOW: {
       badgeVariant: "warning",
-      icon: AlertCircle,
+      icon: AlertCircleHugeIcon,
     },
     CANCELLED: {
       badgeVariant: "destructive",
-      icon: X,
+      icon: XHugeIcon,
     },
   };

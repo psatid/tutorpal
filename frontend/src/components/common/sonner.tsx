@@ -3,8 +3,10 @@ import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ExclamationMarkIcon,
+  InformationCircleIcon,
   MultiplicationSignIcon,
   Loading03Icon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import "./sonner.css";
 
@@ -20,14 +22,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       offset={16}
       icons={{
         success: (
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none">
-            <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <HugeiconsIcon aria-hidden="true" icon={Tick02Icon} strokeWidth={2} className="size-4" />
         ),
         info: (
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none">
-            <path d="M12 11v5m0-8h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-          </svg>
+          <HugeiconsIcon aria-hidden="true" icon={InformationCircleIcon} strokeWidth={2} className="size-4" />
         ),
         warning: (
           <HugeiconsIcon

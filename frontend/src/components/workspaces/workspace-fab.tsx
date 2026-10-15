@@ -1,6 +1,9 @@
 import type { Ref } from "react";
 import { createPortal } from "react-dom";
-import { Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon as PlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/common/button";
 import { ContentReveal } from "@/components/common/animate-ui/components/base/content-reveal";
 import { cn } from "@/lib/utils";
@@ -33,7 +36,7 @@ export function WorkspaceFab({
         ref={triggerRef}
         type="button"
       >
-        <Plus aria-hidden="true" className="size-5" />
+        <HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
         <span className="sr-only">{label}</span>
       </Button>
     </ContentReveal>,

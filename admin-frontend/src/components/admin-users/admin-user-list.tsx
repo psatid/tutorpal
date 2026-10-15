@@ -1,4 +1,9 @@
-import { Loader2, Search, UsersRound } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+  Search01Icon as SearchHugeIcon,
+  UserGroupIcon as UsersRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -71,7 +76,7 @@ export function AdminUserList({
 					</label>
 					<Input
 						id="admin-user-search"
-						leftIcon={Search}
+						leftIcon={SearchHugeIcon}
 						placeholder={t("users.search.placeholder")}
 						value={search}
 						onChange={(event) => onSearchChange(event.target.value)}
@@ -263,7 +268,7 @@ function UserRows({
 			))}
 			{isFetching ? (
 				<div className="flex items-center gap-2 border-t border-border px-4 py-2 text-xs text-muted-foreground sm:px-5" role="status">
-					<Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+					<HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="size-3.5 animate-spin" />
 					{t("users.refreshing")}
 				</div>
 			) : null}
@@ -356,7 +361,7 @@ function EmptyState({
 	return (
 		<div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-border bg-card px-5 py-8 text-center">
 			<div className="flex size-11 items-center justify-center rounded-full bg-primary-container text-primary">
-				<UsersRound aria-hidden="true" className="size-5" />
+				<HugeiconsIcon icon={UsersRoundHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
 			</div>
 			<p className="mt-4 text-sm font-medium text-foreground">
 				{filtered ? t("users.emptyFiltered.title") : t("users.emptyInitial.title")}

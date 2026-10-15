@@ -85,6 +85,9 @@ dev: db-setup
 frontend-dev:
 	+$(MAKE) -C frontend dev
 
+frontend-dev-host:
+	+$(MAKE) -C frontend dev-host
+
 admin-dev:
 	+$(MAKE) -C admin-frontend dev
 

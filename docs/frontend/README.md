@@ -61,6 +61,18 @@ ordinary links, without browser-language redirects or persisted preferences.
 See [image provenance](../marketing-assets/README.md) and the
 [exploration archive](../prototypes/README.md) for source material.
 
+## Icons
+
+Both authenticated frontends use Hugeicons for UI icons. Import named icon data
+from `@hugeicons/core-free-icons` and render it with `HugeiconsIcon` from
+`@hugeicons/react`. Component props that accept an icon use `IconSvgElement`.
+Treat UI icons as decorative and set `aria-hidden="true"`; expose an icon only
+when it deliberately conveys information without equivalent accessible text.
+
+Set `strokeWidth` explicitly: use `2` by default. The shared route fallback
+keeps its deliberate `1.75` stroke width. Preserve official Google and LINE
+provider marks as SVG brand assets.
+
 ## Language and typography
 
 The frontend bundles English and Thai UI resources. It uses a device-local

@@ -1,15 +1,16 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  AlertCircle,
-  CalendarDays,
-  CheckCircle2,
-  MapPin,
-  Monitor,
-  MoreVertical,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+  AlertCircleIcon as AlertCircleHugeIcon,
+  Calendar03Icon as CalendarDaysHugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  MapPinIcon as MapPinHugeIcon,
+  ComputerIcon as MonitorHugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  RotateLeft01Icon as RotateCcwHugeIcon,
+  Delete02Icon as Trash2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { DateTime } from "@/lib/date-time";
 import { Badge } from "@/components/common/badge";
 import { Button } from "@/components/common/button";
@@ -98,7 +99,7 @@ function EmptyScheduleLog({ onAddSchedule }: { onAddSchedule: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
       <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-surface-container-low">
-        <CalendarDays aria-hidden="true" className="size-5 text-on-surface-variant" />
+        <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5 text-on-surface-variant" />
       </div>
       <p className="text-base font-medium text-on-surface">
         {t("classDetail.noSchedules")}
@@ -141,7 +142,7 @@ function ScheduleRow({
   const endTime = formatTime24Hour(schedule.time + schedule.durationMinutes);
   const status = statusColors[schedule.status];
   const StatusIcon = status?.icon;
-  const ScheduleTypeIcon = schedule.type === "ONLINE" ? Monitor : MapPin;
+  const ScheduleTypeIcon = schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
 
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 py-2 transition-colors hover:bg-surface focus-within:bg-surface sm:flex">
@@ -159,7 +160,12 @@ function ScheduleRow({
           {startTime} – {endTime}
         </span>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
-          <ScheduleTypeIcon aria-hidden="true" className="size-3.5" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-3.5"
+            icon={ScheduleTypeIcon}
+            strokeWidth={2}
+          />
           <span>{t(`type.${schedule.type}`)}</span>
           {schedule.notes ? (
             <span className="max-w-48 truncate before:mr-1 before:content-['·']">
@@ -174,7 +180,9 @@ function ScheduleRow({
           className="shrink-0 gap-1 whitespace-nowrap"
           variant={status?.badgeVariant ?? "info"}
         >
-          {StatusIcon ? <StatusIcon className="size-3" /> : null}
+          {StatusIcon ? (
+            <HugeiconsIcon className="size-3" icon={StatusIcon} strokeWidth={2} aria-hidden="true" />
+          ) : null}
           {t(`status.${schedule.status}`)}
         </Badge>
         {onCompleteSchedule ||
@@ -190,7 +198,7 @@ function ScheduleRow({
                 event.preventDefault();
               }}
             >
-              <MoreVertical aria-hidden="true" className="size-4" />
+              <HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {schedule.status === "SCHEDULED" && onCompleteSchedule ? (
@@ -201,7 +209,7 @@ function ScheduleRow({
                     onCompleteSchedule(schedule);
                   }}
                 >
-                  <CheckCircle2 className="size-4" />
+                  <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
                   {t("complete.action")}
                 </DropdownMenuItem>
               ) : null}
@@ -213,7 +221,7 @@ function ScheduleRow({
                     onNoShowSchedule(schedule);
                   }}
                 >
-                  <AlertCircle className="size-4" />
+                  <HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
                   {t("noShow.action")}
                 </DropdownMenuItem>
               ) : null}
@@ -226,7 +234,7 @@ function ScheduleRow({
                     onRestoreSchedule(schedule);
                   }}
                 >
-                  <RotateCcw className="size-4" />
+                  <HugeiconsIcon icon={RotateCcwHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
                   {t("restore.action")}
                 </DropdownMenuItem>
               ) : null}
@@ -247,7 +255,7 @@ function ScheduleRow({
                     onDeleteSchedule(schedule);
                   }}
                 >
-                  <Trash2 className="size-4" />
+                  <HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
                   {t("delete.confirmButton")}
                 </DropdownMenuItem>
               ) : null}

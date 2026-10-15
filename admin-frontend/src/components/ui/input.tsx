@@ -2,10 +2,11 @@ import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+
 
 export type InputProps = React.ComponentProps<"input"> & {
-  leftIcon?: LucideIcon;
+  leftIcon?: IconSvgElement;
   rightAdornment?: React.ReactNode;
 };
 
@@ -37,7 +38,11 @@ function Input({
   return (
     <div className="relative w-full">
       {LeftIcon ? (
-        <LeftIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <HugeiconsIcon
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          icon={LeftIcon}
+          strokeWidth={2} aria-hidden="true"
+        />
       ) : null}
       {input}
       {rightAdornment ? (

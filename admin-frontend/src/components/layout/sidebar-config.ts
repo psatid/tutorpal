@@ -1,13 +1,16 @@
-import { UsersRound, type LucideIcon } from "lucide-react";
+import {
+  UserGroupIcon as UsersRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
+import type { IconSvgElement } from "@hugeicons/react";
 
 export type NavigationItem = {
 	labelKey: string;
 	href: string;
-	icon: LucideIcon;
+	icon: IconSvgElement;
 };
 
 export const SIDE_BAR_CONFIG = [
-	{ labelKey: "navigation:userManagement", href: "/", icon: UsersRound },
+	{ labelKey: "navigation:userManagement", href: "/", icon: UsersRoundHugeIcon },
 ] as const satisfies readonly NavigationItem[];
 
 export function isNavigationItemActive(

@@ -1,4 +1,11 @@
-import { BookOpen, Check, Clock, Loader2, Search } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BookOpen01Icon as BookOpenHugeIcon,
+  Tick02Icon as CheckHugeIcon,
+  Clock01Icon as ClockHugeIcon,
+  Loading03Icon as Loader2HugeIcon,
+  Search01Icon as SearchHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/common/input";
@@ -64,7 +71,7 @@ export function ClassSelectorDrawer({
 		<ResponsiveDrawer
 			headerContent={
 				<Input
-					leftIcon={Search}
+					leftIcon={SearchHugeIcon}
 					onChange={(event) => setSearchQuery(event.target.value)}
 					placeholder={t("schedules:classSelector.searchPlaceholder")}
 					value={searchQuery}
@@ -86,7 +93,7 @@ export function ClassSelectorDrawer({
 					</div>
 				) : classes.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-12 text-center">
-						<BookOpen className="mb-3 h-12 w-12 text-surface-variant" />
+						<HugeiconsIcon icon={BookOpenHugeIcon} strokeWidth={2} aria-hidden="true" className="mb-3 h-12 w-12 text-surface-variant" />
 						<p className="text-on-surface-variant">
 							{searchQuery
 								? t("schedules:classSelector.noResults")
@@ -134,12 +141,12 @@ export function ClassSelectorDrawer({
 									</span>
 
 									<span className="flex shrink-0 items-center gap-1 text-xs text-on-surface-variant">
-										<Clock className="h-3 w-3" />
+										<HugeiconsIcon icon={ClockHugeIcon} strokeWidth={2} aria-hidden="true" className="h-3 w-3" />
 										<span>{balanceLabel}</span>
 									</span>
 									{isSelected ? (
 										<span className="flex shrink-0 items-center text-primary">
-											<Check aria-hidden="true" className="size-4" />
+											<HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
 											<span className="sr-only">
 												{t("schedules:classSelector.selected")}
 											</span>
@@ -152,7 +159,7 @@ export function ClassSelectorDrawer({
 						<div ref={loadMoreRef}>
 							{isFetchingNextPage ? (
 								<div className="flex items-center justify-center gap-2 py-4">
-									<Loader2 className="h-5 w-5 animate-spin text-on-surface-variant" />
+									<HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="h-5 w-5 animate-spin text-on-surface-variant" />
 								</div>
 							) : null}
 						</div>

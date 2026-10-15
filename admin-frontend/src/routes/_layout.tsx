@@ -5,7 +5,11 @@ import { authClient } from "@/lib/auth-client";
 import { ENV } from "@/lib/env";
 import { createFileRoute, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+  SecurityWarningIcon as ShieldAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -35,7 +39,7 @@ function AdminLayout() {
 	if (isLoading) {
 		return (
 			<div className="flex min-h-dvh items-center justify-center bg-surface">
-				<Loader2 className="size-8 animate-spin text-primary" />
+				<HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="size-8 animate-spin text-primary" />
 			</div>
 		);
 	}
@@ -47,7 +51,7 @@ function AdminLayout() {
 	if (isImpersonating) {
 		return (
 			<div className="flex min-h-dvh items-center justify-center bg-surface">
-				<Loader2 className="size-8 animate-spin text-primary" />
+				<HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="size-8 animate-spin text-primary" />
 			</div>
 		);
 	}
@@ -79,7 +83,7 @@ function AccessDenied() {
 		<main className="flex min-h-dvh items-center justify-center bg-background px-6 py-12">
 			<section className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-transient-card">
 				<div className="mx-auto flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-					<ShieldAlert aria-hidden="true" className="size-6" />
+					<HugeiconsIcon icon={ShieldAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="size-6" />
 				</div>
 				<h1 className="mt-6 text-2xl font-semibold tracking-tight">
 					{t("accessDenied.title")}

@@ -1,4 +1,8 @@
-import { ArrowLeft, Pencil } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon as ArrowLeftHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
@@ -123,7 +127,7 @@ export function CourseDetailScreen({ courseId }: CourseDetailScreenProps) {
 						onClick={handleBack}
 						type="button"
 					>
-						<ArrowLeft aria-hidden="true" className="size-5 text-on-surface" />
+						<HugeiconsIcon icon={ArrowLeftHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5 text-on-surface" />
 					</button>
 					<h1 className="min-w-0 flex-1 break-words text-xl font-medium leading-tight tracking-[-0.01em] text-on-surface sm:text-2xl">
 						{course.getName()}
@@ -135,7 +139,7 @@ export function CourseDetailScreen({ courseId }: CourseDetailScreenProps) {
 						type="button"
 						variant="ghost"
 					>
-						<Pencil aria-hidden="true" className="size-4" />
+						<HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
 					</Button>
 				</div>
 				<dl className="mt-5 grid overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-2">

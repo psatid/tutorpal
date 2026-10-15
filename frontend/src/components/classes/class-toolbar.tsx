@@ -1,4 +1,8 @@
-import { Search, ArrowUpDown } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Search01Icon as SearchHugeIcon,
+  ArrowUpDownIcon as ArrowUpDownHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/common/input";
 import { cn } from "@/lib/utils";
@@ -44,12 +48,12 @@ export function ClassToolbar({
         value={searchQuery}
         onChange={(e) => onSearchQueryChange(e.target.value)}
         placeholder={t("classes:searchPlaceholder")}
-        leftIcon={Search}
+        leftIcon={SearchHugeIcon}
       />
 
       {/* Sort Chips */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        <ArrowUpDown className="w-3.5 h-3.5 text-on-surface-variant shrink-0" />
+        <HugeiconsIcon icon={ArrowUpDownHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3.5 h-3.5 text-on-surface-variant shrink-0" />
         {sortOptions.map((option) => {
           const isActive = sortBy === option.sortBy && sortOrder === option.sortOrder;
           return (

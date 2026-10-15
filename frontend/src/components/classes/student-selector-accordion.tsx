@@ -1,5 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Search, Users, ChevronDown } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Search01Icon as SearchHugeIcon,
+  UserGroupIcon as UsersHugeIcon,
+  ArrowDown01Icon as ChevronDownHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
@@ -106,7 +111,7 @@ export function StudentSelectorAccordion({
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
-            <Users className="w-5 h-5 text-on-secondary-container" />
+            <HugeiconsIcon icon={UsersHugeIcon} strokeWidth={2} aria-hidden="true" className="w-5 h-5 text-on-secondary-container" />
           </div>
           <div className="text-left">
             <p className="font-medium text-on-surface">
@@ -118,7 +123,7 @@ export function StudentSelectorAccordion({
             </p>
           </div>
         </div>
-        <ChevronDown
+        <HugeiconsIcon icon={ChevronDownHugeIcon} strokeWidth={2} aria-hidden="true"
           className={`w-5 h-5 text-on-surface-variant transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
@@ -150,12 +155,12 @@ export function StudentSelectorAccordion({
             </button>
           </div>
 
-          {/* Search */}
+          {/* SearchHugeIcon */}
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("classes:selector.searchPlaceholder")}
-            leftIcon={Search}
+            leftIcon={SearchHugeIcon}
           />
 
           {/* Student List */}
@@ -167,7 +172,7 @@ export function StudentSelectorAccordion({
               </div>
             ) : filteredStudents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Users className="w-12 h-12 text-surface-variant mb-3" />
+                <HugeiconsIcon icon={UsersHugeIcon} strokeWidth={2} aria-hidden="true" className="w-12 h-12 text-surface-variant mb-3" />
                 <p className="text-on-surface-variant">
                   {searchQuery
                     ? t("classes:selector.noResults")

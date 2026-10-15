@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { UserPlus } from "lucide-react";
+import {
+  UserAdd01Icon as UserPlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -283,7 +285,7 @@ export function AdminHomeScreen() {
 					<Button
 						className="w-full sm:w-auto"
 						data-admin-create
-						leftIcon={UserPlus}
+						leftIcon={UserPlusHugeIcon}
 						onClick={openCreateDrawer}
 						type="button"
 					>

@@ -1,12 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import { ArrowRight, Plus } from "lucide-react";
+import {
+  ArrowRight01Icon as ArrowRightHugeIcon,
+  Add01Icon as PlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { describe, expect, it } from "vitest";
 import { Button } from "@/components/common/button";
 
 describe("Button", () => {
   it("replaces loading content with three dots while preserving its accessible label and width placeholder", () => {
     render(
-      <Button loading leftIcon={Plus} rightIcon={ArrowRight}>
+      <Button loading leftIcon={PlusHugeIcon} rightIcon={ArrowRightHugeIcon}>
         Save changes
       </Button>,
     );
@@ -28,7 +31,7 @@ describe("Button", () => {
 
   it("keeps its normal label and icons when it is not loading", () => {
     render(
-      <Button leftIcon={Plus} rightIcon={ArrowRight}>
+      <Button leftIcon={PlusHugeIcon} rightIcon={ArrowRightHugeIcon}>
         Save changes
       </Button>,
     );

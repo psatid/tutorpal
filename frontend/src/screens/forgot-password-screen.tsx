@@ -1,6 +1,8 @@
 import { Link, Navigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail } from "lucide-react";
+import {
+  Mail01Icon as MailHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -85,7 +87,7 @@ export function ForgotPasswordScreen() {
 						inputProps={{
 							type: "email",
 							placeholder: t("auth:forgotPassword.emailPlaceholder"),
-							leftIcon: Mail,
+							leftIcon: MailHugeIcon,
 						}}
 					/>
 					<button type="submit" className="hidden" aria-hidden />

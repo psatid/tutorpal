@@ -1,5 +1,8 @@
 import { Drawer } from "@base-ui/react/drawer";
-import { X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon as XHugeIcon,
+} from "@hugeicons/core-free-icons";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -59,7 +62,7 @@ export function AdminUserDrawer({
 								className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
 								disabled={isPending}
 							>
-								<X aria-hidden="true" className="size-5" />
+								<HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
 							</Drawer.Close>
 						</header>
 						<div className="flex-1 overflow-y-auto px-5 py-5 md:px-6">

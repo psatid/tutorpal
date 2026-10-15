@@ -1,5 +1,9 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { Check, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Tick02Icon as CheckHugeIcon,
+  Cancel01Icon as XHugeIcon,
+} from "@hugeicons/core-free-icons";
 import {
   type ComponentProps,
   type FormEvent,
@@ -145,7 +149,7 @@ export function NoShowScheduleDialog({
               />
             }
           >
-            <X aria-hidden="true" className="size-4" />
+            <HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
           </DialogPrimitive.Close>
 
           <div className="rounded-lg border border-border bg-muted px-3 py-3">
@@ -259,7 +263,7 @@ export function NoShowScheduleDialog({
               loading={noShowMutation.isPending}
               type="submit"
             >
-              <Check aria-hidden="true" className="size-4" />
+              <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
               {submitLabel}
             </Button>
           </form>

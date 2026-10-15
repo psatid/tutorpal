@@ -1,5 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserRound } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  UserIcon as UserRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
@@ -182,7 +185,7 @@ export function ClassForm({
 												{student ? (
 													student.getInitials()
 												) : (
-													<UserRound className="size-3" />
+													<HugeiconsIcon icon={UserRoundHugeIcon} strokeWidth={2} aria-hidden="true" className="size-3" />
 												)}
 											</AvatarFallback>
 										</Avatar>

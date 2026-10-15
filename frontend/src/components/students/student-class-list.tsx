@@ -1,6 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { BookOpen, Clock } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BookOpen01Icon as BookOpenHugeIcon,
+  Clock01Icon as ClockHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { Badge } from "@/components/common/badge";
 import { Button } from "@/components/common/button";
 import type { StudentEnrollmentClass } from "@/models/student";
@@ -15,7 +19,7 @@ function EmptyClassList({ onAddClass }: { onAddClass?: () => void }) {
 	return (
 		<div className="flex flex-col items-center justify-center py-12 text-center">
 			<div className="mb-4 flex size-20 items-center justify-center rounded-xl bg-primary/5">
-				<BookOpen className="w-10 h-10 text-primary/40" />
+				<HugeiconsIcon icon={BookOpenHugeIcon} strokeWidth={2} aria-hidden="true" className="w-10 h-10 text-primary/40" />
 			</div>
 			<h3 className="mb-1 font-headline text-lg font-medium tracking-[-0.01em] text-on-surface">
 				{t("students:studentDetail.noClasses")}
@@ -80,7 +84,7 @@ export function StudentClassList({
 									: "info"
 							}
 						>
-							<Clock className="w-3 h-3" />
+							<HugeiconsIcon icon={ClockHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
 							{hours.remainingHours !== undefined
 								? t("classes:hoursWithRemaining", {
 										total: hours.formattedTotalHours,

@@ -1,12 +1,13 @@
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-	Ban,
-	Ellipsis,
-	KeyRound,
-	Mail,
-	Monitor,
-	Pencil,
-	RotateCcw,
-} from "lucide-react";
+  UserBlock01Icon as BanHugeIcon,
+  MoreHorizontalIcon as EllipsisHugeIcon,
+  Key01Icon as KeyRoundHugeIcon,
+  Mail01Icon as MailHugeIcon,
+  ComputerIcon as MonitorHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  RotateLeft01Icon as RotateCcwHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import {
 	DropdownMenu,
@@ -53,20 +54,20 @@ export function AdminUserActionsMenu({
 					/>
 				}
 			>
-				<Ellipsis aria-hidden="true" />
+				<HugeiconsIcon icon={EllipsisHugeIcon} strokeWidth={2} aria-hidden="true" />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="min-w-48">
 				<DropdownMenuItem onClick={() => onEdit(user)}>
-					<Pencil aria-hidden="true" />
+					<HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" />
 					{t("users.actions.edit")}
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={() => onSetPassword(user)}>
-					<KeyRound aria-hidden="true" />
+					<HugeiconsIcon icon={KeyRoundHugeIcon} strokeWidth={2} aria-hidden="true" />
 					{t("users.actions.setPassword")}
 				</DropdownMenuItem>
 				{!user.emailVerified ? (
 					<DropdownMenuItem onClick={() => onResendVerification(user)}>
-						<Mail aria-hidden="true" />
+						<HugeiconsIcon icon={MailHugeIcon} strokeWidth={2} aria-hidden="true" />
 						{t("users.actions.resendVerification")}
 					</DropdownMenuItem>
 				) : null}
@@ -74,7 +75,7 @@ export function AdminUserActionsMenu({
 					<>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => onOpenTutorView(user)}>
-							<Monitor aria-hidden="true" />
+							<HugeiconsIcon icon={MonitorHugeIcon} strokeWidth={2} aria-hidden="true" />
 							{t("users.actions.openTutorView")}
 						</DropdownMenuItem>
 					</>
@@ -85,9 +86,9 @@ export function AdminUserActionsMenu({
 					variant={user.status === "active" ? "destructive" : "default"}
 				>
 					{user.status === "active" ? (
-						<Ban aria-hidden="true" />
+						<HugeiconsIcon icon={BanHugeIcon} strokeWidth={2} aria-hidden="true" />
 					) : (
-						<RotateCcw aria-hidden="true" />
+						<HugeiconsIcon icon={RotateCcwHugeIcon} strokeWidth={2} aria-hidden="true" />
 					)}
 					{user.status === "active"
 						? t("users.actions.deactivate")

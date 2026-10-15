@@ -1,12 +1,13 @@
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  CalendarCheck2,
-  CalendarDays,
-  Check,
-  Clock3,
-  MapPin,
-  Monitor,
-  X,
-} from "lucide-react";
+  CalendarCheckIn01Icon as CalendarCheck2HugeIcon,
+  Calendar03Icon as CalendarDaysHugeIcon,
+  Tick02Icon as CheckHugeIcon,
+  Clock03Icon as Clock3HugeIcon,
+  MapPinIcon as MapPinHugeIcon,
+  ComputerIcon as MonitorHugeIcon,
+  Cancel01Icon as XHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -265,7 +266,7 @@ export function DashboardScreen() {
             className: "w-full sm:w-auto",
           })}
         >
-          <CalendarDays className="size-4" aria-hidden="true" />
+          <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2} className="size-4" aria-hidden="true" />
           {t("dashboard:today.openSchedule")}
         </Link>
       </header>
@@ -575,7 +576,7 @@ function GettingStartedChecklist() {
           type="button"
           variant="ghost"
         >
-          <X aria-hidden="true" />
+          <HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" />
         </Button>
       </div>
 
@@ -775,7 +776,7 @@ function GettingStartedStep({
               : "border-border text-muted-foreground",
           )}
         >
-          {complete ? <Check className="size-3.5" /> : null}
+          {complete ? <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-3.5" /> : null}
         </span>
         <div>
           <p className={cn("font-medium", disabled && "text-muted-foreground")}>
@@ -870,7 +871,7 @@ function SessionToConfirmTriage({
         className="order-first h-fit rounded-lg border border-border bg-card p-4 sm:p-5 lg:order-2"
       >
         <div className="flex size-9 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-          <CalendarCheck2 className="size-4" aria-hidden="true" />
+          <HugeiconsIcon icon={CalendarCheck2HugeIcon} strokeWidth={2} className="size-4" aria-hidden="true" />
         </div>
         <h2
           id="session-to-confirm-title"
@@ -885,7 +886,7 @@ function SessionToConfirmTriage({
     );
   }
 
-  const ScheduleTypeIcon = schedule.type === "ONLINE" ? Monitor : MapPin;
+  const ScheduleTypeIcon = schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
   const startTime = formatTime24Hour(schedule.time);
   const endTime = formatTime24Hour(schedule.time + schedule.durationMinutes);
 
@@ -897,7 +898,7 @@ function SessionToConfirmTriage({
     >
       <div className="flex items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-container text-primary">
-          <CalendarCheck2 className="size-4" aria-hidden="true" />
+          <HugeiconsIcon icon={CalendarCheck2HugeIcon} strokeWidth={2} className="size-4" aria-hidden="true" />
         </div>
         <div className="min-w-0">
           <h2
@@ -921,7 +922,12 @@ function SessionToConfirmTriage({
         </p>
         <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <ScheduleTypeIcon className="size-4" aria-hidden="true" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-4"
+              icon={ScheduleTypeIcon}
+              strokeWidth={2}
+            />
             {t(`schedules:type.${schedule.type}`)}
           </span>
           <span aria-hidden="true">•</span>
@@ -956,7 +962,7 @@ function SessionToConfirmTriage({
           className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
           role="status"
         >
-          <Clock3 className="size-3" aria-hidden="true" />
+          <HugeiconsIcon icon={Clock3HugeIcon} strokeWidth={2} className="size-3" aria-hidden="true" />
           {busyLabel}
         </p>
       ) : null}
@@ -995,9 +1001,9 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                   : "inset-y-0";
           const status =
             statusColors[schedule.status] ?? statusColors.SCHEDULED;
-          const StatusIcon = status.icon ?? Clock3;
+          const StatusIcon = status.icon ?? Clock3HugeIcon;
           const ScheduleTypeIcon =
-            schedule.type === "ONLINE" ? Monitor : MapPin;
+            schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
           const startTime = formatTime24Hour(schedule.time);
           const endTime = formatTime24Hour(
             schedule.time + schedule.durationMinutes,
@@ -1046,13 +1052,23 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                     className="shrink-0 gap-1"
                     variant={status.badgeVariant}
                   >
-                    <StatusIcon className="size-3" aria-hidden="true" />
+                    <HugeiconsIcon
+                      aria-hidden="true"
+                      className="size-3"
+                      icon={StatusIcon}
+                      strokeWidth={2}
+                    />
                     {t(`schedules:status.${schedule.status}`)}
                   </Badge>
                 </div>
                 <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
-                    <ScheduleTypeIcon className="size-4" aria-hidden="true" />
+                    <HugeiconsIcon
+                      aria-hidden="true"
+                      className="size-4"
+                      icon={ScheduleTypeIcon}
+                      strokeWidth={2}
+                    />
                     {t(`schedules:type.${schedule.type}`)}
                   </span>
                   <span aria-hidden="true">•</span>
@@ -1147,7 +1163,7 @@ function TodayEmpty() {
 
   return (
     <section className="rounded-lg border border-border bg-card px-5 py-12 text-center">
-      <CalendarDays
+      <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2}
         className="mx-auto size-6 text-muted-foreground"
         aria-hidden="true"
       />

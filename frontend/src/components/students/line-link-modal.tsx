@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Copy, CheckCircle2 } from "lucide-react";
+import {
+  Copy01Icon as CopyHugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/common/button";
@@ -74,7 +77,7 @@ export function LineLinkModal({
         <DialogFooter>
           <Button
             onClick={handleCopy}
-            rightIcon={copied ? CheckCircle2 : Copy}
+            rightIcon={copied ? CheckCircle2HugeIcon : CopyHugeIcon}
           >
             {copied
               ? t("students:line.modal.copied")

@@ -1,5 +1,9 @@
 import { type ReactNode, useEffect, useRef } from "react";
-import { AlertCircle, KeyRound } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertCircleIcon as AlertCircleHugeIcon,
+  Key01Icon as KeyRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/common/button";
@@ -137,7 +141,7 @@ function AccountMethods({
       </div>
       <div className="border-t border-border">
         <MethodRow
-          icon={<KeyRound className="size-5" aria-hidden="true" />}
+          icon={<HugeiconsIcon icon={KeyRoundHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />}
           title={t("account.password.title")}
           description={t("account.password.description")}
           linked={accounts.password}
@@ -273,7 +277,7 @@ export function AccountSettingsScreen({
       {accounts.isError ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4" role="alert">
           <div className="flex items-start gap-2 text-sm text-destructive">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <p>{t("account.fetchError")}</p>
           </div>
           <Button

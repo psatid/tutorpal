@@ -1,5 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
-import { BookOpen, Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BookOpen01Icon as BookOpenHugeIcon,
+  Add01Icon as PlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import {
 	type ReactNode,
 	useEffect,
@@ -273,7 +277,7 @@ export function ClassesScreen({
 							onClick={() => openCreate(emptyActionRef.current)}
 							ref={emptyActionRef}
 						>
-							<Plus data-icon="inline-start" />
+							<HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
 							{t("classes:createClass")}
 						</Button>
 					) : undefined
@@ -283,7 +287,7 @@ export function ClassesScreen({
 						? t("classes:noMatchesDescription")
 						: t("classes:noClassesDescription")
 				}
-				icon={<BookOpen />}
+				icon={<HugeiconsIcon icon={BookOpenHugeIcon} strokeWidth={2} aria-hidden="true" />}
 				title={
 					debouncedSearch ? t("classes:noMatches") : t("classes:noClasses")
 				}
@@ -359,7 +363,7 @@ export function ClassesScreen({
 						size="icon"
 						type="button"
 					>
-						<Plus data-icon="inline-start" />
+						<HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
 						<span className="hidden sm:inline">{t("classes:newClass")}</span>
 					</Button>
 				}

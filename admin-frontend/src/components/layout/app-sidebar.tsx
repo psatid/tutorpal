@@ -13,7 +13,11 @@ import { useSession } from "@/hooks/use-session";
 import { getAppLanguage, setAppLanguage } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ChevronsUpDown, GlobeIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  UnfoldMoreIcon as ChevronsUpDownHugeIcon,
+  Globe02Icon as GlobeIconHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { triggerEdgeDrawer } from "tailwindcss-jun-layout";
 import {
@@ -63,7 +67,7 @@ export const AppSidebar = () => {
 								/>
 							}
 						>
-							<GlobeIcon aria-hidden="true" />
+							<HugeiconsIcon icon={GlobeIconHugeIcon} strokeWidth={2} aria-hidden="true" />
 							<span lang={currentLanguage}>
 								{currentLanguage === "th" ? "ไทย" : "English"}
 							</span>
@@ -170,7 +174,7 @@ export const AppSidebar = () => {
 														t("common:profile.unknownEmail")}
 												</div>
 											</div>
-											<ChevronsUpDown className="ml-auto size-4" />
+											<HugeiconsIcon icon={ChevronsUpDownHugeIcon} strokeWidth={2} aria-hidden="true" className="ml-auto size-4" />
 										</div>
 									</button>
 								</UserSetting>
@@ -207,7 +211,12 @@ const NavigationLink = ({
 				to={navigationItem.href}
 				onClick={() => triggerEdgeDrawer()}
 			>
-				<navigationItem.icon className="jun-sidebarIcon size-4" />
+				<HugeiconsIcon
+					aria-hidden="true"
+					className="jun-sidebarIcon size-4"
+					icon={navigationItem.icon}
+					strokeWidth={2}
+				/>
 				<span className="jun-sidebarText">{label}</span>
 			</Link>
 		</li>

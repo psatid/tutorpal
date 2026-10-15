@@ -2,7 +2,14 @@ import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/common/avatar";
 import { Badge } from "@/components/common/badge";
 import { Button } from "@/components/common/button";
-import { ArrowLeft, Pencil, Phone, CheckCircle2, TriangleAlert } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon as ArrowLeftHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  CallIcon as PhoneHugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  Alert01Icon as TriangleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { Student } from "@/models/student";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 
@@ -29,7 +36,7 @@ export function StudentInfoHeader({
           className="-ml-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
           aria-label={t("students:studentDetail.back")}
         >
-          <ArrowLeft className="w-5 h-5 text-on-surface" />
+          <HugeiconsIcon icon={ArrowLeftHugeIcon} strokeWidth={2} aria-hidden="true" className="w-5 h-5 text-on-surface" />
         </button>
 
         <Avatar size="lg">
@@ -50,7 +57,7 @@ export function StudentInfoHeader({
           onClick={onEdit}
           aria-label={t("students:studentDetail.editStudent")}
         >
-          <Pencil className="w-4 h-4" />
+          <HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
         </Button>
       </div>
 
@@ -61,20 +68,20 @@ export function StudentInfoHeader({
 
         {data.phoneNumber && (
           <Badge className="gap-1" variant="info">
-            <Phone className="w-3 h-3" />
+            <HugeiconsIcon icon={PhoneHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
             {data.phoneNumber}
           </Badge>
         )}
 
         {data.isLineLinked && (
           <Badge className="gap-1" variant="success">
-            <CheckCircle2 className="w-3 h-3" />
+            <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
             LINE
           </Badge>
         )}
         {data.needsLineRelink && (
           <Badge className="gap-1" variant="warning">
-            <TriangleAlert className="w-3 h-3" />
+            <HugeiconsIcon icon={TriangleAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
             {t("students:line.needsRelink")}
           </Badge>
         )}

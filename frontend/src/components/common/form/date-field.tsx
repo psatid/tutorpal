@@ -1,4 +1,6 @@
-import { Calendar as CalendarIcon } from "lucide-react";
+import {
+  Calendar03Icon as CalendarIconHugeIcon,
+} from "@hugeicons/core-free-icons";
 import {
   cloneElement,
   forwardRef,
@@ -255,7 +257,7 @@ const DateInputTrigger = forwardRef<
       readOnly
       role="button"
       aria-haspopup="dialog"
-      leftIcon={CalendarIcon}
+      leftIcon={CalendarIconHugeIcon}
       value={date ? DateTime.formatDate(date) : ""}
       placeholder={placeholder}
       className={cn(

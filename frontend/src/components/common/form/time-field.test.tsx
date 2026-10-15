@@ -15,7 +15,7 @@ describe("TimeField", () => {
 
 		const input = screen.getByLabelText("Time");
 		const clock = container.querySelector<SVGSVGElement>(
-			"svg.lucide-clock-3",
+			"svg",
 		);
 
 		expect(input).toHaveAttribute("type", "time");

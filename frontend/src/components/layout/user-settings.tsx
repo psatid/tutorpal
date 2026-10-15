@@ -1,7 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { useLogout } from "@/hooks/mutations/use-logout";
 import { useSession } from "@/hooks/use-session";
-import { Loader2, LogOut, UserRound } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+  Logout01Icon as LogOutHugeIcon,
+  UserIcon as UserRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "../common/avatar";
@@ -84,7 +89,7 @@ export default function UserSetting({
             className="min-h-11"
             render={<Link to={APP_ROUTES.ACCOUNT_SETTINGS} />}
           >
-            <UserRound />
+            <HugeiconsIcon icon={UserRoundHugeIcon} strokeWidth={2} aria-hidden="true" />
             {t("settings:account.title")}
           </DropdownMenuItem>
         ) : null}
@@ -93,7 +98,7 @@ export default function UserSetting({
           disabled={isPending}
           onClick={handleAccountAction}
         >
-          {isPending ? <Loader2 className="animate-spin" /> : <LogOut />}
+          {isPending ? <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="animate-spin" /> : <HugeiconsIcon icon={LogOutHugeIcon} strokeWidth={2} aria-hidden="true" />}
           {isImpersonating
             ? t("settings:exitTutorView")
             : t("settings:logout")}

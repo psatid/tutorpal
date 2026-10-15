@@ -1,5 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Plus, Save } from "lucide-react";
+import {
+  Key01Icon as KeyRoundHugeIcon,
+  Add01Icon as PlusHugeIcon,
+  FloppyDiskIcon as SaveHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -69,7 +73,7 @@ export function CreateAdminUserDrawer({
 					</Button>
 					<Button
 						form={CREATE_USER_FORM_ID}
-						leftIcon={Plus}
+						leftIcon={PlusHugeIcon}
 						loading={isPending}
 						type="submit"
 					>
@@ -158,7 +162,7 @@ export function EditAdminUserDrawer({
 					</Button>
 					<Button
 						form={EDIT_USER_FORM_ID}
-						leftIcon={Save}
+						leftIcon={SaveHugeIcon}
 						loading={isPending}
 						type="submit"
 					>
@@ -232,7 +236,7 @@ export function SetAdminUserPasswordDrawer({
 					</Button>
 					<Button
 						form={SET_PASSWORD_FORM_ID}
-						leftIcon={KeyRound}
+						leftIcon={KeyRoundHugeIcon}
 						loading={isPending}
 						type="submit"
 					>

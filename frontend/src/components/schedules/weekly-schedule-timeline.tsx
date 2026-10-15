@@ -1,4 +1,9 @@
-import { CalendarCheck2, MapPin, Monitor } from "lucide-react";
+import {
+  CalendarCheckIn01Icon as CalendarCheck2HugeIcon,
+  MapPinIcon as MapPinHugeIcon,
+  ComputerIcon as MonitorHugeIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   useEffect,
   useId,
@@ -193,7 +198,7 @@ function ScheduleBlock({
   const { t } = useTranslation(["schedules"]);
   const { schedule } = item;
   const scheduleType = schedule.type ?? "ON_SITE";
-  const ScheduleTypeIcon = scheduleType === "ONLINE" ? Monitor : MapPin;
+  const ScheduleTypeIcon = scheduleType === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
   const eventStart = Math.max(schedule.time, bounds.startMinutes);
   const eventEnd = Math.min(
     Math.max(schedule.time + schedule.durationMinutes, eventStart),
@@ -207,7 +212,7 @@ function ScheduleBlock({
   );
   const width = 100 / item.laneCount;
   const left = item.lane * width;
-  const StatusIcon = statusColors[schedule.status]?.icon ?? CalendarCheck2;
+  const StatusIcon = statusColors[schedule.status]?.icon ?? CalendarCheck2HugeIcon;
   const dateLabel = DateTime.formatDate(schedule.date, {
     weekday: "long",
     day: "numeric",
@@ -248,8 +253,18 @@ function ScheduleBlock({
         </span>
       </span>
       <div className="mt-0.5 flex min-w-0 items-center gap-1">
-        <StatusIcon aria-hidden="true" className="size-3 shrink-0" />
-        <ScheduleTypeIcon aria-hidden="true" className="size-3 shrink-0" />
+        <HugeiconsIcon
+          aria-hidden="true"
+          className="size-3 shrink-0"
+          icon={StatusIcon}
+          strokeWidth={2}
+        />
+        <HugeiconsIcon
+          aria-hidden="true"
+          className="size-3 shrink-0"
+          icon={ScheduleTypeIcon}
+          strokeWidth={2}
+        />
       </div>
     </button>
   );

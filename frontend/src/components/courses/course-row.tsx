@@ -1,4 +1,9 @@
-import { Edit3, MoreVertical, Trash2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  PencilEdit01Icon as Edit3HugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  Delete02Icon as Trash2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import type { Ref } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -68,19 +73,19 @@ export function CourseRow({
 							/>
 						}
 					>
-						<MoreVertical aria-hidden="true" />
+						<HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" />
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuGroup>
 							<DropdownMenuItem onClick={onEdit}>
-								<Edit3 />
+								<HugeiconsIcon icon={Edit3HugeIcon} strokeWidth={2} aria-hidden="true" />
 								{t("courses:editCourse")}
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
 							<DropdownMenuItem onClick={onDelete} variant="destructive">
-								<Trash2 />
+								<HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" />
 								{t("courses:deleteCourse")}
 							</DropdownMenuItem>
 						</DropdownMenuGroup>

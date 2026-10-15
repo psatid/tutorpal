@@ -1,5 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertCircleIcon as CircleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { type ComponentProps, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -544,7 +547,7 @@ export function ClassHourAdditionsDrawer({
 						className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
 						role="alert"
 					>
-						<CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+						<HugeiconsIcon icon={CircleAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
 						<span>{submitError}</span>
 					</p>
 				) : null}

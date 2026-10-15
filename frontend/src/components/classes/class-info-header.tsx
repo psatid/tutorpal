@@ -1,4 +1,11 @@
-import { AlertTriangle, ArrowLeft, Clock3, Pencil, UsersRound } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Alert01Icon as AlertTriangleHugeIcon,
+  ArrowLeft01Icon as ArrowLeftHugeIcon,
+  Clock03Icon as Clock3HugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  UserGroupIcon as UsersRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/common/avatar";
@@ -46,7 +53,7 @@ export function ClassInfoHeader({
 		Math.max(0, data.usedHours),
 	);
 	const BalanceIcon =
-		data.balanceState === "exhausted" ? AlertTriangle : Clock3;
+		data.balanceState === "exhausted" ? AlertTriangleHugeIcon : Clock3HugeIcon;
 
 	return (
 		<header className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -57,7 +64,7 @@ export function ClassInfoHeader({
 					onClick={onBack}
 					type="button"
 				>
-					<ArrowLeft aria-hidden="true" className="size-5 text-on-surface" />
+					<HugeiconsIcon icon={ArrowLeftHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5 text-on-surface" />
 				</button>
 				<div className="flex min-w-0 items-center gap-1">
 					<h1 className="min-w-0 truncate text-xl font-medium leading-tight tracking-[-0.01em] text-on-surface sm:text-2xl">
@@ -71,14 +78,14 @@ export function ClassInfoHeader({
 						type="button"
 						variant="ghost"
 					>
-						<Pencil aria-hidden="true" className="size-4" />
+						<HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
 					</Button>
 				</div>
 			</div>
 			<div className="mt-5 grid gap-5 border-t border-border pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,0.65fr)] lg:gap-8">
 				<section aria-labelledby="class-students-title" className="min-w-0">
 					<div className="flex items-center gap-2">
-						<UsersRound aria-hidden="true" className="size-4 text-on-surface-variant" />
+						<HugeiconsIcon icon={UsersRoundHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4 text-on-surface-variant" />
 						<h2
 							className="text-sm font-medium text-on-surface"
 							id="class-students-title"
@@ -121,7 +128,7 @@ export function ClassInfoHeader({
 						>
 							{t("classes:balance.label")}
 						</p>
-						<BalanceIcon
+						<HugeiconsIcon
 							aria-hidden="true"
 							className={cn(
 								"size-4",
@@ -129,6 +136,8 @@ export function ClassInfoHeader({
 									? "text-warning-container"
 									: "text-white/75",
 							)}
+							icon={BalanceIcon}
+							strokeWidth={2}
 						/>
 					</div>
 					<p
@@ -186,7 +195,7 @@ export function ClassInfoHeader({
 					</div>
 					<Button
 						className="mt-4 w-full sm:w-auto"
-						leftIcon={Clock3}
+						leftIcon={Clock3HugeIcon}
 						onClick={onAddHours}
 						ref={addHoursButtonRef}
 						type="button"

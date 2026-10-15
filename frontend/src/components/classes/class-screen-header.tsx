@@ -1,4 +1,7 @@
-import { Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon as PlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 
@@ -20,7 +23,7 @@ export function ClassScreenHeader({ onAddClass }: ClassScreenHeaderProps) {
           onClick={onAddClass}
           aria-label={t("classes:addButton")}
         >
-          <Plus className="w-5 h-5" />
+          <HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" className="w-5 h-5" />
         </Button>
       </div>
     </div>

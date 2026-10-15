@@ -1,5 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert, Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertCircleIcon as CircleAlertHugeIcon,
+  Loading03Icon as Loader2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { DefaultValues } from "react-hook-form";
@@ -432,7 +436,7 @@ export function ScheduleDrawer({
           {mode === "view" && scheduleData && scheduleStatus ? (
             <Badge variant={scheduleStatus.badgeVariant}>
               {ScheduleStatusIcon ? (
-                <ScheduleStatusIcon aria-hidden="true" />
+                <HugeiconsIcon aria-hidden="true" icon={ScheduleStatusIcon} strokeWidth={2} />
               ) : null}
               {t(`schedules:status.${scheduleData.status}`)}
             </Badge>
@@ -500,12 +504,12 @@ export function ScheduleDrawer({
               role={hasSelectedClassAvailabilityError ? "alert" : "status"}
             >
               {isSelectedClassAvailabilityLoading ? (
-                <Loader2
+                <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2}
                   aria-hidden="true"
                   className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground"
                 />
               ) : (
-                <CircleAlert
+                <HugeiconsIcon icon={CircleAlertHugeIcon} strokeWidth={2}
                   aria-hidden="true"
                   className={cn(
                     "mt-0.5 size-4 shrink-0",
@@ -543,7 +547,7 @@ export function ScheduleDrawer({
                   : "border-border bg-muted/50",
               )}
             >
-              <CircleAlert
+              <HugeiconsIcon icon={CircleAlertHugeIcon} strokeWidth={2}
                 aria-hidden="true"
                 className={cn(
                   "mt-0.5 size-4 shrink-0",

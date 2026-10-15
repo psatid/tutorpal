@@ -80,7 +80,7 @@ function PaginationPrevious({
       className={cn("pl-2!", className)}
       {...props}
     >
-      <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />
+      <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
       <span className="hidden sm:block">{text ?? t("buttons.back")}</span>
     </PaginationLink>
   )
@@ -101,7 +101,7 @@ function PaginationNext({
       {...props}
     >
       <span className="hidden sm:block">{text ?? t("buttons.next")}</span>
-      <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} data-icon="inline-end" />
+      <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} aria-hidden="true" data-icon="inline-end" />
     </PaginationLink>
   )
 }
@@ -122,7 +122,7 @@ function PaginationEllipsis({
       )}
       {...props}
     >
-      <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+      <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} aria-hidden="true" />
       <span className="sr-only">{t("accessibility.morePages")}</span>
     </span>
   )

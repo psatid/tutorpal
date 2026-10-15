@@ -1,13 +1,14 @@
 import { type FormEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  CheckCircle2,
-  Circle,
-  KeyRound,
-  MessageCircle,
-  Pencil,
-  ShieldCheck,
-} from "lucide-react";
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  CircleIcon as CircleHugeIcon,
+  Key01Icon as KeyRoundHugeIcon,
+  Message01Icon as MessageCircleHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  SecurityCheckIcon as ShieldCheckHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -167,7 +168,7 @@ export function LineSettingsScreen() {
               <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <MessageCircle className="size-5" aria-hidden="true" />
+                    <HugeiconsIcon icon={MessageCircleHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
                     <h2 className="font-medium text-foreground">{t("settings:line.testTitle")}</h2>
@@ -183,7 +184,7 @@ export function LineSettingsScreen() {
                     className="w-full sm:w-auto"
                     onClick={() => sendTest.mutate()}
                     loading={sendTest.isPending}
-                    leftIcon={MessageCircle}
+                    leftIcon={MessageCircleHugeIcon}
                   >
                     {t("settings:line.sendTest")}
                   </Button>
@@ -192,7 +193,7 @@ export function LineSettingsScreen() {
                     className="w-full sm:w-auto"
                     onClick={() => connectTestAccount.mutate()}
                     loading={connectTestAccount.isPending}
-                    leftIcon={CheckCircle2}
+                    leftIcon={CheckCircle2HugeIcon}
                   >
                     {t("settings:line.connectTestAccount")}
                   </Button>
@@ -204,7 +205,7 @@ export function LineSettingsScreen() {
               <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-                    <KeyRound className="size-5" aria-hidden="true" />
+                    <HugeiconsIcon icon={KeyRoundHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
                     <h2 className="font-medium text-foreground">{t("settings:line.credentials")}</h2>
@@ -219,7 +220,7 @@ export function LineSettingsScreen() {
                   className="w-full sm:w-auto"
                   onClick={() => setEditing(true)}
                   disabled={isBusy}
-                  leftIcon={Pencil}
+                  leftIcon={PencilHugeIcon}
                 >
                   {t("settings:line.editCredentials")}
                 </Button>
@@ -275,9 +276,9 @@ function ConnectionSummary({ connection }: ConnectionSummaryProps) {
             role="status"
           >
             {isConnected ? (
-              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+              <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} className="size-4 shrink-0" aria-hidden="true" />
             ) : (
-              <Circle className="size-4 shrink-0" aria-hidden="true" />
+              <HugeiconsIcon icon={CircleHugeIcon} strokeWidth={2} className="size-4 shrink-0" aria-hidden="true" />
             )}
             {isConnected ? t("settings:line.connected") : t("settings:line.notConnected")}
           </p>
@@ -296,7 +297,7 @@ function ConnectionSummary({ connection }: ConnectionSummaryProps) {
             </p>
           )}
         </div>
-        <ShieldCheck
+        <HugeiconsIcon icon={ShieldCheckHugeIcon} strokeWidth={2}
           className={cn(
             "size-6 shrink-0",
             isConnected ? "text-primary" : "text-muted-foreground/60",
@@ -379,7 +380,7 @@ function CredentialsForm({
     <form onSubmit={onSubmit} className="mt-5 rounded-lg border border-border bg-card p-5">
       <div className="mb-6 flex gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <KeyRound className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={KeyRoundHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />
         </span>
         <div>
           <h2

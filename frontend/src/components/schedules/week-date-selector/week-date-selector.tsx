@@ -8,7 +8,11 @@ import {
 import { MotionConfig, useReducedMotion, type Transition } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Calendar03Icon as CalendarDaysHugeIcon,
+  ArrowDown01Icon as ChevronDownHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/common/button";
 import {
   Tabs,
@@ -390,7 +394,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
                       {periodLabel}
                     </span>
                   </span>
-                  <ChevronDown
+                  <HugeiconsIcon icon={ChevronDownHugeIcon} strokeWidth={2}
                     aria-hidden="true"
                     className="size-4 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180 group-aria-expanded:rotate-180 motion-reduce:transition-none"
                   />
@@ -405,7 +409,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               size="sm"
               onClick={handleToday}
             >
-              <CalendarDays aria-hidden="true" className="size-4" />
+              <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
               {t("schedules:weekSelector.today")}
             </Button>
             <TabsList

@@ -1,4 +1,8 @@
-import { Plus, UserPlus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon as PlusHugeIcon,
+  UserAdd01Icon as UserPlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -166,7 +170,7 @@ export function StudentList({
               onClick={() => onAddStudent(emptyActionRef.current)}
               ref={emptyActionRef}
             >
-              <Plus data-icon="inline-start" />
+              <HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
               {t("students:createStudent")}
             </Button>
           ) : undefined
@@ -176,7 +180,7 @@ export function StudentList({
             ? t("students:noResultsDescription")
             : t("students:noStudentsDescription")
         }
-        icon={<UserPlus />}
+        icon={<HugeiconsIcon icon={UserPlusHugeIcon} strokeWidth={2} aria-hidden="true" />}
         title={hasSearch ? t("students:noResults") : t("students:noStudents")}
       />
     );

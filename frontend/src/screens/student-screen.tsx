@@ -1,5 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon as PlusHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StudentForm } from "@/components/students/student-form";
@@ -113,7 +116,7 @@ export function StudentScreen() {
             ref={triggerRef}
             size="icon"
           >
-            <Plus data-icon="inline-start" />
+            <HugeiconsIcon icon={PlusHugeIcon} strokeWidth={2} aria-hidden="true" data-icon="inline-start" />
             <span className="hidden sm:inline">{t("students:newStudent")}</span>
           </Button>
         }

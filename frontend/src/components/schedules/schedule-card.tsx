@@ -1,13 +1,14 @@
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Trash2,
-  Eye,
-  MoreVertical,
-  CheckCircle2,
-  AlertCircle,
-  RotateCcw,
-  MapPin,
-  Monitor,
-} from "lucide-react";
+  Delete02Icon as Trash2HugeIcon,
+  ViewIcon as EyeHugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  AlertCircleIcon as AlertCircleHugeIcon,
+  RotateLeft01Icon as RotateCcwHugeIcon,
+  MapPinIcon as MapPinHugeIcon,
+  ComputerIcon as MonitorHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/common/badge";
 import { Button } from "@/components/common/button";
@@ -46,7 +47,7 @@ export function ScheduleCard({
   const startTime = formatTime24Hour(schedule.time);
   const scheduleEndTime = schedule.time + schedule.durationMinutes;
   const endTime = formatTime24Hour(scheduleEndTime);
-  const ScheduleTypeIcon = schedule.type === "ONLINE" ? Monitor : MapPin;
+  const ScheduleTypeIcon = schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
   const notes = schedule.notes?.trim();
   const scheduleStatus =
     statusColors[schedule.status] ?? statusColors.SCHEDULED;
@@ -74,16 +75,20 @@ export function ScheduleCard({
               {schedule.className}
             </span>
             <Badge variant={scheduleStatus.badgeVariant}>
-              {StatusIcon ? <StatusIcon aria-hidden="true" /> : null}
+              {StatusIcon ? (
+                <HugeiconsIcon aria-hidden="true" icon={StatusIcon} strokeWidth={2} />
+              ) : null}
               {t(`schedules:status.${schedule.status}`)}
             </Badge>
           </span>
 
           <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-xs leading-4 text-on-surface-variant">
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
-              <ScheduleTypeIcon
+              <HugeiconsIcon
                 aria-hidden="true"
                 className="size-3.5 shrink-0"
+                icon={ScheduleTypeIcon}
+                strokeWidth={2}
               />
               {t(`schedules:type.${schedule.type}`)}
             </span>
@@ -117,17 +122,17 @@ export function ScheduleCard({
             />
           }
         >
-          <MoreVertical aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onView}>
-            <Eye className="w-4 h-4" />
+            <HugeiconsIcon icon={EyeHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
             {t("schedules:view")}
           </DropdownMenuItem>
           {schedule.status === "SCHEDULED" && onComplete && (
             <>
               <DropdownMenuItem onClick={onComplete}>
-                <CheckCircle2 className="w-4 h-4" />
+                <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
                 {t("schedules:complete.action")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -136,7 +141,7 @@ export function ScheduleCard({
           {schedule.status === "SCHEDULED" && onNoShow && (
             <>
               <DropdownMenuItem onClick={onNoShow}>
-                <AlertCircle className="w-4 h-4" />
+                <HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
                 {t("schedules:noShow.action")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -146,14 +151,14 @@ export function ScheduleCard({
             onRestore && (
               <>
                 <DropdownMenuItem onClick={onRestore}>
-                  <RotateCcw className="w-4 h-4" />
+                  <HugeiconsIcon icon={RotateCcwHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
                   {t("schedules:restore.action")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
             )}
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
-            <Trash2 className="w-4 h-4" />
+            <HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
             {t("schedules:delete.confirmButton")}
           </DropdownMenuItem>
         </DropdownMenuContent>

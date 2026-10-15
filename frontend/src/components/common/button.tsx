@@ -2,7 +2,8 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+
 
 const buttonVariants = cva(
   `group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent
@@ -48,8 +49,8 @@ const buttonVariants = cva(
 type ButtonProps = ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     loading?: boolean;
-    leftIcon?: LucideIcon;
-    rightIcon?: LucideIcon;
+    leftIcon?: IconSvgElement;
+    rightIcon?: IconSvgElement;
   };
 
 function Button({
@@ -75,9 +76,9 @@ function Button({
       {loading ? (
         <>
           <span aria-hidden="true" className="button-loading-placeholder">
-            {LeftIcon && <LeftIcon className="size-4" />}
+            {LeftIcon && <HugeiconsIcon className="size-4" icon={LeftIcon} strokeWidth={2} aria-hidden="true" />}
             {children}
-            {RightIcon && <RightIcon className="size-4" />}
+            {RightIcon && <HugeiconsIcon className="size-4" icon={RightIcon} strokeWidth={2} aria-hidden="true" />}
           </span>
           <span aria-hidden="true" className="button-loading-dots">
             <span className="button-loading-dot" />
@@ -88,9 +89,9 @@ function Button({
         </>
       ) : (
         <>
-          {LeftIcon && <LeftIcon className="size-4" />}
+          {LeftIcon && <HugeiconsIcon className="size-4" icon={LeftIcon} strokeWidth={2} aria-hidden="true" />}
           {children}
-          {RightIcon && <RightIcon className="size-4" />}
+          {RightIcon && <HugeiconsIcon className="size-4" icon={RightIcon} strokeWidth={2} aria-hidden="true" />}
         </>
       )}
     </ButtonPrimitive>

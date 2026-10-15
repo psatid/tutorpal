@@ -1,4 +1,9 @@
-import { CalendarDays, Plus, Search } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Calendar03Icon as CalendarDaysHugeIcon,
+  Add01Icon as PlusHugeIcon,
+  Search01Icon as SearchHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useMemo, useRef, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -279,7 +284,7 @@ export function SchedulesScreen() {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="mb-6 flex size-20 items-center justify-center rounded-xl bg-primary-container">
-            <CalendarDays className="size-10 text-primary" />
+            <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2} aria-hidden="true" className="size-10 text-primary" />
           </div>
           <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
             {hasFilters ? t("schedules:noResults") : t("schedules:noSchedules")}
@@ -290,7 +295,7 @@ export function SchedulesScreen() {
                 {t("schedules:noSchedulesDescription")}
               </p>
               <Button
-                leftIcon={Plus}
+                leftIcon={PlusHugeIcon}
                 onClick={(event) => handleAddSchedule(event.currentTarget)}
               >
                 {t("schedules:addSchedule")}
@@ -391,12 +396,12 @@ export function SchedulesScreen() {
                             setSearchQuery(event.target.value)
                           }
                           placeholder={t("schedules:searchPlaceholder")}
-                          leftIcon={Search}
+                          leftIcon={SearchHugeIcon}
                         />
                       </div>
                       <Button
                         className="hidden sm:inline-flex"
-                        leftIcon={Plus}
+                        leftIcon={PlusHugeIcon}
                         onClick={(event) =>
                           handleAddSchedule(event.currentTarget)
                         }

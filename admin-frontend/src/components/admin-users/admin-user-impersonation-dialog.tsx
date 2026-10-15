@@ -1,5 +1,8 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { AlertTriangle } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Alert01Icon as AlertTriangleHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { AdminUser } from "@/types/admin-user";
@@ -42,7 +45,7 @@ export function AdminUserImpersonationDialog({
 						className="w-full max-w-md rounded-xl border border-border bg-popover p-6 text-popover-foreground shadow-transient-dialog outline-none duration-150 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95"
 					>
 						<div className="flex size-11 items-center justify-center rounded-full bg-warning-container text-warning">
-							<AlertTriangle aria-hidden="true" className="size-5" />
+							<HugeiconsIcon icon={AlertTriangleHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
 						</div>
 						<Dialog.Title className="mt-5 text-lg font-semibold text-foreground">
 							{t("users.impersonation.title")}

@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearch } from "@tanstack/react-router";
-import { Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Loading03Icon as Loader2HugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  CancelCircleIcon as XCircleHugeIcon,
+  RotateLeft01Icon as RotateCcwHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import { apiClient } from "@/lib/api-client";
@@ -98,7 +104,7 @@ export function LineLinkScreen() {
 
         {state === "loading" && (
           <div aria-live="polite" className="space-y-4" role="status">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+            <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-8 h-8 animate-spin text-primary mx-auto" />
             <p className="text-muted-foreground">
               {t("students:line.connecting")}
             </p>
@@ -122,7 +128,7 @@ export function LineLinkScreen() {
 
         {state === "success" && (
           <div className="space-y-4">
-            <CheckCircle2 className="w-16 h-16 text-success mx-auto" />
+            <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-16 h-16 text-success mx-auto" />
             <div className="space-y-1">
               <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
                 {t("students:line.successTitle")}
@@ -141,7 +147,7 @@ export function LineLinkScreen() {
 
         {state === "error" && (
           <div aria-live="assertive" className="space-y-4" role="alert">
-            <XCircle className="w-16 h-16 text-destructive mx-auto" />
+            <HugeiconsIcon icon={XCircleHugeIcon} strokeWidth={2} aria-hidden="true" className="w-16 h-16 text-destructive mx-auto" />
             <div className="space-y-1">
               <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
                 {t("students:line.errorTitle")}
@@ -152,7 +158,7 @@ export function LineLinkScreen() {
               <Button
                 onClick={handleConnect}
                 variant="outline"
-                rightIcon={RotateCcw}
+                rightIcon={RotateCcwHugeIcon}
               >
                 {t("students:line.retry")}
               </Button>

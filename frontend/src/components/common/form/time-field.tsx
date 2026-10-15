@@ -1,6 +1,8 @@
 import { Input, type InputProps } from "@/components/common/input";
 import { cn } from "@/lib/utils";
-import { Clock3 } from "lucide-react";
+import {
+  Clock03Icon as Clock3HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { type ChangeEvent, type FocusEvent, useId, useState } from "react";
 import { FormField } from "./form-field";
 
@@ -77,7 +79,7 @@ function TimeField({
           disabled={disabled}
           {...inputProps}
           id={inputId}
-          leftIcon={Clock3}
+          leftIcon={Clock3HugeIcon}
           value={value}
           defaultValue={defaultValue}
           onChange={handleChange}

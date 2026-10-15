@@ -1,4 +1,7 @@
-import { TriangleAlert } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Alert01Icon as TriangleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Button, buttonVariants } from "@/components/common/button";
 import type { StopImpersonationErrorCategory } from "@/hooks/mutations/use-stop-impersonation";
@@ -42,7 +45,7 @@ export function ImpersonationBanner({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
-            <TriangleAlert aria-hidden="true" className="size-5" />
+            <HugeiconsIcon icon={TriangleAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-warning-container-foreground">

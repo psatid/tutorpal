@@ -1,4 +1,5 @@
-import { type LucideIcon } from "lucide-react";
+
+import type { IconSvgElement } from "@hugeicons/react";
 import {
   Controller,
   type Control,
@@ -20,7 +21,7 @@ interface RHFInputFieldProps<T extends FieldValues> {
   required?: boolean;
   disabled?: boolean;
   inputProps?: Omit<React.ComponentProps<"input">, "name"> & {
-    leftIcon?: LucideIcon;
+    leftIcon?: IconSvgElement;
   };
 }
 
@@ -101,7 +102,7 @@ interface RHFPasswordFieldProps<T extends FieldValues> {
   required?: boolean;
   disabled?: boolean;
   inputProps?: Omit<React.ComponentProps<"input">, "name" | "type"> & {
-    leftIcon?: LucideIcon;
+    leftIcon?: IconSvgElement;
   };
 }
 

@@ -1,5 +1,8 @@
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
-import { Check } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Tick02Icon as CheckHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
@@ -126,7 +129,7 @@ function DropdownMenuRadioItem({
 				data-slot="dropdown-menu-radio-item-indicator"
 			>
 				<MenuPrimitive.RadioItemIndicator>
-					<Check className="size-4" />
+					<HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
 				</MenuPrimitive.RadioItemIndicator>
 			</span>
 			{children}

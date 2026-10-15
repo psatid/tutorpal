@@ -13,7 +13,13 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/common/dropdown-menu";
-import { Clock, Eye, MoreVertical, Trash2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Clock01Icon as ClockHugeIcon,
+  ViewIcon as EyeHugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  Delete02Icon as Trash2HugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { Class } from "@/models/class";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
@@ -53,7 +59,7 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 						className="shrink-0 gap-1"
 						variant="info"
 					>
-						<Clock className="w-3 h-3" />
+						<HugeiconsIcon icon={ClockHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
 						{t("classes:hoursWithRemaining", {
 							total: data.formattedTotalHours,
 							remaining: data.formattedRemainingHours,
@@ -97,16 +103,16 @@ export function ClassCard({ classData, onView, onDelete }: ClassCardProps) {
 						e.preventDefault();
 					}}
 				>
-					<MoreVertical className="w-4 h-4 text-on-surface-variant" />
+					<HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4 text-on-surface-variant" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuItem onClick={onView}>
-						<Eye className="w-4 h-4" />
+						<HugeiconsIcon icon={EyeHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
 						{t("classes:view")}
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem variant="destructive" onClick={onDelete}>
-						<Trash2 className="w-4 h-4" />
+						<HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
 						{t("classes:delete.confirmButton")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>

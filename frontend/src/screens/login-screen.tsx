@@ -1,6 +1,11 @@
 import { Link, Navigate, useSearch } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Mail, Lock } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertCircleIcon as AlertCircleHugeIcon,
+  Mail01Icon as MailHugeIcon,
+  LockPasswordIcon as LockHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -162,7 +167,7 @@ export function LoginScreen() {
 							className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
 							role="alert"
 						>
-							<AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+							<HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 							<p>{t("auth:login.socialError")}</p>
 						</div>
 					) : null}
@@ -173,7 +178,7 @@ export function LoginScreen() {
 						inputProps={{
 							type: "email",
 							placeholder: t("auth:login.emailPlaceholder"),
-							leftIcon: Mail,
+							leftIcon: MailHugeIcon,
 						}}
 					/>
 
@@ -183,7 +188,7 @@ export function LoginScreen() {
 						label={t("common:form.password")}
 						inputProps={{
 							placeholder: t("auth:login.passwordPlaceholder"),
-							leftIcon: Lock,
+							leftIcon: LockHugeIcon,
 						}}
 					/>
 					<div className="flex justify-end">

@@ -1,4 +1,8 @@
-import { Eye, EyeOff } from "lucide-react";
+import {
+  ViewIcon as EyeHugeIcon,
+  ViewOffIcon as EyeOffHugeIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { InputField, type InputFieldProps } from "./input-field";
@@ -12,7 +16,7 @@ function PasswordField({ disabled, ...props }: PasswordFieldProps) {
   const toggleLabel = isVisible
     ? t("form.hidePassword")
     : t("form.showPassword");
-  const ToggleIcon = isVisible ? EyeOff : Eye;
+  const ToggleIcon = isVisible ? EyeOffHugeIcon : EyeHugeIcon;
 
   return (
     <InputField
@@ -28,7 +32,7 @@ function PasswordField({ disabled, ...props }: PasswordFieldProps) {
           disabled={disabled}
           className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50"
         >
-          <ToggleIcon className="size-4" />
+          <HugeiconsIcon className="size-4" icon={ToggleIcon} strokeWidth={2} aria-hidden="true" />
         </button>
       }
     />

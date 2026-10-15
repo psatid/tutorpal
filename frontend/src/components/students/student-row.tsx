@@ -11,16 +11,17 @@ import {
 } from "@/components/common/dropdown-menu";
 import { Student } from "@/models/student";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  CheckCircle2,
-  Eye,
-  Link2,
-  MessageSquare,
-  MoreVertical,
-  Phone,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  ViewIcon as EyeHugeIcon,
+  Link02Icon as Link2HugeIcon,
+  Message01Icon as MessageSquareHugeIcon,
+  MoreVerticalIcon as MoreVerticalHugeIcon,
+  CallIcon as PhoneHugeIcon,
+  Delete02Icon as Trash2HugeIcon,
+  Alert01Icon as TriangleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 
 interface StudentRowProps {
@@ -68,19 +69,19 @@ export function StudentRow({
               </Badge>
               {linked ? (
                 <Badge variant="success">
-                  <CheckCircle2 />
+                  <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" />
                   LINE
                 </Badge>
               ) : null}
               {needsRelink ? (
                 <Badge variant="warning">
-                  <TriangleAlert />
+                  <HugeiconsIcon icon={TriangleAlertHugeIcon} strokeWidth={2} aria-hidden="true" />
                   {t("students:line.needsRelink")}
                 </Badge>
               ) : null}
             </div>
             <p className="mt-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-              <Phone className="size-4" />
+              <HugeiconsIcon icon={PhoneHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
               {data.phoneNumber ?? t("students:noPhone")}
             </p>
           </div>
@@ -95,12 +96,12 @@ export function StudentRow({
               />
             }
           >
-            <MoreVertical />
+            <HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={onView}>
-                <Eye />
+                <HugeiconsIcon icon={EyeHugeIcon} strokeWidth={2} aria-hidden="true" />
                 {t("students:view")}
               </DropdownMenuItem>
               {!linked ? (
@@ -112,7 +113,7 @@ export function StudentRow({
                       : undefined
                   }
                 >
-                  <Link2 />
+                  <HugeiconsIcon icon={Link2HugeIcon} strokeWidth={2} aria-hidden="true" />
                   {t(
                     needsRelink
                       ? "students:line.relinkLabel"
@@ -122,7 +123,7 @@ export function StudentRow({
               ) : null}
               {linked ? (
                 <DropdownMenuItem onClick={onSendTestMessage}>
-                  <MessageSquare />
+                  <HugeiconsIcon icon={MessageSquareHugeIcon} strokeWidth={2} aria-hidden="true" />
                   {t("students:line.testMessage")}
                 </DropdownMenuItem>
               ) : null}
@@ -130,7 +131,7 @@ export function StudentRow({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={onDelete} variant="destructive">
-                <Trash2 />
+                <HugeiconsIcon icon={Trash2HugeIcon} strokeWidth={2} aria-hidden="true" />
                 {t("students:delete.confirmButton")}
               </DropdownMenuItem>
             </DropdownMenuGroup>

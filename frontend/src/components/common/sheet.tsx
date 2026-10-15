@@ -72,7 +72,7 @@ function SheetContent({
               />
             }
           >
-            <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
+            <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} aria-hidden="true" />
             <span className="sr-only">{t("accessibility.close")}</span>
           </SheetPrimitive.Close>
         )}

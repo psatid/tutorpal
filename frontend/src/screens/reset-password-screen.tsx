@@ -1,6 +1,8 @@
 import { Link, useSearch } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock } from "lucide-react";
+import {
+  LockPasswordIcon as LockHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -127,7 +129,7 @@ export function ResetPasswordScreen() {
 						label={t("common:form.password")}
 						inputProps={{
 							placeholder: t("auth:resetPassword.passwordPlaceholder"),
-							leftIcon: Lock,
+							leftIcon: LockHugeIcon,
 						}}
 					/>
 					<RHFPasswordField
@@ -136,7 +138,7 @@ export function ResetPasswordScreen() {
 						label={t("auth:resetPassword.confirmLabel")}
 						inputProps={{
 							placeholder: t("auth:resetPassword.confirmPlaceholder"),
-							leftIcon: Lock,
+							leftIcon: LockHugeIcon,
 						}}
 					/>
 					<button type="submit" className="hidden" aria-hidden />

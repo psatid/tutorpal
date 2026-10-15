@@ -1,4 +1,9 @@
-import { Check, Search, Users } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Tick02Icon as CheckHugeIcon,
+  Search01Icon as SearchHugeIcon,
+  UserGroupIcon as UsersHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
@@ -116,7 +121,7 @@ export function StudentSelectorDrawer({
 						</Button>
 					</div>
 					<Input
-						leftIcon={Search}
+						leftIcon={SearchHugeIcon}
 						onChange={(event) => setSearchQuery(event.target.value)}
 						placeholder={t("classes:selector.searchPlaceholder")}
 						value={searchQuery}
@@ -138,7 +143,7 @@ export function StudentSelectorDrawer({
 				</div>
 			) : filteredStudents.length === 0 ? (
 				<div className="flex min-h-48 flex-col items-center justify-center px-4 text-center">
-					<Users aria-hidden="true" className="mb-3 size-10 text-muted-foreground" />
+					<HugeiconsIcon icon={UsersHugeIcon} strokeWidth={2} aria-hidden="true" className="mb-3 size-10 text-muted-foreground" />
 					<p className="text-sm text-muted-foreground">
 						{searchQuery
 							? t("classes:selector.noResults")
@@ -168,7 +173,7 @@ export function StudentSelectorDrawer({
 											isSelected && "border-primary bg-primary text-primary-foreground",
 										)}
 									>
-										{isSelected ? <Check className="size-3.5" /> : null}
+										{isSelected ? <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-3.5" /> : null}
 									</span>
 									<span className="min-w-0">
 										<span className="block truncate text-sm font-medium text-foreground">

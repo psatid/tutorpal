@@ -1,4 +1,8 @@
-import { FileQuestion, TriangleAlert, type LucideIcon } from "lucide-react";
+import {
+  FileQuestionMarkIcon as FileQuestionHugeIcon,
+  Alert01Icon as TriangleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,7 +21,7 @@ interface RouteFallbackLayoutProps {
   alert?: boolean;
   children: ReactNode;
   description: string;
-  icon: LucideIcon;
+  icon: IconSvgElement;
   title: string;
 }
 
@@ -129,7 +133,7 @@ function RouteFallbackLayout({
           aria-hidden="true"
           className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary"
         >
-          <Icon className="size-6" strokeWidth={1.75} />
+          <HugeiconsIcon className="size-6" icon={Icon} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1
           ref={headingRef}
@@ -193,7 +197,7 @@ export function RouteError({ error, info }: ErrorComponentProps) {
     <RouteFallbackLayout
       alert
       description={t("routeError.description")}
-      icon={TriangleAlert}
+      icon={TriangleAlertHugeIcon}
       title={t("routeError.title")}
     >
       <Button
@@ -217,7 +221,7 @@ export function RouteNotFound() {
   return (
     <RouteFallbackLayout
       description={t("notFound.description")}
-      icon={FileQuestion}
+      icon={FileQuestionHugeIcon}
       title={t("notFound.title")}
     >
       <DashboardLink label={t("notFound.dashboard")} />

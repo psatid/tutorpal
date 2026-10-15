@@ -14,7 +14,12 @@ import { useSession } from "@/hooks/use-session";
 import { getAppLanguage, setAppLanguage } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ChevronDown, ChevronsUpDown, GlobeIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon as ChevronDownHugeIcon,
+  UnfoldMoreIcon as ChevronsUpDownHugeIcon,
+  Globe02Icon as GlobeIconHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { triggerEdgeDrawer } from "tailwindcss-jun-layout";
@@ -83,7 +88,7 @@ export const AppSidebar = ({
                 />
               }
             >
-              <GlobeIcon aria-hidden="true" />
+              <HugeiconsIcon icon={GlobeIconHugeIcon} strokeWidth={2} aria-hidden="true" />
               <span lang={currentLanguage}>
                 {currentLanguage === "th" ? "ไทย" : "English"}
               </span>
@@ -205,7 +210,7 @@ export const AppSidebar = ({
                             t("common:profile.unknownEmail")}
                         </div>
                       </div>
-                      <ChevronsUpDown className="ml-auto size-4" />
+                      <HugeiconsIcon icon={ChevronsUpDownHugeIcon} strokeWidth={2} aria-hidden="true" className="ml-auto size-4" />
                     </div>
                   </button>
                 </UserSetting>
@@ -244,7 +249,12 @@ const NavigationLink = ({
         onClick={() => triggerEdgeDrawer()}
       >
         {variant !== "nested" && (
-          <navigationItem.icon className="jun-sidebarIcon size-4" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="jun-sidebarIcon size-4"
+            icon={navigationItem.icon}
+            strokeWidth={2}
+          />
         )}
         <span className="jun-sidebarText">{label}</span>
       </Link>
@@ -273,11 +283,16 @@ const CollapsibleMenu = ({ menu }: { menu: GroupedNavigationItem }) => {
           aria-controls={contentId}
           onClick={() => setOpen((current) => !current)}
         >
-          <menu.icon className="jun-sidebarIcon" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="jun-sidebarIcon"
+            icon={menu.icon}
+            strokeWidth={2}
+          />
           <div className="jun-sidebarText flex items-center">
             <span className="min-w-0 flex-1">{t(menu.labelKey)}</span>
           </div>
-          <ChevronDown
+          <HugeiconsIcon icon={ChevronDownHugeIcon} strokeWidth={2}
             className={cn(
               "jun-sidebarText pointer-events-none absolute right-2 size-4 transition-transform",
               open && "rotate-180",

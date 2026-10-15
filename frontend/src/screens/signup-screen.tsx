@@ -1,6 +1,12 @@
 import { Link, Navigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Lock, Mail, UserRound } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon as ArrowLeftHugeIcon,
+  LockPasswordIcon as LockHugeIcon,
+  Mail01Icon as MailHugeIcon,
+  UserIcon as UserRoundHugeIcon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -59,21 +65,21 @@ export function SignupScreen() {
         title: t("auth:signup.steps.name.title"),
         description: t("auth:signup.steps.name.description"),
         placeholder: t("auth:signup.steps.name.placeholder"),
-        icon: UserRound,
+        icon: UserRoundHugeIcon,
         type: "text" as const,
       },
       {
         title: t("auth:signup.steps.email.title"),
         description: t("auth:signup.steps.email.description"),
         placeholder: t("auth:signup.steps.email.placeholder"),
-        icon: Mail,
+        icon: MailHugeIcon,
         type: "email" as const,
       },
       {
         title: t("auth:signup.steps.password.title"),
         description: t("auth:signup.steps.password.description"),
         placeholder: t("auth:signup.steps.password.placeholder"),
-        icon: Lock,
+        icon: LockHugeIcon,
         type: "password" as const,
       },
     ],
@@ -243,7 +249,7 @@ export function SignupScreen() {
                 inputProps={{
                   type: "text",
                   placeholder: t("auth:signup.steps.name.placeholder"),
-                  leftIcon: UserRound,
+                  leftIcon: UserRoundHugeIcon,
                 }}
               />
             </div>
@@ -264,7 +270,7 @@ export function SignupScreen() {
                 inputProps={{
                   type: "email",
                   placeholder: t("auth:signup.steps.email.placeholder"),
-                  leftIcon: Mail,
+                  leftIcon: MailHugeIcon,
                 }}
               />
             </div>
@@ -284,7 +290,7 @@ export function SignupScreen() {
                 label={t("common:form.password")}
                 inputProps={{
                   placeholder: t("auth:signup.steps.password.placeholder"),
-                  leftIcon: Lock,
+                  leftIcon: LockHugeIcon,
                 }}
               />
             </div>
@@ -305,7 +311,7 @@ export function SignupScreen() {
                 variant="outline"
                 className="h-12 px-4"
               >
-                <ArrowLeft className="size-4" />
+                <HugeiconsIcon icon={ArrowLeftHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
               </Button>
             ) : null}
             <Button
