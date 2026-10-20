@@ -1,8 +1,6 @@
 import { Input, type InputProps } from "@/components/common/input";
 import { cn } from "@/lib/utils";
-import {
-  Clock03Icon as Clock3HugeIcon,
-} from "@hugeicons/core-free-icons";
+import { Clock03Icon as Clock3HugeIcon } from "@hugeicons/core-free-icons";
 import { type ChangeEvent, type FocusEvent, useId, useState } from "react";
 import { FormField } from "./form-field";
 
@@ -68,6 +66,7 @@ function TimeField({
       required={required}
       disabled={disabled}
       orientation={orientation}
+      className="min-w-0"
     >
       <div className="relative w-full">
         <Input

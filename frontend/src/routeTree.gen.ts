@@ -9,52 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LineLinkRouteImport } from './routes/line-link'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LineLinkRouteImport } from './routes/line-link'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
-import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
-import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
-import { Route as LayoutSchedulesRouteImport } from './routes/_layout/schedules'
-import { Route as LayoutCoursesRouteImport } from './routes/_layout/courses'
 import { Route as LayoutClassesRouteImport } from './routes/_layout/classes'
-import { Route as LayoutStudentsIndexRouteImport } from './routes/_layout/students/index'
-import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
-import { Route as LayoutCoursesIndexRouteImport } from './routes/_layout/courses/index'
+import { Route as LayoutCoursesRouteImport } from './routes/_layout/courses'
+import { Route as LayoutSchedulesRouteImport } from './routes/_layout/schedules'
+import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutStudentsRouteImport } from './routes/_layout/students'
 import { Route as LayoutClassesIndexRouteImport } from './routes/_layout/classes/index'
-import { Route as LayoutStudentsStudentIdRouteImport } from './routes/_layout/students/$studentId'
-import { Route as LayoutSettingsLineRouteImport } from './routes/_layout/settings/line'
-import { Route as LayoutSettingsAccountRouteImport } from './routes/_layout/settings/account'
-import { Route as LayoutCoursesCourseIdRouteImport } from './routes/_layout/courses/$courseId'
 import { Route as LayoutClassesClassIdRouteImport } from './routes/_layout/classes/$classId'
+import { Route as LayoutCoursesIndexRouteImport } from './routes/_layout/courses/index'
+import { Route as LayoutCoursesCourseIdRouteImport } from './routes/_layout/courses/$courseId'
+import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
+import { Route as LayoutSettingsAccountRouteImport } from './routes/_layout/settings/account'
+import { Route as LayoutSettingsLineRouteImport } from './routes/_layout/settings/line'
+import { Route as LayoutStudentsIndexRouteImport } from './routes/_layout/students/index'
+import { Route as LayoutStudentsStudentIdRouteImport } from './routes/_layout/students/$studentId'
 
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LineLinkRoute = LineLinkRouteImport.update({
-  id: '/line-link',
-  path: '/line-link',
+const LayoutRoute = LayoutRouteImport.update({
+  id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -62,8 +41,29 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LayoutRoute = LayoutRouteImport.update({
-  id: '/_layout',
+const LineLinkRoute = LineLinkRouteImport.update({
+  id: '/line-link',
+  path: '/line-link',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
@@ -71,19 +71,9 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutStudentsRoute = LayoutStudentsRouteImport.update({
-  id: '/students',
-  path: '/students',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutSchedulesRoute = LayoutSchedulesRouteImport.update({
-  id: '/schedules',
-  path: '/schedules',
+const LayoutClassesRoute = LayoutClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutCoursesRoute = LayoutCoursesRouteImport.update({
@@ -91,22 +81,32 @@ const LayoutCoursesRoute = LayoutCoursesRouteImport.update({
   path: '/courses',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutClassesRoute = LayoutClassesRouteImport.update({
-  id: '/classes',
-  path: '/classes',
+const LayoutSchedulesRoute = LayoutSchedulesRouteImport.update({
+  id: '/schedules',
+  path: '/schedules',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutStudentsIndexRoute = LayoutStudentsIndexRouteImport.update({
+const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutStudentsRoute = LayoutStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutClassesIndexRoute = LayoutClassesIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LayoutStudentsRoute,
+  getParentRoute: () => LayoutClassesRoute,
 } as any).lazy(() =>
-  import('./routes/_layout/students/index.lazy').then((d) => d.Route),
+  import('./routes/_layout/classes/index.lazy').then((d) => d.Route),
 )
-const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutSettingsRoute,
+const LayoutClassesClassIdRoute = LayoutClassesClassIdRouteImport.update({
+  id: '/$classId',
+  path: '/$classId',
+  getParentRoute: () => LayoutClassesRoute,
 } as any)
 const LayoutCoursesIndexRoute = LayoutCoursesIndexRouteImport.update({
   id: '/',
@@ -115,21 +115,14 @@ const LayoutCoursesIndexRoute = LayoutCoursesIndexRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_layout/courses/index.lazy').then((d) => d.Route),
 )
-const LayoutClassesIndexRoute = LayoutClassesIndexRouteImport.update({
+const LayoutCoursesCourseIdRoute = LayoutCoursesCourseIdRouteImport.update({
+  id: '/$courseId',
+  path: '/$courseId',
+  getParentRoute: () => LayoutCoursesRoute,
+} as any)
+const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LayoutClassesRoute,
-} as any).lazy(() =>
-  import('./routes/_layout/classes/index.lazy').then((d) => d.Route),
-)
-const LayoutStudentsStudentIdRoute = LayoutStudentsStudentIdRouteImport.update({
-  id: '/$studentId',
-  path: '/$studentId',
-  getParentRoute: () => LayoutStudentsRoute,
-} as any)
-const LayoutSettingsLineRoute = LayoutSettingsLineRouteImport.update({
-  id: '/line',
-  path: '/line',
   getParentRoute: () => LayoutSettingsRoute,
 } as any)
 const LayoutSettingsAccountRoute = LayoutSettingsAccountRouteImport.update({
@@ -137,15 +130,22 @@ const LayoutSettingsAccountRoute = LayoutSettingsAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => LayoutSettingsRoute,
 } as any)
-const LayoutCoursesCourseIdRoute = LayoutCoursesCourseIdRouteImport.update({
-  id: '/$courseId',
-  path: '/$courseId',
-  getParentRoute: () => LayoutCoursesRoute,
+const LayoutSettingsLineRoute = LayoutSettingsLineRouteImport.update({
+  id: '/line',
+  path: '/line',
+  getParentRoute: () => LayoutSettingsRoute,
 } as any)
-const LayoutClassesClassIdRoute = LayoutClassesClassIdRouteImport.update({
-  id: '/$classId',
-  path: '/$classId',
-  getParentRoute: () => LayoutClassesRoute,
+const LayoutStudentsIndexRoute = LayoutStudentsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutStudentsRoute,
+} as any).lazy(() =>
+  import('./routes/_layout/students/index.lazy').then((d) => d.Route),
+)
+const LayoutStudentsStudentIdRoute = LayoutStudentsStudentIdRouteImport.update({
+  id: '/$studentId',
+  path: '/$studentId',
+  getParentRoute: () => LayoutStudentsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -296,39 +296,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/line-link': {
-      id: '/line-link'
-      path: '/line-link'
-      fullPath: '/line-link'
-      preLoaderRoute: typeof LineLinkRouteImport
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -338,11 +310,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_layout': {
-      id: '/_layout'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof LayoutRouteImport
+    '/line-link': {
+      id: '/line-link'
+      path: '/line-link'
+      fullPath: '/line-link'
+      preLoaderRoute: typeof LineLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/': {
@@ -352,25 +352,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/students': {
-      id: '/_layout/students'
-      path: '/students'
-      fullPath: '/students'
-      preLoaderRoute: typeof LayoutStudentsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/settings': {
-      id: '/_layout/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof LayoutSettingsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/schedules': {
-      id: '/_layout/schedules'
-      path: '/schedules'
-      fullPath: '/schedules'
-      preLoaderRoute: typeof LayoutSchedulesRouteImport
+    '/_layout/classes': {
+      id: '/_layout/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof LayoutClassesRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/courses': {
@@ -380,33 +366,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutCoursesRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/classes': {
-      id: '/_layout/classes'
-      path: '/classes'
-      fullPath: '/classes'
-      preLoaderRoute: typeof LayoutClassesRouteImport
+    '/_layout/schedules': {
+      id: '/_layout/schedules'
+      path: '/schedules'
+      fullPath: '/schedules'
+      preLoaderRoute: typeof LayoutSchedulesRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/students/': {
-      id: '/_layout/students/'
-      path: '/'
-      fullPath: '/students/'
-      preLoaderRoute: typeof LayoutStudentsIndexRouteImport
-      parentRoute: typeof LayoutStudentsRoute
+    '/_layout/settings': {
+      id: '/_layout/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof LayoutSettingsRouteImport
+      parentRoute: typeof LayoutRoute
     }
-    '/_layout/settings/': {
-      id: '/_layout/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof LayoutSettingsIndexRouteImport
-      parentRoute: typeof LayoutSettingsRoute
-    }
-    '/_layout/courses/': {
-      id: '/_layout/courses/'
-      path: '/'
-      fullPath: '/courses/'
-      preLoaderRoute: typeof LayoutCoursesIndexRouteImport
-      parentRoute: typeof LayoutCoursesRoute
+    '/_layout/students': {
+      id: '/_layout/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof LayoutStudentsRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/classes/': {
       id: '/_layout/classes/'
@@ -415,18 +394,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutClassesIndexRouteImport
       parentRoute: typeof LayoutClassesRoute
     }
-    '/_layout/students/$studentId': {
-      id: '/_layout/students/$studentId'
-      path: '/$studentId'
-      fullPath: '/students/$studentId'
-      preLoaderRoute: typeof LayoutStudentsStudentIdRouteImport
-      parentRoute: typeof LayoutStudentsRoute
+    '/_layout/classes/$classId': {
+      id: '/_layout/classes/$classId'
+      path: '/$classId'
+      fullPath: '/classes/$classId'
+      preLoaderRoute: typeof LayoutClassesClassIdRouteImport
+      parentRoute: typeof LayoutClassesRoute
     }
-    '/_layout/settings/line': {
-      id: '/_layout/settings/line'
-      path: '/line'
-      fullPath: '/settings/line'
-      preLoaderRoute: typeof LayoutSettingsLineRouteImport
+    '/_layout/courses/': {
+      id: '/_layout/courses/'
+      path: '/'
+      fullPath: '/courses/'
+      preLoaderRoute: typeof LayoutCoursesIndexRouteImport
+      parentRoute: typeof LayoutCoursesRoute
+    }
+    '/_layout/courses/$courseId': {
+      id: '/_layout/courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/courses/$courseId'
+      preLoaderRoute: typeof LayoutCoursesCourseIdRouteImport
+      parentRoute: typeof LayoutCoursesRoute
+    }
+    '/_layout/settings/': {
+      id: '/_layout/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof LayoutSettingsIndexRouteImport
       parentRoute: typeof LayoutSettingsRoute
     }
     '/_layout/settings/account': {
@@ -436,19 +429,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsAccountRouteImport
       parentRoute: typeof LayoutSettingsRoute
     }
-    '/_layout/courses/$courseId': {
-      id: '/_layout/courses/$courseId'
-      path: '/$courseId'
-      fullPath: '/courses/$courseId'
-      preLoaderRoute: typeof LayoutCoursesCourseIdRouteImport
-      parentRoute: typeof LayoutCoursesRoute
+    '/_layout/settings/line': {
+      id: '/_layout/settings/line'
+      path: '/line'
+      fullPath: '/settings/line'
+      preLoaderRoute: typeof LayoutSettingsLineRouteImport
+      parentRoute: typeof LayoutSettingsRoute
     }
-    '/_layout/classes/$classId': {
-      id: '/_layout/classes/$classId'
-      path: '/$classId'
-      fullPath: '/classes/$classId'
-      preLoaderRoute: typeof LayoutClassesClassIdRouteImport
-      parentRoute: typeof LayoutClassesRoute
+    '/_layout/students/': {
+      id: '/_layout/students/'
+      path: '/'
+      fullPath: '/students/'
+      preLoaderRoute: typeof LayoutStudentsIndexRouteImport
+      parentRoute: typeof LayoutStudentsRoute
+    }
+    '/_layout/students/$studentId': {
+      id: '/_layout/students/$studentId'
+      path: '/$studentId'
+      fullPath: '/students/$studentId'
+      preLoaderRoute: typeof LayoutStudentsStudentIdRouteImport
+      parentRoute: typeof LayoutStudentsRoute
     }
   }
 }
