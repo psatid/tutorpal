@@ -4850,15 +4850,16 @@
         "tags": [
           "line"
         ],
-        "description": "LINE OAuth callback — exchanges code and links student",
+        "description": "Handle LINE callbacks for student linking and test-recipient authorization, redirecting provider errors to the relevant frontend result.",
         "parameters": [
           {
             "name": "code",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Authorization code returned only after successful LINE authorization; absent when LINE returns an OAuth error."
           },
           {
             "name": "state",
@@ -4866,12 +4867,22 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "State returned by LINE. TutorPal uses it to classify and correlate the callback; missing state redirects to line-link?error=missing_params."
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "LINE OAuth error code returned when authorization fails."
           }
         ],
         "responses": {
           "302": {
-            "description": "Redirects to frontend success/error page"
+            "description": "Redirects student linking to success or error feedback and test-recipient authorization to connected or error feedback."
           }
         }
       }

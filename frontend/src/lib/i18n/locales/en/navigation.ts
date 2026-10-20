@@ -4,6 +4,7 @@ export default {
   classes: "Classes",
   courses: "Courses",
   schedules: "Schedules",
+  integrations: "Integrations",
   settings: "Settings",
   lineConnection: "LINE connection",
   primaryNavigation: "Primary navigation",

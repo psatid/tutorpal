@@ -55,6 +55,7 @@ export interface ILineRepository {
 		expiresAt: Date;
 		usedAt: Date | null;
 	} | null>;
+	hasToken(token: string): Promise<boolean>;
 	markTokenUsed(tokenId: string): Promise<void>;
 	findConnectionByTutorId(
 		tutorId: string,
@@ -72,6 +73,7 @@ export interface ILineRepository {
 		expiresAt: Date;
 		usedAt: Date | null;
 	} | null>;
+	hasTestRecipientToken(token: string): Promise<boolean>;
 	markTestRecipientTokenUsed(tokenId: string): Promise<void>;
 	setTestRecipient(connectionId: string, lineUserId: string): Promise<void>;
 }

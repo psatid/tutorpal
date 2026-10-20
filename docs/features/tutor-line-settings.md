@@ -2,19 +2,23 @@
 
 ## Overview
 
-Tutors now configure their own LINE Official Account instead of sharing one
-application-wide Messaging API token. Settings is a sidebar group with a
-dedicated LINE connection screen as its first item.
+Tutors configure their own LINE Official Account instead of sharing one
+application-wide Messaging API token. Messaging integrations are grouped under
+Integrations, separate from Account settings and social sign-in.
 
 ## Settings experience
 
-- `/settings` and `/settings/` redirect to `/settings/line` for compatibility
-  with existing links.
-- The Settings sidebar group contains a `LINE connection` child at
-  `/settings/line` and expands automatically while that route is active.
-- `/settings/line` lets a tutor save and verify their Messaging API token and
+- `/settings` and `/settings/` redirect to `/settings/account`.
+- The side rail links directly to `/integrations`; Account remains available in
+  the user menu.
+- `/integrations` groups LINE under Messaging and lists Zoom and Google Meet as
+  coming soon under Online classes.
+- `/integrations/line` lets a tutor save and verify their Messaging API token and
   LINE Login credentials, connect their own LINE account for test messages,
   and send a private test message.
+- `/settings/line` is a compatibility redirect to `/integrations/line` and
+  preserves only recognized `testRecipient=connected` or `testRecipient=error`
+  callback values.
 - The LINE connection screen keeps the global authenticated layout and uses a
   connection summary, a divider-led test/credentials surface, and a focused
   setup or edit form.

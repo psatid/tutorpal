@@ -438,9 +438,15 @@ muted.
 
 The desktop rail is white with a `border` divider and `secondary-foreground`
 text. The current route uses `aria-current="page"` with indigo text at 600 and
-no fill. Hover uses `background` (#F6F9FC). Groups (Settings) expand with a
-rotating chevron. The user menu sits at the bottom with an indigo initials
-avatar. The mobile header is a white `jun-header` bar with a bottom hairline.
+no fill. Hover uses `background` (#F6F9FC). Integrations follows Students as a
+direct item. Account access remains in the user menu, which sits at the bottom
+with an indigo initials avatar. The mobile header is a white `jun-header` bar
+with a bottom hairline.
+
+The Integrations screen uses a centered 960px content column. Provider cards
+use a 48px muted mark tile, a title and one-line description, a text-plus-icon
+status badge, and a 44px action. Messaging and Online classes are separate
+groups. Coming-soon providers remain informational and are not focusable.
 
 Breadcrumbs use a semantic navigation landmark with an ordered trail. Ancestors
 are router links that underline on hover; the current page is medium weight and

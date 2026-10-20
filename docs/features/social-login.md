@@ -14,8 +14,8 @@ change the admin portal.
   policy. Different email addresses are not accepted, and no trusted-provider
   bypass is configured.
 - LINE can be connected after password or Google sign-in from
-  `/settings/account`. The existing LINE messaging credentials page remains
-  `/settings/line`.
+  `/settings/account`. LINE messaging credentials are managed separately at
+  `/integrations/line`; `/settings/line` redirects there for compatibility.
 
 ## Provider configuration
 

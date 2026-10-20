@@ -5,7 +5,6 @@ import {
   Home01Icon as HomeIconHugeIcon,
   Message01Icon as MessageCircleIconHugeIcon,
   BoardMathIcon as BoardMathIconHugeIcon,
-  Settings01Icon as SettingsIconHugeIcon,
   UserGroupIcon as UsersIconHugeIcon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
@@ -51,15 +50,9 @@ export const SIDE_BAR_CONFIG: readonly NavigationItem[] = [
     icon: UsersIconHugeIcon,
   },
   {
-    labelKey: "navigation:settings",
-    icon: SettingsIconHugeIcon,
-    items: [
-      {
-        labelKey: "navigation:lineConnection",
-        href: APP_ROUTES.LINE_SETTINGS,
-        icon: MessageCircleIconHugeIcon,
-      },
-    ],
+    labelKey: "navigation:integrations",
+    href: APP_ROUTES.INTEGRATIONS,
+    icon: MessageCircleIconHugeIcon,
   },
 ] as const;
 

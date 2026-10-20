@@ -23,6 +23,8 @@ export type LineServiceRuntimeDependencies = {
 	credentialCipher: LineCredentialCipher;
 };
 
+export type LineCallbackStateKind = "student" | "test-recipient" | "unknown";
+
 function createLocalLineServiceRuntimeDependencies(): LineServiceRuntimeDependencies {
 	const config = getLocalAppConfig();
 
@@ -241,6 +243,16 @@ export class LineService {
 			success: true,
 			displayName: profile.displayName,
 		};
+	}
+
+	async classifyCallbackState(state: string): Promise<LineCallbackStateKind> {
+		if (await this.repository.hasToken(state)) {
+			return "student";
+		}
+		if (await this.repository.hasTestRecipientToken(state)) {
+			return "test-recipient";
+		}
+		return "unknown";
 	}
 
 	async sendTestMessage(studentId: string, tutorId: string) {

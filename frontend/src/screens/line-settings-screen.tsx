@@ -1,5 +1,6 @@
 import { type FormEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CheckmarkCircle02Icon as CheckCircle2HugeIcon,
@@ -67,13 +68,19 @@ function connectionError(error: unknown, t: TFunction, fallback: string) {
     : fallback;
 }
 
-export function LineSettingsScreen() {
+export function LineSettingsScreen({
+  testRecipient,
+}: {
+  testRecipient?: "connected" | "error";
+}) {
   const { t } = useTranslation(["settings"]);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [credentials, setCredentials] = useState(emptyCredentials);
   const editCredentialsRef = useRef<HTMLButtonElement>(null);
   const formHeadingRef = useRef<HTMLHeadingElement>(null);
+  const handledTestRecipientRef = useRef<string | null>(null);
   const connection = useLineConnection();
 
   const save = useMutation({
@@ -100,17 +107,24 @@ export function LineSettingsScreen() {
   });
 
   useEffect(() => {
-    const testRecipient = new URLSearchParams(window.location.search).get("testRecipient");
-    if (testRecipient === "connected") {
-      queryClient.invalidateQueries({ queryKey: lineQueryKeys.connection() });
-      toast.success(t("settings:line.testAccountConnected"));
-      window.history.replaceState({}, "", "/settings/line");
-    }
+    if (!testRecipient || handledTestRecipientRef.current === testRecipient) return;
+
+    handledTestRecipientRef.current = testRecipient;
+    void navigate({ to: "/integrations/line", search: {}, replace: true });
+
     if (testRecipient === "error") {
       toast.error(t("settings:line.testAccountFailed"));
-      window.history.replaceState({}, "", "/settings/line");
+      return;
     }
-  }, [queryClient, t]);
+
+    void connection.refetch().then((result) => {
+      if (!result.isError && result.data?.testRecipientConnected) {
+        toast.success(t("settings:line.testAccountConnected"));
+      } else {
+        toast.error(t("settings:line.testAccountFailed"));
+      }
+    });
+  }, [connection.refetch, navigate, t, testRecipient]);
 
   useEffect(() => {
     if (!editing) return;

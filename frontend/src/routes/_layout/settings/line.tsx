@@ -1,21 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { ScreenLayout } from "@/components/layout/screen-layout";
-import { LineSettingsScreen } from "@/screens/line-settings-screen";
+import { APP_ROUTES } from "@/constants/routes";
 
 const lineSettingsSearch = z.object({
-  testRecipient: z.enum(["connected", "error"]).optional(),
+  testRecipient: z.enum(["connected", "error"]).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/_layout/settings/line")({
   validateSearch: lineSettingsSearch,
-  component: LineSettingsRoute,
+  beforeLoad: ({ search }) => {
+    throw redirect({
+      to: APP_ROUTES.LINE_INTEGRATION,
+      search,
+      replace: true,
+    });
+  },
 });
-
-function LineSettingsRoute() {
-  return (
-    <ScreenLayout>
-      <LineSettingsScreen />
-    </ScreenLayout>
-  );
-}
