@@ -1,7 +1,9 @@
-# React Query and Domain Model Convention
+# React Query API Integration
 
 This guide defines how TutorPal integrates API-backed server state with TanStack
-Query. Use it for new features and when refactoring existing ones.
+Query. Use it for new features and when refactoring existing ones. Model
+ownership and behavior are defined in
+[Frontend Domain Model Conventions](domain-models.md).
 
 > **Adoption status:** students are the reference implementation for this
 > convention. Students, classes, and courses now use raw `use-fetch-*.ts`
@@ -18,8 +20,8 @@ output is regenerated automatically before development and production builds.
 - Give every API caller one focused, reusable raw query hook.
 - Transform raw payloads into class-based domain models with `select`.
 - Keep API schema knowledge out of screens and components.
-- Centralize entity behavior, formatting, status checks, and UI-ready derived
-  data in model classes.
+- Select class-based models from feature hooks; follow the
+  [domain model guide](domain-models.md) for model responsibilities.
 - Use stable, resource-owned query keys and explicit cache reconciliation.
 
 ## Data flow
@@ -51,7 +53,8 @@ The target ownership is:
 - `src/types/base-query.ts` — shared query-option contracts.
 - `src/hooks/queries/` — raw endpoint hooks and feature/domain hooks.
 - `src/hooks/mutations/` — write operations and cache reconciliation.
-- `src/models/` — domain model classes and their internal plain data types.
+- `src/models/` — domain model classes and their internal plain data types; see
+  [Frontend Domain Model Conventions](domain-models.md).
 - `src/screens/` and `src/components/` — rendering, local interaction state,
   and translated copy.
 
@@ -222,122 +225,12 @@ instance. For infinite queries, select `InfiniteData<RawPage>` into an object
 whose `pages` are those same plain envelopes and whose `pageParams` are
 preserved.
 
-## 5. Encapsulate mapping and behavior in model classes
+## 5. Keep model behavior in the model layer
 
-Models are classes, not exported mapper functions or passive response aliases.
-They own a private internal plain-data shape, static factory methods for API
-responses, and the behavior required by their consumers.
-
-```ts
-import type { GetV1Students200DataItem } from
-  "@/api/generated/models/getV1Students200DataItem";
-import type { GetV1StudentsById200 } from
-  "@/api/generated/models/getV1StudentsById200";
-
-export type StudentDetails = {
-  id: string;
-  name: string;
-  phoneNumber: string | null;
-  grade: number;
-  lineLinkStatus: "linked" | "needs_relink" | "not_linked";
-  classes: Array<{
-    id: string;
-    displayName: string;
-    totalHours: number;
-    remainingHours?: number;
-  }>;
-};
-
-export class Student {
-  constructor(private readonly data: StudentDetails) {}
-
-  static fromListItem(response: GetV1Students200DataItem): Student {
-    return new Student({
-      id: response.id,
-      name: response.name,
-      phoneNumber: response.phoneNumber,
-      grade: response.grade,
-      lineLinkStatus: response.lineLinkStatus,
-      classes: [],
-    });
-  }
-
-  static fromGetStudentByIdResponse(response: GetV1StudentsById200): Student {
-    return new Student({
-      id: response.id,
-      name: response.name,
-      phoneNumber: response.phoneNumber,
-      grade: response.grade,
-      lineLinkStatus: response.lineLinkStatus,
-      classes: response.classes.map((classItem) => ({
-        id: classItem.id,
-        displayName: classItem.displayName,
-        totalHours: classItem.totalHours,
-        remainingHours: classItem.remainingHours,
-      })),
-    });
-  }
-
-  getId() {
-    return this.data.id;
-  }
-
-  getName() {
-    return this.data.name;
-  }
-
-  getInitials() {
-    return this.data.name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  }
-
-  isLineLinked() {
-    return this.data.lineLinkStatus === "linked";
-  }
-
-  needsLineRelink() {
-    return this.data.lineLinkStatus === "needs_relink";
-  }
-
-  getListItemData() {
-    return {
-      id: this.getId(),
-      name: this.getName(),
-      initials: this.getInitials(),
-      phoneNumber: this.data.phoneNumber,
-      grade: this.data.grade,
-      isLineLinked: this.isLineLinked(),
-      needsLineRelink: this.needsLineRelink(),
-    };
-  }
-
-  getClasses() {
-    return this.data.classes;
-  }
-}
-```
-
-Rules:
-
-- Within a model module, generated types may be imported only for static
-  factories and their private helpers. The model's stored data and public return
-  types are application-owned plain types.
-- Do not export `toStudent`, `mapStudent`, or similar standalone mappers.
-  Private normalization helpers in the same file are allowed when a factory is
-  complex, but callers use only the model factory.
-- Keep raw fields private. Expose focused getters, predicates, formatters, and
-  view-data methods instead of a public `data` object.
-- Put entity-specific business logic, status checks, initials, date/hour
-  formatting, and UI-ready derived values on the model. Locale-sensitive
-  formatting may accept a locale or call a shared non-React utility.
-- Do not import React, React hooks, router hooks, or i18n hooks into models.
-  Components retain translated labels and interaction behavior.
-- A model may provide multiple factories for different API response shapes,
-  such as list items and detail responses.
+Feature hooks should select model instances through the model's response
+factories, as shown above. Keep model ownership, mapping, formatting, and state
+transition rules in the
+[Frontend Domain Model Conventions](domain-models.md) guide.
 
 ## 6. Keep components API-agnostic
 
@@ -346,10 +239,9 @@ UI state. Components receive model instances or values returned by model
 methods. They must not import generated API types, call generated client
 methods, or construct query-key arrays.
 
-Prefer model methods such as `student.getListItemData()` or
-`student.isLineLinked()` over repeating field access and formatting in every
-component. Keep translated strings in components; models return semantic data
-and booleans, not translated copy.
+Use model methods for domain-derived values instead of repeating calculations
+in screens and components. Keep translated strings and presentation behavior in
+the UI; see the [domain model guide](domain-models.md) for the boundary.
 
 ## 7. Infinite queries
 
@@ -401,8 +293,8 @@ Rules:
 - [ ] Add the resource key factory in `src/constants/query-keys/`.
 - [ ] Add a raw query hook for the endpoint; return `response.data`.
 - [ ] Add a feature hook with a stable selector that creates model instances.
-- [ ] Add a model class with private plain data and static response factories.
-- [ ] Put formatting, predicates, and reusable derived data on the model.
+- [ ] Add or select a model according to the
+  [domain model convention](domain-models.md).
 - [ ] Keep generated API types out of screens and components.
 - [ ] Use `BaseInfiniteQuery` for infinite endpoints.
 - [ ] Handle pending, error, empty, and background-fetch states explicitly.

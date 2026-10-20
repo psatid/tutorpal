@@ -1,8 +1,11 @@
 # Frontend Form Handling
 
-TutorPal forms use Zod for validation and normalization, React Hook Form for
-state, and the adapters in `frontend/src/components/common/form/` for consistent
-labels, descriptions, errors, disabled states, and controls.
+TutorPal forms use Zod for form input/output shape, parsing, and localized
+field validation; React Hook Form owns draft state; and the adapters in
+`frontend/src/components/common/form/` provide consistent labels, descriptions,
+errors, disabled states, and controls. Domain rules and calculations belong to
+the [frontend domain model](domain-models.md); schemas may call model behavior
+and translate its result into a localized field issue.
 
 Use `frontend/src/components/schedules/schedule-drawer.tsx` as the reference
 for forms that load existing data, switch between create/view/edit modes, or
@@ -24,8 +27,12 @@ Zod schema and inferred types
 ## 1. Define a translated schema factory outside the component
 
 Keep feature schemas and their inferred types under `frontend/src/types/`.
-The schema is the source of truth for validation and should also normalize
-values before submission, such as trimming names or converting numeric input.
+The schema is the source of truth for the form's input/output contract,
+field-level validation, and localized errors. It may normalize control values
+for submission, such as trimming text or converting numeric input. Put reusable
+business invariants and domain-specific calculations in the owning model, then
+have the schema call that model behavior when validation needs it. See the
+[frontend domain model convention](domain-models.md).
 
 Validation messages must be created with the current translator rather than at
 module load. Export a schema factory that accepts `TFunction`, call it from the
@@ -65,7 +72,8 @@ const form = useForm<CourseFormInput, unknown, CourseFormData>({
 ```
 
 `CourseFormInput` describes values held by controls. `CourseFormData` describes
-the validated, normalized object received by the submit handler.
+the validated, form-normalized object received by the submit handler. The model
+owns any additional domain normalization needed across different callers.
 
 ## 2. Use the shared React Hook Form adapters
 
