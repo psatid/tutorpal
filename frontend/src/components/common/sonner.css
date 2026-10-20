@@ -3,9 +3,9 @@
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-styled="true"] {
-  --toast-accent: #533afd;
-  --toast-icon-background: #4434d4;
-  --toast-icon: #ffffff;
+  --toast-accent: var(--primary);
+  --toast-icon-background: var(--primary-hover);
+  --toast-icon: var(--primary-foreground);
   background: var(--popover);
   border: 1px solid var(--border);
   border-left: 4px solid var(--toast-accent);
@@ -19,28 +19,28 @@
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-type="success"] {
-  --toast-accent: #42d16b;
-  --toast-icon-background: #1e9148;
+  --toast-accent: var(--success);
+  --toast-icon-background: var(--success);
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-type="info"] {
-  --toast-accent: #3189e8;
-  --toast-icon-background: #1d6fcf;
+  --toast-accent: var(--info);
+  --toast-icon-background: var(--info);
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-type="warning"] {
-  --toast-accent: #ffc326;
-  --toast-icon-background: #a96a00;
+  --toast-accent: var(--warning);
+  --toast-icon-background: var(--warning);
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-type="error"] {
-  --toast-accent: #ff345f;
-  --toast-icon-background: #df1e49;
+  --toast-accent: var(--destructive);
+  --toast-icon-background: var(--destructive);
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-type="loading"] {
-  --toast-accent: #533afd;
-  --toast-icon-background: #4434d4;
+  --toast-accent: var(--primary);
+  --toast-icon-background: var(--primary-hover);
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast] [data-icon] {
@@ -86,8 +86,8 @@
 }
 
 [data-sonner-toaster].toaster [data-sonner-toast][data-styled="true"] [data-button] {
-  background: #533afd;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   border-radius: 6px;
   flex: 0 0 auto;
 }

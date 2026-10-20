@@ -120,10 +120,10 @@ export function ClassInfoHeader({
 					)}
 				</section>
 
-				<section aria-labelledby="class-balance-title" className="rounded-lg bg-overlay-navy p-4">
+				<section aria-labelledby="class-balance-title" className="rounded-lg bg-inverse p-4">
 					<div className="flex items-center justify-between gap-3">
 						<p
-							className="text-xs font-medium uppercase tracking-[0.12em] text-white/70"
+							className="text-xs font-medium uppercase tracking-[0.12em] text-inverse-foreground/70"
 							id="class-balance-title"
 						>
 							{t("classes:balance.label")}
@@ -134,7 +134,7 @@ export function ClassInfoHeader({
 								"size-4",
 								data.balanceState === "exhausted"
 									? "text-warning-container"
-									: "text-white/75",
+									: "text-inverse-foreground/75",
 							)}
 							icon={BalanceIcon}
 							strokeWidth={2}
@@ -142,19 +142,19 @@ export function ClassInfoHeader({
 					</div>
 					<p
 						className={cn(
-							"mt-2 text-2xl font-semibold tabular-nums tracking-[-0.02em] text-white",
+							"mt-2 text-2xl font-semibold tabular-nums tracking-[-0.02em] text-inverse-foreground",
 							data.balanceState === "exhausted" && "text-warning-container",
 						)}
 					>
 						{balanceLabel}
 					</p>
-					<p className="mt-1 text-sm text-white/70 tabular-nums">
+					<p className="mt-1 text-sm text-inverse-foreground/70 tabular-nums">
 						{t("classes:balance.total", {
 							hours: data.formattedTotalHours,
 						})}
 					</p>
-					<div className="mt-4 border-t border-white/20 pt-4">
-						<p className="text-sm tabular-nums text-white">
+					<div className="mt-4 border-t border-inverse-foreground/20 pt-4">
+						<p className="text-sm tabular-nums text-inverse-foreground">
 							{t("classes:balance.accounting", {
 								scheduled: data.formattedScheduledHours,
 								used: data.formattedUsedHours,
@@ -171,7 +171,7 @@ export function ClassInfoHeader({
 								used: data.formattedUsedHours,
 								total: data.formattedTotalHours,
 							})}
-							className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/20"
+							className="mt-3 h-1.5 overflow-hidden rounded-full bg-inverse-foreground/20"
 							role="progressbar"
 						>
 							<span
@@ -184,11 +184,11 @@ export function ClassInfoHeader({
 							/>
 						</div>
 					) : null}
-					<div className="mt-4 border-t border-white/20 pt-4">
-						<p className="text-xs font-medium uppercase tracking-[0.12em] text-white/70">
+					<div className="mt-4 border-t border-inverse-foreground/20 pt-4">
+						<p className="text-xs font-medium uppercase tracking-[0.12em] text-inverse-foreground/70">
 							{t("classes:revenue.label")}
 						</p>
-						<p className="mt-1 text-lg font-semibold tabular-nums text-white">
+						<p className="mt-1 text-lg font-semibold tabular-nums text-inverse-foreground">
 							{data.formattedRecordedRevenue ??
 								t("classes:revenue.notRecorded")}
 						</p>

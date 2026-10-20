@@ -404,7 +404,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
           </div>
           <div className="ml-auto flex shrink-0 items-center justify-end gap-2 whitespace-nowrap">
             <Button
-              className="relative isolate h-11 border-transparent bg-transparent hover:bg-transparent aria-expanded:bg-transparent dark:bg-transparent dark:hover:bg-transparent dark:aria-expanded:bg-transparent before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1.5 before:z-[-1] before:rounded-full before:border before:border-input before:bg-white hover:before:bg-muted aria-expanded:before:bg-muted dark:before:bg-card"
+              className="relative isolate h-11 border-transparent bg-transparent hover:bg-transparent aria-expanded:bg-transparent dark:bg-transparent dark:hover:bg-transparent dark:aria-expanded:bg-transparent before:pointer-events-none before:absolute before:inset-x-0 before:inset-y-1.5 before:z-[-1] before:rounded-full before:border before:border-input before:bg-card hover:before:bg-muted aria-expanded:before:bg-muted"
               variant="outline"
               size="sm"
               onClick={handleToday}

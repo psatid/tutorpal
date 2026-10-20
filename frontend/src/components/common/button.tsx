@@ -4,7 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
-
 const buttonVariants = cva(
   `group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent
   bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none 
@@ -19,14 +18,14 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed",
         outline:
-          "border-input bg-white hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground data-active:border-primary data-active:bg-primary/10 data-active:text-primary data-active:[&_svg]:text-primary dark:bg-card dark:text-foreground",
+          "border-input bg-card hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground data-active:border-primary data-active:bg-primary/10 data-active:text-primary data-active:[&_svg]:text-primary dark:text-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "p-0! text-primary underline-offset-4 hover:underline",
       },
       size: {
         md: "h-11 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
@@ -76,9 +75,23 @@ function Button({
       {loading ? (
         <>
           <span aria-hidden="true" className="button-loading-placeholder">
-            {LeftIcon && <HugeiconsIcon className="size-4" icon={LeftIcon} strokeWidth={2} aria-hidden="true" />}
+            {LeftIcon && (
+              <HugeiconsIcon
+                className="size-4"
+                icon={LeftIcon}
+                strokeWidth={2}
+                aria-hidden="true"
+              />
+            )}
             {children}
-            {RightIcon && <HugeiconsIcon className="size-4" icon={RightIcon} strokeWidth={2} aria-hidden="true" />}
+            {RightIcon && (
+              <HugeiconsIcon
+                className="size-4"
+                icon={RightIcon}
+                strokeWidth={2}
+                aria-hidden="true"
+              />
+            )}
           </span>
           <span aria-hidden="true" className="button-loading-dots">
             <span className="button-loading-dot" />
@@ -89,9 +102,23 @@ function Button({
         </>
       ) : (
         <>
-          {LeftIcon && <HugeiconsIcon className="size-4" icon={LeftIcon} strokeWidth={2} aria-hidden="true" />}
+          {LeftIcon && (
+            <HugeiconsIcon
+              className="size-4"
+              icon={LeftIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          )}
           {children}
-          {RightIcon && <HugeiconsIcon className="size-4" icon={RightIcon} strokeWidth={2} aria-hidden="true" />}
+          {RightIcon && (
+            <HugeiconsIcon
+              className="size-4"
+              icon={RightIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          )}
         </>
       )}
     </ButtonPrimitive>

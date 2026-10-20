@@ -81,6 +81,9 @@ export default {
 			date: "Date",
 			time: "Time",
 			duration: "Duration",
+			endDateTime: "Ends {{date}} at {{time}}",
+			endDayOffset_one: "(+{{count}} day)",
+			endDayOffset_other: "(+{{count}} days)",
 		},
 		outcome: {
 			label: "What should happen to the reserved hours?",

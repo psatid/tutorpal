@@ -1,4 +1,5 @@
 import type { ScheduleStatus, ScheduleType, Weekday } from "@prisma/client";
+import type { DateTime } from "../lib/date-time";
 import type {
 	RecurringScheduleCandidate,
 	RecurringScheduleCreatePlan,
@@ -122,6 +123,31 @@ export interface ScheduleListQueryDTO {
 	classId?: string; // Filter by class ID
 }
 
+export interface AwaitingConfirmationQueryDTO {
+	limit: number;
+	cursor?: string;
+}
+
+export interface AwaitingConfirmationAfter {
+	date: string;
+	time: number;
+	id: string;
+}
+
+export interface AwaitingConfirmationPage {
+	data: ScheduleModel[];
+	pagination: {
+		hasNext: boolean;
+		nextCursor: string | null;
+	};
+}
+
+export interface AwaitingConfirmationRepositoryPage {
+	data: ScheduleModel[];
+	hasNext: boolean;
+	nextAfter?: AwaitingConfirmationAfter;
+}
+
 // Recurring schedule DTOs
 export interface RecurringScheduleDTO {
 	id: string;
@@ -182,6 +208,14 @@ export interface IScheduleRepository {
 		tutorId: string,
 		query?: ScheduleListQueryDTO,
 	): Promise<ScheduleModel[]>;
+	findAwaitingConfirmationPage(
+		tutorId: string,
+		input: {
+			asOf: DateTime;
+			after?: AwaitingConfirmationAfter;
+			limit: number;
+		},
+	): Promise<AwaitingConfirmationRepositoryPage>;
 	findById(id: string, tutorId?: string): Promise<ScheduleModel | null>;
 	update(id: string, data: UpdateScheduleDTO): Promise<ScheduleModel>;
 	delete(id: string): Promise<void>;

@@ -1,6 +1,8 @@
+import { createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
 import type { ScheduleStatus } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import { AppError } from "../lib/error";
+import { getLocalAppConfig } from "../lib/local-config";
 import { minutesToSeconds } from "../lib/teaching-time";
 import {
 	RecurringSchedulePlanner,
@@ -14,6 +16,9 @@ import {
 } from "../models/schedule.model";
 import { classRepository as defaultClassRepository } from "../repositories";
 import type {
+	AwaitingConfirmationAfter,
+	AwaitingConfirmationPage,
+	AwaitingConfirmationQueryDTO,
 	CreateScheduleDTO,
 	IClassRepository,
 	IScheduleRepository,
@@ -23,11 +28,213 @@ import type {
 } from "../types";
 import { ScheduleLifecyclePersistenceError } from "../types";
 
+const AWAITING_CONFIRMATION_CURSOR_VERSION = "v1";
+const AWAITING_CONFIRMATION_CURSOR_MAX_LENGTH = 1024;
+const AWAITING_CONFIRMATION_CURSOR_KEY_LENGTH = 32;
+const AWAITING_CONFIRMATION_CURSOR_SALT = "tutorpal.cursor-signing";
+const AWAITING_CONFIRMATION_CURSOR_INFO = "schedules.awaiting-confirmation.v1";
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const BASE64_URL_REGEX = /^[A-Za-z0-9_-]+$/;
+
+type AwaitingConfirmationCursorPayload = {
+	tutorId: string;
+	asOf: string;
+	after: AwaitingConfirmationAfter;
+};
+
+function invalidAwaitingConfirmationCursor(): never {
+	throw AppError.badRequest(
+		"INVALID_AWAITING_CONFIRMATION_CURSOR",
+		"The confirmation cursor is invalid",
+	);
+}
+
+function deriveAwaitingConfirmationCursorKey(secret: string): Uint8Array {
+	if (secret.trim().length === 0) {
+		throw new Error("BETTER_AUTH_SECRET must not be blank for cursor signing");
+	}
+
+	return new Uint8Array(
+		hkdfSync(
+			"sha256",
+			secret,
+			AWAITING_CONFIRMATION_CURSOR_SALT,
+			AWAITING_CONFIRMATION_CURSOR_INFO,
+			AWAITING_CONFIRMATION_CURSOR_KEY_LENGTH,
+		),
+	);
+}
+
+function encodeBase64UrlBytes(bytes: Uint8Array): string {
+	let binary = "";
+	for (const byte of bytes) {
+		binary += String.fromCharCode(byte);
+	}
+	return btoa(binary)
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=+$/, "");
+}
+
+function encodeBase64Url(value: string): string {
+	return encodeBase64UrlBytes(new TextEncoder().encode(value));
+}
+
+function decodeBase64UrlBytes(value: string): Uint8Array {
+	if (!BASE64_URL_REGEX.test(value) || value.length % 4 === 1) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	try {
+		const padded = `${value.replace(/-/g, "+").replace(/_/g, "/")}${"=".repeat(
+			(4 - (value.length % 4)) % 4,
+		)}`;
+		const binary = atob(padded);
+		return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+	} catch {
+		return invalidAwaitingConfirmationCursor();
+	}
+}
+
+function decodeBase64Url(value: string): string {
+	try {
+		return new TextDecoder("utf-8", { fatal: true }).decode(
+			decodeBase64UrlBytes(value),
+		);
+	} catch {
+		return invalidAwaitingConfirmationCursor();
+	}
+}
+
+function isValidCursorDate(value: string): boolean {
+	if (!DATE_ONLY_REGEX.test(value)) return false;
+
+	try {
+		return DateTime.fromDateOnlyString(value).toDateOnlyString() === value;
+	} catch {
+		return false;
+	}
+}
+
+function decodeAwaitingConfirmationCursor(
+	cursor: string,
+	tutorId: string,
+	signingKey: Uint8Array,
+): {
+	asOf: DateTime;
+	after: AwaitingConfirmationAfter;
+} {
+	if (
+		cursor.length === 0 ||
+		cursor.length > AWAITING_CONFIRMATION_CURSOR_MAX_LENGTH
+	) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	const segments = cursor.split(".");
+	if (segments.length !== 3) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	const [version, payloadSegment, signatureSegment] = segments;
+	if (
+		version !== AWAITING_CONFIRMATION_CURSOR_VERSION ||
+		!payloadSegment ||
+		!BASE64_URL_REGEX.test(payloadSegment) ||
+		!signatureSegment
+	) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	const signature = decodeBase64UrlBytes(signatureSegment);
+	if (signature.byteLength !== AWAITING_CONFIRMATION_CURSOR_KEY_LENGTH) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	const expectedSignature = createHmac("sha256", signingKey)
+		.update(`${version}.${payloadSegment}`, "ascii")
+		.digest();
+	if (
+		expectedSignature.byteLength !== signature.byteLength ||
+		!timingSafeEqual(expectedSignature, signature)
+	) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(decodeBase64Url(payloadSegment));
+	} catch {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	const payload = parsed as Partial<AwaitingConfirmationCursorPayload>;
+	if (
+		typeof payload.tutorId !== "string" ||
+		payload.tutorId !== tutorId ||
+		typeof payload.asOf !== "string" ||
+		typeof payload.after !== "object" ||
+		payload.after === null ||
+		Array.isArray(payload.after) ||
+		typeof payload.after.date !== "string" ||
+		!isValidCursorDate(payload.after.date) ||
+		typeof payload.after.time !== "number" ||
+		!Number.isInteger(payload.after.time) ||
+		payload.after.time < 0 ||
+		payload.after.time > 1439 ||
+		typeof payload.after.id !== "string" ||
+		payload.after.id.length === 0
+	) {
+		return invalidAwaitingConfirmationCursor();
+	}
+
+	try {
+		const asOf = DateTime.from(payload.asOf);
+		if (asOf.toISOString() !== payload.asOf) {
+			return invalidAwaitingConfirmationCursor();
+		}
+		return { asOf, after: payload.after };
+	} catch {
+		return invalidAwaitingConfirmationCursor();
+	}
+}
+
+function encodeAwaitingConfirmationCursor(
+	signingKey: Uint8Array,
+	tutorId: string,
+	asOf: DateTime,
+	after: AwaitingConfirmationAfter,
+): string {
+	const payloadSegment = encodeBase64Url(
+		JSON.stringify({
+			tutorId,
+			asOf: asOf.toISOString(),
+			after,
+		} satisfies AwaitingConfirmationCursorPayload),
+	);
+	const macInput = `${AWAITING_CONFIRMATION_CURSOR_VERSION}.${payloadSegment}`;
+	const signature = createHmac("sha256", signingKey)
+		.update(macInput, "ascii")
+		.digest();
+
+	return `${macInput}.${encodeBase64UrlBytes(signature)}`;
+}
+
 export class ScheduleService {
+	private readonly awaitingConfirmationCursorKey: Uint8Array;
+
 	constructor(
 		private readonly repository: IScheduleRepository,
 		private readonly classRepository: IClassRepository = defaultClassRepository,
-	) {}
+		cursorSigningSecret: string = getLocalAppConfig().BETTER_AUTH_SECRET,
+	) {
+		this.awaitingConfirmationCursorKey =
+			deriveAwaitingConfirmationCursorKey(cursorSigningSecret);
+	}
 
 	private isActiveStatus(status: ScheduleStatus): boolean {
 		return ScheduleModel.isCapacityReservingStatus(status);
@@ -157,6 +364,42 @@ export class ScheduleService {
 		},
 	): Promise<ScheduleModel[]> {
 		return this.repository.findAll(tutorId, query);
+	}
+
+	async getSchedulesAwaitingConfirmation(
+		tutorId: string,
+		query: AwaitingConfirmationQueryDTO,
+	): Promise<AwaitingConfirmationPage> {
+		const cursor =
+			query.cursor !== undefined
+				? decodeAwaitingConfirmationCursor(
+						query.cursor,
+						tutorId,
+						this.awaitingConfirmationCursorKey,
+					)
+				: undefined;
+		const asOf = cursor?.asOf ?? DateTime.now();
+		const page = await this.repository.findAwaitingConfirmationPage(tutorId, {
+			asOf,
+			after: cursor?.after,
+			limit: query.limit,
+		});
+
+		return {
+			data: page.data,
+			pagination: {
+				hasNext: page.hasNext,
+				nextCursor:
+					page.hasNext && page.nextAfter
+						? encodeAwaitingConfirmationCursor(
+								this.awaitingConfirmationCursorKey,
+								tutorId,
+								asOf,
+								page.nextAfter,
+							)
+						: null,
+			},
+		};
 	}
 
 	async getScheduleById(id: string, tutorId: string): Promise<ScheduleModel> {

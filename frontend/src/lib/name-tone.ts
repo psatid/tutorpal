@@ -24,13 +24,13 @@ export function getNameTone(name: string): NameTone {
 }
 
 export const nameToneAvatarClasses: Record<NameTone, string> = {
-  indigo: "bg-[#533AFD] text-white",
-  orange: "bg-[#A85800] text-white",
-  cyan: "bg-[#08769B] text-white",
+  indigo: "bg-name-tone-indigo text-name-tone-foreground",
+  orange: "bg-name-tone-orange text-name-tone-foreground",
+  cyan: "bg-name-tone-cyan text-name-tone-foreground",
 };
 
 export const nameToneAccentClasses: Record<NameTone, string> = {
-  indigo: "bg-[#533AFD]",
-  orange: "bg-[#F79303]",
-  cyan: "bg-[#17B5F3]",
+  indigo: "bg-name-accent-indigo",
+  orange: "bg-name-accent-orange",
+  cyan: "bg-name-accent-cyan",
 };

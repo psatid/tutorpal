@@ -69,6 +69,9 @@ export const useCreateSchedule = (options?: { onSuccess?: () => void }) => {
 		onSuccess: () => {
 			toast.success(t("toast.createSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+			queryClient.invalidateQueries({
+				queryKey: schedulesKeys.awaitingConfirmation(),
+			});
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
@@ -107,6 +110,9 @@ export const useUpdateSchedule = (options?: { onSuccess?: () => void }) => {
 			toast.success(t("toast.updateSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
 			queryClient.invalidateQueries({
+				queryKey: schedulesKeys.awaitingConfirmation(),
+			});
+			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables.id),
 			});
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
@@ -132,6 +138,9 @@ export const useDeleteSchedule = (options?: { onSuccess?: () => void }) => {
 		onSuccess: () => {
 			toast.success(t("toast.deleteSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+			queryClient.invalidateQueries({
+				queryKey: schedulesKeys.awaitingConfirmation(),
+			});
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
@@ -156,6 +165,9 @@ export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
 		onSuccess: (_, variables) => {
 			toast.success(t("toast.completeSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+			queryClient.invalidateQueries({
+				queryKey: schedulesKeys.awaitingConfirmation(),
+			});
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables),
 			});
@@ -202,6 +214,9 @@ export const useNoShowSchedule = (options?: { onSuccess?: () => void }) => {
 			await Promise.all([
 				queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() }),
 				queryClient.invalidateQueries({
+					queryKey: schedulesKeys.awaitingConfirmation(),
+				}),
+				queryClient.invalidateQueries({
 					queryKey: schedulesKeys.detail(variables.id),
 				}),
 				queryClient.invalidateQueries({ queryKey: classesQueryKeys.all }),
@@ -227,6 +242,9 @@ export const useRestoreHours = (options?: { onSuccess?: () => void }) => {
 		onSuccess: (_, variables) => {
 			toast.success(t("toast.restoreSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+			queryClient.invalidateQueries({
+				queryKey: schedulesKeys.awaitingConfirmation(),
+			});
 			queryClient.invalidateQueries({
 				queryKey: schedulesKeys.detail(variables),
 			});
@@ -268,6 +286,9 @@ export const useUpdateRecurringSchedule = (options?: { onSuccess?: () => void })
 		onSuccess: () => {
 			toast.success(t("toast.recurringUpdateSuccess"));
 			queryClient.invalidateQueries({ queryKey: schedulesKeys.lists() });
+			queryClient.invalidateQueries({
+				queryKey: schedulesKeys.awaitingConfirmation(),
+			});
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.all });
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();

@@ -72,7 +72,11 @@ export function createApplicationDependencies(
 				lineClient,
 				credentialCipher,
 			}),
-			scheduleService: new ScheduleService(scheduleRepository, classRepository),
+			scheduleService: new ScheduleService(
+				scheduleRepository,
+				classRepository,
+				config.BETTER_AUTH_SECRET,
+			),
 			socialAccountService: new SocialAccountService(
 				socialAccountRepository,
 				config,

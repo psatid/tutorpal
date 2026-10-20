@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	AwaitingConfirmationQuerySchema,
 	CreateScheduleSchema,
 	NoShowScheduleSchema,
 	ScheduleListQuerySchema,
@@ -166,6 +167,31 @@ describe("schedule request contracts", () => {
 				date: "invalid",
 			}).success,
 		).toBe(false);
+	});
+
+	test("defaults and bounds awaiting-confirmation pagination", () => {
+		expect(AwaitingConfirmationQuerySchema.parse({})).toEqual({ limit: 10 });
+		expect(
+			AwaitingConfirmationQuerySchema.parse({
+				limit: "50",
+				cursor: "v1.Ab-_9.Cd-_9",
+			}),
+		).toEqual({ limit: 50, cursor: "v1.Ab-_9.Cd-_9" });
+
+		for (const query of [
+			{ limit: "0" },
+			{ limit: "51" },
+			{ limit: "1.5" },
+			{ cursor: "" },
+			{ cursor: "not+a+cursor" },
+			{ cursor: "v1.Ab-_9" },
+			{ cursor: "v1..Cd-_9" },
+			{ cursor: "v1.Ab-_9.Cd-_9.extra" },
+		]) {
+			expect(AwaitingConfirmationQuerySchema.safeParse(query).success).toBe(
+				false,
+			);
+		}
 	});
 
 	test("accepts an inclusive date range up to 31 calendar days", () => {

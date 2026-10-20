@@ -6,7 +6,7 @@ const infoCardVariants = cva(
   {
     variants: {
       interactive: {
-        true: "cursor-pointer group hover:bg-[#f6f9fc] transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35",
+        true: "cursor-pointer group hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35",
       },
     },
   }

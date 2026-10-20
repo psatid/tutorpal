@@ -2,141 +2,210 @@
 name: TutorPal
 version: alpha
 description: Stripe-inspired product design for calm, precise tutoring operations
+source: frontend/src/index.css (:root) and frontend/src/components/common
 colors:
   primary: "#533AFD"
   primary-hover: "#4434D4"
-  primary-press: "#2E2B8C"
-  primary-soft: "#B9B9F9"
-  brand-dark: "#0D253D"
-  brand-dark-900: "#1C1E54"
-  ink: "#0D253D"
-  ink-secondary: "#273951"
-  ink-muted: "#61718A"
-  on-primary: "#FFFFFF"
-  canvas: "#FFFFFF"
-  canvas-soft: "#F6F9FC"
-  canvas-cream: "#F5E9D4"
-  hairline: "#E3E8EE"
-  hairline-input: "#E3EBF4"
-  ruby: "#EA2261"
-  success: "#16835B"
-  success-soft: "#E7F6EF"
-  warning: "#9B6829"
-  warning-soft: "#FFF2D9"
-  destructive: "#C93755"
-  destructive-soft: "#FCE8EE"
+  primary-pressed: "#2E2B8C"
+  primary-foreground: "#FFFFFF"
+  primary-container: "#ECEBFF"
+  foreground: "#0D253D"
+  secondary-foreground: "#273951"
+  muted-foreground: "#61718A"
+  background: "#F6F9FC"
+  card: "#FFFFFF"
+  popover: "#FFFFFF"
+  accent: "#EEF4F9"
+  secondary: "#EDF2F7"
+  secondary-hover: "#E3EBF4"
+  muted: "#F1F5F9"
+  border: "#E3E8EE"
+  input: "#E3EBF4"
+  input-hover: "#C4D3E2"
+  overlay-navy: "#0D253D"
+  ring: "#533AFD"
+  info: "#0369A1"
+  info-container: "#E0F2FE"
+  info-container-foreground: "#075985"
+  success: "#087443"
+  success-container: "#E8F7EF"
+  success-container-foreground: "#075C35"
+  warning: "#9A5B00"
+  warning-container: "#FFF4DB"
+  warning-container-foreground: "#754400"
+  destructive: "#B42318"
+  destructive-container: "{colors.destructive} / 10%"
+  inverse: "#0D253D"
+  inverse-foreground: "#FFFFFF"
+  avatar-neutral: "#273951"
+  avatar-neutral-foreground: "#FFFFFF"
+  name-tone-foreground: "#FFFFFF"
+  name-tone-indigo: "#533AFD"
+  name-tone-orange: "#A85800"
+  name-tone-cyan: "#08769B"
+  name-accent-indigo: "#533AFD"
+  name-accent-orange: "#F79303"
+  name-accent-cyan: "#17B5F3"
 typography:
+  fontFamily: "Inter, 'Noto Sans Thai Variable', sans-serif"
+  fontFeature: "ss01"
   display:
-    fontFamily: "Inter, system-ui, sans-serif"
-    fontSize: "3.5rem"
+    fontSize: "2.25rem → 3rem (sm)"
     fontWeight: 300
-    lineHeight: 1.03
-    letterSpacing: "-0.025em"
-  heading:
-    fontFamily: "Inter, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 400
-    lineHeight: 1.15
     letterSpacing: "-0.02em"
-  body:
-    fontFamily: "Inter, system-ui, sans-serif"
-    fontSize: "0.9375rem"
+  page-title:
+    fontSize: "1.5rem–2.5rem"
     fontWeight: 400
-    lineHeight: 1.4
-  label:
-    fontFamily: "Inter, system-ui, sans-serif"
+    lineHeight: 1.25
+    letterSpacing: "-0.02em to -0.025em"
+  title:
+    fontSize: "1.125rem–1.25rem"
+    fontWeight: "400–500"
+    letterSpacing: "-0.01em"
+  ui:
+    fontSize: "0.875rem"
+    fontWeight: "400 / 500 controls / 600 row titles"
+    lineHeight: "1.25rem"
+  meta:
     fontSize: "0.75rem"
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: "0.04em"
+    fontWeight: 400
+    lineHeight: "1rem"
+  label:
+    fontSize: "0.75rem"
+    fontWeight: 500
   numeric:
     fontFeature: "tnum"
 rounded:
-  xs: "4px"
-  sm: "6px"
-  md: "8px"
-  lg: "12px"
-  xl: "16px"
-  pill: "9999px"
+  base: "0.5rem (--radius)"
+  sm: "4.8px"
+  md: "6.4px"
+  lg: "8px"
+  xl: "11.2px"
+  2xl: "14.4px"
+  3xl: "17.6px"
+  4xl: "20.8px"
+  full: "9999px"
 spacing:
-  xxs: "2px"
-  xs: "4px"
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
-  xl: "24px"
-  xxl: "32px"
-  huge: "64px"
+  grid: "Tailwind 4px scale"
+  screen-padding: "12px → 16px (sm) → 24px (lg)"
+  hit-target: "44px (h-11 / size-11)"
+shadows:
+  transient-menu: "0 8px 20px rgba(31, 71, 112, 0.14)"
+  transient-popover: "0 12px 28px rgba(31, 71, 112, 0.16)"
+  transient-card: "0 16px 40px rgba(31, 71, 112, 0.12)"
+  transient-dialog: "0 16px 40px rgba(31, 71, 112, 0.18)"
 components:
-  button-primary-pill:
+  button-default:
     backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    rounded: "{rounded.pill}"
-    padding: "8px 16px"
+    hover: "{colors.primary-hover}"
+    active: "{colors.primary-pressed}"
+    textColor: "{colors.primary-foreground}"
+    rounded: "{rounded.full}"
+    height: "44px"
+    padding: "0 12px"
+    font: "14px / 500"
+  button-outline:
+    backgroundColor: "{colors.card}"
+    border: "1px solid {colors.input}"
+    textColor: "{colors.foreground}"
+    hover: "{colors.muted}"
+    rounded: "{rounded.full}"
   button-secondary:
-    backgroundColor: "{colors.canvas}"
+    backgroundColor: "{colors.secondary}"
+    hover: "{colors.secondary-hover}"
+    textColor: "{colors.secondary-foreground}"
+    rounded: "{rounded.full}"
+  button-ghost:
+    backgroundColor: "transparent"
+    hover: "{colors.muted}"
+    rounded: "{rounded.full}"
+  button-destructive:
+    backgroundColor: "{colors.destructive} / 10%"
+    hover: "{colors.destructive} / 20%"
+    textColor: "{colors.destructive}"
+    rounded: "{rounded.full}"
+  button-link:
     textColor: "{colors.primary}"
-    border: "1px solid {colors.primary}"
-    rounded: "{rounded.pill}"
-    padding: "8px 16px"
-  button-on-dark:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.brand-dark}"
-    rounded: "{rounded.pill}"
-    padding: "8px 16px"
+    hover: "underline, offset 4px"
   text-input:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    border: "1px solid {colors.hairline-input}"
-    rounded: "{rounded.sm}"
-    padding: "8px 12px"
-  card-feature-light:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    border: "1px solid {colors.hairline}"
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.foreground}"
+    border: "1px solid {colors.input}"
+    hover: "border {colors.input-hover}"
+    focus: "border {colors.ring} + 3px ring {colors.primary} / 35%"
+    invalid: "border {colors.destructive} + 3px ring {colors.destructive} / 20%"
+    rounded: "{rounded.md}"
+    height: "44px"
+    padding: "0 12px (36px left with icon)"
+    font: "16px mobile / 14px md+"
+  badge:
+    height: "20px"
+    rounded: "{rounded.md}"
+    padding: "2px 8px"
+    font: "12px / 500"
+    border: "1px solid {variant} / 25%"
+    variants: "primary, info, success, warning, destructive"
+  card-row:
+    backgroundColor: "{colors.card}"
+    border: "1px solid {colors.border}"
+    rounded: "{rounded.xl}"
+    hover: "{colors.background}"
+  dropdown-menu:
+    backgroundColor: "{colors.popover}"
+    border: "1px solid {colors.border}"
     rounded: "{rounded.lg}"
-    padding: "24px"
-  pill-tag-soft:
-    backgroundColor: "{colors.primary-soft}"
-    textColor: "{colors.primary-press}"
-    rounded: "{rounded.pill}"
-    padding: "4px 8px"
+    padding: "4px"
+    shadow: "{shadows.transient-menu}"
+    item: "14px, 8px 12px, hover {colors.accent}"
+  drawer:
+    mobile: "bottom sheet, top {rounded.xl}, max-h min(85dvh, 44rem), grab handle {colors.input-hover}"
+    desktop: "right panel, 26rem, square corners"
+    backdrop: "{colors.overlay-navy} / 45%"
+    shadow: "{shadows.transient-dialog}"
+  tabs:
+    track: "44px, {colors.card} pill with {colors.border}"
+    indicator: "{colors.primary} sliding pill"
+    active-text: "{colors.primary-foreground}"
+    inactive-text: "{colors.muted-foreground}"
 ---
 
 # Design system: TutorPal
 
+> This document describes what the code ships. Token values come from
+> `frontend/src/index.css` (`:root`), and component specs come from
+> `frontend/src/components/common`. When you change a token or a primitive,
+> update this file in the same change.
+
 ## Overview
 
-TutorPal uses a Stripe-inspired product language: precise editorial typography,
-white navigation chrome, dark-navy product bands, white and cool-soft work surfaces, and one
-indigo action color. The visual system should help a private tutor understand
-today's workload quickly without feeling like a spreadsheet.
+TutorPal uses a Stripe-inspired product language: precise typography, white
+navigation chrome, white and cool-soft work surfaces, navy ink, and one indigo
+action color. The visual system should help a private tutor understand today's
+workload quickly without feeling like a spreadsheet.
 
-The system is adapted for an operational product rather than a marketing site.
-The authenticated app stays light and task-oriented. The dark product track is
-reserved for top product chrome and meaningful summary bands. A restrained organic
-mesh is allowed only on public authentication surfaces.
+The authenticated app stays light and task-oriented. A restrained organic mesh
+(`/stripe-auth-mesh.svg`) appears only behind the authentication shell.
 
 ## Principles
 
 ### One action color
 
-Indigo is used for primary actions, current navigation, focus, and meaningful
-selection. It should remain rare enough to communicate importance. Ruby,
-success, warning, and LINE green are semantic only.
+Indigo is used for primary actions, current navigation, focus, active tabs and
+meaningful selection. It should remain rare enough to communicate importance.
+Info, success, warning and destructive are semantic only.
 
 ### Surface before shadow
 
-White on cool-soft creates the default hierarchy. Hairlines establish
-boundaries. Shadows are reserved for transient overlays and stay blue-tinted
-and light; cards do not need broad soft shadows.
+White (`card`) on cool-soft (`background`) creates the default hierarchy.
+Hairlines (`border`) establish boundaries. Shadows are reserved for transient
+overlays (menus, popovers, dialogs, drawers) and are always blue-tinted. Resting
+cards and rows never carry a shadow.
 
 ### Product clarity
 
-List workspaces use divider-led rows and restrained grouping. Details use
-progressive disclosure instead of a grid of boxed cards. Every screen has a
-clear title, one primary next action, and an honest loading, empty, or error
-state.
+Entity lists (students, classes, schedules) are stacks of hairline-outlined
+rows with 8px gaps. Details use progressive disclosure. Every screen has a clear
+title, one primary next action, and an honest loading, empty, or error state.
 
 ### Shared controls
 
@@ -148,169 +217,327 @@ control layout; primitives control visual language.
 
 ### Brand
 
-- **Indigo** (#533AFD): primary actions, links, focus, current selection.
-- **Indigo hover** (#4434D4): hover and active navigation feedback.
-- **Indigo press** (#2E2B8C): pressed state.
-- **Indigo soft** (#B9B9F9): selected filters and subdued tags.
-- **Brand dark** (#0D253D): top product chrome and dark summary bands.
-- **Brand dark 900** (#1C1E54): deep app chrome and dark summary surfaces.
+- **Indigo** `primary` #533AFD: primary actions, links, focus ring, current
+  navigation, active tab indicator.
+- **Indigo hover** `primary-hover` #4434D4: button hover.
+- **Indigo pressed** `primary-pressed` #2E2B8C: pressed state; also the text
+  color of the primary badge.
+- **Indigo container** `primary-container` #ECEBFF: primary badge and subdued
+  indigo surfaces.
 
 ### Surfaces and text
 
-- **Canvas** (#FFFFFF): primary work surface and form surface.
-- **Canvas soft** (#F6F9FC): app background and grouped panel surface.
-- **Canvas cream** (#F5E9D4): rare warm product interlude.
-- **Hairline** (#E3E8EE): dividers and card outlines.
-- **Input hairline** (#E3EBF4): quiet form and outline-control boundary.
-- **Ink** (#0D253D): primary text.
-- **Ink secondary** (#273951): supporting text.
-- **Ink muted** (#61718A): metadata, helper text, and disabled text.
-- **On primary** (#FFFFFF): text on indigo and dark surfaces.
+| Token | Value | Use |
+| --- | --- | --- |
+| `background` / `surface` | #F6F9FC | App background, row hover, sidebar hover |
+| `card` / `popover` / `sidebar` | #FFFFFF | Work surfaces, forms, overlays, rail |
+| `accent` / `surface-container-low` | #EEF4F9 | Menu item hover and highlight |
+| `secondary` | #EDF2F7 | Secondary button fill |
+| `secondary-hover` | #E3EBF4 | Secondary button hover |
+| `muted` | #F1F5F9 | Ghost and outline button hover |
+| `border` | #E3E8EE | Dividers, card and row outlines |
+| `input` | #E3EBF4 | Input and outline-button boundary |
+| `input-hover` | #C4D3E2 | Input hover boundary, drawer grab handle |
+| `foreground` | #0D253D | Primary text (15.6:1 on white) |
+| `secondary-foreground` | #273951 | Supporting text, sidebar text (11.7:1) |
+| `muted-foreground` | #61718A | Metadata, helper, placeholder (5.0:1) |
+| `overlay-navy` | #0D253D | Drawer and dialog backdrop at 45% |
+| `inverse` / `inverse-foreground` | #0D253D / #FFFFFF | Dark summary band (class balance); use `inverse-foreground/70` etc. for secondary text and `/20` for dividers |
+| `avatar-neutral` / `-foreground` | #273951 / #FFFFFF | Unknown-student avatar, avatar group count |
 
 ### Semantic
 
-- **Success** uses a readable green foreground with a soft green container.
-- **Warning** uses a warm brown foreground with a soft amber container.
-- **Destructive** uses ruby/red foreground with a soft ruby container.
-- **LINE** green appears only when communicating the external LINE connection.
+Each semantic role has a foreground, a soft container and a darker container
+foreground. Badges use the container and the container foreground, with a border
+of the foreground at 25%.
+
+| Role | Foreground | Container | Container text | Schedule status |
+| --- | --- | --- | --- | --- |
+| Info | #0369A1 | #E0F2FE | #075985 | Scheduled (calendar icon) |
+| Success | #087443 | #E8F7EF | #075C35 | Completed (tick icon) |
+| Warning | #9A5B00 | #FFF4DB | #754400 | No-show (alert icon) |
+| Destructive | #B42318 | #B42318 at 10% | #B42318 | Cancelled (× icon) |
 
 Semantic color is always paired with visible text or an icon. It is never the
-only indicator.
+only indicator. The status → variant → icon map lives in
+`lib/schedule-utils.ts`.
+
+The LINE connection is shown with the success badge plus a "LINE" label, not
+with a dedicated LINE-green token.
+
+### Name tones
+
+Student avatars get a stable tone hashed from the normalized name
+(`lib/name-tone.ts`), as `bg-name-tone-*` with `text-name-tone-foreground`.
+Accent colors (`bg-name-accent-*`) are for small decorative marks only, never
+behind text.
+
+| Tone | Avatar fill | Accent |
+| --- | --- | --- |
+| Indigo | #533AFD | #533AFD |
+| Orange | #A85800 | #F79303 |
+| Cyan | #08769B | #17B5F3 |
+
+### Dark mode
+
+A `.dark` block exists, but it holds the shadcn neutral defaults and is not
+themed to TutorPal. Treat dark mode as unsupported until it is designed; don't
+build on those values.
 
 ## Typography
 
 ### Font family
 
-Inter is the open-source runtime substitute for the proprietary Sohne family
-described in the Stripe reference. Load the required weights locally and use
-system-ui only as fallback. Apply the ss01 feature globally where supported.
+Inter (weights 300–700, self-hosted via `@fontsource/inter`) with
+`Noto Sans Thai Variable` as the fallback for Thai script. The `ss01`
+stylistic set is applied to `body`, `button`, `input`, `select` and `textarea`.
+Thai text needs a taller line height; don't apply negative tracking to Thai.
 
-### Hierarchy
+### Hierarchy (as used in the code)
 
-| Token | Size | Weight | Line height | Tracking | Use |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Display | 56px | 300 | 1.03 | -0.025em | Auth and high-impact overview |
-| Heading | 24px | 400 | 1.15 | -0.02em | Page titles and major sections |
-| Title | 18px | 500 | 1.3 | -0.01em | Entity and drawer titles |
-| Body | 15px | 400 | 1.4 | 0 | Default reading text |
-| Caption | 13px | 400 | 1.4 | 0 | Helper and metadata |
-| Label | 12px | 600 | 1.3 | 0.04em | Functional labels only |
-| Numeric | 14–32px | 400–500 | 1.2–1.4 | 0 | Hours, dates, and counts |
+| Role | Size | Weight | Tracking | Where |
+| --- | --- | --- | --- | --- |
+| Display | 36px → 48px (sm) | 300 | -0.02em | Auth shell title |
+| Overview title | 36px → 40px (sm) | 400 | -0.025em | Dashboard greeting |
+| Page title | 24–30px | 400 | -0.02em | Workspace and settings headings |
+| Section title | 20px | 500 | -0.01em | Settings cards |
+| Drawer title | 18px | 400 | -0.01em | Drawer and dialog headers |
+| UI / body | 14px, line height 20px | 400 | 0 | Default product text, menu items |
+| Control | 14px | 500 | 0 | Buttons, tabs |
+| Row title | 14–16px | 600 | 0 | Student, class and schedule names |
+| Meta | 12px, line height 16px | 400 | 0 | Times, durations, notes |
+| Badge | 12px | 500 | 0 | Status and attribute badges |
+| Auth eyebrow | 14px | 600 uppercase | +0.08em | Auth shell only |
+| Numeric | any | 400–600 | 0 | `tabular-nums` on hours, times, counts |
 
-Numeric roles use tabular figures. Display headings use negative tracking but
-never tighter than -0.04em. Labels are sentence-case or functional small
-caps, not decorative eyebrows above every section.
+Headings use weight and tracking contrast, not bold. The mobile header page
+title is the one exception (`font-bold`, 16–18px). Tracking never goes tighter
+than -0.04em. Uppercase eyebrows are used only in the auth shell.
+
+> `font-headline` appears on some headings but has no definition in
+> `@theme`, so it falls back to the sans stack. Either define it or remove it.
 
 ## Layout
 
-- Use a centered content container with a maximum width around 1200–1440px.
-- Keep existing ScreenLayout padding and jun-layout geometry unchanged.
-- Use 32–48px section spacing in authenticated product surfaces and 64px or
-  more only for quiet public/auth composition.
-- Use a single-column mobile flow. Horizontal overflow is limited to date and
-  refinement rails.
-- Preserve the desktop side rail, mobile edge drawer, safe-area spacing, and
-  drawer footer reachability.
+- `ScreenLayout` pads screens at 12px, 16px from `sm`, and 24px from `lg`, on
+  `background`.
+- Keep the existing jun-layout geometry unchanged: a 280px desktop rail that
+  collapses to 3rem and auto-collapses at `lg`, the mobile edge drawer, and the
+  `jun-header` bar (white with a bottom hairline).
+- Single-column mobile flow. Horizontal overflow is limited to date and
+  refinement rails (`workspace-refinement-rail` hides its scrollbar).
+- The minimum hit target for mobile-facing actions is 44px (`h-11` / `size-11`).
 
 ## Elevation and shapes
 
 ### Radius scale
 
-- 4px: hairline tags and compact table chrome.
-- 6px: inputs and compact controls.
-- 8px: alerts and small grouped surfaces.
-- 12px: feature cards, drawers, and product panels.
-- 16px: major app surfaces and auth form container.
-- Full pill: buttons, tags, and compact status chips only.
+The base is `--radius: 0.5rem`. Tailwind's radius steps are multiples of it.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `rounded` | 4px | Dropdown menu items |
+| `rounded-sm` | 4.8px | Compact chrome |
+| `rounded-md` | 6.4px | Inputs, badges |
+| `rounded-lg` | 8px | Dropdown menus, inner hit areas |
+| `rounded-xl` | 11.2px | Rows, schedule cards, auth container, drawer top |
+| `rounded-full` | pill | Buttons, icon buttons, tabs, avatars only |
+
+Inputs are never pill-shaped.
 
 ### Depth
 
-White on cool-soft is the primary depth cue. Use a subtle blue-tinted shadow
-only for dropdowns, dialogs, drawers, and other transient overlays. Do not add
-generic black card shadows or blur-heavy glass effects.
+White on cool-soft is the primary depth cue. The four `shadow-transient-*`
+tokens are blue-tinted (`rgba(31, 71, 112, …)`) and are used only on transient
+surfaces: menus (`menu`), popovers and selects (`popover`), floating cards
+(`card`), and dialogs and drawers (`dialog`). Don't use black shadows or
+backdrop blur; the jun edge-sidebar blur is explicitly disabled.
 
 ## Components
 
 ### Buttons
 
-- Primary: indigo fill, white label, full pill, 8px × 16px padding.
-- Secondary: white surface, indigo label, 1px indigo border, full pill.
-- Ghost: transparent until hover, used for in-context actions.
-- Destructive: soft ruby container and readable ruby label.
-- On dark: white surface or light label treatment with a visible focus ring.
-- Hover shifts color; press uses the deeper indigo and a 1px downward movement.
-- All interactive buttons expose a visible 3px indigo focus ring and a minimum
-  44px hit target where the action is mobile-facing.
+- All variants are `rounded-full` with 14px / 500 labels and 16px icons at
+  stroke 2.
+- **Default:** indigo fill and white label. Hover is `primary-hover`; active
+  is `primary-pressed`.
+- **Outline:** white fill, `input` border, ink label, `muted` hover. Its
+  `data-active` state shows a `primary` border, an indigo 10% fill and an indigo
+  label.
+- **Secondary:** `secondary` fill, `secondary-foreground` label,
+  `secondary-hover` on hover.
+- **Ghost:** transparent until `muted` hover. Used for in-context and ⋮
+  actions.
+- **Destructive:** destructive at 10% fill (20% on hover) with a destructive
+  label.
+- **Link:** an indigo label that underlines on hover.
+- **Sizes:** `xs` 24px, `sm` 32px, `md` 44px (default, 12px padding), `lg` 44px
+  (16px padding). Icon buttons are `icon-xs` 24, `icon-sm` 32, `icon-lg` 40 and
+  `icon` 44.
+- **Press and states:** pressing moves the button down 1px (except menu
+  triggers). Focus shows a 3px `ring` at 50%. Disabled is 50% opacity.
+  Loading keeps the button's width and shows three 4px dots that bob 2px over
+  0.72s; the label stays readable for screen readers.
 
 ### Inputs
 
-Inputs use a white surface, 1px input hairline, 6–8px radius, and 8px × 12px
-padding. Focus changes the boundary to indigo and adds a 3px indigo ring.
-Invalid fields use destructive boundary and ring tokens. Placeholder text uses
-muted ink and remains readable.
+44px high, white (`card`) surface, 1px `input` border, `rounded-md`, 12px
+horizontal padding. Text is 16px on mobile (to avoid iOS zoom) and 14px from
+`md`. Hover changes the border to `input-hover`. Focus uses a `ring` border plus
+a 3px indigo ring at 35%. Invalid fields (`aria-invalid`) use a destructive
+border and a 3px destructive ring at 20%. Placeholders use `muted-foreground`.
+A leading icon sits 12px from the left in muted ink, and the input pads to 36px.
+Number inputs hide their spinners and blur on wheel.
 
-### Cards, rows, and badges
+### Badges
 
-Cards are white with a hairline and 12px radius when elevation communicates
-hierarchy. Routine list content uses divider-led rows instead of repeating
-outlined cards. Badges and compact status tags are pills with subdued
-semantic or indigo-soft containers.
+20px high, `rounded-md`, 2px × 8px padding, 12px / 500, with 12px icons. The
+variants are `primary`, `info`, `success`, `warning` and `destructive`. Each uses
+its container fill, its container-foreground text and a border of its
+foreground at 25%.
+
+### Rows and cards
+
+- **Student row:** a white card with a `border` hairline, `rounded-xl`, at least
+  80px high and 16px padding. It holds a 40px name-tone avatar, the name at 600,
+  attribute badges (grade, LINE, needs relink), a muted phone line, and a ⋮
+  ghost icon button. Hover and focus-within fill the card with `background`.
+- **Schedule card:** a white card with a hairline, `rounded-xl` and 8–12px
+  padding. It has a 64px right-aligned tabular time column (start 14/600, end
+  12 muted), a 14/600 title with a status badge, a 12px meta line (type icon ·
+  duration), an optional truncated note, and a ⋮ menu.
+- The primary hit area of each row is a single `<button>`; the ⋮ menu sits
+  outside it. Lists stack rows with 8px gaps.
+
+### Avatars
+
+Sizes are `sm` 24, `default` 32 and `lg` 40, circular, with an inner `border`
+hairline. The fallback uses indigo at 10% with muted initials; student rows use
+name-tone fills instead. Groups overlap by 8px with a 2px `background` ring. The
+count chip is #273951.
+
+### Dropdown menus
+
+`popover` surface, 1px `border`, `rounded-lg`, 4px padding, minimum width 192px,
+`shadow-transient-menu`. Items are 14px, 8px × 12px padding, `rounded`, with
+16px icons; hover and highlight use `accent`. Destructive items use destructive
+text with a 10% hover, and sit last after a separator. Group labels are 12px
+muted.
+
+### Tabs
+
+- **Default:** a 44px track with a white pill (`card` and `border`) inset 4px,
+  plus a sliding indigo pill indicator. The active label is white; inactive
+  labels are `muted-foreground` and turn ink on hover.
+- **Subtle:** no track; the indigo indicator slides between items. Inactive
+  items hover to `muted`, and the active label is 600.
+- The indicator animation turns off under reduced motion.
 
 ### Navigation
 
-The authenticated desktop rail is white with a cool hairline divider, dark-navy
-inactive navigation, and an indigo active treatment. Hover uses a cool-soft
-surface instead of a saturated fill. The compact mobile header and edge-sidebar
-drawer remain. Current routes use aria-current="page" and a visible visual state.
+The desktop rail is white with a `border` divider and `secondary-foreground`
+text. The current route uses `aria-current="page"` with indigo text at 600 and
+no fill. Hover uses `background` (#F6F9FC). Groups (Settings) expand with a
+rotating chevron. The user menu sits at the bottom with an indigo initials
+avatar. The mobile header is a white `jun-header` bar with a bottom hairline.
 
 ### Drawers and dialogs
 
-Small screens use a bottom sheet with a 16px top radius and a 44px close
-target. At md and above, the same surface enters from the right. Headers stay
-fixed, the body scrolls, and optional action footers remain reachable. Nested
-Select and calendar surfaces portal into the active drawer surface.
+- **Below `md`:** a bottom sheet with an 11.2px top radius and a maximum height
+  of min(85dvh, 44rem). It has a 40×6px grab handle in `input-hover` and enters
+  by translating up.
+- **From `md`:** a 26rem right-hand panel with square corners that slides in from
+  the right.
+- **Both:** a `popover` surface with `shadow-transient-dialog` over an
+  `overlay-navy` backdrop at 45%. Headers and content use 24px horizontal
+  padding, and the footer uses 16px. The body scrolls and the footer stays
+  reachable. Nested Select and calendar surfaces portal into the active drawer.
 
-## Authentication mesh
+### Toasts
 
-Authentication surfaces may use a local SVG organic mesh with low-contrast
-indigo, lavender, ruby, and peach shapes. The mesh is an intentional exception
-to the flat product surfaces, must remain behind an opaque white form surface,
-and must not be used in authenticated workspaces or as gradient text. Do not
-use remote image URLs or flat CSS gradient bands.
+Toasts are built on Sonner (`common/sonner.tsx`, styled in `common/sonner.css`).
+They appear 16px from the viewport edge (12px on mobile) and always show a
+close button.
+
+- **Surface:** `popover` with a 1px `border`, a 4px left accent edge
+  (`--toast-accent`), 12px radius and `shadow-transient-popover`. Minimum
+  height is 72px; padding is 14px, with 40px on the right to clear the close
+  button; gap is 12px.
+- **Icon disc:** a 28px circle in `--toast-icon-background` holding a 16px
+  Hugeicons glyph in `--toast-icon` (`primary-foreground`).
+- **Text:** title 14 / 600 / 1.3 in `popover-foreground`; description
+  12 / 400 / 1.4 in `muted-foreground`. Long words wrap anywhere.
+- **Close:** 24px, 8px from the top-right corner, muted ink.
+- **Action:** `primary` fill with a `primary-foreground` label and 6px radius.
+  **Cancel:** `secondary` with `secondary-foreground`.
+- **Focus:** a 2px `ring` outline with a 2px offset.
+
+| Type | Accent edge | Icon disc | Icon |
+| --- | --- | --- | --- |
+| Default | `primary` | none | none |
+| Success | `success` | `success` | Tick |
+| Info | `info` | `info` | Information circle |
+| Warning | `warning` | `warning` | Exclamation mark (stroke 2.5) |
+| Error | `destructive` | `destructive` | Multiplication sign |
+| Loading | `primary` | `primary-hover` | Spinning loader |
+
+At 600px and below: minimum height 68px, padding 12px, gap 10px, icon disc
+26px. At 420px and below, a toast with an action wraps so the button drops
+below the text.
+
+Use toasts to confirm an action the user just took. Errors that block a form
+belong inline. Write the title as the outcome ("Class marked as completed"),
+and keep the description to one line. For reversible destructive actions,
+prefer an Undo action over a confirm dialog.
+
+## Authentication shell
+
+The auth screens center a white `card` with a hairline and `rounded-xl` over
+the local mesh SVG (70% opacity). Padding is 24 × 20px, rising to 40px from
+`sm`. Inside are a 40px app icon, an optional uppercase eyebrow, and a light
+display title (36 → 48px, 300) capped at 12ch. The mesh must stay behind an
+opaque surface and must never appear in authenticated workspaces or as gradient
+text. Don't use remote image URLs.
 
 ## States and accessibility
 
-- Loading uses skeletons that mirror the eventual content; standalone spinners
-  are limited to brief button or redirect states.
+- Loading uses skeletons that mirror the eventual content. Standalone spinners
+  are limited to the button loading dots and redirect states.
 - Empty states explain the next useful action and offer one relevant CTA.
 - Errors state the problem directly, preserve input where possible, and offer
   retry or correction.
 - Success and warning states pair color with text or an icon.
-- Keyboard users receive visible focus, logical focus trapping, Escape
-  dismissal, and focus return to the invoking control.
+- Keyboard users get a visible 3px focus ring, logical focus trapping, Escape
+  dismissal, and focus return to the invoking control. Icon-only buttons have
+  an `aria-label`, and decorative icons are `aria-hidden`.
 - Test 320px, 768px, 1024px, and wide desktop layouts with no clipped content,
   page overflow, or unreachable drawer actions.
-- Respect prefers-reduced-motion; use short transform/opacity transitions and
-  disable choreography when reduction is requested.
+- `prefers-reduced-motion` collapses all animations and transitions to 0.01ms
+  and stops the loading dots.
 
 ## Do and don't
 
 ### Do
 
 - Do use Inter weight and tracking contrast instead of heavy all-bold headings.
-- Do keep the app rail white with navy text, indigo current navigation, and
-  product content light.
+- Do keep the app rail white with navy text and indigo current navigation.
 - Do use tabular figures for class hours, dates, and counts.
-- Do use local mesh artwork only on auth backgrounds.
+- Do use the four `shadow-transient-*` tokens, and only on overlays.
 - Do keep semantic states readable and redundant with text or icons.
-- Do prefer rows, dividers, and grouping over card grids.
+- Do use the shared primitives' variants before adding classes in screens.
 
 ### Don't
 
 - Don't use Manrope, default browser typography, or pure black.
-- Don't use pill-shaped inputs or oversized rounded controls.
+- Don't use pill-shaped inputs.
+- Don't hard-code colors in components: no `bg-[#…]`, `text-white`,
+  `bg-white` or palette classes. Use a token, and add one to `index.css`
+  (`:root` plus `@theme`) if none fits. Third-party brand marks (the Google and
+  LINE logos) are the only exception.
+- Toasts (`sonner.css`) take their accents from the semantic tokens; don't
+  give them their own palette.
 - Don't use generic gradients, external image services, or gradient text.
-- Don't use broad black shadows, backdrop blur, or card-per-row repetition.
+- Don't use black shadows, backdrop blur, or shadows on resting cards.
 - Don't add new accent colors or invent dashboard data.
 - Don't change routes, API contracts, data models, or the existing drawer
   geometry for visual work.

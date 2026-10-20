@@ -56,7 +56,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        `flex w-full items-center justify-between gap-1.5 rounded-md border border-input bg-white px-3
+        `flex w-full items-center justify-between gap-1.5 rounded-md border border-input bg-card px-3
         py-2 text-sm whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] 
         focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive 
         aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-active:border-primary 

@@ -1,4 +1,9 @@
-import type { Prisma, PrismaClient, ScheduleType } from "@prisma/client";
+import {
+	Prisma,
+	type PrismaClient,
+	type ScheduleStatus,
+	type ScheduleType,
+} from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import { prisma as defaultPrisma } from "../lib/db";
 import { minutesToSeconds } from "../lib/teaching-time";
@@ -8,6 +13,8 @@ import {
 	ScheduleModel,
 } from "../models/schedule.model";
 import type {
+	AwaitingConfirmationAfter,
+	AwaitingConfirmationRepositoryPage,
 	CreateScheduleDTO,
 	IScheduleRepository,
 	RecurringScheduleTransaction,
@@ -23,6 +30,22 @@ import {
 } from "./class-hours";
 
 const classContextInclude = {} as const;
+
+type AwaitingConfirmationScheduleRow = {
+	id: string;
+	classId: string;
+	recurringScheduleId: string | null;
+	date: Date;
+	time: number;
+	durationSeconds: bigint;
+	notes: string | null;
+	noShowNote: string | null;
+	status: ScheduleStatus;
+	type: ScheduleType;
+	createdAt: Date;
+	updatedAt: Date;
+	className: string;
+};
 
 export class ScheduleRepository implements IScheduleRepository {
 	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
@@ -180,6 +203,81 @@ export class ScheduleRepository implements IScheduleRepository {
 				remainingHoursMap.get(schedule.classId),
 			),
 		);
+	}
+
+	async findAwaitingConfirmationPage(
+		tutorId: string,
+		input: {
+			asOf: DateTime;
+			after?: AwaitingConfirmationAfter;
+			limit: number;
+		},
+	): Promise<AwaitingConfirmationRepositoryPage> {
+		const afterPredicate = input.after
+			? Prisma.sql`
+				AND (
+					schedule.date > ${input.after.date}::date
+					OR (schedule.date = ${input.after.date}::date AND schedule.time > ${input.after.time})
+					OR (
+						schedule.date = ${input.after.date}::date
+						AND schedule.time = ${input.after.time}
+						AND schedule.id > ${input.after.id}
+					)
+				)
+			`
+			: Prisma.empty;
+		const rows = await this.prisma.$queryRaw<AwaitingConfirmationScheduleRow[]>`
+			SELECT
+				schedule.id,
+				schedule."classId",
+				schedule."recurringScheduleId",
+				schedule.date,
+				schedule.time,
+				schedule."durationSeconds",
+				schedule.notes,
+				schedule."noShowNote",
+				schedule.status,
+				schedule.type,
+				schedule."createdAt",
+				schedule."updatedAt",
+				class_record.name AS "className"
+			FROM schedules AS schedule
+			INNER JOIN classes AS class_record
+				ON class_record.id = schedule."classId"
+			WHERE class_record."tutorId" = ${tutorId}
+				AND schedule.status = 'SCHEDULED'
+				AND (
+					(
+						schedule.date::timestamp
+						+ schedule.time * INTERVAL '1 minute'
+						+ schedule."durationSeconds" * INTERVAL '1 second'
+					) AT TIME ZONE 'Asia/Bangkok'
+				) <= ${input.asOf.toDate()}
+				${afterPredicate}
+			ORDER BY schedule.date ASC, schedule.time ASC, schedule.id ASC
+			LIMIT ${input.limit + 1}
+		`;
+		const hasNext = rows.length > input.limit;
+		const data = rows.slice(0, input.limit).map((row) =>
+			ScheduleModel.fromSchedulePrisma({
+				...row,
+				class: { name: row.className },
+			}),
+		);
+		const lastSchedule = data[data.length - 1];
+
+		return {
+			data,
+			hasNext,
+			nextAfter:
+				hasNext && lastSchedule
+					? {
+							date: DateTime.from(lastSchedule.date).toDateOnlyString(),
+							time: lastSchedule.time,
+							id: lastSchedule.id,
+						}
+					: undefined,
+		};
 	}
 
 	async findById(id: string, tutorId?: string): Promise<ScheduleModel | null> {

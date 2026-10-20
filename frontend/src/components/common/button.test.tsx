@@ -4,7 +4,7 @@ import {
   Add01Icon as PlusHugeIcon,
 } from "@hugeicons/core-free-icons";
 import { describe, expect, it } from "vitest";
-import { Button } from "@/components/common/button";
+import { Button, buttonVariants } from "@/components/common/button";
 
 describe("Button", () => {
   it("replaces loading content with three dots while preserving its accessible label and width placeholder", () => {
@@ -46,4 +46,32 @@ describe("Button", () => {
     expect(button.querySelector(".button-loading-placeholder")).not.toBeInTheDocument();
     expect(button.querySelector(".button-loading-dots")).not.toBeInTheDocument();
   });
+
+  it.each([
+    ["xs", "h-6", "gap-1"],
+    ["sm", "h-8", "gap-1"],
+    ["md", "h-11", "gap-1.5"],
+    ["lg", "h-11", "gap-1.5"],
+  ] as const)(
+    "keeps the %s link height and gap while removing padding for buttons and anchors",
+    (size, height, gap) => {
+      render(
+        <>
+          <Button size={size} variant="link">
+            Button link
+          </Button>
+          <a className={buttonVariants({ size, variant: "link" })} href="/schedule">
+            Anchor link
+          </a>
+        </>,
+      );
+
+      for (const control of [
+        screen.getByRole("button", { name: "Button link" }),
+        screen.getByRole("link", { name: "Anchor link" }),
+      ]) {
+        expect(control).toHaveClass("p-0!", height, gap);
+      }
+    },
+  );
 });

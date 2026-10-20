@@ -4,6 +4,8 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth";
 import { scheduleRepository } from "../repositories";
 import {
+	AwaitingConfirmationPageSchemaResolver,
+	AwaitingConfirmationQuerySchema,
 	CreateScheduleSchema,
 	NoShowScheduleSchema,
 	RecurringScheduleUpdateResultSchemaResolver,
@@ -141,6 +143,92 @@ export function createScheduleRoutes({
 						query,
 					);
 					return c.json(schedules.map((schedule) => schedule.toScheduleDTO()));
+				},
+			)
+
+			// List scheduled sessions whose end has passed and still need confirmation
+			.get(
+				"/awaiting-confirmation",
+				validator("query", AwaitingConfirmationQuerySchema, (result, c) => {
+					const hasCursorValidationError =
+						!result.success &&
+						result.error.some((issue) =>
+							issue.path?.some(
+								(path) =>
+									path === "cursor" ||
+									(typeof path === "object" &&
+										path !== null &&
+										"key" in path &&
+										path.key === "cursor"),
+							),
+						);
+					if (hasCursorValidationError) {
+						return c.json(
+							{
+								errorCode: "INVALID_AWAITING_CONFIRMATION_CURSOR",
+								message: "The confirmation cursor is invalid",
+							},
+							400,
+						);
+					}
+					return undefined;
+				}),
+				describeRoute({
+					tags: ["schedules"],
+					description:
+						"List tutor-owned scheduled sessions whose scheduled end has passed, oldest first",
+					parameters: [
+						{
+							name: "limit",
+							in: "query",
+							required: false,
+							schema: {
+								type: "integer",
+								default: 10,
+								minimum: 1,
+								maximum: 50,
+							},
+							description: "Maximum sessions to return",
+						},
+						{
+							name: "cursor",
+							in: "query",
+							required: false,
+							schema: {
+								type: "string",
+								pattern: "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+								maxLength: 1024,
+							},
+							description:
+								"Opaque signed cursor from the previous awaiting-confirmation response",
+						},
+					],
+					responses: {
+						200: {
+							description: "Scheduled sessions awaiting confirmation",
+							content: {
+								"application/json": {
+									schema: AwaitingConfirmationPageSchemaResolver,
+								},
+							},
+						},
+						400: {
+							description: "Invalid pagination limit or cursor",
+						},
+						401: {
+							description: "Unauthorized - Authentication required",
+						},
+					},
+				}),
+				async (c) => {
+					const page = await scheduleService.getSchedulesAwaitingConfirmation(
+						c.get("tutorId"),
+						c.req.valid("query"),
+					);
+					return c.json({
+						data: page.data.map((schedule) => schedule.toScheduleDTO()),
+						pagination: page.pagination,
+					});
 				},
 			)
 

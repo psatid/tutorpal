@@ -191,7 +191,7 @@ export const AppSidebar = ({
                         src="/unknow.png"
                         alt={t("common:profile.avatarAlt")}
                       />
-                      <AvatarFallback className="bg-[#533AFD] font-semibold text-white">
+                      <AvatarFallback className="bg-primary font-semibold text-primary-foreground">
                         {session?.user?.name
                           ?.split(" ")
                           .map((n) => n[0])

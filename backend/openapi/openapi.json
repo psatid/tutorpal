@@ -3613,6 +3613,170 @@
         }
       }
     },
+    "/v1/schedules/awaiting-confirmation": {
+      "get": {
+        "operationId": "getV1SchedulesAwaitingConfirmation",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 50
+            },
+            "description": "Maximum sessions to return"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+              "maxLength": 1024
+            },
+            "description": "Opaque signed cursor from the previous awaiting-confirmation response"
+          }
+        ],
+        "tags": [
+          "schedules"
+        ],
+        "description": "List tutor-owned scheduled sessions whose scheduled end has passed, oldest first",
+        "responses": {
+          "200": {
+            "description": "Scheduled sessions awaiting confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "classId": {
+                            "type": "string"
+                          },
+                          "className": {
+                            "type": "string"
+                          },
+                          "recurringScheduleId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "date": {
+                            "type": "string"
+                          },
+                          "time": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1439
+                          },
+                          "durationMinutes": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "notes": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "noShowNote": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "COMPLETED",
+                              "NO_SHOW",
+                              "CANCELLED"
+                            ]
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "ON_SITE",
+                              "ONLINE"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "remainingHours": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "classId",
+                          "className",
+                          "date",
+                          "time",
+                          "durationMinutes",
+                          "notes",
+                          "noShowNote",
+                          "status",
+                          "type",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "hasNext": {
+                          "type": "boolean"
+                        },
+                        "nextCursor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "hasNext",
+                        "nextCursor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination limit or cursor"
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          }
+        }
+      }
+    },
     "/v1/schedules/recurring/{id}": {
       "patch": {
         "operationId": "patchV1SchedulesRecurringById",

@@ -222,6 +222,26 @@ export const ScheduleListQuerySchema = z
 		}
 	});
 
+export const AwaitingConfirmationQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(50).default(10),
+	cursor: z
+		.string()
+		.max(1024)
+		.regex(
+			/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
+			"Cursor must have three base64url segments",
+		)
+		.optional(),
+});
+
+export const AwaitingConfirmationPageSchema = z.object({
+	data: z.array(ScheduleSchema),
+	pagination: z.object({
+		hasNext: z.boolean(),
+		nextCursor: z.string().nullable(),
+	}),
+});
+
 export const UpdateRecurringScheduleSchema = z.object({
 	effectiveDate: z
 		.string()
@@ -249,6 +269,9 @@ export const ScheduleListSchemaResolver = resolver(z.array(ScheduleSchema));
 export const ScheduleListQuerySchemaResolver = resolver(
 	ScheduleListQuerySchema,
 );
+export const AwaitingConfirmationPageSchemaResolver = resolver(
+	AwaitingConfirmationPageSchema,
+);
 export const RecurringScheduleSchemaResolver = resolver(
 	RecurringScheduleSchema,
 );
@@ -270,6 +293,9 @@ export type WeekdaySchemaType = z.infer<typeof WeekdaySchema>;
 export type RecurringPatternSchemaType = z.infer<typeof RecurringPatternSchema>;
 export type ScheduleListQuerySchemaType = z.infer<
 	typeof ScheduleListQuerySchema
+>;
+export type AwaitingConfirmationQuerySchemaType = z.infer<
+	typeof AwaitingConfirmationQuerySchema
 >;
 export type RecurringScheduleSchemaType = z.infer<
 	typeof RecurringScheduleSchema

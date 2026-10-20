@@ -1,6 +1,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  CalendarCheckIn01Icon as CalendarCheck2HugeIcon,
+  ArrowRight,
   Calendar03Icon as CalendarDaysHugeIcon,
   Tick02Icon as CheckHugeIcon,
   Clock03Icon as Clock3HugeIcon,
@@ -9,20 +9,30 @@ import {
   Cancel01Icon as XHugeIcon,
 } from "@hugeicons/core-free-icons";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
+import {
+  type FocusEvent as ReactFocusEvent,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Badge } from "@/components/common/badge";
 import { Button, buttonVariants } from "@/components/common/button";
 import { Skeleton } from "@/components/common/skeleton";
 import { ClassDrawer } from "@/components/classes/class-drawer";
+import {
+  AwaitingConfirmationCarousel,
+  getAwaitingConfirmationCompleteActionId,
+} from "@/components/dashboard/awaiting-confirmation-carousel";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { ScheduleDrawer } from "@/components/schedules/schedule-drawer";
 import { APP_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/auth-context";
-import {
-  useCompleteSchedule,
-} from "@/hooks/mutations/use-schedules";
+import { useCompleteSchedule } from "@/hooks/mutations/use-schedules";
+import { useInfiniteAwaitingConfirmationSchedules } from "@/hooks/queries/use-infinite-awaiting-confirmation-schedules";
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useClasses } from "@/hooks/queries/use-classes";
 import { DateTime } from "@/lib/date-time";
@@ -31,6 +41,7 @@ import {
   formatTime24Hour,
   statusColors,
 } from "@/lib/schedule-utils";
+import type { AwaitingConfirmationSchedule } from "@/types/awaiting-confirmation-schedule";
 import { cn } from "@/lib/utils";
 
 type DashboardSchedule = NonNullable<
@@ -40,11 +51,14 @@ type DashboardSchedule = NonNullable<
 type ScheduledSummary = {
   count: number;
   plannedMinutes: number;
-  nextSession: DashboardSchedule | null;
 };
 
 type ConfirmationLock = {
   id: number;
+};
+
+type ConfirmationFocusTarget = {
+  completeActionScheduleId: string | null;
 };
 
 type ChecklistSuccessStep = "class" | "schedule";
@@ -58,7 +72,6 @@ function getScheduledSummary(
   const summary: ScheduledSummary = {
     count: 0,
     plannedMinutes: 0,
-    nextSession: null,
   };
 
   if (!schedules) {
@@ -75,7 +88,6 @@ function getScheduledSummary(
 
     summary.count += 1;
     summary.plannedMinutes += schedule.durationMinutes;
-    summary.nextSession ??= schedule;
   }
 
   return summary;
@@ -93,22 +105,58 @@ export function DashboardScreen() {
   } = useSchedules({
     date: today,
   });
+  const awaitingConfirmationQuery = useInfiniteAwaitingConfirmationSchedules();
   const completeMutation = useCompleteSchedule();
   const confirmationLockIdRef = useRef(0);
   const confirmationLockRef = useRef<ConfirmationLock | null>(null);
+  const noShowLockRef = useRef<ConfirmationLock | null>(null);
   const resolvedScheduleIdsRef = useRef(new Set<string>());
   const schedulesLinkRef = useRef<HTMLAnchorElement>(null);
+  const noShowTriggerRef = useRef<HTMLButtonElement>(null);
+  const confirmationHeadingRef = useRef<HTMLHeadingElement>(null);
+  const shouldFocusConfirmationHeadingAfterNoShowSuccessRef = useRef(false);
   const [confirmationLock, setConfirmationLock] =
     useState<ConfirmationLock | null>(null);
+  const [completingScheduleId, setCompletingScheduleId] = useState<
+    string | null
+  >(null);
+  const [confirmationFocusTarget, setConfirmationFocusTarget] =
+    useState<ConfirmationFocusTarget | null>(null);
   const [resolvedScheduleIds, setResolvedScheduleIds] = useState<Set<string>>(
     () => new Set(),
   );
   const [noShowSchedule, setNoShowSchedule] =
-    useState<DashboardSchedule | null>(null);
+    useState<AwaitingConfirmationSchedule | null>(null);
+  const [homeAnnouncement, setHomeAnnouncement] = useState("");
   const scheduledSummary = getScheduledSummary(schedules, resolvedScheduleIds);
+  const awaitingConfirmationSchedules =
+    awaitingConfirmationQuery.data?.pages
+      .flatMap((page) => page.schedules)
+      .filter((schedule) => !resolvedScheduleIds.has(schedule.id)) ?? [];
   const isMutationPending = completeMutation.isPending;
   const isAwaitingConfirmation = confirmationLock !== null;
-  const isTriageBusy = isMutationPending || isAwaitingConfirmation;
+  const isConfirmationBusy = isMutationPending || isAwaitingConfirmation;
+
+  useEffect(() => {
+    if (!confirmationFocusTarget || isConfirmationBusy) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const completeAction = confirmationFocusTarget.completeActionScheduleId
+        ? document.getElementById(
+            getAwaitingConfirmationCompleteActionId(
+              confirmationFocusTarget.completeActionScheduleId,
+            ),
+          )
+        : null;
+
+      (completeAction ?? confirmationHeadingRef.current)?.focus();
+      setConfirmationFocusTarget(null);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [confirmationFocusTarget, isConfirmationBusy]);
 
   useEffect(() => {
     if (!schedules || resolvedScheduleIdsRef.current.size === 0) {
@@ -172,7 +220,24 @@ export function DashboardScreen() {
     );
   };
 
-  const handleCompleteSchedule = (schedule: DashboardSchedule) => {
+  const queueConfirmationSuccessFocus = (scheduleId: string) => {
+    const scheduleIndex = awaitingConfirmationSchedules.findIndex(
+      (schedule) => schedule.id === scheduleId,
+    );
+    const neighboringSchedule =
+      scheduleIndex >= 0
+        ? (awaitingConfirmationSchedules[scheduleIndex + 1] ??
+          awaitingConfirmationSchedules[scheduleIndex - 1])
+        : awaitingConfirmationSchedules.find(
+            (schedule) => schedule.id !== scheduleId,
+          );
+
+    setConfirmationFocusTarget({
+      completeActionScheduleId: neighboringSchedule?.id ?? null,
+    });
+  };
+
+  const handleCompleteSchedule = (schedule: AwaitingConfirmationSchedule) => {
     const lock = acquireConfirmationLock(schedule.id);
     if (!lock) {
       return;
@@ -199,9 +264,16 @@ export function DashboardScreen() {
           }
 
           wasConfirmed = true;
+          setCompletingScheduleId(schedule.id);
           completeMutation.mutate(schedule.id, {
-            onSuccess: () => markScheduleResolved(schedule.id),
-            onSettled: () => releaseConfirmationLock(lock),
+            onSuccess: () => {
+              markScheduleResolved(schedule.id);
+              queueConfirmationSuccessFocus(schedule.id);
+            },
+            onSettled: () => {
+              setCompletingScheduleId(null);
+              releaseConfirmationLock(lock);
+            },
           });
         },
       },
@@ -214,21 +286,34 @@ export function DashboardScreen() {
     });
   };
 
-  const handleNoShowSchedule = (schedule: DashboardSchedule) => {
-    if (
-      confirmationLockRef.current ||
-      isMutationPending ||
-      resolvedScheduleIdsRef.current.has(schedule.id)
-    ) {
+  const handleNoShowSchedule = (
+    schedule: AwaitingConfirmationSchedule,
+    trigger: HTMLButtonElement,
+  ) => {
+    const lock = acquireConfirmationLock(schedule.id);
+    if (!lock) {
       return;
     }
 
+    shouldFocusConfirmationHeadingAfterNoShowSuccessRef.current = false;
+    noShowLockRef.current = lock;
+    noShowTriggerRef.current = trigger;
     setNoShowSchedule(schedule);
+  };
+
+  const closeNoShowDialog = () => {
+    const lock = noShowLockRef.current;
+    noShowLockRef.current = null;
+    setNoShowSchedule(null);
+
+    if (lock) {
+      releaseConfirmationLock(lock);
+    }
   };
 
   return (
     <section className="mx-auto w-full max-w-6xl">
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:pb-8 lg:flex-row lg:items-end lg:justify-between">
+      <header className="border-b border-border pb-6 sm:pb-8">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             {DateTime.formatDate(todayDate, {
@@ -257,21 +342,57 @@ export function DashboardScreen() {
             </p>
           ) : null}
         </div>
-
-        <Link
-          ref={schedulesLinkRef}
-          to={APP_ROUTES.SCHEDULES}
-          className={buttonVariants({
-            variant: "outline",
-            className: "w-full sm:w-auto",
-          })}
-        >
-          <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2} className="size-4" aria-hidden="true" />
-          {t("dashboard:today.openSchedule")}
-        </Link>
       </header>
 
-      <div className="mt-6">
+      <AwaitingConfirmationCarousel
+        completingScheduleId={completingScheduleId}
+        headingRef={confirmationHeadingRef}
+        hasNextPage={awaitingConfirmationQuery.hasNextPage}
+        isBusy={isConfirmationBusy}
+        isError={awaitingConfirmationQuery.isError}
+        isFetchingNextPage={awaitingConfirmationQuery.isFetchingNextPage}
+        isFetchNextPageError={awaitingConfirmationQuery.isFetchNextPageError}
+        isLoading={awaitingConfirmationQuery.isLoading}
+        onComplete={handleCompleteSchedule}
+        onLoadMore={() => awaitingConfirmationQuery.fetchNextPage()}
+        onNoShow={handleNoShowSchedule}
+        onRetry={() => void awaitingConfirmationQuery.refetch()}
+        schedules={awaitingConfirmationSchedules}
+      />
+
+      <section
+        aria-labelledby="today-agenda-title"
+        className="mt-6 rounded-lg border border-border bg-card"
+      >
+        <header className="flex gap-4 border-b border-border p-4 flex-row justify-between">
+          <div>
+            <h2
+              id="today-agenda-title"
+              className="font-semibold text-foreground"
+            >
+              {t("dashboard:today.agenda")}
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t("dashboard:today.timezone")}
+            </p>
+          </div>
+          <Link
+            ref={schedulesLinkRef}
+            to={APP_ROUTES.SCHEDULES}
+            className={buttonVariants({
+              variant: "link",
+              size: "sm",
+            })}
+          >
+            {t("dashboard:today.openSchedule")}
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-4"
+              icon={ArrowRight}
+              strokeWidth={2}
+            />
+          </Link>
+        </header>
         {isLoading ? (
           <TodayHubSkeleton loadingLabel={t("dashboard:today.loading")} />
         ) : isError ? (
@@ -281,34 +402,40 @@ export function DashboardScreen() {
             retryLabel={t("dashboard:today.retry")}
           />
         ) : schedules && schedules.length > 0 ? (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-6">
-            <SessionToConfirmTriage
-              isCompleting={completeMutation.isPending}
-              isBusy={isTriageBusy}
-              busyLabel={t(
-                isAwaitingConfirmation
-                  ? "dashboard:today.waitingForConfirmation"
-                  : "dashboard:today.updating",
-              )}
-              noShowLabel={t("dashboard:today.noShowAction")}
-              onComplete={handleCompleteSchedule}
-              onNoShow={handleNoShowSchedule}
-              schedule={scheduledSummary.nextSession}
-            />
-            <TodayAgenda schedules={schedules} />
-          </div>
+          <TodayAgenda schedules={schedules} />
         ) : (
           <TodayEmpty />
         )}
-      </div>
+      </section>
 
-      <GettingStartedChecklist />
+      <GettingStartedChecklist
+        onAnnouncement={setHomeAnnouncement}
+        openScheduleLinkRef={schedulesLinkRef}
+      />
+      <p aria-atomic="true" aria-live="polite" className="sr-only">
+        {homeAnnouncement}
+      </p>
       <NoShowScheduleDialog
-        finalFocus={schedulesLinkRef}
-        onOpenChange={(open) => {
-          if (!open) setNoShowSchedule(null);
+        finalFocus={() => {
+          if (shouldFocusConfirmationHeadingAfterNoShowSuccessRef.current) {
+            shouldFocusConfirmationHeadingAfterNoShowSuccessRef.current = false;
+            return confirmationHeadingRef.current ?? schedulesLinkRef.current;
+          }
+
+          return (
+            noShowTriggerRef.current ??
+            confirmationHeadingRef.current ??
+            schedulesLinkRef.current
+          );
         }}
-        onSuccess={(schedule) => markScheduleResolved(schedule.id)}
+        onOpenChange={(open) => {
+          if (!open) closeNoShowDialog();
+        }}
+        onSuccess={(schedule) => {
+          markScheduleResolved(schedule.id);
+          queueConfirmationSuccessFocus(schedule.id);
+          shouldFocusConfirmationHeadingAfterNoShowSuccessRef.current = true;
+        }}
         open={noShowSchedule !== null}
         schedule={noShowSchedule}
       />
@@ -316,7 +443,13 @@ export function DashboardScreen() {
   );
 }
 
-function GettingStartedChecklist() {
+function GettingStartedChecklist({
+  onAnnouncement,
+  openScheduleLinkRef,
+}: {
+  onAnnouncement: (message: string) => void;
+  openScheduleLinkRef: RefObject<HTMLAnchorElement | null>;
+}) {
   const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -330,16 +463,17 @@ function GettingStartedChecklist() {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
   const [isCreateScheduleOpen, setIsCreateScheduleOpen] = useState(false);
-  const [announcement, setAnnouncement] = useState("");
   const [pendingSuccess, setPendingSuccess] =
     useState<ChecklistSuccessStep | null>(null);
   const [pendingHoursSuccess, setPendingHoursSuccess] = useState(false);
   const pendingSuccessRef = useRef<ChecklistSuccessStep | null>(null);
   const hoursSuccessHandledRef = useRef(false);
+  const completionFocusRequestedRef = useRef(false);
+  const checklistHadFocusRef = useRef(false);
+  const wasCompleteRef = useRef(false);
   const checklistHeadingRef = useRef<HTMLHeadingElement>(null);
   const reopenButtonRef = useRef<HTMLButtonElement>(null);
   const primaryActionRef = useRef<HTMLButtonElement>(null);
-  const guideSummaryRef = useRef<HTMLElement>(null);
   const classesRetryButtonRef = useRef<HTMLButtonElement>(null);
   const schedulesRetryButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -355,7 +489,8 @@ function GettingStartedChecklist() {
     (classData) => classData.getHoursData().totalHours > 0,
   );
   const hasSchedule = hasScheduleData && schedulesQuery.data.length > 0;
-  const completedSteps = Number(hasClass) + Number(hasHours) + Number(hasSchedule);
+  const completedSteps =
+    Number(hasClass) + Number(hasHours) + Number(hasSchedule);
   const isLoading =
     !hasClassData &&
     !hasScheduleData &&
@@ -375,15 +510,27 @@ function GettingStartedChecklist() {
             ? "schedule"
             : null;
 
+  const requestOpenScheduleFocus = () => {
+    completionFocusRequestedRef.current = true;
+  };
+
+  const handleChecklistFocus = () => {
+    checklistHadFocusRef.current = true;
+  };
+
+  const handleChecklistBlur = (event: ReactFocusEvent<HTMLElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      checklistHadFocusRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (!dismissalStorageKey) {
       setIsDismissed(false);
       return;
     }
 
-    setIsDismissed(
-      window.localStorage.getItem(dismissalStorageKey) === "true",
-    );
+    setIsDismissed(window.localStorage.getItem(dismissalStorageKey) === "true");
   }, [dismissalStorageKey]);
 
   const dismiss = () => {
@@ -405,15 +552,19 @@ function GettingStartedChecklist() {
   useEffect(() => {
     if (pendingSuccess === "class") {
       if (hasClass) {
-        setAnnouncement(t("gettingStarted.classSuccess"));
+        onAnnouncement(t("gettingStarted.classSuccess"));
         pendingSuccessRef.current = null;
         setPendingSuccess(null);
-        requestAnimationFrame(() => primaryActionRef.current?.focus());
+        if (isComplete) {
+          requestOpenScheduleFocus();
+        } else {
+          requestAnimationFrame(() => primaryActionRef.current?.focus());
+        }
         return;
       }
 
       if (classesQuery.isError) {
-        setAnnouncement(t("gettingStarted.classRefreshRequired"));
+        onAnnouncement(t("gettingStarted.classRefreshRequired"));
         pendingSuccessRef.current = null;
         setPendingSuccess(null);
         requestAnimationFrame(() => classesRetryButtonRef.current?.focus());
@@ -423,15 +574,19 @@ function GettingStartedChecklist() {
 
     if (pendingSuccess === "schedule") {
       if (hasSchedule) {
-        setAnnouncement(t("gettingStarted.scheduleSuccess"));
+        onAnnouncement(t("gettingStarted.scheduleSuccess"));
         pendingSuccessRef.current = null;
         setPendingSuccess(null);
-        requestAnimationFrame(() => guideSummaryRef.current?.focus());
+        if (isComplete) {
+          requestOpenScheduleFocus();
+        } else {
+          requestAnimationFrame(() => primaryActionRef.current?.focus());
+        }
         return;
       }
 
       if (schedulesQuery.isError) {
-        setAnnouncement(t("gettingStarted.scheduleRefreshRequired"));
+        onAnnouncement(t("gettingStarted.scheduleRefreshRequired"));
         pendingSuccessRef.current = null;
         setPendingSuccess(null);
         requestAnimationFrame(() => schedulesRetryButtonRef.current?.focus());
@@ -441,16 +596,15 @@ function GettingStartedChecklist() {
     classesQuery.isError,
     hasClass,
     hasSchedule,
+    isComplete,
+    onAnnouncement,
     pendingSuccess,
     schedulesQuery.isError,
     t,
   ]);
 
   useEffect(() => {
-    if (
-      search.setup !== "hours-added" ||
-      hoursSuccessHandledRef.current
-    ) {
+    if (search.setup !== "hours-added" || hoursSuccessHandledRef.current) {
       return;
     }
 
@@ -462,13 +616,20 @@ function GettingStartedChecklist() {
     void navigate({ to: "/", search: {}, replace: true });
 
     if (!hasHours) {
-      setAnnouncement(t("gettingStarted.hoursClassesRefreshRequired"));
+      onAnnouncement(t("gettingStarted.hoursClassesRefreshRequired"));
       requestAnimationFrame(() => classesRetryButtonRef.current?.focus());
       return;
     }
 
     setPendingHoursSuccess(true);
-  }, [classesQuery.isError, hasHours, navigate, search.setup, t]);
+  }, [
+    classesQuery.isError,
+    hasHours,
+    navigate,
+    onAnnouncement,
+    search.setup,
+    t,
+  ]);
 
   useEffect(() => {
     if (!pendingHoursSuccess) {
@@ -476,7 +637,7 @@ function GettingStartedChecklist() {
     }
 
     if (schedulesQuery.isError) {
-      setAnnouncement(t("gettingStarted.hoursSchedulesRefreshRequired"));
+      onAnnouncement(t("gettingStarted.hoursSchedulesRefreshRequired"));
       setPendingHoursSuccess(false);
       requestAnimationFrame(() => schedulesRetryButtonRef.current?.focus());
       return;
@@ -484,22 +645,60 @@ function GettingStartedChecklist() {
 
     if (!hasScheduleData || (!isComplete && activeStep === null)) return;
 
-    setAnnouncement(t("gettingStarted.hoursSuccess"));
+    onAnnouncement(t("gettingStarted.hoursSuccess"));
     setPendingHoursSuccess(false);
-    requestAnimationFrame(() => {
-      if (isComplete) {
-        guideSummaryRef.current?.focus();
-        return;
-      }
-      primaryActionRef.current?.focus();
-    });
+    if (isComplete) {
+      requestOpenScheduleFocus();
+      return;
+    }
+    requestAnimationFrame(() => primaryActionRef.current?.focus());
   }, [
     activeStep,
     hasScheduleData,
     isComplete,
+    onAnnouncement,
     pendingHoursSuccess,
     schedulesQuery.isError,
     t,
+  ]);
+
+  useEffect(() => {
+    if (!isComplete) {
+      wasCompleteRef.current = false;
+      completionFocusRequestedRef.current = false;
+      return;
+    }
+
+    if (!wasCompleteRef.current && checklistHadFocusRef.current) {
+      requestOpenScheduleFocus();
+    }
+    wasCompleteRef.current = true;
+
+    if (
+      !completionFocusRequestedRef.current ||
+      isCreateClassOpen ||
+      isCreateScheduleOpen
+    ) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const openScheduleLink = openScheduleLinkRef.current;
+      if (!openScheduleLink) {
+        return;
+      }
+
+      openScheduleLink.focus();
+      checklistHadFocusRef.current = false;
+      completionFocusRequestedRef.current = false;
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [
+    isComplete,
+    isCreateClassOpen,
+    isCreateScheduleOpen,
+    openScheduleLinkRef,
   ]);
 
   const handleSuccess = (step: ChecklistSuccessStep) => {
@@ -507,10 +706,41 @@ function GettingStartedChecklist() {
     setPendingSuccess(step);
   };
 
-  if (isDismissed) {
-    return (
-      <>
-        <div className="mt-6">
+  const openAddHours = () => {
+    void navigate({
+      to: "/classes",
+      search: { setup: "getting-started" },
+    });
+  };
+
+  const handleDrawerCloseAutoFocus = () => {
+    if (isComplete) {
+      requestOpenScheduleFocus();
+      requestAnimationFrame(() => {
+        if (!completionFocusRequestedRef.current) {
+          return;
+        }
+
+        openScheduleLinkRef.current?.focus();
+        checklistHadFocusRef.current = false;
+        completionFocusRequestedRef.current = false;
+      });
+      return;
+    }
+
+    if (!pendingSuccessRef.current) {
+      primaryActionRef.current?.focus();
+    }
+  };
+
+  return (
+    <>
+      {isComplete ? null : isDismissed ? (
+        <div
+          className="mt-6"
+          onBlurCapture={handleChecklistBlur}
+          onFocusCapture={handleChecklistFocus}
+        >
           <Button
             onClick={reopen}
             ref={reopenButtonRef}
@@ -520,227 +750,191 @@ function GettingStartedChecklist() {
             {t("gettingStarted.reopen")}
           </Button>
         </div>
-        <ScheduleDrawer
-          isOpen={isCreateScheduleOpen}
-          mode="create"
-          onCloseAutoFocus={() => reopenButtonRef.current?.focus()}
-          onCreateSuccess={() => handleSuccess("schedule")}
-          onModeChange={() => {}}
-          onOpenChange={setIsCreateScheduleOpen}
-          scheduleId={null}
-          selectedDate={DateTime.today().toDate()}
-        />
-      </>
-    );
-  }
-
-  if (isLoading) {
-    return <GettingStartedSkeleton label={t("gettingStarted.loading")} />;
-  }
-
-  const openAddHours = () => {
-    void navigate({
-      to: "/classes",
-      search: { setup: "getting-started" },
-    });
-  };
-
-  return (
-    <section
-      aria-labelledby="getting-started-title"
-      className="mt-6 rounded-lg border border-border bg-card"
-    >
-      <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-5">
-        <div>
-          <h2
-            id="getting-started-title"
-            ref={checklistHeadingRef}
-            tabIndex={-1}
-            className="font-semibold text-foreground outline-none"
-          >
-            {t("gettingStarted.title")}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isComplete
-              ? t("gettingStarted.completeDescription")
-              : t("gettingStarted.description")}
-          </p>
-          <p className="mt-2 text-sm font-medium tabular-nums text-muted-foreground">
-            {t("gettingStarted.progress", { completed: completedSteps, total: 3 })}
-          </p>
-        </div>
-        <Button
-          aria-label={t("gettingStarted.dismiss")}
-          onClick={dismiss}
-          size="icon"
-          type="button"
-          variant="ghost"
+      ) : isLoading ? (
+        <div
+          onBlurCapture={handleChecklistBlur}
+          onFocusCapture={handleChecklistFocus}
         >
-          <HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" />
-        </Button>
-      </div>
-
-      <ChecklistSourceStatus
-        isError={classesQuery.isError}
-        isRetrying={classesQuery.isFetching}
-        onRetry={() => void classesQuery.refetch()}
-        retryButtonRef={classesRetryButtonRef}
-        text={t("gettingStarted.classesLoadError")}
-      />
-      <ChecklistSourceStatus
-        isError={schedulesQuery.isError}
-        isRetrying={schedulesQuery.isFetching}
-        onRetry={() => void schedulesQuery.refetch()}
-        retryButtonRef={schedulesRetryButtonRef}
-        text={t("gettingStarted.schedulesLoadError")}
-      />
-
-      {isComplete ? (
-        <details className="border-t border-border px-4 py-3 sm:px-5">
-          <summary
-            ref={guideSummaryRef}
-            className="cursor-pointer text-sm font-medium text-foreground"
-          >
-            {t("gettingStarted.manageSchedule")}
-          </summary>
-          <div className="mt-3 space-y-2 text-sm leading-5 text-muted-foreground">
-            <p>{t("gettingStarted.guide.quickActions")}</p>
-            <p>{t("gettingStarted.guide.cancelled")}</p>
-            <p>{t("gettingStarted.guide.reservations")}</p>
-            <p>{t("gettingStarted.guide.delete")}</p>
-          </div>
-        </details>
+          <GettingStartedSkeleton label={t("gettingStarted.loading")} />
+        </div>
       ) : (
-        <>
+        <section
+          aria-labelledby="getting-started-title"
+          className="mt-6 rounded-lg border border-border bg-card"
+          onBlurCapture={handleChecklistBlur}
+          onFocusCapture={handleChecklistFocus}
+        >
+          <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-5">
+            <div>
+              <h2
+                id="getting-started-title"
+                ref={checklistHeadingRef}
+                tabIndex={-1}
+                className="font-semibold text-foreground outline-none"
+              >
+                {t("gettingStarted.title")}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("gettingStarted.description")}
+              </p>
+              <p className="mt-2 text-sm font-medium tabular-nums text-muted-foreground">
+                {t("gettingStarted.progress", {
+                  completed: completedSteps,
+                  total: 3,
+                })}
+              </p>
+            </div>
+            <Button
+              aria-label={t("gettingStarted.dismiss")}
+              onClick={dismiss}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon
+                aria-hidden="true"
+                icon={XHugeIcon}
+                strokeWidth={2}
+              />
+            </Button>
+          </div>
+
+          <ChecklistSourceStatus
+            isError={classesQuery.isError}
+            isRetrying={classesQuery.isFetching}
+            onRetry={() => void classesQuery.refetch()}
+            retryButtonRef={classesRetryButtonRef}
+            text={t("gettingStarted.classesLoadError")}
+          />
+          <ChecklistSourceStatus
+            isError={schedulesQuery.isError}
+            isRetrying={schedulesQuery.isFetching}
+            onRetry={() => void schedulesQuery.refetch()}
+            retryButtonRef={schedulesRetryButtonRef}
+            text={t("gettingStarted.schedulesLoadError")}
+          />
+
           <ol className="border-t border-border">
             <GettingStartedStep
-            action={
-              activeStep === "class" ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => setIsCreateClassOpen(true)}
-                  ref={primaryActionRef}
-                  type="button"
-                >
-                  {t("gettingStarted.createClass")}
-                </Button>
-              ) : undefined
-            }
-            complete={hasClass}
-            description={
-              !hasClassData
-                ? t("gettingStarted.classLoading")
-                : hasClass
-                ? t("gettingStarted.classDone")
-                : t("gettingStarted.classDescription")
-            }
-            disabled={activeStep !== "class"}
-            state={
-              hasClass
-                ? "complete"
-                : activeStep === "class"
-                  ? "current"
-                  : "notStarted"
-            }
-            title={t("gettingStarted.classTitle")}
+              action={
+                activeStep === "class" ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => setIsCreateClassOpen(true)}
+                    ref={primaryActionRef}
+                    type="button"
+                  >
+                    {t("gettingStarted.createClass")}
+                  </Button>
+                ) : undefined
+              }
+              complete={hasClass}
+              description={
+                !hasClassData
+                  ? t("gettingStarted.classLoading")
+                  : hasClass
+                    ? t("gettingStarted.classDone")
+                    : t("gettingStarted.classDescription")
+              }
+              disabled={activeStep !== "class"}
+              state={
+                hasClass
+                  ? "complete"
+                  : activeStep === "class"
+                    ? "current"
+                    : "notStarted"
+              }
+              title={t("gettingStarted.classTitle")}
             />
             <GettingStartedStep
-            action={
-              activeStep === "hours" ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={openAddHours}
-                  ref={primaryActionRef}
-                  type="button"
-                >
-                  {t("gettingStarted.addHours")}
-                </Button>
-              ) : undefined
-            }
-            complete={hasHours}
-            description={
-              !hasClassData
-                ? t("gettingStarted.classLoading")
-                : !hasClass
-                ? t("gettingStarted.hoursNeedsClass")
-                : hasHours
-                  ? t("gettingStarted.hoursDone")
-                  : t("gettingStarted.hoursDescription")
-            }
-            disabled={activeStep !== "hours"}
-            state={
-              hasHours
-                ? "complete"
-                : activeStep === "hours"
-                  ? "current"
-                  : "notStarted"
-            }
-            title={t("gettingStarted.hoursTitle")}
+              action={
+                activeStep === "hours" ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={openAddHours}
+                    ref={primaryActionRef}
+                    type="button"
+                  >
+                    {t("gettingStarted.addHours")}
+                  </Button>
+                ) : undefined
+              }
+              complete={hasHours}
+              description={
+                !hasClassData
+                  ? t("gettingStarted.classLoading")
+                  : !hasClass
+                    ? t("gettingStarted.hoursNeedsClass")
+                    : hasHours
+                      ? t("gettingStarted.hoursDone")
+                      : t("gettingStarted.hoursDescription")
+              }
+              disabled={activeStep !== "hours"}
+              state={
+                hasHours
+                  ? "complete"
+                  : activeStep === "hours"
+                    ? "current"
+                    : "notStarted"
+              }
+              title={t("gettingStarted.hoursTitle")}
             />
             <GettingStartedStep
-            action={
-              activeStep === "schedule" ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => setIsCreateScheduleOpen(true)}
-                  ref={primaryActionRef}
-                  type="button"
-                >
-                  {t("gettingStarted.createSchedule")}
-                </Button>
-              ) : undefined
-            }
-            complete={hasSchedule}
-            description={
-              !hasScheduleData
-                ? t("gettingStarted.scheduleLoading")
-                : !hasHours
-                ? t("gettingStarted.scheduleNeedsHours")
-                : hasSchedule
-                  ? t("gettingStarted.scheduleDone")
-                  : t("gettingStarted.scheduleDescription")
-            }
-            disabled={activeStep !== "schedule"}
-            state={
-              hasSchedule
-                ? "complete"
-                : activeStep === "schedule"
-                  ? "current"
-                  : "notStarted"
-            }
-            title={t("gettingStarted.scheduleTitle")}
+              action={
+                activeStep === "schedule" ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => setIsCreateScheduleOpen(true)}
+                    ref={primaryActionRef}
+                    type="button"
+                  >
+                    {t("gettingStarted.createSchedule")}
+                  </Button>
+                ) : undefined
+              }
+              complete={hasSchedule}
+              description={
+                !hasScheduleData
+                  ? t("gettingStarted.scheduleLoading")
+                  : !hasHours
+                    ? t("gettingStarted.scheduleNeedsHours")
+                    : hasSchedule
+                      ? t("gettingStarted.scheduleDone")
+                      : t("gettingStarted.scheduleDescription")
+              }
+              disabled={activeStep !== "schedule"}
+              state={
+                hasSchedule
+                  ? "complete"
+                  : activeStep === "schedule"
+                    ? "current"
+                    : "notStarted"
+              }
+              title={t("gettingStarted.scheduleTitle")}
             />
           </ol>
-        </>
+        </section>
       )}
-
-      <p aria-live="polite" className="sr-only">
-        {announcement}
-      </p>
 
       <ClassDrawer
         classData={null}
         isOpen={isCreateClassOpen}
         mode="create"
-        onCloseAutoFocus={() => {
-          if (!pendingSuccessRef.current) primaryActionRef.current?.focus();
-        }}
+        onCloseAutoFocus={handleDrawerCloseAutoFocus}
         onOpenChange={setIsCreateClassOpen}
         onSuccess={() => handleSuccess("class")}
       />
       <ScheduleDrawer
         isOpen={isCreateScheduleOpen}
         mode="create"
-        onCloseAutoFocus={() => {
-          if (!pendingSuccessRef.current) primaryActionRef.current?.focus();
-        }}
+        onCloseAutoFocus={handleDrawerCloseAutoFocus}
         onCreateSuccess={() => handleSuccess("schedule")}
         onModeChange={() => {}}
         onOpenChange={setIsCreateScheduleOpen}
         scheduleId={null}
         selectedDate={DateTime.today().toDate()}
       />
-    </section>
+    </>
   );
 }
 
@@ -776,16 +970,23 @@ function GettingStartedStep({
               : "border-border text-muted-foreground",
           )}
         >
-          {complete ? <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-3.5" /> : null}
+          {complete ? (
+            <HugeiconsIcon
+              icon={CheckHugeIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="size-3.5"
+            />
+          ) : null}
         </span>
         <div>
           <p className={cn("font-medium", disabled && "text-muted-foreground")}>
             {title}
           </p>
-          <span className="sr-only">
-            {t(`gettingStarted.states.${state}`)}
-          </span>
-          <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+          <span className="sr-only">{t(`gettingStarted.states.${state}`)}</span>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">
+            {description}
+          </p>
         </div>
       </div>
       {action ? <div className="shrink-0 sm:pl-4">{action}</div> : null}
@@ -811,7 +1012,10 @@ function ChecklistSourceStatus({
   if (!isError) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:px-5" role="status">
+    <div
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:px-5"
+      role="status"
+    >
       <p>{text}</p>
       <Button
         className="min-h-11"
@@ -845,289 +1049,123 @@ function GettingStartedSkeleton({ label }: { label: string }) {
   );
 }
 
-function SessionToConfirmTriage({
-  schedule,
-  isBusy,
-  isCompleting,
-  onComplete,
-  onNoShow,
-  noShowLabel,
-  busyLabel,
-}: {
-  schedule: DashboardSchedule | null;
-  isBusy: boolean;
-  isCompleting: boolean;
-  onComplete: (schedule: DashboardSchedule) => void;
-  onNoShow: (schedule: DashboardSchedule) => void;
-  noShowLabel: string;
-  busyLabel: string;
-}) {
-  const { t } = useTranslation(["dashboard", "schedules"]);
-
-  if (!schedule) {
-    return (
-      <aside
-        aria-labelledby="session-to-confirm-title"
-        className="order-first h-fit rounded-lg border border-border bg-card p-4 sm:p-5 lg:order-2"
-      >
-        <div className="flex size-9 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-          <HugeiconsIcon icon={CalendarCheck2HugeIcon} strokeWidth={2} className="size-4" aria-hidden="true" />
-        </div>
-        <h2
-          id="session-to-confirm-title"
-          className="mt-4 text-base font-semibold text-foreground"
-        >
-          {t("dashboard:today.noSessionToConfirmTitle")}
-        </h2>
-        <p className="mt-1 text-sm leading-5 text-muted-foreground">
-          {t("dashboard:today.noSessionToConfirmDescription")}
-        </p>
-      </aside>
-    );
-  }
-
-  const ScheduleTypeIcon = schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
-  const startTime = formatTime24Hour(schedule.time);
-  const endTime = formatTime24Hour(schedule.time + schedule.durationMinutes);
-
-  return (
-    <aside
-      aria-busy={isBusy}
-      aria-labelledby="session-to-confirm-title"
-      className="order-first h-fit rounded-lg border border-border bg-card p-4 sm:p-5 lg:order-2"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-container text-primary">
-          <HugeiconsIcon icon={CalendarCheck2HugeIcon} strokeWidth={2} className="size-4" aria-hidden="true" />
-        </div>
-        <div className="min-w-0">
-          <h2
-            id="session-to-confirm-title"
-            className="font-semibold text-foreground"
-          >
-            {t("dashboard:today.sessionToConfirm")}
-          </h2>
-          <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
-            {t("dashboard:today.sessionToConfirmDescription")}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-5 border-y border-border py-4">
-        <p className="font-medium tabular-nums text-foreground">
-          {startTime} – {endTime}
-        </p>
-        <p className="mt-1 wrap-break-word font-semibold text-foreground">
-          {schedule.className}
-        </p>
-        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <HugeiconsIcon
-              aria-hidden="true"
-              className="size-4"
-              icon={ScheduleTypeIcon}
-              strokeWidth={2}
-            />
-            {t(`schedules:type.${schedule.type}`)}
-          </span>
-          <span aria-hidden="true">•</span>
-          <span className="tabular-nums">
-            {formatDuration(schedule.durationMinutes, t)}
-          </span>
-        </p>
-      </div>
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-        <Button
-          className="w-full"
-          disabled={isBusy}
-          loading={isCompleting}
-          onClick={() => onComplete(schedule)}
-          type="button"
-        >
-          {t("schedules:complete.action")}
-        </Button>
-        <Button
-          className="w-full"
-          disabled={isBusy}
-          onClick={() => onNoShow(schedule)}
-          type="button"
-          variant="outline"
-        >
-          {noShowLabel}
-        </Button>
-      </div>
-      {isBusy ? (
-        <p
-          className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-          role="status"
-        >
-          <HugeiconsIcon icon={Clock3HugeIcon} strokeWidth={2} className="size-3" aria-hidden="true" />
-          {busyLabel}
-        </p>
-      ) : null}
-    </aside>
-  );
-}
-
 function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
   const { t } = useTranslation(["dashboard", "schedules"]);
 
   return (
-    <section
-      aria-labelledby="today-agenda-title"
-      className="rounded-lg border border-border bg-card lg:order-1"
-    >
-      <div className="border-b border-border px-4 py-4 sm:px-5">
-        <h2 id="today-agenda-title" className="font-semibold text-foreground">
-          {t("dashboard:today.agenda")}
-        </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {t("dashboard:today.timezone")}
-        </p>
-      </div>
+    <ol aria-label={t("dashboard:today.agenda")} className="overflow-hidden">
+      {schedules.map((schedule, index) => {
+        const isFirst = index === 0;
+        const isLast = index === schedules.length - 1;
+        const railSegmentClass =
+          isFirst && isLast
+            ? "hidden"
+            : isFirst
+              ? "top-[1.875rem] bottom-0"
+              : isLast
+                ? "top-0 bottom-[calc(100%_-_1.875rem)]"
+                : "inset-y-0";
+        const status = statusColors[schedule.status] ?? statusColors.SCHEDULED;
+        const StatusIcon = status.icon ?? Clock3HugeIcon;
+        const ScheduleTypeIcon =
+          schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
+        const startTime = formatTime24Hour(schedule.time);
+        const endTime = formatTime24Hour(
+          schedule.time + schedule.durationMinutes,
+        );
 
-      <ol aria-label={t("dashboard:today.agenda")} className="overflow-hidden">
-        {schedules.map((schedule, index) => {
-          const isFirst = index === 0;
-          const isLast = index === schedules.length - 1;
-          const railSegmentClass =
-            isFirst && isLast
-              ? "hidden"
-              : isFirst
-                ? "top-[1.875rem] bottom-0"
-                : isLast
-                  ? "top-0 bottom-[calc(100%_-_1.875rem)]"
-                  : "inset-y-0";
-          const status =
-            statusColors[schedule.status] ?? statusColors.SCHEDULED;
-          const StatusIcon = status.icon ?? Clock3HugeIcon;
-          const ScheduleTypeIcon =
-            schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
-          const startTime = formatTime24Hour(schedule.time);
-          const endTime = formatTime24Hour(
-            schedule.time + schedule.durationMinutes,
-          );
+        return (
+          <li
+            className="relative grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 px-4 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:px-5"
+            key={schedule.id}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "absolute left-21 w-px bg-border sm:left-29",
+                railSegmentClass,
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className="absolute top-6 left-19.5 size-3 rounded-full border border-border bg-card sm:left-27.5"
+            />
 
-          return (
-            <li
-              className="relative grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 px-4 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:px-5"
-              key={schedule.id}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "absolute left-21 w-px bg-border sm:left-29",
-                  railSegmentClass,
-                )}
-              />
-              <span
-                aria-hidden="true"
-                className="absolute top-6 left-19.5 size-3 rounded-full border border-border bg-card sm:left-27.5"
-              />
-
-              <div className="pt-5 text-sm tabular-nums text-foreground">
-                <time className="block font-semibold" dateTime={startTime}>
-                  {startTime}
-                </time>
-                <time
-                  className="mt-0.5 block text-muted-foreground"
-                  dateTime={endTime}
-                >
-                  {endTime}
-                </time>
-              </div>
-
-              <div
-                className={cn(
-                  "min-w-0 py-4 pl-5",
-                  !isLast && "border-b border-border",
-                )}
+            <div className="pt-5 text-sm tabular-nums text-foreground">
+              <time className="block font-semibold" dateTime={startTime}>
+                {startTime}
+              </time>
+              <time
+                className="mt-0.5 block text-muted-foreground"
+                dateTime={endTime}
               >
-                <div className="flex min-w-0 items-center gap-2">
-                  <p className="min-w-0 flex-1 truncate font-semibold leading-5 text-foreground">
-                    {schedule.className}
-                  </p>
-                  <Badge
-                    className="shrink-0 gap-1"
-                    variant={status.badgeVariant}
-                  >
-                    <HugeiconsIcon
-                      aria-hidden="true"
-                      className="size-3"
-                      icon={StatusIcon}
-                      strokeWidth={2}
-                    />
-                    {t(`schedules:status.${schedule.status}`)}
-                  </Badge>
-                </div>
-                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <HugeiconsIcon
-                      aria-hidden="true"
-                      className="size-4"
-                      icon={ScheduleTypeIcon}
-                      strokeWidth={2}
-                    />
-                    {t(`schedules:type.${schedule.type}`)}
-                  </span>
-                  <span aria-hidden="true">•</span>
-                  <span className="tabular-nums">
-                    {formatDuration(schedule.durationMinutes, t)}
-                  </span>
+                {endTime}
+              </time>
+            </div>
+
+            <div
+              className={cn(
+                "min-w-0 py-4 pl-5",
+                !isLast && "border-b border-border",
+              )}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="min-w-0 flex-1 truncate font-semibold leading-5 text-foreground">
+                  {schedule.className}
                 </p>
+                <Badge className="shrink-0 gap-1" variant={status.badgeVariant}>
+                  <HugeiconsIcon
+                    aria-hidden="true"
+                    className="size-3"
+                    icon={StatusIcon}
+                    strokeWidth={2}
+                  />
+                  {t(`schedules:status.${schedule.status}`)}
+                </Badge>
               </div>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <HugeiconsIcon
+                    aria-hidden="true"
+                    className="size-4"
+                    icon={ScheduleTypeIcon}
+                    strokeWidth={2}
+                  />
+                  {t(`schedules:type.${schedule.type}`)}
+                </span>
+                <span aria-hidden="true">•</span>
+                <span className="tabular-nums">
+                  {formatDuration(schedule.durationMinutes, t)}
+                </span>
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
 function TodayHubSkeleton({ loadingLabel }: { loadingLabel: string }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-6">
-      <aside
-        aria-label={loadingLabel}
-        className="order-first h-fit rounded-lg border border-border bg-card p-4 sm:p-5 lg:order-2"
-        role="status"
-      >
-        <span className="sr-only">{loadingLabel}</span>
-        <Skeleton className="size-9" />
-        <Skeleton className="mt-4 h-5 w-28" />
-        <Skeleton className="mt-2 h-4 w-full" />
-        <Skeleton className="mt-5 h-20 w-full" />
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-          <Skeleton className="h-11 w-full rounded-full" />
-          <Skeleton className="h-11 w-full rounded-full" />
-        </div>
-      </aside>
-
-      <section className="rounded-lg border border-border bg-card lg:order-1">
-        <div className="border-b border-border px-4 py-4 sm:px-5">
-          <Skeleton className="h-5 w-28" />
-        </div>
-        <div className="px-4 sm:px-5">
-          {[0, 1, 2].map((index) => (
+    <div aria-label={loadingLabel} role="status">
+      <span className="sr-only">{loadingLabel}</span>
+      <div className="px-4 sm:px-5">
+        {[0, 1, 2].map((index) => (
+          <div
+            className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 sm:grid-cols-[6.5rem_minmax(0,1fr)]"
+            key={index}
+          >
+            <Skeleton className="mt-5 h-9 w-14" />
             <div
-              className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 sm:grid-cols-[6.5rem_minmax(0,1fr)]"
-              key={index}
+              className={cn("py-4 pl-5", index < 2 && "border-b border-border")}
             >
-              <Skeleton className="mt-5 h-9 w-14" />
-              <div
-                className={cn(
-                  "py-4 pl-5",
-                  index < 2 && "border-b border-border",
-                )}
-              >
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-3 h-4 w-44 max-w-full" />
-              </div>
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="mt-3 h-4 w-44 max-w-full" />
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1142,7 +1180,7 @@ function TodayError({
   onRetry: () => void;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-card px-5 py-12 text-center">
+    <div className="px-5 py-12 text-center">
       <p className="text-sm text-muted-foreground" role="alert">
         {description}
       </p>
@@ -1154,7 +1192,7 @@ function TodayError({
       >
         {retryLabel}
       </Button>
-    </section>
+    </div>
   );
 }
 
@@ -1162,17 +1200,19 @@ function TodayEmpty() {
   const { t } = useTranslation(["dashboard"]);
 
   return (
-    <section className="rounded-lg border border-border bg-card px-5 py-12 text-center">
-      <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2}
-        className="mx-auto size-6 text-muted-foreground"
+    <div className="px-5 py-12 text-center">
+      <HugeiconsIcon
         aria-hidden="true"
+        className="mx-auto size-6 text-muted-foreground"
+        icon={CalendarDaysHugeIcon}
+        strokeWidth={2}
       />
-      <h2 className="mt-3 font-semibold text-foreground">
+      <h3 className="mt-3 font-semibold text-foreground">
         {t("dashboard:today.emptyTitle")}
-      </h2>
+      </h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {t("dashboard:today.emptyDescription")}
       </p>
-    </section>
+    </div>
   );
 }

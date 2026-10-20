@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { PrismaClient } from "@prisma/client";
+import { DateTime } from "../lib/date-time";
 import type {
 	RecurringScheduleCreatePlan,
 	RecurringScheduleUpdatePlan,
@@ -96,6 +97,100 @@ function scheduleRow(overrides: Partial<ScheduleRow> = {}): ScheduleRow {
 		updatedAt: createdAt,
 		class: classContext,
 		...overrides,
+	};
+}
+
+type AwaitingConfirmationRow = Omit<ScheduleRow, "class"> & {
+	className: string;
+};
+
+type CapturedRawQuery = {
+	strings: TemplateStringsArray;
+	values: unknown[];
+};
+
+type SqlFragment = {
+	strings: readonly string[];
+	values: readonly unknown[];
+};
+
+function awaitingConfirmationRow(
+	overrides: Partial<AwaitingConfirmationRow> = {},
+): AwaitingConfirmationRow {
+	return {
+		id: "schedule-1",
+		classId: "class-1",
+		recurringScheduleId: null,
+		date: new Date("2026-08-10T00:00:00.000Z"),
+		time: 540,
+		durationSeconds: 3_600n,
+		notes: null,
+		noShowNote: null,
+		status: "SCHEDULED",
+		type: "ON_SITE",
+		createdAt,
+		updatedAt,
+		className: "Algebra",
+		...overrides,
+	};
+}
+
+function isSqlFragment(value: unknown): value is SqlFragment {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"strings" in value &&
+		Array.isArray(value.strings) &&
+		"values" in value &&
+		Array.isArray(value.values)
+	);
+}
+
+function flattenRawQuery(query: CapturedRawQuery): {
+	sql: string;
+	values: unknown[];
+} {
+	let sql = query.strings[0] ?? "";
+	const values: unknown[] = [];
+
+	for (const [index, value] of query.values.entries()) {
+		if (isSqlFragment(value)) {
+			const fragment = flattenRawQuery({
+				strings: value.strings as TemplateStringsArray,
+				values: [...value.values],
+			});
+			sql += fragment.sql;
+			values.push(...fragment.values);
+		} else {
+			sql += "?";
+			values.push(value);
+		}
+		sql += query.strings[index + 1] ?? "";
+	}
+
+	return { sql, values };
+}
+
+function makeAwaitingConfirmationRepositoryFixture(
+	rows: AwaitingConfirmationRow[],
+) {
+	let query: CapturedRawQuery | undefined;
+	const client = {
+		$queryRaw: async (
+			strings: TemplateStringsArray,
+			...values: unknown[]
+		): Promise<AwaitingConfirmationRow[]> => {
+			query = { strings, values };
+			return rows;
+		},
+	} as unknown as PrismaClient;
+
+	return {
+		repository: new ScheduleRepository(client),
+		getQuery: () => {
+			if (!query) throw new Error("Expected an awaiting-confirmation query");
+			return flattenRawQuery(query);
+		},
 	};
 }
 
@@ -363,6 +458,104 @@ function makeRecurringRepositoryFixture({
 		getCommittedState: () => cloneState(committed),
 	};
 }
+
+describe("ScheduleRepository awaiting confirmation", () => {
+	test("uses a tutor-scoped, Bangkok end-time keyset query for confirmation pages", async () => {
+		const fixture = makeAwaitingConfirmationRepositoryFixture([
+			awaitingConfirmationRow({
+				id: "same-time-second",
+				date: new Date("2026-08-10T00:00:00.000Z"),
+				time: 1_410,
+				durationSeconds: 3_600n,
+			}),
+			awaitingConfirmationRow({
+				id: "next-day",
+				date: new Date("2026-08-11T00:00:00.000Z"),
+				time: 30,
+			}),
+			awaitingConfirmationRow({
+				id: "later-page",
+				date: new Date("2026-08-12T00:00:00.000Z"),
+			}),
+		]);
+
+		const page = await fixture.repository.findAwaitingConfirmationPage(
+			"tutor-1",
+			{
+				// 2026-08-10 23:30 Bangkok plus one hour ends at this instant.
+				asOf: DateTime.from("2026-08-10T17:30:00.000Z"),
+				after: {
+					date: "2026-08-10",
+					time: 1_410,
+					id: "same-time-first",
+				},
+				limit: 2,
+			},
+		);
+
+		expect(page.data.map((schedule) => schedule.id)).toEqual([
+			"same-time-second",
+			"next-day",
+		]);
+		expect(page.hasNext).toBe(true);
+		expect(page.nextAfter).toEqual({
+			date: "2026-08-11",
+			time: 30,
+			id: "next-day",
+		});
+
+		const query = fixture.getQuery();
+		expect(query.sql).toContain('class_record."tutorId" = ?');
+		expect(query.sql).toContain("AND schedule.status = 'SCHEDULED'");
+		expect(query.sql).toContain(
+			"schedule.\"durationSeconds\" * INTERVAL '1 second'",
+		);
+		expect(query.sql).toContain("AT TIME ZONE 'Asia/Bangkok'");
+		expect(query.sql).toContain(") <= ?");
+		expect(query.sql).toContain("schedule.date > ?::date");
+		expect(query.sql).toContain("schedule.time > ?");
+		expect(query.sql).toContain("schedule.id > ?");
+		expect(query.sql).toContain(
+			"ORDER BY schedule.date ASC, schedule.time ASC, schedule.id ASC",
+		);
+		expect(query.sql).toContain("LIMIT ?");
+		expect(
+			query.values.map((value) =>
+				value instanceof Date ? value.toISOString() : value,
+			),
+		).toEqual([
+			"tutor-1",
+			"2026-08-10T17:30:00.000Z",
+			"2026-08-10",
+			"2026-08-10",
+			1_410,
+			"2026-08-10",
+			1_410,
+			"same-time-first",
+			3,
+		]);
+	});
+
+	test("returns no cursor boundary for a terminal confirmation page", async () => {
+		const fixture = makeAwaitingConfirmationRepositoryFixture([
+			awaitingConfirmationRow({ id: "terminal-session" }),
+		]);
+
+		const page = await fixture.repository.findAwaitingConfirmationPage(
+			"tutor-1",
+			{
+				asOf: DateTime.from("2026-08-11T00:00:00.000Z"),
+				limit: 1,
+			},
+		);
+
+		expect(page.data.map((schedule) => schedule.id)).toEqual([
+			"terminal-session",
+		]);
+		expect(page.hasNext).toBe(false);
+		expect(page.nextAfter).toBeUndefined();
+	});
+});
 
 describe("ScheduleRepository recurring transaction adapter", () => {
 	test("loads tutor-scoped context and supplies status-bearing conflict rows to the planner", async () => {

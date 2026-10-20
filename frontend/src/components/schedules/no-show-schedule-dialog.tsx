@@ -27,6 +27,27 @@ import { DateTime } from "@/lib/date-time";
 import { formatDuration, formatTime24Hour } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
+const MINUTES_PER_DAY = 24 * 60;
+
+function formatClockTime(minutes: number): string {
+  const minutesInDay =
+    ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+
+  return formatTime24Hour(minutesInDay);
+}
+
+function getScheduleEndDate(date: string, totalMinutes: number) {
+  const endDayOffset = Math.floor(totalMinutes / MINUTES_PER_DAY);
+  const endDate = DateTime.fromDateOnlyString(date).toDate();
+
+  endDate.setDate(endDate.getDate() + endDayOffset);
+
+  return {
+    endDate: DateTime.from(endDate),
+    endDayOffset,
+  };
+}
+
 export type NoShowSchedule = {
   id: string;
   className: string;
@@ -80,11 +101,27 @@ export function NoShowScheduleDialog({
 
   const hours = DateTime.formatDurationHours(schedule.durationMinutes / 60);
   const startTime = formatTime24Hour(schedule.time);
-  const endTime = formatTime24Hour(schedule.time + schedule.durationMinutes);
-  const date = DateTime.formatDate(DateTime.fromDateOnlyString(schedule.date), {
+  const endTotalMinutes = schedule.time + schedule.durationMinutes;
+  const endTime = formatClockTime(endTotalMinutes);
+  const startDate = DateTime.fromDateOnlyString(schedule.date);
+  const date = DateTime.formatDate(startDate, {
     weekday: "long",
     month: "long",
     day: "numeric",
+  });
+  const { endDate, endDayOffset } = getScheduleEndDate(
+    schedule.date,
+    endTotalMinutes,
+  );
+  const endDateLabel = DateTime.formatDate(endDate, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const endDateTimeLabel = t("noShow.session.endDateTime", {
+    date: endDateLabel,
+    time: endTime,
   });
   const submitLabel =
     deductHours === true
@@ -161,7 +198,27 @@ export function NoShowScheduleDialog({
               <dd className="min-w-0 text-right text-foreground">{date}</dd>
               <dt>{t("noShow.session.time")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-                {startTime} – {endTime}
+                <time dateTime={`${schedule.date}T${startTime}`}>
+                  {startTime}
+                </time>
+                <span aria-hidden="true"> – </span>
+                <time
+                  aria-label={endDayOffset > 0 ? endDateTimeLabel : undefined}
+                  dateTime={`${endDate.toDateOnlyString()}T${endTime}`}
+                >
+                  {endTime}
+                </time>
+                {endDayOffset > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className="ml-1 text-xs text-muted-foreground"
+                    title={endDateLabel}
+                  >
+                    {t("noShow.session.endDayOffset", {
+                      count: endDayOffset,
+                    })}
+                  </span>
+                ) : null}
               </dd>
               <dt>{t("noShow.session.duration")}</dt>
               <dd className="text-right tabular-nums text-foreground">

@@ -282,11 +282,11 @@ export function ClassDetailScreen({
                 <Skeleton className="h-8 w-24 rounded-full" />
               </div>
             </div>
-            <div className="space-y-3 rounded-lg bg-overlay-navy p-4">
-              <Skeleton className="h-3 w-16 bg-white/20" />
-              <Skeleton className="h-7 w-36 bg-white/20" />
-              <Skeleton className="h-3 w-24 bg-white/20" />
-              <Skeleton className="h-11 w-28 rounded-full bg-white/20" />
+            <div className="space-y-3 rounded-lg bg-inverse p-4">
+              <Skeleton className="h-3 w-16 bg-inverse-foreground/20" />
+              <Skeleton className="h-7 w-36 bg-inverse-foreground/20" />
+              <Skeleton className="h-3 w-24 bg-inverse-foreground/20" />
+              <Skeleton className="h-11 w-28 rounded-full bg-inverse-foreground/20" />
             </div>
           </div>
         </div>

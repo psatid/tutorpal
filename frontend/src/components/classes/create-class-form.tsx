@@ -179,7 +179,7 @@ export function ClassForm({
 												className={
 													student
 														? nameToneAvatarClasses[getNameTone(name)]
-														: "bg-[#273951] text-white"
+														: "bg-avatar-neutral text-avatar-neutral-foreground"
 												}
 											>
 												{student ? (

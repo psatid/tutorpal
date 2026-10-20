@@ -43,6 +43,7 @@ function renderDialog(options?: {
 	finalFocus?: RefObject<HTMLElement | null>;
 	onOpenChange?: (open: boolean) => void;
 	onSuccess?: (nextSchedule: NoShowSchedule) => void;
+	schedule?: NoShowSchedule;
 }) {
 	return render(
 		<NoShowScheduleDialog
@@ -50,7 +51,7 @@ function renderDialog(options?: {
 			onOpenChange={options?.onOpenChange ?? vi.fn()}
 			onSuccess={options?.onSuccess}
 			open
-			schedule={schedule}
+			schedule={options?.schedule ?? schedule}
 		/>,
 	);
 }
@@ -129,6 +130,53 @@ describe("NoShowScheduleDialog", () => {
 		expect(details).not.toHaveClass("text-on-surface-variant");
 		expect(screen.getByText("Date").nextElementSibling).toHaveClass(
 			"text-foreground",
+		);
+	});
+
+	it("shows English next-day context for a cross-midnight session", () => {
+		renderDialog({
+			schedule: {
+				...schedule,
+				date: "2026-10-12",
+				durationMinutes: 90,
+				time: 23 * 60,
+			},
+		});
+
+		expect(screen.getByText("23:00")).toHaveAttribute(
+			"datetime",
+			"2026-10-12T23:00",
+		);
+		const endTime = screen.getByText("00:30");
+		expect(endTime).toHaveAttribute("datetime", "2026-10-13T00:30");
+		expect(endTime).toHaveAccessibleName(
+			"Ends Tuesday, October 13, 2026 at 00:30",
+		);
+		expect(screen.getByText("(+1 day)")).toHaveAttribute(
+			"title",
+			"Tuesday, October 13, 2026",
+		);
+	});
+
+	it("localizes next-day context for a cross-midnight session in Thai", async () => {
+		await i18n.changeLanguage("th");
+		renderDialog({
+			schedule: {
+				...schedule,
+				date: "2026-10-12",
+				durationMinutes: 90,
+				time: 23 * 60,
+			},
+		});
+
+		const endTime = screen.getByText("00:30");
+		expect(endTime).toHaveAttribute("datetime", "2026-10-13T00:30");
+		expect(endTime).toHaveAccessibleName(
+			"สิ้นสุดวันที่ วันอังคารที่ 13 ตุลาคม 2026 เวลา 00:30",
+		);
+		expect(screen.getByText("(+1 วัน)")).toHaveAttribute(
+			"title",
+			"วันอังคารที่ 13 ตุลาคม 2026",
 		);
 	});
 

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { createHmac, hkdfSync } from "node:crypto";
 import { DateTime } from "../lib/date-time";
 import type {
 	RecurringScheduleCreatePlan,
@@ -18,6 +19,19 @@ import {
 import { ScheduleService } from "./schedule.service";
 
 const createdAt = new Date("2026-08-01T00:00:00.000Z");
+const confirmationCursorSecret = "test-confirmation-cursor-secret";
+const confirmationCursorSalt = "tutorpal.cursor-signing";
+const confirmationCursorInfo = "schedules.awaiting-confirmation.v1";
+
+type ConfirmationCursorPayload = {
+	tutorId: string;
+	asOf: string;
+	after: {
+		date: string;
+		time: number;
+		id: string;
+	};
+};
 
 function schedule(
 	status: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELLED" = "SCHEDULED",
@@ -35,6 +49,96 @@ function schedule(
 		createdAt,
 		updatedAt: createdAt,
 		class: { name: "Algebra" },
+	});
+}
+
+function base64Url(value: string): string {
+	return btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlBytes(value: Uint8Array): string {
+	let binary = "";
+	for (const byte of value) {
+		binary += String.fromCharCode(byte);
+	}
+	return base64Url(binary);
+}
+
+function confirmationCursorSigningKey(
+	secret = confirmationCursorSecret,
+): Uint8Array {
+	return new Uint8Array(
+		hkdfSync(
+			"sha256",
+			secret,
+			confirmationCursorSalt,
+			confirmationCursorInfo,
+			32,
+		),
+	);
+}
+
+function signedConfirmationCursorJson(
+	payloadJson: string,
+	secret = confirmationCursorSecret,
+	version = "v1",
+): string {
+	const payloadSegment = base64Url(payloadJson);
+	const macInput = `${version}.${payloadSegment}`;
+	const signature = createHmac("sha256", confirmationCursorSigningKey(secret))
+		.update(macInput, "ascii")
+		.digest();
+	return `${macInput}.${base64UrlBytes(signature)}`;
+}
+
+function signedConfirmationCursor(
+	payload: unknown,
+	secret = confirmationCursorSecret,
+	version = "v1",
+): string {
+	return signedConfirmationCursorJson(JSON.stringify(payload), secret, version);
+}
+
+function decodeBase64Url(value: string): string {
+	const padded = `${value.replace(/-/g, "+").replace(/_/g, "/")}${"=".repeat(
+		(4 - (value.length % 4)) % 4,
+	)}`;
+	return atob(padded);
+}
+
+function tamperConfirmationCursor(
+	cursor: string,
+	tamper: (payload: ConfirmationCursorPayload) => ConfirmationCursorPayload,
+): string {
+	const [version, payloadSegment, signatureSegment] = cursor.split(".");
+	if (!version || !payloadSegment || !signatureSegment) {
+		throw new Error("Expected a three-segment confirmation cursor");
+	}
+
+	const payload = JSON.parse(
+		decodeBase64Url(payloadSegment),
+	) as ConfirmationCursorPayload;
+	return `${version}.${base64Url(JSON.stringify(tamper(payload)))}.${signatureSegment}`;
+}
+
+function confirmationService(
+	repository: IScheduleRepository,
+	secret = confirmationCursorSecret,
+): ScheduleService {
+	return new ScheduleService(repository, {} as IClassRepository, secret);
+}
+
+async function expectInvalidConfirmationCursor(
+	service: ScheduleService,
+	cursor: string,
+	tutorId = "tutor-1",
+): Promise<void> {
+	await expect(
+		service.getSchedulesAwaitingConfirmation(tutorId, { limit: 10, cursor }),
+	).rejects.toMatchObject({
+		errorCode: "INVALID_AWAITING_CONFIRMATION_CURSOR",
+		message: "The confirmation cursor is invalid",
+		status: 400,
 	});
 }
 
@@ -165,6 +269,269 @@ describe("ScheduleService ownership", () => {
 			status: 400,
 		});
 		expect(createCalls).toBe(0);
+	});
+});
+
+describe("ScheduleService awaiting confirmation", () => {
+	test("signs a fixed snapshot and tuple boundary across a status change", async () => {
+		const calls: Array<{
+			tutorId: string;
+			asOf: string;
+			after: unknown;
+			limit: number;
+		}> = [];
+		let boundaryStatus: "SCHEDULED" | "COMPLETED" = "SCHEDULED";
+		const boundary = {
+			date: "2026-08-10",
+			time: 1_410,
+			id: "schedule-at-boundary",
+		};
+		const repository = {
+			findAwaitingConfirmationPage: async (
+				tutorId: string,
+				input: {
+					asOf: DateTime;
+					after?: typeof boundary;
+					limit: number;
+				},
+			) => {
+				calls.push({
+					tutorId,
+					asOf: input.asOf.toISOString(),
+					after: input.after,
+					limit: input.limit,
+				});
+				if (calls.length === 1) {
+					return {
+						data: [schedule()],
+						hasNext: true,
+						nextAfter: boundary,
+					};
+				}
+
+				if (boundaryStatus !== "COMPLETED") {
+					throw new Error("The cursor boundary must change before page two");
+				}
+				return { data: [schedule()], hasNext: false };
+			},
+		} as unknown as IScheduleRepository;
+		const service = confirmationService(repository);
+
+		const firstPage = await service.getSchedulesAwaitingConfirmation(
+			"tutor-1",
+			{
+				limit: 1,
+			},
+		);
+		const nextCursor = firstPage.pagination.nextCursor;
+		if (!nextCursor) throw new Error("Expected a cursor for the second page");
+
+		boundaryStatus = "COMPLETED";
+		const secondPage = await service.getSchedulesAwaitingConfirmation(
+			"tutor-1",
+			{
+				limit: 1,
+				cursor: nextCursor,
+			},
+		);
+
+		expect(firstPage.pagination).toEqual({
+			hasNext: true,
+			nextCursor: expect.any(String),
+		});
+		expect(nextCursor).toMatch(/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+		expect(calls).toHaveLength(2);
+		expect(calls[0]).toMatchObject({
+			tutorId: "tutor-1",
+			after: undefined,
+			limit: 1,
+		});
+		expect(calls[1]).toEqual({
+			tutorId: "tutor-1",
+			asOf: calls[0]?.asOf,
+			after: boundary,
+			limit: 1,
+		});
+		expect(secondPage.pagination).toEqual({ hasNext: false, nextCursor: null });
+	});
+
+	test("rejects a client-forged future snapshot or keyset tuple before querying", async () => {
+		let repositoryCalls = 0;
+		const boundary = {
+			date: "2026-08-10",
+			time: 1_410,
+			id: "schedule-at-boundary",
+		};
+		const repository = {
+			findAwaitingConfirmationPage: async () => {
+				repositoryCalls += 1;
+				return {
+					data: [schedule()],
+					hasNext: true,
+					nextAfter: boundary,
+				};
+			},
+		} as unknown as IScheduleRepository;
+		const service = confirmationService(repository);
+		const issuedPage = await service.getSchedulesAwaitingConfirmation(
+			"tutor-1",
+			{ limit: 1 },
+		);
+		const cursor = issuedPage.pagination.nextCursor;
+		if (!cursor) throw new Error("Expected a cursor to tamper with");
+
+		repositoryCalls = 0;
+		for (const tamper of [
+			(payload: ConfirmationCursorPayload) => ({
+				...payload,
+				asOf: "2099-01-01T00:00:00.000Z",
+			}),
+			(payload: ConfirmationCursorPayload) => ({
+				...payload,
+				after: { ...payload.after, date: "2099-01-01" },
+			}),
+			(payload: ConfirmationCursorPayload) => ({
+				...payload,
+				after: { ...payload.after, time: 0 },
+			}),
+			(payload: ConfirmationCursorPayload) => ({
+				...payload,
+				after: { ...payload.after, id: "forged-schedule" },
+			}),
+		]) {
+			await expectInvalidConfirmationCursor(
+				service,
+				tamperConfirmationCursor(cursor, tamper),
+			);
+		}
+
+		expect(repositoryCalls).toBe(0);
+	});
+
+	test("rejects cross-tutor and rotated-secret cursors before querying", async () => {
+		let repositoryCalls = 0;
+		const boundary = {
+			date: "2026-08-10",
+			time: 1_410,
+			id: "schedule-at-boundary",
+		};
+		const repository = {
+			findAwaitingConfirmationPage: async () => {
+				repositoryCalls += 1;
+				return {
+					data: [schedule()],
+					hasNext: true,
+					nextAfter: boundary,
+				};
+			},
+		} as unknown as IScheduleRepository;
+		const service = confirmationService(repository);
+		const issuedPage = await service.getSchedulesAwaitingConfirmation(
+			"tutor-1",
+			{ limit: 1 },
+		);
+		const cursor = issuedPage.pagination.nextCursor;
+		if (!cursor) throw new Error("Expected a cursor for the next page");
+
+		repositoryCalls = 0;
+		await expectInvalidConfirmationCursor(service, cursor, "tutor-2");
+		await expectInvalidConfirmationCursor(
+			confirmationService(repository, "rotated-confirmation-cursor-secret"),
+			cursor,
+		);
+		expect(repositoryCalls).toBe(0);
+	});
+
+	test("accepts a contract-signed cursor and rejects malformed signed payloads before querying", async () => {
+		let repositoryCalls = 0;
+		const received: Array<{
+			tutorId: string;
+			asOf: string;
+			after: unknown;
+			limit: number;
+		}> = [];
+		const repository = {
+			findAwaitingConfirmationPage: async (
+				tutorId: string,
+				input: {
+					asOf: DateTime;
+					after?: unknown;
+					limit: number;
+				},
+			) => {
+				repositoryCalls += 1;
+				received.push({
+					tutorId,
+					asOf: input.asOf.toISOString(),
+					after: input.after,
+					limit: input.limit,
+				});
+				return { data: [], hasNext: false };
+			},
+		} as unknown as IScheduleRepository;
+		const validPayload: ConfirmationCursorPayload = {
+			tutorId: "tutor-1",
+			asOf: "2026-08-10T17:30:00.000Z",
+			after: {
+				date: "2026-08-10",
+				time: 1_410,
+				id: "schedule-at-boundary",
+			},
+		};
+		const service = confirmationService(repository);
+
+		await service.getSchedulesAwaitingConfirmation("tutor-1", {
+			limit: 10,
+			cursor: signedConfirmationCursor(validPayload),
+		});
+		expect(received).toEqual([
+			{
+				tutorId: "tutor-1",
+				asOf: "2026-08-10T17:30:00.000Z",
+				after: validPayload.after,
+				limit: 10,
+			},
+		]);
+
+		repositoryCalls = 0;
+
+		for (const cursor of [
+			"A",
+			base64Url(JSON.stringify(validPayload)),
+			"v1.payload",
+			"v1..signature",
+			signedConfirmationCursor(validPayload, confirmationCursorSecret, "v2"),
+			"v1.payload!.signature",
+			"v1.payload.A",
+			signedConfirmationCursorJson("not JSON"),
+			signedConfirmationCursor({
+				...validPayload,
+				after: { ...validPayload.after, date: "2026-02-30" },
+			}),
+			signedConfirmationCursor({
+				...validPayload,
+				asOf: "2026-08-10T17:30:00Z",
+			}),
+			signedConfirmationCursor({
+				...validPayload,
+				after: { ...validPayload.after, time: 1_440 },
+			}),
+		]) {
+			await expectInvalidConfirmationCursor(service, cursor);
+		}
+
+		expect(repositoryCalls).toBe(0);
+	});
+
+	test("fails closed when the confirmation signing source is blank", () => {
+		const repository = {} as unknown as IScheduleRepository;
+
+		expect(() => confirmationService(repository, "")).toThrow(
+			"BETTER_AUTH_SECRET must not be blank for cursor signing",
+		);
+		expect(() => confirmationService(repository, "   ")).toThrow(
+			"BETTER_AUTH_SECRET must not be blank for cursor signing",
+		);
 	});
 });
 

@@ -66,7 +66,11 @@ function createDefaultRouteDependencies(): RouteDependencies {
 		classService: new ClassService(classRepository),
 		courseService: new CourseService(courseRepository),
 		lineService: new LineService(lineRepository, studentRepository),
-		scheduleService: new ScheduleService(scheduleRepository, classRepository),
+		scheduleService: new ScheduleService(
+			scheduleRepository,
+			classRepository,
+			config.BETTER_AUTH_SECRET,
+		),
 		socialAccountService: new SocialAccountService(
 			socialAccountRepository,
 			config,

@@ -85,6 +85,9 @@ const th = {
 			date: "วันที่",
 			time: "เวลา",
 			duration: "ระยะเวลา",
+			endDateTime: "สิ้นสุดวันที่ {{date}} เวลา {{time}}",
+			endDayOffset_one: "(+{{count}} วัน)",
+			endDayOffset_other: "(+{{count}} วัน)",
 		},
 		outcome: {
 			label: "ต้องการจัดการชั่วโมงที่จองไว้อย่างไร?",
