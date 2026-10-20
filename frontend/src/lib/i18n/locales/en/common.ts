@@ -51,6 +51,7 @@ export default {
     close: "Close",
     closeNamed: "Close {{title}}",
     primaryNavigation: "Primary navigation",
+    breadcrumb: "Breadcrumb",
     pagination: "Pagination",
     previousPage: "Go to previous page",
     nextPage: "Go to next page",

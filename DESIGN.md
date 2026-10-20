@@ -144,7 +144,7 @@ components:
     padding: "2px 8px"
     font: "12px / 500"
     border: "1px solid {variant} / 25%"
-    variants: "primary, info, success, warning, destructive"
+    variants: "primary, neutral, info, success, warning, destructive"
   card-row:
     backgroundColor: "{colors.card}"
     border: "1px solid {colors.border}"
@@ -392,9 +392,10 @@ Number inputs hide their spinners and blur on wheel.
 ### Badges
 
 20px high, `rounded-md`, 2px × 8px padding, 12px / 500, with 12px icons. The
-variants are `primary`, `info`, `success`, `warning` and `destructive`. Each uses
-its container fill, its container-foreground text and a border of its
-foreground at 25%.
+variants are `primary`, `neutral`, `info`, `success`, `warning` and
+`destructive`. Semantic variants use their container fill, their
+container-foreground text and a border of their foreground at 25%. `neutral`
+uses a `muted` fill, `secondary-foreground` text and a `border` hairline.
 
 ### Rows and cards
 
@@ -440,6 +441,15 @@ text. The current route uses `aria-current="page"` with indigo text at 600 and
 no fill. Hover uses `background` (#F6F9FC). Groups (Settings) expand with a
 rotating chevron. The user menu sits at the bottom with an indigo initials
 avatar. The mobile header is a white `jun-header` bar with a bottom hairline.
+
+Breadcrumbs use a semantic navigation landmark with an ordered trail. Ancestors
+are router links that underline on hover; the current page is medium weight and
+truncates. In the default responsive mode, the full trail appears from `md` and
+a 44px parent back link appears below it. That back link uses the indigo link
+color, a `muted` hover fill and the standard 3px focus ring. `always` keeps the
+parent back link at every width, while `never` keeps the full trail at every
+width. When a parent has no route target, keep the full trail visible rather
+than showing a noninteractive back control.
 
 ### Drawers and dialogs
 
