@@ -113,6 +113,24 @@ describe("AwaitingConfirmationCarousel", () => {
 		expect(props.onNoShow).toHaveBeenCalledWith(schedule, noShow);
 	});
 
+	it("uses a full-bleed mobile rail that resets at sm without trailing track padding", () => {
+		renderCarousel();
+
+		const rail = getScrollport();
+		const track = rail.querySelector("ol");
+
+		expect(rail).toHaveClass(
+			"-mx-3",
+			"w-[calc(100%+1.5rem)]",
+			"max-w-none",
+			"sm:mx-0",
+			"sm:w-auto",
+			"sm:max-w-full",
+		);
+		expect(track).toHaveClass("flex", "min-w-max", "gap-3", "sm:gap-4");
+		expect(track?.className).not.toMatch(/(?:^|\s)pr-\S+/);
+	});
+
 	it("localizes the full cross-midnight end date in Thai", async () => {
 		await i18n.changeLanguage("th");
 		const schedule = makeSchedule({
@@ -260,9 +278,22 @@ describe("AwaitingConfirmationCarousel", () => {
 	it("shows an initial loading state before the first page arrives", () => {
 		renderCarousel({ isLoading: true, schedules: [] });
 
-		expect(
-			screen.getByRole("status", { name: "Sessions to confirm" }),
-		).toHaveTextContent("Loading sessions to confirm…");
+		const skeleton = screen.getByRole("status", {
+			name: "Sessions to confirm",
+		});
+		const track = skeleton.querySelector("div.flex");
+
+		expect(skeleton).toHaveTextContent("Loading sessions to confirm…");
+		expect(skeleton).toHaveClass(
+			"-mx-3",
+			"w-[calc(100%+1.5rem)]",
+			"max-w-none",
+			"sm:mx-0",
+			"sm:w-auto",
+			"sm:max-w-full",
+		);
+		expect(track).toHaveClass("flex", "min-w-max", "gap-3", "sm:gap-4");
+		expect(track?.className).not.toMatch(/(?:^|\s)pr-\S+/);
 		expect(
 			screen.queryByRole("group", {
 				name: "Scrollable sessions awaiting confirmation",

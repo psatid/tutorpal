@@ -192,7 +192,7 @@ export function AwaitingConfirmationCarousel({
         <div
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
-          className="mt-4 min-w-0 max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="mt-4 -mx-3 w-[calc(100%+1.5rem)] min-w-0 max-w-none snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:mx-0 sm:w-auto sm:max-w-full"
           onKeyDown={handleScrollportKeyDown}
           onScroll={handleScroll}
           role="group"
@@ -201,7 +201,7 @@ export function AwaitingConfirmationCarousel({
           <p className="sr-only" id={instructionId}>
             {t("today.awaitingConfirmation.scrollInstruction")}
           </p>
-          <ol className="flex min-w-max gap-3 pr-4 sm:gap-4">
+          <ol className="flex min-w-max gap-3 sm:gap-4">
             {schedules.map((schedule) => (
               <AwaitingConfirmationCard
                 completing={completingScheduleId === schedule.id}
@@ -349,13 +349,13 @@ function AwaitingConfirmationSkeleton({
     <div
       aria-describedby={instructionId}
       aria-labelledby={titleId}
-      className="mt-4 min-w-0 max-w-full overflow-x-hidden pb-2"
+      className="mt-4 -mx-3 w-[calc(100%+1.5rem)] min-w-0 max-w-none overflow-x-hidden pb-2 sm:mx-0 sm:w-auto sm:max-w-full"
       role="status"
     >
       <span className="sr-only" id={instructionId}>
         {loadingLabel}
       </span>
-      <div className="flex min-w-max gap-3 pr-4 sm:gap-4">
+      <div className="flex min-w-max gap-3 sm:gap-4">
         {[0, 1].map((index) => (
           <div
             className="w-[17rem] shrink-0 rounded-lg border border-border bg-card p-4 sm:w-72"
