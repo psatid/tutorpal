@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { type RefObject, useRef, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "@/lib/i18n/config";
+import { Schedule, type ScheduleDisplayInput } from "@/models/schedule";
 
 const mutation = vi.hoisted(() => ({
 	error: null as Error | null,
@@ -31,19 +32,25 @@ import {
 	type NoShowSchedule,
 } from "@/components/schedules/no-show-schedule-dialog";
 
-const schedule: NoShowSchedule = {
-	className: "Class one",
-	date: "2026-10-08",
-	durationMinutes: 90,
-	id: "schedule-1",
-	time: 540,
-};
+function makeSchedule(overrides: Partial<ScheduleDisplayInput> = {}): Schedule {
+	return Schedule.fromInput({
+		className: "Class one",
+		date: "2026-10-08",
+		durationMinutes: 90,
+		id: "schedule-1",
+		time: 540,
+		type: "ONLINE",
+		...overrides,
+	});
+}
+
+const schedule = makeSchedule();
 
 function renderDialog(options?: {
 	finalFocus?: RefObject<HTMLElement | null>;
 	onOpenChange?: (open: boolean) => void;
 	onSuccess?: (nextSchedule: NoShowSchedule) => void;
-	schedule?: NoShowSchedule;
+	schedule?: Schedule;
 }) {
 	return render(
 		<NoShowScheduleDialog
@@ -135,12 +142,11 @@ describe("NoShowScheduleDialog", () => {
 
 	it("shows English next-day context for a cross-midnight session", () => {
 		renderDialog({
-			schedule: {
-				...schedule,
+			schedule: makeSchedule({
 				date: "2026-10-12",
 				durationMinutes: 90,
 				time: 23 * 60,
-			},
+			}),
 		});
 
 		expect(screen.getByText("23:00")).toHaveAttribute(
@@ -161,12 +167,11 @@ describe("NoShowScheduleDialog", () => {
 	it("localizes next-day context for a cross-midnight session in Thai", async () => {
 		await i18n.changeLanguage("th");
 		renderDialog({
-			schedule: {
-				...schedule,
+			schedule: makeSchedule({
 				date: "2026-10-12",
 				durationMinutes: 90,
 				time: 23 * 60,
-			},
+			}),
 		});
 
 		const endTime = screen.getByText("00:30");

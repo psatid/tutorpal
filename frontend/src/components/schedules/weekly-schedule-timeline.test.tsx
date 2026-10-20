@@ -5,6 +5,7 @@ import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedule
 import { WeeklyScheduleTimeline } from "@/components/schedules/weekly-schedule-timeline";
 import { DateTime } from "@/lib/date-time";
 import i18n from "@/lib/i18n/config";
+import { Schedule } from "@/models/schedule";
 
 const selectedDate = new Date(2026, 9, 7);
 
@@ -23,8 +24,8 @@ function getCell(date: Date, time: string) {
 
 function makeSchedule(
   overrides: Partial<GetV1Schedules200Item> = {},
-): GetV1Schedules200Item {
-  return {
+): Schedule {
+	return Schedule.fromListItem({
     classId: "class-1",
     className: "Mathematics",
     createdAt: "2026-10-01T00:00:00.000Z",
@@ -38,10 +39,10 @@ function makeSchedule(
     type: "ONLINE",
     updatedAt: "2026-10-01T00:00:00.000Z",
     ...overrides,
-  };
+  });
 }
 
-function renderTimeline(schedules: GetV1Schedules200Item[] = []) {
+function renderTimeline(schedules: Schedule[] = []) {
   const onCreateSchedule = vi.fn();
   const onViewSchedule = vi.fn();
 

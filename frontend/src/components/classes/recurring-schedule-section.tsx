@@ -13,17 +13,16 @@ import { Button } from "@/components/common/button";
 import { DateTime } from "@/lib/date-time";
 import { formatDuration } from "@/lib/schedule-utils";
 import {
-	minutesToTimeString,
-	WEEKDAY_ORDER,
-	type RecurringScheduleSummary,
-	type Weekday,
-} from "@/types/schedule";
+	RecurringSchedule,
+	RecurringSchedulePattern,
+} from "@/models/recurring-schedule";
+import type { Weekday } from "@/types/schedule";
 
 interface RecurringScheduleSectionProps {
 	balanceState?: "no-hours" | "all-scheduled" | "exhausted" | "available";
 	hasNoAvailableHours: boolean;
 	onAddHours: () => void;
-	recurringSchedule?: RecurringScheduleSummary | null;
+	recurringSchedule?: RecurringSchedule | null;
 	onEdit: () => void;
 	onCreate: () => void;
 }
@@ -39,45 +38,18 @@ const WEEKDAY_LABEL_KEYS: Record<Weekday, string> = {
 };
 
 function formatRecurringItems(
-	recurringSchedule: RecurringScheduleSummary,
+	recurringSchedule: RecurringSchedule,
 	t: TFunction,
 ) {
-	const groupedItems = new Map<
-		Weekday,
-		{
-			weekday: string;
-			items: Array<{
-				id: string;
-				startTime: string;
-				durationLabel: string;
-				time: number;
-			}>;
-		}
-	>();
-
-	for (const item of recurringSchedule.scheduleItems) {
-		const group = groupedItems.get(item.weekday) ?? {
-			weekday: t(WEEKDAY_LABEL_KEYS[item.weekday]),
-			items: [],
-		};
-		group.items.push({
+	return recurringSchedule.getPattern().getOrderedWeekdayGroups().map((group) => ({
+		weekdayKey: group.weekday,
+		weekday: t(WEEKDAY_LABEL_KEYS[group.weekday]),
+		items: group.items.map((item) => ({
 			id: item.id ?? `${item.weekday}-${item.time}-${item.durationMinutes}`,
-			startTime: minutesToTimeString(item.time),
+			startTime: RecurringSchedulePattern.minutesToTimeString(item.time),
 			durationLabel: formatDuration(item.durationMinutes, t),
-			time: item.time,
-		});
-		groupedItems.set(item.weekday, group);
-	}
-
-	return [...groupedItems.entries()]
-		.map(([weekdayKey, group]) => ({
-			weekdayKey,
-			...group,
-			items: group.items.sort((left, right) => left.time - right.time),
-		}))
-		.sort(
-			(left, right) => WEEKDAY_ORDER[left.weekdayKey] - WEEKDAY_ORDER[right.weekdayKey],
-		);
+		})),
+	}));
 }
 
 export function RecurringScheduleSection({
@@ -160,7 +132,7 @@ export function RecurringScheduleSection({
 								<HugeiconsIcon icon={CalendarRangeHugeIcon} strokeWidth={2} aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
 								<span>
 									{t("schedules:recurring.startsOn", {
-										date: DateTime.formatDate(recurringSchedule.startDate, {
+									date: DateTime.formatDate(recurringSchedule.getStartDate(), {
 											day: "numeric",
 											month: "long",
 											year: "numeric",
@@ -169,12 +141,12 @@ export function RecurringScheduleSection({
 								</span>
 							</Badge>
 							<Badge className="inline-flex gap-1" variant="info">
-								{recurringSchedule.type === "ONLINE" ? (
+									{recurringSchedule.getType() === "ONLINE" ? (
 									<HugeiconsIcon icon={MonitorHugeIcon} strokeWidth={2} aria-hidden="true" className="h-3 w-3 shrink-0" />
 								) : (
 									<HugeiconsIcon icon={MapPinHugeIcon} strokeWidth={2} aria-hidden="true" className="h-3 w-3 shrink-0" />
 								)}
-								<span>{t(`schedules:type.${recurringSchedule.type}`)}</span>
+									<span>{t(`schedules:type.${recurringSchedule.getType()}`)}</span>
 							</Badge>
 						</div>
 					</div>

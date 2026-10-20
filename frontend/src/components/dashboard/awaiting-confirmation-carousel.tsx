@@ -3,42 +3,17 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import { Skeleton } from "@/components/common/skeleton";
 import { DateTime } from "@/lib/date-time";
-import { formatTime24Hour } from "@/lib/schedule-utils";
-import type { AwaitingConfirmationSchedule } from "@/types/awaiting-confirmation-schedule";
+import { Schedule } from "@/models/schedule";
 
 const LOAD_MORE_THRESHOLD = 160;
-const MINUTES_PER_DAY = 24 * 60;
 const COMPLETE_ACTION_ID_PREFIX = "awaiting-confirmation-complete-action-";
 
 export function getAwaitingConfirmationCompleteActionId(scheduleId: string) {
   return `${COMPLETE_ACTION_ID_PREFIX}${encodeURIComponent(scheduleId)}`;
 }
 
-function getScheduleEndDate(
-  schedule: AwaitingConfirmationSchedule,
-) {
-  const endDayOffset = Math.floor(
-    (schedule.time + schedule.durationMinutes) / MINUTES_PER_DAY,
-  );
-  const endDate = DateTime.fromDateOnlyString(schedule.date).toDate();
-
-  endDate.setDate(endDate.getDate() + endDayOffset);
-
-  return {
-    endDate: DateTime.from(endDate),
-    endDayOffset,
-  };
-}
-
-function formatClockTime(minutes: number): string {
-  const minutesInDay =
-    ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-
-  return formatTime24Hour(minutesInDay);
-}
-
 type AwaitingConfirmationCarouselProps = {
-  schedules: AwaitingConfirmationSchedule[];
+  schedules: Schedule[];
   isLoading: boolean;
   isError: boolean;
   isFetchingNextPage: boolean;
@@ -47,9 +22,9 @@ type AwaitingConfirmationCarouselProps = {
   isBusy: boolean;
   completingScheduleId: string | null;
   headingRef: RefObject<HTMLHeadingElement | null>;
-  onComplete: (schedule: AwaitingConfirmationSchedule) => void;
+  onComplete: (schedule: Schedule) => void;
   onNoShow: (
-    schedule: AwaitingConfirmationSchedule,
+    schedule: Schedule,
     trigger: HTMLButtonElement,
   ) => void;
   onRetry: () => void;
@@ -203,14 +178,14 @@ export function AwaitingConfirmationCarousel({
           </p>
           <ol className="flex min-w-max gap-3 sm:gap-4">
             {schedules.map((schedule) => (
-              <AwaitingConfirmationCard
-                completing={completingScheduleId === schedule.id}
-                disabled={isBusy}
-                key={schedule.id}
-                onComplete={onComplete}
-                onNoShow={onNoShow}
-                schedule={schedule}
-              />
+                <AwaitingConfirmationCard
+                  completing={completingScheduleId === schedule.getId()}
+                  disabled={isBusy}
+                  key={schedule.getId()}
+                  onComplete={onComplete}
+                  onNoShow={onNoShow}
+                  schedule={schedule}
+                />
             ))}
             {isFetchingNextPage ? (
               <AwaitingConfirmationLoadingMore
@@ -238,26 +213,26 @@ function AwaitingConfirmationCard({
   onComplete,
   onNoShow,
 }: {
-  schedule: AwaitingConfirmationSchedule;
+  schedule: Schedule;
   disabled: boolean;
   completing: boolean;
-  onComplete: (schedule: AwaitingConfirmationSchedule) => void;
+  onComplete: (schedule: Schedule) => void;
   onNoShow: (
-    schedule: AwaitingConfirmationSchedule,
+    schedule: Schedule,
     trigger: HTMLButtonElement,
   ) => void;
 }) {
   const { t } = useTranslation(["dashboard", "schedules"]);
-  const startDate = DateTime.fromDateOnlyString(schedule.date);
+	const startDate = DateTime.fromDateOnlyString(schedule.getDate());
   const date = DateTime.formatDate(startDate, {
     weekday: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const startTime = formatTime24Hour(schedule.time);
-  const endTime = formatClockTime(schedule.time + schedule.durationMinutes);
-  const { endDate, endDayOffset } = getScheduleEndDate(schedule);
+	const startTime = schedule.getStartTimeLabel();
+	const endTime = schedule.getEndClockTimeLabel();
+	const { endDate, endDayOffset } = schedule.getEndDateData();
   const endDateLabel = DateTime.formatDate(endDate, {
     weekday: "long",
     month: "long",
@@ -275,16 +250,16 @@ function AwaitingConfirmationCard({
   return (
     <li className="w-[17rem] shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72">
       <p className="text-sm font-medium text-muted-foreground">
-        <time dateTime={schedule.date}>{date}</time>
+		<time dateTime={schedule.getDate()}>{date}</time>
       </p>
       <p
         className="mt-3 min-h-10 line-clamp-2 wrap-break-word font-semibold leading-5 text-foreground"
-        title={schedule.className}
+		title={schedule.getClassName()}
       >
-        {schedule.className}
+		{schedule.getClassName()}
       </p>
       <p className="mt-2 text-sm font-medium tabular-nums text-foreground">
-        <time dateTime={`${schedule.date}T${startTime}`}>{startTime}</time>
+		<time dateTime={`${schedule.getDate()}T${startTime}`}>{startTime}</time>
         <span aria-hidden="true"> – </span>
         <time
           aria-label={endDayOffset > 0 ? endDateTimeLabel : undefined}
@@ -306,12 +281,12 @@ function AwaitingConfirmationCard({
       <div className="mt-5 grid grid-cols-2 gap-2">
         <Button
           aria-label={t("dashboard:today.awaitingConfirmation.completeAction", {
-            className: schedule.className,
+			className: schedule.getClassName(),
             date,
             time: timeRange,
           })}
           disabled={disabled}
-          id={getAwaitingConfirmationCompleteActionId(schedule.id)}
+		id={getAwaitingConfirmationCompleteActionId(schedule.getId())}
           loading={completing}
           onClick={() => onComplete(schedule)}
           type="button"
@@ -320,7 +295,7 @@ function AwaitingConfirmationCard({
         </Button>
         <Button
           aria-label={t("dashboard:today.awaitingConfirmation.noShowAction", {
-            className: schedule.className,
+			className: schedule.getClassName(),
             date,
             time: timeRange,
           })}

@@ -5,11 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import { DateTime } from "@/lib/date-time";
 import i18n from "@/lib/i18n/config";
+import { Schedule } from "@/models/schedule";
 
 const queryState = vi.hoisted(() => ({
   calls: [] as Array<Record<string, string | undefined>>,
   refetch: vi.fn(),
-  schedules: [] as GetV1Schedules200Item[],
+	schedules: [] as Schedule[],
 }));
 
 vi.mock("@/hooks/queries/use-schedules", () => ({
@@ -135,8 +136,8 @@ function getSharedHeaderControls() {
 
 function makeSchedule(
   overrides: Partial<GetV1Schedules200Item> = {},
-): GetV1Schedules200Item {
-  return {
+): Schedule {
+	return Schedule.fromListItem({
     classId: "class-1",
     className: "Mathematics",
     createdAt: "2026-10-01T00:00:00.000Z",
@@ -150,7 +151,7 @@ function makeSchedule(
     type: "ONLINE",
     updatedAt: "2026-10-01T00:00:00.000Z",
     ...overrides,
-  };
+  });
 }
 
 describe("SchedulesScreen weekly timeline integration", () => {
@@ -239,7 +240,7 @@ describe("SchedulesScreen weekly timeline integration", () => {
     expect(screen.getByTestId("drawer-time")).toHaveTextContent("default");
   });
 
-	it("keeps the desktop Week Add beside the view tabs and preserves the Day Add and FAB", async () => {
+	it("keeps the Day toolbar Add and FAB out of the Week timeline", async () => {
     const user = userEvent.setup();
     render(<SchedulesScreen />);
 
@@ -256,17 +257,9 @@ describe("SchedulesScreen weekly timeline integration", () => {
       ).not.toBeInTheDocument();
     });
 
-    const desktopWeekAdd = await waitFor(() =>
-      getAddButtonWithClass("sm:inline-flex"),
-    );
-
-    expect(sharedControls).toContainElement(desktopWeekAdd);
-    expect(
-      screen.getAllByRole("button", { name: "Add Schedule" }),
-		).toEqual([desktopWeekAdd]);
-		expect(desktopWeekAdd).toHaveAttribute("aria-haspopup", "dialog");
-    expect(desktopWeekAdd).toHaveClass("hidden", "sm:inline-flex");
-    expect(desktopWeekAdd).toHaveTextContent("Add Schedule");
+		expect(
+			screen.queryByRole("button", { name: "Add Schedule" }),
+		).not.toBeInTheDocument();
     expect(screen.queryByTestId("workspace-fab")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Day" }));
@@ -319,9 +312,9 @@ describe("SchedulesScreen weekly timeline integration", () => {
 		expect(
 			screen.queryByPlaceholderText("Search by class..."),
 		).not.toBeInTheDocument();
-    expect(getSharedHeaderControls()).toContainElement(
-      getAddButtonWithClass("sm:inline-flex"),
-    );
+		expect(
+			screen.queryByRole("button", { name: "Add Schedule" }),
+		).not.toBeInTheDocument();
   });
 
   it("filters Day schedules through manual-activation status tabs and preserves the selection across Week", async () => {

@@ -5,10 +5,11 @@ Query. Use it for new features and when refactoring existing ones. Model
 ownership and behavior are defined in
 [Frontend Domain Model Conventions](domain-models.md).
 
-> **Adoption status:** students are the reference implementation for this
-> convention. Students, classes, and courses now use raw `use-fetch-*.ts`
-> hooks, stable selected domain hooks, resource-owned keys, and class models in
-> `src/models/`. Schedules remain the next migration candidate.
+> **Adoption status:** students, classes, courses, and schedules use this
+> convention. Schedule list, detail, and awaiting-confirmation hooks cache raw
+> endpoint responses, then select `Schedule` models through stable selectors.
+> Recurring series select `RecurringSchedule` and its pattern value object from
+> their owning class model.
 
 The admin portal follows the same generated-client boundary. Its Orval
 configuration lives at `admin-frontend/orval.config.ts`, and its ignored client
@@ -312,6 +313,6 @@ Adopt the convention feature by feature:
 6. Move cache reconciliation into the related mutation hooks.
 7. Build and exercise the migrated feature before starting the next one.
 
-Students, classes, and courses establish the working reference. Migrate
-schedules next, following the same raw-hook, stable-selector, and class-model
-boundaries.
+Students, classes, courses, and schedules establish the working reference.
+Keep future migrations incremental while preserving query-key values, cache
+invalidation, and visible behavior.

@@ -1,14 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { schedulesKeys } from "./query-keys";
-import type { GetV1SchedulesParams } from "@/api/generated/models/getV1SchedulesParams";
+import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
+import { Schedule } from "@/models/schedule";
+import type { ScheduleListFilters } from "@/types/schedule-query";
+import { useFetchSchedules } from "./use-fetch-schedules";
 
-export const useSchedules = (params?: GetV1SchedulesParams) => {
-  return useQuery({
-    queryKey: schedulesKeys.list(params),
-    queryFn: async () => {
-      const response = await apiClient.getV1Schedules(params);
-      return response.data;
-    },
-  });
-};
+const selectSchedules = (
+	data: GetV1Schedules200Item[] | undefined,
+): Schedule[] | undefined => data?.map(Schedule.fromListItem);
+
+export const useSchedules = (filters?: ScheduleListFilters) =>
+	useFetchSchedules<Schedule[] | undefined>({
+		filters,
+		select: selectSchedules,
+	});

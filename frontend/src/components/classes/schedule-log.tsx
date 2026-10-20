@@ -23,10 +23,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/common/dropdown-menu";
 import {
-  formatTime24Hour,
   statusColors,
 } from "@/lib/schedule-utils";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
+import type { Schedule } from "@/models/schedule";
 
 type ScheduleLogSection = "upcoming" | "recent";
 
@@ -34,34 +33,19 @@ const UPCOMING_PREVIEW_COUNT = 3;
 
 interface ScheduleLogProps {
   section: ScheduleLogSection;
-  schedules: GetV1Schedules200Item[];
+	schedules: Schedule[];
   hasData: boolean;
   isError: boolean;
   isLoading: boolean;
   errorOwner: boolean;
   onRetry: () => void;
   referenceTime: DateTime;
-  onViewSchedule: (schedule: GetV1Schedules200Item) => void;
+	onViewSchedule: (schedule: Schedule) => void;
   onAddSchedule: () => void;
-  onCompleteSchedule?: (schedule: GetV1Schedules200Item) => void;
-  onNoShowSchedule?: (schedule: GetV1Schedules200Item) => void;
-  onRestoreSchedule?: (schedule: GetV1Schedules200Item) => void;
-  onDeleteSchedule?: (schedule: GetV1Schedules200Item) => void;
-}
-
-function getScheduleStart(schedule: GetV1Schedules200Item): DateTime {
-  const hours = Math.floor(schedule.time / 60).toString().padStart(2, "0");
-  const minutes = (schedule.time % 60).toString().padStart(2, "0");
-
-  return DateTime.from(`${schedule.date}T${hours}:${minutes}:00`);
-}
-
-function compareScheduleStart(
-  left: GetV1Schedules200Item,
-  right: GetV1Schedules200Item,
-): number {
-  const dateComparison = left.date.localeCompare(right.date);
-  return dateComparison || left.time - right.time;
+	onCompleteSchedule?: (schedule: Schedule) => void;
+	onNoShowSchedule?: (schedule: Schedule) => void;
+	onRestoreSchedule?: (schedule: Schedule) => void;
+	onDeleteSchedule?: (schedule: Schedule) => void;
 }
 
 function formatDateHeader(dateStr: string, t: (key: string) => string): string {
@@ -134,21 +118,22 @@ function ScheduleRow({
   | "onRetry"
   | "referenceTime"
 > & {
-  schedule: GetV1Schedules200Item;
+	schedule: Schedule;
   showDate: boolean;
 }) {
   const { t } = useTranslation(["schedules"]);
-  const startTime = formatTime24Hour(schedule.time);
-  const endTime = formatTime24Hour(schedule.time + schedule.durationMinutes);
-  const status = statusColors[schedule.status];
+	const startTime = schedule.getStartTimeLabel();
+	const endTime = schedule.getEndTimeLabel();
+	const status = statusColors[schedule.getStatus()];
   const StatusIcon = status?.icon;
-  const ScheduleTypeIcon = schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
+	const ScheduleTypeIcon =
+		schedule.getType() === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
 
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 py-2 transition-colors hover:bg-surface focus-within:bg-surface sm:flex">
       {showDate ? (
         <p className="col-span-2 mb-1 text-xs leading-5 text-on-surface-variant sm:mb-0 sm:w-28 sm:shrink-0">
-          {formatScheduleDate(schedule.date)}
+			{formatScheduleDate(schedule.getDate())}
         </p>
       ) : null}
       <button
@@ -166,10 +151,10 @@ function ScheduleRow({
             icon={ScheduleTypeIcon}
             strokeWidth={2}
           />
-          <span>{t(`type.${schedule.type}`)}</span>
-          {schedule.notes ? (
+			<span>{t(`type.${schedule.getType()}`)}</span>
+			{schedule.getNotes() ? (
             <span className="max-w-48 truncate before:mr-1 before:content-['·']">
-              {schedule.notes}
+					{schedule.getNotes()}
             </span>
           ) : null}
         </div>
@@ -183,7 +168,7 @@ function ScheduleRow({
           {StatusIcon ? (
             <HugeiconsIcon className="size-3" icon={StatusIcon} strokeWidth={2} aria-hidden="true" />
           ) : null}
-          {t(`status.${schedule.status}`)}
+			{t(`status.${schedule.getStatus()}`)}
         </Badge>
         {onCompleteSchedule ||
         onNoShowSchedule ||
@@ -201,7 +186,7 @@ function ScheduleRow({
               <HugeiconsIcon icon={MoreVerticalHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {schedule.status === "SCHEDULED" && onCompleteSchedule ? (
+			{schedule.canComplete() && onCompleteSchedule ? (
                 <DropdownMenuItem
                   onClick={(event) => {
                     event.stopPropagation();
@@ -213,7 +198,7 @@ function ScheduleRow({
                   {t("complete.action")}
                 </DropdownMenuItem>
               ) : null}
-              {schedule.status === "SCHEDULED" && onNoShowSchedule ? (
+			{schedule.canMarkNoShow() && onNoShowSchedule ? (
                 <DropdownMenuItem
                   onClick={(event) => {
                     event.stopPropagation();
@@ -225,8 +210,7 @@ function ScheduleRow({
                   {t("noShow.action")}
                 </DropdownMenuItem>
               ) : null}
-              {(schedule.status === "COMPLETED" || schedule.status === "NO_SHOW") &&
-              onRestoreSchedule ? (
+			{schedule.canRestore() && onRestoreSchedule ? (
                 <DropdownMenuItem
                   onClick={(event) => {
                     event.stopPropagation();
@@ -238,12 +222,12 @@ function ScheduleRow({
                   {t("restore.action")}
                 </DropdownMenuItem>
               ) : null}
-              {schedule.status === "SCHEDULED" &&
+			{schedule.isScheduled() &&
               (onCompleteSchedule || onNoShowSchedule) &&
               onDeleteSchedule ? (
                 <DropdownMenuSeparator />
               ) : null}
-              {schedule.status !== "SCHEDULED" && onDeleteSchedule ? (
+			{!schedule.isScheduled() && onDeleteSchedule ? (
                 <DropdownMenuSeparator />
               ) : null}
               {onDeleteSchedule ? (
@@ -290,25 +274,25 @@ export function ScheduleLog({
   const displayedSchedules = useMemo(() => {
     const now = referenceTime;
     const matchingSchedules = schedules.filter((schedule) => {
-      const isUpcomingSchedule =
-        schedule.status === "SCHEDULED" && !getScheduleStart(schedule).isBefore(now);
+		const isUpcomingSchedule = schedule.isUpcoming(now);
 
       return isUpcoming ? isUpcomingSchedule : !isUpcomingSchedule;
     });
 
     return matchingSchedules.sort((left, right) =>
       isUpcoming
-        ? compareScheduleStart(left, right)
-        : compareScheduleStart(right, left),
+		? left.compareStart(right)
+		: right.compareStart(left),
     );
   }, [isUpcoming, referenceTime, schedules]);
   const recentScheduleGroups = useMemo(() => {
-    const groups = new Map<string, GetV1Schedules200Item[]>();
+		const groups = new Map<string, Schedule[]>();
 
     for (const schedule of displayedSchedules) {
-      const group = groups.get(schedule.date) ?? [];
+			const date = schedule.getDate();
+			const group = groups.get(date) ?? [];
       group.push(schedule);
-      groups.set(schedule.date, group);
+			groups.set(date, group);
     }
 
     return [...groups.entries()].map(([date, groupSchedules]) => ({
@@ -408,7 +392,7 @@ export function ScheduleLog({
             <ul className="divide-y divide-border border-y border-border" role="list">
               {visibleUpcomingSchedules.map((schedule) => (
                 <ScheduleRow
-                  key={schedule.id}
+					key={schedule.getId()}
                   schedule={schedule}
                   showDate
                   onViewSchedule={onViewSchedule}
@@ -447,7 +431,7 @@ export function ScheduleLog({
                 <ul className="divide-y divide-border border-y border-border" role="list">
                   {group.schedules.map((schedule) => (
                     <ScheduleRow
-                      key={schedule.id}
+						key={schedule.getId()}
                       schedule={schedule}
                       showDate={false}
                       onViewSchedule={onViewSchedule}

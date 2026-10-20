@@ -3,14 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
 import i18n from "@/lib/i18n/config";
+import { Schedule } from "@/models/schedule";
 
 const longClassName =
 	"Advanced Algebra preparation with an intentionally long class name";
 
 function makeSchedule(
 	overrides: Partial<GetV1Schedules200Item> = {},
-): GetV1Schedules200Item {
-	return {
+): Schedule {
+	return Schedule.fromListItem({
 		classId: "class-1",
 		className: longClassName,
 		createdAt: "2026-10-12T00:00:00.000Z",
@@ -24,7 +25,7 @@ function makeSchedule(
 		type: "ONLINE",
 		updatedAt: "2026-10-12T00:00:00.000Z",
 		...overrides,
-	};
+	});
 }
 
 describe("ScheduleCard", () => {

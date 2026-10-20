@@ -11,12 +11,6 @@ export const SCHEDULE_DURATION_OPTIONS: readonly number[] = [
   30, 60, 90, 120, 150, 180,
 ];
 
-export function formatTime24Hour(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
-}
-
 export function formatDuration(totalMinutes: number, t: TFunction): string {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;

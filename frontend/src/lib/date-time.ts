@@ -1,5 +1,6 @@
 import {
 	addWeeks,
+	addDays,
 	compareAsc as compareDatesAsc,
 	eachDayOfInterval,
 	endOfWeek,
@@ -142,6 +143,10 @@ export class DateTime {
 
 	addWeeks(weeks: number): DateTime {
 		return new DateTime(addWeeks(this.dateTime, weeks));
+	}
+
+	addDays(days: number): DateTime {
+		return new DateTime(addDays(this.dateTime, days));
 	}
 
 	subWeeks(weeks: number): DateTime {

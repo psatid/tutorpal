@@ -83,3 +83,11 @@ Apply this convention to new features and incrementally when existing features
 are refactored. It describes the target boundary; it does not require a broad
 rewrite of current code. The React Query guide records the current adoption
 status and migration order.
+
+Schedules are the current example of a feature-owned model boundary: `Schedule`
+maps list, detail, and awaiting-confirmation transport shapes and owns session
+calculations and lifecycle predicates. `RecurringSchedulePattern` owns recurring
+ordering, overlap checks, command conversion, and pure editor decisions, while
+`RecurringSchedule` owns persisted-series behavior and affected-occurrence
+counts. React Hook Form and components keep drafts, focus, translated copy, and
+visual layout.

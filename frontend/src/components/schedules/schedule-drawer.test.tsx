@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GetV1SchedulesById200 } from "@/api/generated/models/getV1SchedulesById200";
 import i18n from "@/lib/i18n/config";
+import { Schedule } from "@/models/schedule";
+import type { ScheduleStatus } from "@/types/schedule";
 
 const mutations = vi.hoisted(() => ({
 	create: vi.fn(),
@@ -16,7 +18,7 @@ const drawerState = vi.hoisted(() => ({
 	completePending: false,
 	deletePending: false,
 	restorePending: false,
-	schedule: null as GetV1SchedulesById200 | null,
+	schedule: null as Schedule | null,
 }));
 
 const noShowDialogState = vi.hoisted(() => ({
@@ -60,12 +62,12 @@ vi.mock("@/components/schedules/no-show-schedule-dialog", () => ({
 	}: {
 		finalFocus?: () => HTMLElement | null;
 		open: boolean;
-		schedule: { id: string } | null;
+		schedule: Schedule | null;
 	}) => {
 		noShowDialogState.finalFocus = finalFocus;
 		return (
 			<div data-open={open ? "true" : "false"} data-testid="no-show-schedule-dialog">
-				{schedule?.id}
+				{schedule?.getId()}
 			</div>
 		);
 	},
@@ -110,9 +112,10 @@ vi.mock("@/hooks/queries/use-get-schedule", () => ({
 import { ScheduleDrawer } from "@/components/schedules/schedule-drawer";
 
 function makeSchedule(
-	status: GetV1SchedulesById200["status"],
-): GetV1SchedulesById200 {
-	return {
+	status: ScheduleStatus,
+	overrides: Partial<GetV1SchedulesById200> = {},
+): Schedule {
+	return Schedule.fromGetScheduleByIdResponse({
 		classId: "class-1",
 		className: "Class one",
 		createdAt: "2026-10-08T00:00:00.000Z",
@@ -125,11 +128,12 @@ function makeSchedule(
 		time: 540,
 		type: "ONLINE",
 		updatedAt: "2026-10-08T00:00:00.000Z",
-	};
+		...overrides,
+	});
 }
 
 function renderScheduleDrawer(
-	status: GetV1SchedulesById200["status"],
+	status: ScheduleStatus,
 	mode: "view" | "edit" = "view",
 ) {
 	drawerState.schedule = makeSchedule(status);
@@ -145,7 +149,7 @@ function renderScheduleDrawer(
 	);
 }
 
-const scheduleStatusLabels: Record<GetV1SchedulesById200["status"], string> = {
+const scheduleStatusLabels: Record<ScheduleStatus, string> = {
 	SCHEDULED: "Scheduled",
 	COMPLETED: "Completed",
 	NO_SHOW: "No Show",
@@ -321,7 +325,7 @@ describe("ScheduleDrawer", () => {
 		const duration = screen.getByRole("combobox", { name: "Duration" });
 		expect(duration).toHaveTextContent("Select duration");
 
-		drawerState.schedule = { ...makeSchedule("SCHEDULED"), durationMinutes: 90 };
+		drawerState.schedule = makeSchedule("SCHEDULED", { durationMinutes: 90 });
 		rerender(<ScheduleDrawer {...props} />);
 
 		await waitFor(() => {

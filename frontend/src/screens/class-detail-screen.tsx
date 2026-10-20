@@ -27,8 +27,8 @@ import {
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { Button } from "@/components/common/button";
 import { Skeleton } from "@/components/common/skeleton";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import { DateTime } from "@/lib/date-time";
+import type { Schedule } from "@/models/schedule";
 
 interface ClassDetailScreenProps {
   classId: string;
@@ -87,7 +87,7 @@ export function ClassDetailScreen({
     null,
   );
   const [noShowSchedule, setNoShowSchedule] =
-    useState<GetV1Schedules200Item | null>(null);
+		useState<Schedule | null>(null);
   const [isRecurringDrawerOpen, setIsRecurringDrawerOpen] = useState(false);
   const [scheduleReferenceTime, setScheduleReferenceTime] = useState(DateTime.now);
   const isClassNotFound = isClassNotFoundError(classError);
@@ -160,8 +160,8 @@ export function ClassDetailScreen({
     }
   }, [openHourAdditionsOnMount]);
 
-  const handleViewSchedule = useCallback((schedule: GetV1Schedules200Item) => {
-    setSelectedScheduleId(schedule.id);
+	const handleViewSchedule = useCallback((schedule: Schedule) => {
+		setSelectedScheduleId(schedule.getId());
     setScheduleDrawerMode("view");
     setIsScheduleDrawerOpen(true);
   }, []);
@@ -182,11 +182,11 @@ export function ClassDetailScreen({
   }, [handleAddHours]);
 
   const handleDeleteSchedule = useCallback(
-    (schedule: GetV1Schedules200Item) => {
+	(schedule: Schedule) => {
       toast(t("schedules:delete.confirm", { ns: "schedules" }), {
         action: {
           label: t("schedules:delete.confirmButton", { ns: "schedules" }),
-          onClick: () => deleteScheduleMutation.mutate(schedule.id),
+			onClick: () => deleteScheduleMutation.mutate(schedule.getId()),
         },
         cancel: {
           label: t("schedules:delete.cancelButton", { ns: "schedules" }),
@@ -198,9 +198,9 @@ export function ClassDetailScreen({
   );
 
   const handleCompleteSchedule = useCallback(
-    (schedule: GetV1Schedules200Item) => {
+	(schedule: Schedule) => {
       const hoursToDeduct = DateTime.formatDurationHours(
-        schedule.durationMinutes / 60,
+			schedule.getDurationHours(),
       );
       toast(
         t("schedules:complete.confirm", {
@@ -210,7 +210,7 @@ export function ClassDetailScreen({
         {
           action: {
             label: t("schedules:complete.confirmButton", { ns: "schedules" }),
-            onClick: () => completeMutation.mutate(schedule.id),
+			onClick: () => completeMutation.mutate(schedule.getId()),
           },
           cancel: {
             label: t("schedules:complete.cancelButton", { ns: "schedules" }),
@@ -223,9 +223,9 @@ export function ClassDetailScreen({
   );
 
   const handleRestoreHours = useCallback(
-    (schedule: GetV1Schedules200Item) => {
+	(schedule: Schedule) => {
       const hoursToRestore = DateTime.formatDurationHours(
-        schedule.durationMinutes / 60,
+			schedule.getDurationHours(),
       );
       toast(
         t("schedules:restore.confirm", {
@@ -235,7 +235,7 @@ export function ClassDetailScreen({
         {
           action: {
             label: t("schedules:restore.confirmButton", { ns: "schedules" }),
-            onClick: () => restoreMutation.mutate(schedule.id),
+			onClick: () => restoreMutation.mutate(schedule.getId()),
           },
           cancel: {
             label: t("schedules:restore.cancelButton", { ns: "schedules" }),
@@ -248,7 +248,7 @@ export function ClassDetailScreen({
   );
 
   const handleNoShowSchedule = useCallback(
-    (schedule: GetV1Schedules200Item) => {
+		(schedule: Schedule) => {
       setNoShowSchedule(schedule);
     },
     [],

@@ -43,6 +43,7 @@ const rangeLabel = DateTime.formatDateRange(startDate, endDate, {
 const hours = DateTime.formatDurationHours(2.5); // "2.5"
 
 // Date arithmetic and calendar checks
+const tomorrow = selectedDate.addDays(1);
 const nextWeek = selectedDate.addWeeks(1);
 const isToday = selectedDate.isToday();
 ```

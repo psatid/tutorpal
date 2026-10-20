@@ -12,31 +12,17 @@ import {
   SCHEDULE_DURATION_OPTIONS,
 } from "@/lib/schedule-utils";
 import {
-  timeStringToMinutes,
   type ScheduleFormData,
   type Weekday,
 } from "@/types/schedule";
+import {
+	RecurringSchedulePattern,
+} from "@/models/recurring-schedule";
 
 interface WeekdayTimeSelectorProps {
   name: FieldArrayPath<ScheduleFormData>;
   control: Control<ScheduleFormData>;
   disabled?: boolean;
-}
-
-const WEEKDAYS: Weekday[] = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-];
-
-function getTimeAtMinute(minute: number) {
-  return `${Math.floor(minute / 60)
-    .toString()
-    .padStart(2, "0")}:${(minute % 60).toString().padStart(2, "0")}`;
 }
 
 export function WeekdayTimeSelector({
@@ -66,40 +52,23 @@ export function WeekdayTimeSelector({
   });
 
   const toggleWeekday = (weekday: Weekday) => {
-    const indexes = items
-      .filter((item) => item.weekday === weekday)
-      .map((item) => item.index);
+		const decision = RecurringSchedulePattern.fromFormItems(items).getToggleWeekdayDecision(
+			weekday,
+		);
 
-    if (indexes.length > 0) {
-      remove(indexes);
+		if (decision.kind === "remove") {
+			remove(decision.indexes);
       return;
     }
 
-    append(
-      { weekday, time: "09:00", durationMinutes: 60 },
-      { shouldFocus: false },
-    );
+		append(decision.item, { shouldFocus: false });
   };
 
   const addInterval = (weekday: Weekday) => {
-    const latestEnd = items
-      .filter((item) => item.weekday === weekday)
-      .reduce(
-        (latest, item) =>
-          Math.max(
-            latest,
-            timeStringToMinutes(item.time) + item.durationMinutes,
-          ),
-        0,
-      );
-
-    if (latestEnd < 24 * 60) {
-      append({
-        weekday,
-        time: getTimeAtMinute(latestEnd),
-        durationMinutes: 60,
-      });
-    }
+		const item = RecurringSchedulePattern.fromFormItems(items).getAddIntervalItem(
+			weekday,
+		);
+		if (item) append(item);
   };
 
   return (
@@ -109,19 +78,16 @@ export function WeekdayTimeSelector({
       onAddInterval={addInterval}
       onRemoveInterval={remove}
       onSelectAll={() => {
-        if (
-          new Set(items.map((item) => item.weekday)).size === WEEKDAYS.length
-        ) {
+		const decision = RecurringSchedulePattern.fromFormItems(
+			items,
+		).getSelectAllWeekdaysDecision();
+
+		if (decision.kind === "clear") {
           remove();
           return;
         }
 
-        append(
-          WEEKDAYS.filter(
-            (weekday) => !items.some((item) => item.weekday === weekday),
-          ).map((weekday) => ({ weekday, time: "09:00", durationMinutes: 60 })),
-          { shouldFocus: false },
-        );
+		append(decision.items, { shouldFocus: false });
       }}
       onToggleWeekday={toggleWeekday}
       renderInterval={({

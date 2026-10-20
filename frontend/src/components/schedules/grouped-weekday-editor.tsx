@@ -5,21 +5,13 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import {
-  getOverlappingRecurringScheduleItemIndexes,
-  timeStringToMinutes,
   type RecurringScheduleItemInput,
   type Weekday,
 } from "@/types/schedule";
-
-const WEEKDAY_ORDER: Weekday[] = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-];
+import {
+	recurringScheduleWeekdays,
+	RecurringSchedulePattern,
+} from "@/models/recurring-schedule";
 
 export interface GroupedWeekdayScheduleItem extends RecurringScheduleItemInput {
   id: string;
@@ -52,9 +44,13 @@ export function GroupedWeekdayEditor({
   renderInterval,
 }: GroupedWeekdayEditorProps) {
   const { t } = useTranslation(["schedules"]);
-  const selectedWeekdays = new Set(items.map((item) => item.weekday));
-  const allWeekdaysSelected = selectedWeekdays.size === WEEKDAY_ORDER.length;
-  const overlappingIndexes = getOverlappingRecurringScheduleItemIndexes(items);
+	const pattern = RecurringSchedulePattern.fromFormItems(items);
+	const selectedWeekdays = new Set(
+		pattern.getItems().map((item) => item.weekday),
+	);
+	const allWeekdaysSelected =
+		selectedWeekdays.size === recurringScheduleWeekdays.length;
+	const overlappingIndexes = pattern.getOverlappingItemIndexes();
 
   return (
     <div className="space-y-3">
@@ -81,27 +77,16 @@ export function GroupedWeekdayEditor({
       </div>
 
       <div className="space-y-2">
-        {WEEKDAY_ORDER.map((weekday) => {
+		{recurringScheduleWeekdays.map((weekday) => {
           const weekdayLabel = t(
             `schedules:drawer.weekdayTime.weekdays.${weekday}`,
           );
-          const weekdayItems = items
-            .filter((item) => item.weekday === weekday)
-            .sort(
-              (left, right) =>
-                timeStringToMinutes(left.time) -
-                timeStringToMinutes(right.time),
-            );
+			const weekdayItems = pattern
+				.getWeekdayItemIndexes(weekday)
+				.map((index) => items[index])
+				.filter((item): item is GroupedWeekdayScheduleItem => Boolean(item));
           const isSelected = weekdayItems.length > 0;
-          const latestEnd = weekdayItems.reduce(
-            (latest, item) =>
-              Math.max(
-                latest,
-                timeStringToMinutes(item.time) + item.durationMinutes,
-              ),
-            0,
-          );
-          const cannotAddInterval = latestEnd >= 24 * 60;
+			const cannotAddInterval = !pattern.canAddInterval(weekday);
           const overlapDescriptionId = `weekday-${weekday.toLowerCase()}-overlap`;
           const hasOverlap = weekdayItems.some((item) =>
             overlappingIndexes.has(item.index),

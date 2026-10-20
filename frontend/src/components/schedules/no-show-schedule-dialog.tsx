@@ -24,43 +24,17 @@ import {
 import { overlayLayers } from "@/components/common/overlay-layers";
 import { useNoShowSchedule } from "@/hooks/mutations/use-schedules";
 import { DateTime } from "@/lib/date-time";
-import { formatDuration, formatTime24Hour } from "@/lib/schedule-utils";
+import { formatDuration } from "@/lib/schedule-utils";
+import { Schedule } from "@/models/schedule";
 import { cn } from "@/lib/utils";
 
-const MINUTES_PER_DAY = 24 * 60;
-
-function formatClockTime(minutes: number): string {
-  const minutesInDay =
-    ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-
-  return formatTime24Hour(minutesInDay);
-}
-
-function getScheduleEndDate(date: string, totalMinutes: number) {
-  const endDayOffset = Math.floor(totalMinutes / MINUTES_PER_DAY);
-  const endDate = DateTime.fromDateOnlyString(date).toDate();
-
-  endDate.setDate(endDate.getDate() + endDayOffset);
-
-  return {
-    endDate: DateTime.from(endDate),
-    endDayOffset,
-  };
-}
-
-export type NoShowSchedule = {
-  id: string;
-  className: string;
-  date: string;
-  time: number;
-  durationMinutes: number;
-};
+export type NoShowSchedule = Schedule;
 
 interface NoShowScheduleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  schedule: NoShowSchedule | null;
-  onSuccess?: (schedule: NoShowSchedule) => void;
+	schedule: NoShowSchedule | null;
+	onSuccess?: (schedule: NoShowSchedule) => void;
   finalFocus?: ComponentProps<typeof DialogPrimitive.Popup>["finalFocus"];
 }
 
@@ -75,7 +49,7 @@ export function NoShowScheduleDialog({
   const [deductHours, setDeductHours] = useState<boolean | null>(null);
   const [note, setNote] = useState("");
   const deductHoursInputRef = useRef<HTMLInputElement>(null);
-  const scheduleId = schedule?.id;
+	const scheduleId = schedule?.getId();
   const noShowMutation = useNoShowSchedule({
     onSuccess: () => {
       if (schedule) onSuccess?.(schedule);
@@ -99,20 +73,16 @@ export function NoShowScheduleDialog({
 
   if (!schedule) return null;
 
-  const hours = DateTime.formatDurationHours(schedule.durationMinutes / 60);
-  const startTime = formatTime24Hour(schedule.time);
-  const endTotalMinutes = schedule.time + schedule.durationMinutes;
-  const endTime = formatClockTime(endTotalMinutes);
-  const startDate = DateTime.fromDateOnlyString(schedule.date);
+	const hours = DateTime.formatDurationHours(schedule.getDurationHours());
+	const startTime = schedule.getStartTimeLabel();
+	const endTime = schedule.getEndClockTimeLabel();
+	const startDate = DateTime.fromDateOnlyString(schedule.getDate());
   const date = DateTime.formatDate(startDate, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
-  const { endDate, endDayOffset } = getScheduleEndDate(
-    schedule.date,
-    endTotalMinutes,
-  );
+	const { endDate, endDayOffset } = schedule.getEndDateData();
   const endDateLabel = DateTime.formatDate(endDate, {
     weekday: "long",
     month: "long",
@@ -145,7 +115,7 @@ export function NoShowScheduleDialog({
     if (deductHours === null || noShowMutation.isPending) return;
 
     noShowMutation.mutate({
-      id: schedule.id,
+		id: schedule.getId(),
       deductHours,
       note: note.trim() || undefined,
     });
@@ -191,14 +161,14 @@ export function NoShowScheduleDialog({
 
           <div className="rounded-lg border border-border bg-muted px-3 py-3">
             <p className="font-medium wrap-break-word text-foreground">
-              {schedule.className}
+				{schedule.getClassName()}
             </p>
             <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm text-muted-foreground">
               <dt>{t("noShow.session.date")}</dt>
               <dd className="min-w-0 text-right text-foreground">{date}</dd>
               <dt>{t("noShow.session.time")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-                <time dateTime={`${schedule.date}T${startTime}`}>
+				<time dateTime={`${schedule.getDate()}T${startTime}`}>
                   {startTime}
                 </time>
                 <span aria-hidden="true"> – </span>
@@ -222,7 +192,7 @@ export function NoShowScheduleDialog({
               </dd>
               <dt>{t("noShow.session.duration")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-                {formatDuration(schedule.durationMinutes, t)}
+					{formatDuration(schedule.getDurationMinutes(), t)}
               </dd>
             </dl>
           </div>

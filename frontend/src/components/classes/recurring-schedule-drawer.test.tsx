@@ -1,7 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "@/lib/i18n/config";
+import { RecurringSchedule } from "@/models/recurring-schedule";
 
 const mutations = vi.hoisted(() => ({
   create: vi.fn(),
@@ -36,6 +37,10 @@ describe("RecurringScheduleDrawer", () => {
     await i18n.changeLanguage("en");
     mutations.create.mockReset();
     mutations.updateRecurring.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it.each([
@@ -100,6 +105,37 @@ describe("RecurringScheduleDrawer", () => {
     ).toBeDisabled();
   });
 
+  it("preserves an open draft when the calendar day rolls over and the drawer rerenders", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 12, 23, 59));
+    const props = {
+      classId: "class-1",
+      hasNoAvailableHours: false,
+      isOpen: true,
+      onAddHours: vi.fn(),
+      onOpenChange: vi.fn(),
+      schedules: [],
+    };
+    const { rerender } = render(<RecurringScheduleDrawer {...props} />);
+
+    const startDate = screen.getByLabelText("Start date");
+    expect(startDate).toHaveValue("October 12, 2026");
+    fireEvent.click(screen.getByRole("radio", { name: "Online" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Monday" }));
+
+    vi.setSystemTime(new Date(2026, 9, 13, 0, 1));
+    rerender(<RecurringScheduleDrawer {...props} />);
+
+    expect(screen.getByLabelText("Start date")).toHaveValue(
+      "October 12, 2026",
+    );
+    expect(screen.getByRole("radio", { name: "Online" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Monday" })).toBeChecked();
+    expect(screen.getByLabelText("Time — Monday, session 1")).toHaveValue(
+      "09:00",
+    );
+  });
+
   it.each([
     [
       "en",
@@ -133,14 +169,14 @@ describe("RecurringScheduleDrawer", () => {
           onAddHours={vi.fn()}
           onOpenChange={vi.fn()}
           schedules={[]}
-          recurringSchedule={{
+			recurringSchedule={RecurringSchedule.fromInput({
             id: "recurring-1",
             startDate: "2026-10-08",
             type: "ONLINE",
             scheduleItems: [
               { id: "monday", weekday: "MONDAY", time: 540, durationMinutes: 60 },
             ],
-          }}
+			})}
         />,
       );
 
@@ -177,7 +213,7 @@ describe("RecurringScheduleDrawer", () => {
         onAddHours={vi.fn()}
         onOpenChange={vi.fn()}
         schedules={[]}
-        recurringSchedule={{
+		recurringSchedule={RecurringSchedule.fromInput({
           id: "recurring-1",
           startDate: "2026-10-08",
           type: "ONLINE",
@@ -185,7 +221,7 @@ describe("RecurringScheduleDrawer", () => {
             { id: "late", weekday: "MONDAY", time: 840, durationMinutes: 30 },
             { id: "early", weekday: "MONDAY", time: 480, durationMinutes: 60 },
           ],
-        }}
+		})}
       />,
     );
 
@@ -219,14 +255,14 @@ describe("RecurringScheduleDrawer", () => {
         onAddHours={vi.fn()}
         onOpenChange={vi.fn()}
         schedules={[]}
-        recurringSchedule={{
+		recurringSchedule={RecurringSchedule.fromInput({
           id: "recurring-1",
           startDate: "2026-10-08",
           type: "ONLINE",
           scheduleItems: [
             { id: "custom-duration", weekday: "MONDAY", time: 540, durationMinutes: 75 },
           ],
-        }}
+		})}
       />,
     );
 

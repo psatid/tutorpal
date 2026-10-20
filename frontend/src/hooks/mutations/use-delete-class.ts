@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { classesQueryKeys } from "@/constants/query-keys/classes-query-keys";
 import { studentsQueryKeys } from "@/constants/query-keys/students-query-keys";
-import { schedulesKeys } from "@/hooks/queries/query-keys";
+import { schedulesQueryKeys } from "@/constants/query-keys/schedules-query-keys";
 import { apiClient } from "@/lib/api-client";
 
 export type ClassDeleteErrorKind = "not-found" | "unknown";
@@ -37,7 +37,7 @@ export function useDeleteClass(options?: {
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.lists() }),
 			queryClient.invalidateQueries({ queryKey: classesQueryKeys.infinites() }),
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all }),
-			queryClient.invalidateQueries({ queryKey: schedulesKeys.all }),
+			queryClient.invalidateQueries({ queryKey: schedulesQueryKeys.all }),
 		]);
 	};
 

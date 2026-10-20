@@ -6,7 +6,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import type { DefaultValues } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -44,33 +43,16 @@ import {
   statusColors,
 } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
+import { RecurringSchedulePattern } from "@/models/recurring-schedule";
+import { Schedule } from "@/models/schedule";
 import {
-  getOverlappingRecurringScheduleItemIndexes,
-  minutesToTimeString,
-  sortRecurringScheduleItems,
   type ScheduleFormData,
   createScheduleSchema,
-  timeStringToMinutes,
 } from "@/types/schedule";
 
 export type { DrawerMode } from "@/components/common/responsive-drawer";
 
 const SCHEDULE_DRAWER_FORM_ID = "schedule-drawer-form";
-function getScheduleDefaultValues(
-  date: string,
-  initialTime?: number,
-): DefaultValues<ScheduleFormData> {
-  return {
-    classId: "",
-    date,
-    type: undefined,
-    time:
-      initialTime === undefined ? "" : minutesToTimeString(initialTime),
-    durationMinutes: undefined,
-    notes: "",
-    recurring: undefined,
-  };
-}
 
 interface ScheduleDrawerProps {
   isOpen: boolean;
@@ -118,7 +100,7 @@ export function ScheduleDrawer({
     setValue,
   } = useForm<ScheduleFormData>({
     resolver: zodResolver(createScheduleSchema(t)),
-    defaultValues: getScheduleDefaultValues(selectedDateValue, initialTime),
+	defaultValues: Schedule.getFormDefaults(selectedDateValue, initialTime),
   });
   const classIdValue = useWatch({ control, name: "classId" });
   const recurring = useWatch({ control, name: "recurring" });
@@ -164,7 +146,7 @@ export function ScheduleDrawer({
 
   useEffect(() => {
     if (!isOpen || mode === "create") {
-      reset(getScheduleDefaultValues(selectedDateValue, initialTime));
+		reset(Schedule.getFormDefaults(selectedDateValue, initialTime));
       if (!isOpen) {
         setIsClassDrawerOpen(false);
         setIsNoShowDialogOpen(false);
@@ -173,21 +155,13 @@ export function ScheduleDrawer({
     }
 
     if (scheduleData) {
-      reset({
-        classId: scheduleData.classId,
-        date: scheduleData.date,
-        type: scheduleData.type,
-        time: minutesToTimeString(scheduleData.time),
-        durationMinutes: scheduleData.durationMinutes,
-        notes: scheduleData.notes || "",
-        recurring: undefined,
-      });
+		reset(scheduleData.getFormValues());
     }
   }, [initialTime, isOpen, mode, reset, scheduleData, selectedDateValue]);
 
   const createMutation = useCreateSchedule({
     onSuccess: () => {
-      reset(getScheduleDefaultValues(selectedDateValue, initialTime));
+		reset(Schedule.getFormDefaults(selectedDateValue, initialTime));
       onOpenChange(false);
       onCreateSuccess?.();
     },
@@ -203,59 +177,24 @@ export function ScheduleDrawer({
   const restoreMutation = useRestoreHours();
 
   const onSubmit = (data: ScheduleFormData) => {
-    if (!data.type || isCreateSubmissionBlocked) {
+	if (isCreateSubmissionBlocked) {
       return;
     }
 
-    const timeInMinutes = data.recurring
-      ? 0
-      : timeStringToMinutes(data.time || "");
-
     if (mode === "create") {
-      createMutation.mutate({
-        classId: data.classId,
-        date: data.date,
-        type: data.type,
-        time: timeInMinutes,
-        durationMinutes: data.durationMinutes,
-        notes: data.notes,
-        recurring: data.recurring
-          ? {
-              startDate: data.date,
-              scheduleItems: sortRecurringScheduleItems(
-                data.recurring.scheduleItems,
-              ).map((item) => ({
-                weekday: item.weekday,
-                time: timeStringToMinutes(item.time),
-                durationMinutes: item.durationMinutes,
-              })),
-            }
-          : undefined,
-      });
+		const command = Schedule.toCreateCommand(data);
+		if (command) createMutation.mutate(command);
     } else if (mode === "edit" && scheduleId) {
-      updateMutation.mutate({
-        id: scheduleId,
-        data: {
-          classId: data.classId,
-          date: data.date,
-          type: data.type,
-          time: timeInMinutes,
-          durationMinutes: data.durationMinutes,
-          notes: data.notes,
-        },
-      });
+		const command = Schedule.toUpdateCommand(data);
+		if (command) updateMutation.mutate({ id: scheduleId, data: command });
     }
   };
 
   const focusFirstOverlappingRecurringTime = () => {
     const scheduleItems = getValues("recurring.scheduleItems") ?? [];
-    const firstOverlappingIndex = [
-      ...getOverlappingRecurringScheduleItemIndexes(scheduleItems),
-    ].sort(
-      (left, right) =>
-        timeStringToMinutes(scheduleItems[left]?.time ?? "") -
-        timeStringToMinutes(scheduleItems[right]?.time ?? ""),
-    )[0];
+	const firstOverlappingIndex = RecurringSchedulePattern.fromFormItems(
+		scheduleItems,
+	).getFirstOverlappingItemIndexByTime();
 
     if (firstOverlappingIndex !== undefined) {
       setFocus(`recurring.scheduleItems.${firstOverlappingIndex}.time`);
@@ -300,9 +239,9 @@ export function ScheduleDrawer({
 
   const isScheduleActionPending =
     completeMutation.isPending || restoreMutation.isPending;
-  const noShowNote = scheduleData?.noShowNote?.trim();
+	const noShowNote = scheduleData?.getNoShowNote()?.trim();
   const scheduleStatus = scheduleData
-    ? statusColors[scheduleData.status]
+		? statusColors[scheduleData.getStatus()]
     : undefined;
   const ScheduleStatusIcon = scheduleStatus?.icon;
 
@@ -310,12 +249,12 @@ export function ScheduleDrawer({
     if (!scheduleData || isScheduleActionPending) return;
 
     const hoursToDeduct = DateTime.formatDurationHours(
-      scheduleData.durationMinutes / 60,
+		scheduleData.getDurationHours(),
     );
     toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
       action: {
         label: t("schedules:complete.confirmButton"),
-        onClick: () => completeMutation.mutate(scheduleData.id),
+			onClick: () => completeMutation.mutate(scheduleData.getId()),
       },
       cancel: {
         label: t("schedules:complete.cancelButton"),
@@ -328,12 +267,12 @@ export function ScheduleDrawer({
     if (!scheduleData || isScheduleActionPending) return;
 
     const hoursToRestore = DateTime.formatDurationHours(
-      scheduleData.durationMinutes / 60,
+		scheduleData.getDurationHours(),
     );
     toast(t("schedules:restore.confirm", { hours: hoursToRestore }), {
       action: {
         label: t("schedules:restore.confirmButton"),
-        onClick: () => restoreMutation.mutate(scheduleData.id),
+			onClick: () => restoreMutation.mutate(scheduleData.getId()),
       },
       cancel: {
         label: t("schedules:restore.cancelButton"),
@@ -349,7 +288,7 @@ export function ScheduleDrawer({
         className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
         role="group"
       >
-        {scheduleData.status === "SCHEDULED" ? (
+		{scheduleData.canComplete() ? (
           <>
             <Button
               disabled={isScheduleActionPending}
@@ -373,8 +312,7 @@ export function ScheduleDrawer({
             </Button>
           </>
         ) : null}
-        {(scheduleData.status === "COMPLETED" ||
-          scheduleData.status === "NO_SHOW") && (
+		{scheduleData.canRestore() && (
           <Button
             disabled={isScheduleActionPending}
             loading={restoreMutation.isPending}
@@ -438,7 +376,7 @@ export function ScheduleDrawer({
               {ScheduleStatusIcon ? (
                 <HugeiconsIcon aria-hidden="true" icon={ScheduleStatusIcon} strokeWidth={2} />
               ) : null}
-              {t(`schedules:status.${scheduleData.status}`)}
+			{t(`schedules:status.${scheduleData.getStatus()}`)}
             </Badge>
           ) : null}
 

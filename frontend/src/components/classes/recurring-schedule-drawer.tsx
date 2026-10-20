@@ -7,8 +7,6 @@ import {
 	useWatch,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
-import { z } from "zod";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -31,62 +29,15 @@ import { useCreateSchedule, useUpdateRecurringSchedule } from "@/hooks/mutations
 import { DateTime } from "@/lib/date-time";
 import { formatDuration, SCHEDULE_DURATION_OPTIONS } from "@/lib/schedule-utils";
 import {
-	getOverlappingRecurringScheduleItemIndexes,
-	sortRecurringScheduleItems,
-	timeStringToMinutes,
-	type RecurringScheduleSummary,
-	scheduleTypeSchema,
+	RecurringSchedule,
+	RecurringSchedulePattern,
+} from "@/models/recurring-schedule";
+import type { Schedule } from "@/models/schedule";
+import {
+	createRecurringScheduleSchema,
+	type RecurringScheduleFormData,
 	type Weekday,
 } from "@/types/schedule";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
-
-function createRecurringScheduleFormSchema(t: TFunction) {
-	return z.object({
-		effectiveDate: z
-			.string()
-			.min(1, t("schedules:validation.effectiveDateRequired")),
-		type: scheduleTypeSchema
-			.optional()
-			.refine(
-				(value) => value !== undefined,
-				t("schedules:validation.typeRequired"),
-			),
-		scheduleItems: z
-			.array(
-				z.object({
-					weekday: z.enum([
-						"MONDAY",
-						"TUESDAY",
-						"WEDNESDAY",
-						"THURSDAY",
-						"FRIDAY",
-						"SATURDAY",
-						"SUNDAY",
-					]),
-					time: z.string().regex(
-						/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-						t("schedules:validation.invalidTime"),
-					),
-					durationMinutes: z
-						.number()
-						.min(1, t("schedules:validation.durationRequired")),
-				}),
-			)
-			.min(1, t("schedules:validation.weekdayRequired")),
-	}).superRefine((data, ctx) => {
-		if (getOverlappingRecurringScheduleItemIndexes(data.scheduleItems).size > 0) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				path: ["scheduleItems"],
-				message: t("schedules:validation.overlappingWeekdayTimes"),
-			});
-		}
-	});
-}
-
-type RecurringScheduleFormData = z.infer<
-	ReturnType<typeof createRecurringScheduleFormSchema>
->;
 
 interface RecurringScheduleDrawerProps {
 	balanceState?: "no-hours" | "all-scheduled" | "exhausted" | "available";
@@ -95,24 +46,11 @@ interface RecurringScheduleDrawerProps {
 	onAddHours: () => void;
 	onOpenChange: (open: boolean) => void;
 	classId: string;
-	recurringSchedule?: RecurringScheduleSummary | null;
-	schedules: GetV1Schedules200Item[];
+	recurringSchedule?: RecurringSchedule | null;
+	schedules: Schedule[];
 }
 
-const WEEKDAYS: Weekday[] = [
-	"MONDAY",
-	"TUESDAY",
-	"WEDNESDAY",
-	"THURSDAY",
-	"FRIDAY",
-	"SATURDAY",
-	"SUNDAY",
-];
 const RECURRING_SCHEDULE_DRAWER_FORM_ID = "recurring-schedule-drawer-form";
-
-function getTodayDateString() {
-	return DateTime.today().toDateOnlyString();
-}
 
 function formatRecurringDate(value: string | undefined, fallback: string) {
 	const date = DateTime.tryFromDateOnlyString(value);
@@ -126,67 +64,6 @@ function formatRecurringDate(value: string | undefined, fallback: string) {
 		: fallback;
 }
 
-function isLegacyRecurringOccurrence(
-	schedule: GetV1Schedules200Item,
-	recurringSchedule: RecurringScheduleSummary,
-) {
-	if (schedule.recurringScheduleId === recurringSchedule.id) {
-		return true;
-	}
-
-	if (schedule.recurringScheduleId) {
-		return false;
-	}
-
-	if (schedule.date < recurringSchedule.startDate) {
-		return false;
-	}
-
-	const scheduleWeekday = DateTime.fromDateOnlyString(
-		schedule.date,
-	).getWeekdayIndex();
-	const weekdayMap: Record<Weekday, number> = {
-		MONDAY: 1,
-		TUESDAY: 2,
-		WEDNESDAY: 3,
-		THURSDAY: 4,
-		FRIDAY: 5,
-		SATURDAY: 6,
-		SUNDAY: 0,
-	};
-
-	return recurringSchedule.scheduleItems.some(
-		(item) =>
-			weekdayMap[item.weekday] === scheduleWeekday &&
-			item.time === schedule.time &&
-			item.durationMinutes === schedule.durationMinutes,
-	);
-}
-
-function getDefaultValues(
-	recurringSchedule?: RecurringScheduleSummary | null,
-): RecurringScheduleFormData {
-	return {
-		effectiveDate: recurringSchedule?.startDate ?? getTodayDateString(),
-		type: recurringSchedule?.type,
-		scheduleItems:
-			recurringSchedule?.scheduleItems.map((item) => ({
-				weekday: item.weekday,
-				time: `${Math.floor(item.time / 60)
-					.toString()
-					.padStart(2, "0")}:${(item.time % 60)
-					.toString()
-					.padStart(2, "0")}`,
-				durationMinutes: item.durationMinutes,
-			})) ?? [],
-	};
-}
-
-function getTimeAtMinute(minute: number) {
-	return `${Math.floor(minute / 60)
-		.toString()
-		.padStart(2, "0")}:${(minute % 60).toString().padStart(2, "0")}`;
-}
 
 function RecurringWeekdayTimeSelector({
 	control,
@@ -220,53 +97,38 @@ function RecurringWeekdayTimeSelector({
 		.map((value) => ({ value, label: formatDuration(value, t) }));
 
 	const toggleWeekday = (weekday: Weekday) => {
-		const indexes = items
-			.filter((item) => item.weekday === weekday)
-			.map((item) => item.index);
+		const decision = RecurringSchedulePattern.fromFormItems(items).getToggleWeekdayDecision(
+			weekday,
+		);
 
-		if (indexes.length > 0) {
-			remove(indexes);
+		if (decision.kind === "remove") {
+			remove(decision.indexes);
 			return;
 		}
 
-		append({ weekday, time: "09:00", durationMinutes: 60 });
+		append(decision.item);
 	};
 
 	return (
 		<GroupedWeekdayEditor
 			items={items}
 			onAddInterval={(weekday) => {
-				const latestEnd = items
-					.filter((item) => item.weekday === weekday)
-					.reduce(
-						(latest, item) =>
-							Math.max(
-								latest,
-								timeStringToMinutes(item.time) + item.durationMinutes,
-							),
-						0,
-					);
-
-				if (latestEnd < 24 * 60) {
-					append({
-						weekday,
-						time: getTimeAtMinute(latestEnd),
-						durationMinutes: 60,
-					});
-				}
+				const item = RecurringSchedulePattern.fromFormItems(
+					items,
+				).getAddIntervalItem(weekday);
+				if (item) append(item);
 			}}
 			onRemoveInterval={remove}
 			onSelectAll={() => {
-				if (new Set(items.map((item) => item.weekday)).size === WEEKDAYS.length) {
+				const decision = RecurringSchedulePattern.fromFormItems(
+					items,
+				).getSelectAllWeekdaysDecision();
+				if (decision.kind === "clear") {
 					remove();
 					return;
 				}
 
-				append(
-					WEEKDAYS.filter(
-						(weekday) => !items.some((item) => item.weekday === weekday),
-					).map((weekday) => ({ weekday, time: "09:00", durationMinutes: 60 })),
-				);
+				append(decision.items);
 			}}
 			onToggleWeekday={toggleWeekday}
 			renderInterval={({
@@ -333,6 +195,10 @@ export function RecurringScheduleDrawer({
 	const [pendingValues, setPendingValues] = useState<RecurringScheduleFormData | null>(
 		null,
 	);
+	const drawerSessionDate = useMemo(
+		() => DateTime.today().toDateOnlyString(),
+		[isOpen],
+	);
 	const mode = recurringSchedule ? "edit" : "create";
 	const isCreateUnavailable = mode === "create" && hasNoAvailableHours;
 	const unavailableBalanceLabel =
@@ -361,8 +227,11 @@ export function RecurringScheduleDrawer({
 		reset,
 		setFocus,
 	} = useForm<RecurringScheduleFormData>({
-		resolver: zodResolver(createRecurringScheduleFormSchema(t)),
-		defaultValues: getDefaultValues(recurringSchedule),
+		resolver: zodResolver(createRecurringScheduleSchema(t)),
+		defaultValues: RecurringSchedule.getFormDefaults(
+			recurringSchedule,
+			drawerSessionDate,
+		),
 	});
 	const effectiveDate = useWatch({
 		control,
@@ -375,50 +244,38 @@ export function RecurringScheduleDrawer({
 
 	useEffect(() => {
 		if (isOpen) {
-			reset(getDefaultValues(recurringSchedule));
+			reset(
+				RecurringSchedule.getFormDefaults(recurringSchedule, drawerSessionDate),
+			);
 			return;
 		}
 
 		setIsConfirmOpen(false);
 		setPendingValues(null);
-		reset(getDefaultValues(recurringSchedule));
-	}, [isOpen, recurringSchedule, reset]);
+		reset(
+			RecurringSchedule.getFormDefaults(recurringSchedule, drawerSessionDate),
+		);
+	}, [drawerSessionDate, isOpen, recurringSchedule, reset]);
 
 	const affectedCount = useMemo(() => {
 		if (!recurringSchedule || !effectiveDate) {
 			return 0;
 		}
 
-		return schedules.filter(
-			(schedule) =>
-				isLegacyRecurringOccurrence(schedule, recurringSchedule) &&
-				schedule.date >= effectiveDate &&
-				(schedule.status === "SCHEDULED" || schedule.status === "CANCELLED"),
-		).length;
+		return recurringSchedule.getAffectedOccurrenceCount(
+			schedules,
+			effectiveDate,
+		);
 	}, [effectiveDate, recurringSchedule, schedules]);
 
 	const submitValues = (values: RecurringScheduleFormData) => {
-		if (isCreateUnavailable || !values.type) {
+		if (isCreateUnavailable) {
 			return;
 		}
 
 		if (mode === "create") {
-			createMutation.mutate({
-				classId,
-				date: values.effectiveDate,
-				type: values.type,
-				time: 0,
-				recurring: {
-					startDate: values.effectiveDate,
-					scheduleItems: sortRecurringScheduleItems(
-						values.scheduleItems,
-					).map((item) => ({
-						weekday: item.weekday,
-						time: timeStringToMinutes(item.time),
-						durationMinutes: item.durationMinutes,
-					})),
-				},
-			});
+			const command = RecurringSchedule.toCreateCommand(classId, values);
+			if (command) createMutation.mutate(command);
 			return;
 		}
 
@@ -427,9 +284,9 @@ export function RecurringScheduleDrawer({
 	};
 
 	const focusFirstOverlappingRecurringTime = () => {
-		const firstOverlappingIndex = [
-			...getOverlappingRecurringScheduleItemIndexes(getValues("scheduleItems")),
-		][0];
+		const [firstOverlappingIndex] = RecurringSchedulePattern.fromFormItems(
+			getValues("scheduleItems"),
+		).getOverlappingItemIndexes();
 
 		if (firstOverlappingIndex !== undefined) {
 			setFocus(`scheduleItems.${firstOverlappingIndex}.time`);
@@ -441,20 +298,8 @@ export function RecurringScheduleDrawer({
 			return;
 		}
 
-		updateRecurringMutation.mutate({
-			id: recurringSchedule.id,
-			data: {
-				effectiveDate: pendingValues.effectiveDate,
-				type: pendingValues.type,
-				scheduleItems: sortRecurringScheduleItems(
-					pendingValues.scheduleItems,
-				).map((item) => ({
-					weekday: item.weekday,
-					time: timeStringToMinutes(item.time),
-					durationMinutes: item.durationMinutes,
-				})),
-			},
-		});
+		const command = recurringSchedule.toUpdateCommand(pendingValues);
+		if (command) updateRecurringMutation.mutate(command);
 	};
 
 	const footer = (

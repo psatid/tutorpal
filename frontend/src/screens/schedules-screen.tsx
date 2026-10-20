@@ -8,7 +8,6 @@ import { useMemo, useRef, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import {
   useCompleteSchedule,
   useDeleteSchedule,
@@ -39,6 +38,7 @@ import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
 import { DateTime } from "@/lib/date-time";
+import type { Schedule } from "@/models/schedule";
 import { cn } from "@/lib/utils";
 
 function isScheduleViewMode(value: string): value is ScheduleViewMode {
@@ -72,7 +72,7 @@ export function SchedulesScreen() {
     null,
   );
   const [noShowSchedule, setNoShowSchedule] =
-    useState<GetV1Schedules200Item | null>(null);
+		useState<Schedule | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
 
@@ -110,7 +110,7 @@ export function SchedulesScreen() {
   const filteredSchedules = useMemo(() => {
     if (!schedules) return [];
     if (viewMode === "week" || statusFilter === "ALL") return schedules;
-    return schedules.filter((s) => s.status === statusFilter);
+	return schedules.filter((schedule) => schedule.getStatus() === statusFilter);
   }, [schedules, statusFilter, viewMode]);
 
   const handleAddSchedule = (trigger: HTMLButtonElement | null) => {
@@ -157,23 +157,23 @@ export function SchedulesScreen() {
   };
 
   const handleViewSchedule = (
-    schedule: GetV1Schedules200Item,
+		schedule: Schedule,
     trigger?: HTMLButtonElement,
   ) => {
     if (trigger) {
       activeTriggerRef.current = trigger;
     }
 
-    setSelectedScheduleId(schedule.id);
+		setSelectedScheduleId(schedule.getId());
     setDrawerMode("view");
     setIsDrawerOpen(true);
   };
 
-  const handleDeleteSchedule = (schedule: GetV1Schedules200Item) => {
+	const handleDeleteSchedule = (schedule: Schedule) => {
     toast(t("schedules:delete.confirm"), {
       action: {
         label: t("schedules:delete.confirmButton"),
-        onClick: () => deleteMutation.mutate(schedule.id),
+			onClick: () => deleteMutation.mutate(schedule.getId()),
       },
       cancel: {
         label: t("schedules:delete.cancelButton"),
@@ -182,14 +182,14 @@ export function SchedulesScreen() {
     });
   };
 
-  const handleCompleteSchedule = (schedule: GetV1Schedules200Item) => {
+	const handleCompleteSchedule = (schedule: Schedule) => {
     const hoursToDeduct = DateTime.formatDurationHours(
-      schedule.durationMinutes / 60,
+		schedule.getDurationHours(),
     );
     toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
       action: {
         label: t("schedules:complete.confirmButton"),
-        onClick: () => completeMutation.mutate(schedule.id),
+			onClick: () => completeMutation.mutate(schedule.getId()),
       },
       cancel: {
         label: t("schedules:complete.cancelButton"),
@@ -198,14 +198,14 @@ export function SchedulesScreen() {
     });
   };
 
-  const handleRestoreHours = (schedule: GetV1Schedules200Item) => {
+	const handleRestoreHours = (schedule: Schedule) => {
     const hoursToRestore = DateTime.formatDurationHours(
-      schedule.durationMinutes / 60,
+		schedule.getDurationHours(),
     );
     toast(t("schedules:restore.confirm", { hours: hoursToRestore }), {
       action: {
         label: t("schedules:restore.confirmButton"),
-        onClick: () => restoreMutation.mutate(schedule.id),
+			onClick: () => restoreMutation.mutate(schedule.getId()),
       },
       cancel: {
         label: t("schedules:restore.cancelButton"),
@@ -214,7 +214,7 @@ export function SchedulesScreen() {
     });
   };
 
-  const handleNoShowSchedule = (schedule: GetV1Schedules200Item) => {
+	const handleNoShowSchedule = (schedule: Schedule) => {
     setNoShowSchedule(schedule);
   };
 
@@ -340,7 +340,7 @@ export function SchedulesScreen() {
       <div className="space-y-2">
         {filteredSchedules.map((schedule) => (
           <ScheduleCard
-            key={schedule.id}
+			key={schedule.getId()}
             schedule={schedule}
             onView={() => handleViewSchedule(schedule)}
             onDelete={() => handleDeleteSchedule(schedule)}

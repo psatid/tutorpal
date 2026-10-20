@@ -5,15 +5,14 @@ import {
 	type ReactNode,
 } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import i18n from "@/lib/i18n/config";
-import type { AwaitingConfirmationSchedule } from "@/types/awaiting-confirmation-schedule";
+import { Schedule, type ScheduleDisplayInput } from "@/models/schedule";
 
 const queryState = vi.hoisted(() => ({
-	schedules: [] as GetV1Schedules200Item[],
+	schedules: [] as Schedule[],
 	todayIsError: false,
 	todayIsLoading: false,
-	setupSchedules: [] as GetV1Schedules200Item[] | undefined,
+	setupSchedules: [] as Schedule[] | undefined,
 	setupSchedulesIsError: false,
 	setupSchedulesIsFetching: false,
 	setupSchedulesIsLoading: false,
@@ -23,7 +22,7 @@ const queryState = vi.hoisted(() => ({
 	classesIsError: false,
 	classesIsFetching: false,
 	classesIsLoading: false,
-	awaitingConfirmation: [] as AwaitingConfirmationSchedule[],
+	awaitingConfirmation: [] as Schedule[],
 	awaitingConfirmationError: false,
 }));
 
@@ -158,8 +157,8 @@ import { DashboardScreen } from "@/screens/dashboard-screen";
 const longClassName =
 	"Advanced Algebra preparation with an intentionally long class name";
 
-function makeSchedule(): GetV1Schedules200Item {
-	return {
+function makeSchedule(): Schedule {
+	return Schedule.fromInput({
 		classId: "class-1",
 		className: longClassName,
 		createdAt: "2026-10-12T00:00:00.000Z",
@@ -172,20 +171,21 @@ function makeSchedule(): GetV1Schedules200Item {
 		time: 540,
 		type: "ONLINE",
 		updatedAt: "2026-10-12T00:00:00.000Z",
-	};
+	});
 }
 
 function makeAwaitingConfirmationSchedule(
-	overrides: Partial<AwaitingConfirmationSchedule> = {},
-): AwaitingConfirmationSchedule {
-	return {
+	overrides: Partial<ScheduleDisplayInput> = {},
+): Schedule {
+	return Schedule.fromInput({
 		className: "Biology refresher",
 		date: "2026-10-11",
 		durationMinutes: 60,
 		id: "awaiting-schedule-1",
 		time: 540,
+		type: "ONLINE",
 		...overrides,
-	};
+	});
 }
 
 function makeSetupClass(totalHours = 2) {
@@ -197,9 +197,9 @@ function makeSetupClass(totalHours = 2) {
 type MockNoShowDialogProps = {
 	finalFocus: () => HTMLElement | null;
 	onOpenChange: (open: boolean) => void;
-	onSuccess: (schedule: AwaitingConfirmationSchedule) => void;
+	onSuccess: (schedule: Schedule) => void;
 	open: boolean;
-	schedule: AwaitingConfirmationSchedule | null;
+	schedule: Schedule | null;
 };
 
 type CompleteMutationOptions = {
@@ -491,7 +491,7 @@ describe("DashboardScreen", () => {
 		});
 
 		expect(completeMutation.mutate).toHaveBeenCalledWith(
-			schedule.id,
+			schedule.getId(),
 			expect.any(Object),
 		);
 		const [, mutationOptions] = completeMutation.mutate.mock.calls[0] ?? [];
@@ -500,7 +500,9 @@ describe("DashboardScreen", () => {
 			(mutationOptions as CompleteMutationOptions).onSettled();
 		});
 
-		expect(screen.queryByText(schedule.className)).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(schedule.getClassName()),
+		).not.toBeInTheDocument();
 		expectConfirmationHeadingFocus();
 	});
 
@@ -528,7 +530,9 @@ describe("DashboardScreen", () => {
 			(mutationOptions as CompleteMutationOptions).onSettled();
 		});
 
-		expect(screen.queryByText(completedSchedule.className)).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(completedSchedule.getClassName()),
+		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: /Complete Chemistry practice/i }),
 		).toHaveFocus();
@@ -552,7 +556,7 @@ describe("DashboardScreen", () => {
 			(mutationOptions as CompleteMutationOptions).onSettled();
 		});
 
-		expect(screen.getByText(schedule.className)).toBeVisible();
+		expect(screen.getByText(schedule.getClassName())).toBeVisible();
 		expect(complete).toBeEnabled();
 	});
 
@@ -576,7 +580,9 @@ describe("DashboardScreen", () => {
 			dialog.onOpenChange(false);
 		});
 
-		expect(screen.queryByText(noShowSchedule.className)).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(noShowSchedule.getClassName()),
+		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: /Complete Chemistry practice/i }),
 		).toHaveFocus();
@@ -598,7 +604,7 @@ describe("DashboardScreen", () => {
 		const dismissedDialog = noShowDialog.props as MockNoShowDialogProps;
 		act(() => dismissedDialog.onOpenChange(false));
 		expect(noShow).toBeEnabled();
-		expect(screen.getByText(schedule.className)).toBeVisible();
+		expect(screen.getByText(schedule.getClassName())).toBeVisible();
 
 		act(() => noShow.click());
 		const successfulDialog = noShowDialog.props as MockNoShowDialogProps;
@@ -607,7 +613,9 @@ describe("DashboardScreen", () => {
 			successfulDialog.onOpenChange(false);
 		});
 
-		expect(screen.queryByText(schedule.className)).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(schedule.getClassName()),
+		).not.toBeInTheDocument();
 		expectConfirmationHeadingFocus();
 	});
 });

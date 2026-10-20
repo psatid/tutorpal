@@ -3,19 +3,20 @@ import { createRef, type ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AwaitingConfirmationCarousel } from "@/components/dashboard/awaiting-confirmation-carousel";
 import i18n from "@/lib/i18n/config";
-import type { AwaitingConfirmationSchedule } from "@/types/awaiting-confirmation-schedule";
+import { Schedule, type ScheduleDisplayInput } from "@/models/schedule";
 
 function makeSchedule(
-	overrides: Partial<AwaitingConfirmationSchedule> = {},
-): AwaitingConfirmationSchedule {
-	return {
+	overrides: Partial<ScheduleDisplayInput> = {},
+): Schedule {
+	return Schedule.fromInput({
 		className: "Algebra foundations",
 		date: "2026-10-12",
 		durationMinutes: 60,
 		id: "schedule-1",
 		time: 540,
+		type: "ONLINE",
 		...overrides,
-	};
+	});
 }
 
 function renderCarousel(

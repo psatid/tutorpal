@@ -1,7 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { InfiniteData } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GetV1SchedulesAwaitingConfirmation200 } from "@/api/generated/models/getV1SchedulesAwaitingConfirmation200";
+import { schedulesQueryKeys } from "@/constants/query-keys/schedules-query-keys";
+import { Schedule } from "@/models/schedule";
 
 const api = vi.hoisted(() => ({
 	fetchAwaitingConfirmation: vi.fn(),
@@ -90,18 +94,24 @@ describe("useInfiniteAwaitingConfirmationSchedules", () => {
 			cursor: undefined,
 			limit: 10,
 		});
-		expect(result.current.data?.pages[0]).toEqual({
-			pagination: { hasNext: true, nextCursor: "cursor-2" },
-			schedules: [
-				{
-					className: "Class schedule-1",
-					date: "2026-10-12",
-					durationMinutes: 60,
-					id: "schedule-1",
-					time: 540,
-				},
-			],
+		const firstSelectedPage = result.current.data?.pages[0];
+		expect(firstSelectedPage?.pagination).toEqual({
+			hasNext: true,
+			nextCursor: "cursor-2",
 		});
+		expect(firstSelectedPage?.schedules[0]).toBeInstanceOf(Schedule);
+		expect(firstSelectedPage?.schedules[0]?.getId()).toBe("schedule-1");
+		expect(firstSelectedPage?.schedules[0]?.getClassName()).toBe(
+			"Class schedule-1",
+		);
+		const cachedFirstPage = queryClient.getQueryData<
+			InfiniteData<GetV1SchedulesAwaitingConfirmation200>
+		>(schedulesQueryKeys.awaitingConfirmation());
+		expect(cachedFirstPage?.pages).toEqual([
+			makePage({ hasNext: true, id: "schedule-1", nextCursor: "cursor-2" }),
+		]);
+		expect(cachedFirstPage?.pages[0]?.data[0]).not.toBeInstanceOf(Schedule);
+		expect(cachedFirstPage?.pageParams).toEqual([null]);
 
 		await act(async () => {
 			await result.current.fetchNextPage();
@@ -115,7 +125,15 @@ describe("useInfiniteAwaitingConfirmationSchedules", () => {
 			limit: 10,
 		});
 		expect(result.current.data?.pages).toHaveLength(2);
+		expect(result.current.data?.pages[1]?.schedules[0]).toBeInstanceOf(
+			Schedule,
+		);
 		expect(result.current.hasNextPage).toBe(false);
+		expect(
+			queryClient.getQueryData<
+				InfiniteData<GetV1SchedulesAwaitingConfirmation200>
+			>(schedulesQueryKeys.awaitingConfirmation())?.pageParams,
+		).toEqual([null, "cursor-2"]);
 
 		await act(async () => {
 			await result.current.fetchNextPage();

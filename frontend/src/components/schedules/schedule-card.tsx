@@ -21,13 +21,12 @@ import {
 } from "@/components/common/dropdown-menu";
 import {
   formatDuration,
-  formatTime24Hour,
   statusColors,
 } from "@/lib/schedule-utils";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
+import { Schedule } from "@/models/schedule";
 
 interface ScheduleCardProps {
-  schedule: GetV1Schedules200Item;
+	schedule: Schedule;
   onView: () => void;
   onDelete: () => void;
   onComplete?: () => void;
@@ -44,13 +43,13 @@ export function ScheduleCard({
   onRestore,
 }: ScheduleCardProps) {
   const { t } = useTranslation(["schedules"]);
-  const startTime = formatTime24Hour(schedule.time);
-  const scheduleEndTime = schedule.time + schedule.durationMinutes;
-  const endTime = formatTime24Hour(scheduleEndTime);
-  const ScheduleTypeIcon = schedule.type === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
-  const notes = schedule.notes?.trim();
+	const startTime = schedule.getStartTimeLabel();
+	const endTime = schedule.getEndTimeLabel();
+	const ScheduleTypeIcon =
+		schedule.getType() === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
+	const notes = schedule.getNotes()?.trim();
   const scheduleStatus =
-    statusColors[schedule.status] ?? statusColors.SCHEDULED;
+		statusColors[schedule.getStatus()] ?? statusColors.SCHEDULED;
   const StatusIcon = scheduleStatus.icon;
 
   return (
@@ -72,13 +71,13 @@ export function ScheduleCard({
         <span className="min-w-0 flex-1 py-0.5">
           <span className="flex min-w-0 items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-on-surface">
-              {schedule.className}
+					{schedule.getClassName()}
             </span>
             <Badge variant={scheduleStatus.badgeVariant}>
               {StatusIcon ? (
                 <HugeiconsIcon aria-hidden="true" icon={StatusIcon} strokeWidth={2} />
               ) : null}
-              {t(`schedules:status.${schedule.status}`)}
+					{t(`schedules:status.${schedule.getStatus()}`)}
             </Badge>
           </span>
 
@@ -90,12 +89,12 @@ export function ScheduleCard({
                 icon={ScheduleTypeIcon}
                 strokeWidth={2}
               />
-              {t(`schedules:type.${schedule.type}`)}
+					{t(`schedules:type.${schedule.getType()}`)}
             </span>
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
               <span aria-hidden="true">·</span>
               <span className="tabular-nums">
-                {formatDuration(schedule.durationMinutes, t)}
+						{formatDuration(schedule.getDurationMinutes(), t)}
               </span>
             </span>
           </span>
@@ -113,7 +112,7 @@ export function ScheduleCard({
           render={
             <Button
               aria-label={t("schedules:actionsFor", {
-                name: schedule.className,
+					name: schedule.getClassName(),
               })}
               className="self-center focus-visible:ring-primary!"
               size="icon"
@@ -129,7 +128,7 @@ export function ScheduleCard({
             <HugeiconsIcon icon={EyeHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
             {t("schedules:view")}
           </DropdownMenuItem>
-          {schedule.status === "SCHEDULED" && onComplete && (
+			{schedule.canComplete() && onComplete && (
             <>
               <DropdownMenuItem onClick={onComplete}>
                 <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
@@ -138,7 +137,7 @@ export function ScheduleCard({
               <DropdownMenuSeparator />
             </>
           )}
-          {schedule.status === "SCHEDULED" && onNoShow && (
+			{schedule.canMarkNoShow() && onNoShow && (
             <>
               <DropdownMenuItem onClick={onNoShow}>
                 <HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
@@ -147,8 +146,7 @@ export function ScheduleCard({
               <DropdownMenuSeparator />
             </>
           )}
-          {(schedule.status === "COMPLETED" || schedule.status === "NO_SHOW") &&
-            onRestore && (
+			{schedule.canRestore() && onRestore && (
               <>
                 <DropdownMenuItem onClick={onRestore}>
                   <HugeiconsIcon icon={RotateCcwHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />

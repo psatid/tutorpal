@@ -3,7 +3,7 @@ import type { GetV1Classes200DataItemStudentsItem } from "@/api/generated/models
 import type { GetV1ClassesById200 } from "@/api/generated/models/getV1ClassesById200";
 import type { GetV1ClassesById200StudentsItem } from "@/api/generated/models/getV1ClassesById200StudentsItem";
 import { DateTime } from "@/lib/date-time";
-import type { RecurringScheduleSummary } from "@/types/schedule";
+import { RecurringSchedule } from "@/models/recurring-schedule";
 
 type ClassStudentDetails = {
 	id: string;
@@ -22,7 +22,7 @@ type ClassDetails = {
 	remainingHours: number;
 	recordedRevenue: number | null;
 	students: ClassStudent[];
-	recurringSchedule?: RecurringScheduleSummary | null;
+	recurringSchedule?: RecurringSchedule | null;
 };
 
 export class ClassStudent {
@@ -167,13 +167,7 @@ function toClassDetails(
 			"recordedRevenue" in response ? response.recordedRevenue : null,
 		students: response.students.map(ClassStudent.fromResponse),
 		recurringSchedule: response.recurringSchedule
-			? {
-					id: response.recurringSchedule.id,
-					startDate: response.recurringSchedule.startDate,
-					notes: response.recurringSchedule.notes,
-					type: response.recurringSchedule.type,
-					scheduleItems: response.recurringSchedule.scheduleItems,
-				}
+			? RecurringSchedule.fromResponse(response.recurringSchedule)
 			: null,
 	};
 }

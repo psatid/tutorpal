@@ -1,14 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { schedulesKeys } from "./query-keys";
+import type { GetV1SchedulesById200 } from "@/api/generated/models/getV1SchedulesById200";
+import { Schedule } from "@/models/schedule";
+import { useFetchScheduleById } from "./use-fetch-schedule-by-id";
 
-export const useGetSchedule = (scheduleId: string | null) => {
-  return useQuery({
-    queryKey: schedulesKeys.detail(scheduleId!),
-    queryFn: async () => {
-      const response = await apiClient.getV1SchedulesById(scheduleId!);
-      return response.data;
-    },
-    enabled: !!scheduleId,
-  });
-};
+const selectSchedule = (data: GetV1SchedulesById200 | undefined) =>
+	data ? Schedule.fromGetScheduleByIdResponse(data) : undefined;
+
+export const useGetSchedule = (scheduleId: string | null) =>
+	useFetchScheduleById({ scheduleId, select: selectSchedule });

@@ -14,9 +14,10 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
-import type { GetV1Schedules200Item } from "@/api/generated/models/getV1Schedules200Item";
 import { DateTime } from "@/lib/date-time";
-import { formatTime24Hour, statusColors } from "@/lib/schedule-utils";
+import { statusColors } from "@/lib/schedule-utils";
+import { Schedule } from "@/models/schedule";
+import type { ScheduleStatus } from "@/types/schedule";
 import { cn } from "@/lib/utils";
 
 const MINUTES_PER_DAY = 24 * 60;
@@ -48,7 +49,7 @@ const TIME_SLOTS = Array.from(
   { length: MINUTES_PER_DAY / MINUTES_PER_SLOT },
   (_, index) => index * MINUTES_PER_SLOT,
 );
-const statusBlockClasses: Record<GetV1Schedules200Item["status"], string> = {
+const statusBlockClasses: Record<ScheduleStatus, string> = {
   SCHEDULED:
     "border-info/25 bg-info-container text-info-container-foreground dark:border-info/40",
   COMPLETED:
@@ -61,14 +62,14 @@ const statusBlockClasses: Record<GetV1Schedules200Item["status"], string> = {
 
 interface WeeklyScheduleTimelineProps {
   selectedDate: Date;
-  schedules: GetV1Schedules200Item[];
+	schedules: Schedule[];
   onCreateSchedule: (
     date: Date,
     time: number,
     trigger: HTMLButtonElement,
   ) => void;
   onViewSchedule: (
-    schedule: GetV1Schedules200Item,
+		schedule: Schedule,
     trigger: HTMLButtonElement,
   ) => void;
 }
@@ -81,7 +82,7 @@ interface TimelineBounds {
 interface PositionedSchedule {
   lane: number;
   laneCount: number;
-  schedule: GetV1Schedules200Item;
+	schedule: Schedule;
 }
 
 interface TimelineCell {
@@ -137,21 +138,23 @@ function hasTouchGestureExceededTapThreshold(
   );
 }
 
-function getScheduleEnd(schedule: GetV1Schedules200Item): number {
-  return schedule.time + schedule.durationMinutes;
+function getScheduleEnd(schedule: Schedule): number {
+	return schedule.getEndTimeMinutes();
 }
 
 function getPositionedSchedules(
-  schedules: GetV1Schedules200Item[],
+	schedules: Schedule[],
 ): PositionedSchedule[] {
   const sortedSchedules = [...schedules].sort((first, second) => {
-    if (first.time !== second.time) return first.time - second.time;
+		if (first.getTimeMinutes() !== second.getTimeMinutes()) {
+			return first.getTimeMinutes() - second.getTimeMinutes();
+		}
     return getScheduleEnd(second) - getScheduleEnd(first);
   });
   const laneEndTimes: number[] = [];
   const assignments = sortedSchedules.map((schedule) => {
     const lane = laneEndTimes.findIndex(
-      (laneEndTime) => laneEndTime <= schedule.time,
+		(laneEndTime) => laneEndTime <= schedule.getTimeMinutes(),
     );
 
     if (lane === -1) {
@@ -168,8 +171,8 @@ function getPositionedSchedules(
       assignments
         .filter(({ schedule: otherSchedule }) => {
           return (
-            otherSchedule.time < getScheduleEnd(schedule) &&
-            schedule.time < getScheduleEnd(otherSchedule)
+			otherSchedule.getTimeMinutes() < getScheduleEnd(schedule) &&
+			schedule.getTimeMinutes() < getScheduleEnd(otherSchedule)
           );
         })
         .map((assignment) => assignment.lane),
@@ -197,11 +200,11 @@ function ScheduleBlock({
 }) {
   const { t } = useTranslation(["schedules"]);
   const { schedule } = item;
-  const scheduleType = schedule.type ?? "ON_SITE";
+	const scheduleType = schedule.getType();
   const ScheduleTypeIcon = scheduleType === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
-  const eventStart = Math.max(schedule.time, bounds.startMinutes);
+	const eventStart = Math.max(schedule.getTimeMinutes(), bounds.startMinutes);
   const eventEnd = Math.min(
-    Math.max(schedule.time + schedule.durationMinutes, eventStart),
+		Math.max(schedule.getEndTimeMinutes(), eventStart),
     bounds.endMinutes,
   );
   const top =
@@ -212,28 +215,29 @@ function ScheduleBlock({
   );
   const width = 100 / item.laneCount;
   const left = item.lane * width;
-  const StatusIcon = statusColors[schedule.status]?.icon ?? CalendarCheck2HugeIcon;
-  const dateLabel = DateTime.formatDate(schedule.date, {
+	const StatusIcon =
+		statusColors[schedule.getStatus()]?.icon ?? CalendarCheck2HugeIcon;
+	const dateLabel = DateTime.formatDate(schedule.getDate(), {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const startTime = formatTime24Hour(schedule.time);
-  const endTime = formatTime24Hour(getScheduleEnd(schedule));
+	const startTime = schedule.getStartTimeLabel();
+	const endTime = schedule.getEndTimeLabel();
 
   return (
     <button
       aria-label={t("schedules:timeline.eventLabel", {
-        className: schedule.className,
+		className: schedule.getClassName(),
         date: dateLabel,
         startTime,
         endTime,
-        status: t(`schedules:status.${schedule.status}`),
+		status: t(`schedules:status.${schedule.getStatus()}`),
         type: t(`schedules:type.${scheduleType}`),
       })}
       className={cn(
         "absolute z-10 flex min-w-0 flex-col items-start overflow-hidden rounded-lg border px-2 py-1.5 text-left text-xs leading-tight transition-[filter,transform] hover:brightness-[0.97] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-px motion-reduce:transition-none",
-        statusBlockClasses[schedule.status],
+		statusBlockClasses[schedule.getStatus()],
       )}
       onClick={(event) => onView(event.currentTarget)}
       style={{
@@ -245,7 +249,7 @@ function ScheduleBlock({
       type="button"
     >
       <span className="w-full min-w-0 truncate font-semibold">
-        {schedule.className}
+		{schedule.getClassName()}
       </span>
       <span className="mt-0.5 flex min-w-0 items-center gap-1">
         <span className="min-w-0 truncate tabular-nums">
@@ -295,19 +299,17 @@ export function WeeklyScheduleTimeline({
   const [currentTime, setCurrentTime] = useState(() => DateTime.now().toDate());
   const timelineSchedules = useMemo(
     () =>
-      schedules.filter(
-        (schedule) =>
-          schedule.status !== "CANCELLED" && schedule.status !== "NO_SHOW",
-      ),
+		schedules.filter((schedule) => schedule.isTimelineEligible()),
     [schedules],
   );
   const schedulesByDate = useMemo(() => {
-    const grouped = new Map<string, GetV1Schedules200Item[]>();
+		const grouped = new Map<string, Schedule[]>();
 
     for (const schedule of timelineSchedules) {
-      const current = grouped.get(schedule.date) ?? [];
+			const date = schedule.getDate();
+			const current = grouped.get(date) ?? [];
       current.push(schedule);
-      grouped.set(schedule.date, current);
+			grouped.set(date, current);
     }
 
     return grouped;
@@ -584,7 +586,7 @@ export function WeeklyScheduleTimeline({
                         <button
                           aria-label={t("schedules:timeline.createCellLabel", {
                             date: dateLabel,
-                            time: formatTime24Hour(minutes),
+							time: Schedule.formatTimeLabel(minutes),
                           })}
                           className="peer size-full cursor-pointer scroll-mt-16 transition-colors hover:bg-primary/5 focus-visible:outline-none active:bg-primary/10 motion-reduce:transition-none"
                           onClick={(event) => {
@@ -655,7 +657,7 @@ export function WeeklyScheduleTimeline({
                     <ScheduleBlock
                       bounds={bounds}
                       item={item}
-                      key={item.schedule.id}
+						key={item.schedule.getId()}
                       onView={(trigger) =>
                         onViewSchedule(item.schedule, trigger)
                       }
