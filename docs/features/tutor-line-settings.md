@@ -19,9 +19,13 @@ Integrations, separate from Account settings and social sign-in.
 - `/settings/line` is a compatibility redirect to `/integrations/line` and
   preserves only recognized `testRecipient=connected` or `testRecipient=error`
   callback values.
-- The LINE connection screen keeps the global authenticated layout and uses a
-  connection summary, a divider-led test/credentials surface, and a focused
-  setup or edit form.
+- The LINE connection screen uses the shared integration configuration
+  layout: an Integrations breadcrumb, a Supported badge, a main setup column,
+  and an About panel. Its numbered progress reflects API-backed credential and
+  test-recipient state; the test-message step appears only after the recipient
+  is confirmed. The connected summary shows supported account metadata and the
+  test-message action. Credential editing starts with blank fields, and setup
+  errors remain inline.
 - Language selection remains in the authenticated top bar and log out remains
   in the account menu.
 - Credentials are never returned to the browser after saving.

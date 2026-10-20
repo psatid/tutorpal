@@ -448,6 +448,20 @@ use a 48px muted mark tile, a title and one-line description, a text-plus-icon
 status badge, and a 44px action. Messaging and Online classes are separate
 groups. Coming-soon providers remain informational and are not focusable.
 
+LINE configuration uses a centered 1040px shell with a muted 48px provider mark,
+a title, and a neutral Supported badge. The main setup column and About panel
+stack until their container reaches 824px; at that threshold, they use a 520px /
+280px split with a 24px gap.
+The mobile breadcrumb uses a 44px “All integrations” parent link. The progress
+list numbers the credential and test-recipient steps; the “Send a test message”
+step appears only after the API confirms `testRecipientConnected`. Connection
+state comes from `configured` and `testRecipientConnected`, not a local status
+label. The connected summary shows only the account name, Basic ID, verification
+time, and test-message action. Account details use semantic label/value rows;
+credential edit fields start blank because saved secrets are never read back.
+The About panel explains supported capabilities, setup requirements, the LINE
+Developers Console, and credential privacy.
+
 Breadcrumbs use a semantic navigation landmark with an ordered trail. Ancestors
 are router links that underline on hover; the current page is medium weight and
 truncates. In the default responsive mode, the full trail appears from `md` and
