@@ -113,7 +113,9 @@ describe("IntegrationsScreen", () => {
       "We couldn't check your LINE connection. Try again.",
     );
     expect(within(lineCard).getByRole("heading", { name: "LINE" })).toBeVisible();
-    expect(within(lineCard).getByRole("img", { name: "LINE" })).toBeVisible();
+    const providerMark = within(lineCard).getByAltText("");
+    expect(providerMark).toHaveAttribute("src", "/icons/line/default.svg");
+    expect(providerMark.closest('[aria-hidden="true"]')).not.toBeNull();
 
     const retry = within(lineCard).getByRole("button", { name: "Retry" });
     retry.focus();

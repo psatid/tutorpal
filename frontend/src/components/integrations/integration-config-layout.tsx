@@ -12,6 +12,7 @@ type IntegrationConfigLayoutProps = {
   providerMark: ReactNode;
   children: ReactNode;
   aside: ReactNode;
+  footer?: ReactNode;
 };
 
 export function IntegrationConfigLayout({
@@ -24,9 +25,10 @@ export function IntegrationConfigLayout({
   providerMark,
   children,
   aside,
+  footer,
 }: IntegrationConfigLayoutProps) {
   return (
-    <section className="@container mx-auto w-full max-w-[1040px] px-1 pb-10 sm:px-0">
+    <section className="@container mx-auto w-full max-w-[1040px] pb-10">
       <Breadcrumb
         className="mb-6"
         items={[
@@ -56,6 +58,7 @@ export function IntegrationConfigLayout({
         <div className="min-w-0">{children}</div>
         <aside className="min-w-0 @[824px]:w-[17.5rem] @[824px]:justify-self-end">{aside}</aside>
       </div>
+      {footer}
     </section>
   );
 }

@@ -288,6 +288,9 @@ describe("SchedulesScreen weekly timeline integration", () => {
     expect(modeContent).toContainElement(
       screen.getByRole("group", { name: "Schedule date selector" }),
     );
+    expect(
+      screen.getByRole("group", { name: "Schedule date selector" }).closest(".-mx-3"),
+    ).toHaveClass("-mx-3", "sm:-mx-4", "lg:-mx-6");
     expect(modeContent).toContainElement(
       screen.getByRole("tab", { name: "All" }),
     );
@@ -309,6 +312,9 @@ describe("SchedulesScreen weekly timeline integration", () => {
         screen.getByRole("region", { name: "Weekly schedule timeline" }),
       ).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("region", { name: "Weekly schedule timeline" }).closest(".-mx-3"),
+    ).toHaveClass("-mx-3", "sm:mx-0");
 		expect(
 			screen.queryByPlaceholderText("Search by class..."),
 		).not.toBeInTheDocument();

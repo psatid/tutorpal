@@ -28,7 +28,7 @@ function renderLayout(contentWidth = 1040) {
           mobileParentLabel="All integrations"
           parentLabel="Integrations"
           parentTo="/integrations"
-          providerMark={<img alt="" src="/line-mark.svg" />}
+          providerMark={<img alt="" src="/icons/line/default.svg" />}
           title="LINE"
         >
           <p>Primary content</p>

@@ -114,7 +114,7 @@ describe("AwaitingConfirmationCarousel", () => {
 		expect(props.onNoShow).toHaveBeenCalledWith(schedule, noShow);
 	});
 
-	it("uses a full-bleed mobile rail that resets at sm without trailing track padding", () => {
+	it("uses the shared mobile edge rail without trailing track padding", () => {
 		renderCarousel();
 
 		const rail = getScrollport();
@@ -122,12 +122,9 @@ describe("AwaitingConfirmationCarousel", () => {
 
 		expect(rail).toHaveClass(
 			"-mx-3",
-			"w-[calc(100%+1.5rem)]",
-			"max-w-none",
 			"sm:mx-0",
-			"sm:w-auto",
-			"sm:max-w-full",
 		);
+		expect(rail).not.toHaveClass("w-[calc(100%+1.5rem)]", "max-w-none");
 		expect(track).toHaveClass("flex", "min-w-max", "gap-3", "sm:gap-4");
 		expect(track?.className).not.toMatch(/(?:^|\s)pr-\S+/);
 	});
@@ -287,12 +284,9 @@ describe("AwaitingConfirmationCarousel", () => {
 		expect(skeleton).toHaveTextContent("Loading sessions to confirm…");
 		expect(skeleton).toHaveClass(
 			"-mx-3",
-			"w-[calc(100%+1.5rem)]",
-			"max-w-none",
 			"sm:mx-0",
-			"sm:w-auto",
-			"sm:max-w-full",
 		);
+		expect(skeleton).not.toHaveClass("w-[calc(100%+1.5rem)]", "max-w-none");
 		expect(track).toHaveClass("flex", "min-w-max", "gap-3", "sm:gap-4");
 		expect(track?.className).not.toMatch(/(?:^|\s)pr-\S+/);
 		expect(

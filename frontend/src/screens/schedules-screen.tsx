@@ -37,9 +37,9 @@ import {
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
+import { ScreenLayoutEdge } from "@/components/layout/screen-layout";
 import { DateTime } from "@/lib/date-time";
 import type { Schedule } from "@/models/schedule";
-import { cn } from "@/lib/utils";
 
 function isScheduleViewMode(value: string): value is ScheduleViewMode {
   return value === "day" || value === "week";
@@ -354,7 +354,7 @@ export function SchedulesScreen() {
   };
 
   const renderDayScheduleResults = () => (
-    <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
+    <div className="min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
       {renderScheduleContent("day")}
     </div>
   );
@@ -363,7 +363,7 @@ export function SchedulesScreen() {
     <div
       className={
         viewMode === "week"
-          ? "flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden"
+          ? "flex h-full min-h-0 flex-col overflow-hidden"
           : "flex min-h-[calc(100vh-200px)] flex-col"
       }
     >
@@ -384,9 +384,11 @@ export function SchedulesScreen() {
                 mode="layout"
               >
                 <TabsPanel className="flex min-h-0 flex-1 flex-col" value="day">
-                  <div className="mb-2 w-full shrink-0">{day}</div>
+                  <ScreenLayoutEdge className="mb-2 w-auto shrink-0">
+                    {day}
+                  </ScreenLayoutEdge>
 
-                  <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
+                  <div className="mb-2 shrink-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1">
                         <Input
@@ -418,7 +420,7 @@ export function SchedulesScreen() {
                       onValueChange={setStatusFilter}
                       value={statusFilter}
                     >
-                      <div className="mb-2 shrink-0 overflow-x-auto px-3 sm:px-4 lg:px-6">
+                      <div className="mb-2 shrink-0 overflow-x-auto">
                         <TabsList
                           activateOnFocus={false}
                           aria-label={t("schedules:drawer.status.label")}
@@ -461,17 +463,22 @@ export function SchedulesScreen() {
                   className="flex min-h-0 flex-1 flex-col"
                   value="week"
                 >
-                  <div className="mb-2 w-full shrink-0">{week}</div>
+                  <ScreenLayoutEdge className="mb-2 w-auto shrink-0">
+                    {week}
+                  </ScreenLayoutEdge>
 
-                  <div
-                    className={cn(
-                      "flex min-h-0 flex-1 flex-col px-3 pb-0 sm:px-4 lg:px-6",
-                      isWeeklyTimelineVisible &&
-                        "relative left-1/2 w-screen max-w-none -translate-x-1/2 px-0 sm:static sm:left-auto sm:w-auto sm:translate-x-0 sm:px-0 lg:px-0",
-                    )}
-                  >
-                    {renderScheduleContent("week")}
-                  </div>
+                  {isWeeklyTimelineVisible ? (
+                    <ScreenLayoutEdge
+                      mobileOnly
+                      className="flex min-h-0 flex-1 flex-col pb-0"
+                    >
+                      {renderScheduleContent("week")}
+                    </ScreenLayoutEdge>
+                  ) : (
+                    <div className="flex min-h-0 flex-1 flex-col pb-0">
+                      {renderScheduleContent("week")}
+                    </div>
+                  )}
                 </TabsPanel>
               </TabsPanels>
             )}

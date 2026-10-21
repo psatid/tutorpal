@@ -7,7 +7,6 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { prefersReducedMotion } from "motion-dom";
 import { useState } from "react";
 import {
   afterAll,
@@ -25,6 +24,19 @@ import {
   type ScheduleViewMode,
   WeekDateSelector,
 } from "./week-date-selector";
+
+const motionPreferences = vi.hoisted(() => ({
+  reducedMotion: false,
+}));
+
+vi.mock("framer-motion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("framer-motion")>();
+
+  return {
+    ...actual,
+    useReducedMotion: () => motionPreferences.reducedMotion,
+  };
+});
 
 const INITIAL_DATE = DateTime.fromDateOnlyString("2026-10-14").toDate();
 
@@ -807,8 +819,7 @@ describe("WeekDateSelector", () => {
   });
 
   it("centers parent-driven date changes instantly for reduced-motion users", async () => {
-    const originalPreference = prefersReducedMotion.current;
-    prefersReducedMotion.current = true;
+    motionPreferences.reducedMotion = true;
 
     try {
       const user = userEvent.setup();
@@ -840,7 +851,7 @@ describe("WeekDateSelector", () => {
         behavior: "auto",
       });
     } finally {
-      prefersReducedMotion.current = originalPreference;
+      motionPreferences.reducedMotion = false;
     }
   });
 
@@ -866,8 +877,7 @@ describe("WeekDateSelector", () => {
   });
 
   it("shows the newly active panel immediately for reduced-motion users", async () => {
-    const originalPreference = prefersReducedMotion.current;
-    prefersReducedMotion.current = true;
+    motionPreferences.reducedMotion = true;
 
     try {
       const user = userEvent.setup();
@@ -882,7 +892,7 @@ describe("WeekDateSelector", () => {
         screen.getByRole("group", { name: "Schedule week selector" }),
       ).toBeVisible();
     } finally {
-      prefersReducedMotion.current = originalPreference;
+      motionPreferences.reducedMotion = false;
     }
   });
 });

@@ -320,7 +320,9 @@ than -0.04em. Uppercase eyebrows are used only in the auth shell.
 ## Layout
 
 - `ScreenLayout` pads screens at 12px, 16px from `sm`, and 24px from `lg`, on
-  `background`.
+  `background`. It is the sole owner of the page gutter. `ScreenLayoutEdge`
+  cancels that gutter for horizontal rails at every width, or only below `sm`
+  with `mobileOnly`; the rail still owns its scrolling and track inset.
 - Keep the existing jun-layout geometry unchanged: a 280px desktop rail that
   collapses to 3rem and auto-collapses at `lg`, the mobile edge drawer, and the
   `jun-header` bar (white with a bottom hairline).
@@ -443,24 +445,29 @@ direct item. Account access remains in the user menu, which sits at the bottom
 with an indigo initials avatar. The mobile header is a white `jun-header` bar
 with a bottom hairline.
 
-The Integrations screen uses a centered 960px content column. Provider cards
-use a 48px muted mark tile, a title and one-line description, a text-plus-icon
-status badge, and a 44px action. Messaging and Online classes are separate
-groups. Coming-soon providers remain informational and are not focusable.
+The Integrations screen uses a centered 960px content column inside the shared
+screen gutter. Provider cards use a neutral 48px mark tile containing the
+bundled [theSVG](https://github.com/GLINCKER/thesvg) LINE, Zoom, or Google Meet
+mark, a title and one-line description, a text-plus-icon status badge, and a
+44px action. Messaging and Online classes are separate groups. Coming-soon
+providers remain informational and are not focusable.
 
-LINE configuration uses a centered 1040px shell with a muted 48px provider mark,
+LINE configuration uses a centered 1040px shell with a neutral 48px provider mark,
 a title, and a neutral Supported badge. The main setup column and About panel
 stack until their container reaches 824px; at that threshold, they use a 520px /
 280px split with a 24px gap.
 The mobile breadcrumb uses a 44px “All integrations” parent link. The progress
-list numbers the credential and test-recipient steps; the “Send a test message”
-step appears only after the API confirms `testRecipientConnected`. Connection
+list lives in the same bordered setup card as the credential form. The form is
+Step 1, followed by divided Step 2 (test recipient) and Step 3 (test message)
+rows. Steps stay muted until their API prerequisites are met. The token field
+has a keyboard-operable visibility button, and the channel ID and secret fields
+sit side by side from `sm`. Connection
 state comes from `configured` and `testRecipientConnected`, not a local status
 label. The connected summary shows only the account name, Basic ID, verification
 time, and test-message action. Account details use semantic label/value rows;
 credential edit fields start blank because saved secrets are never read back.
-The About panel explains supported capabilities, setup requirements, the LINE
-Developers Console, and credential privacy.
+The About panel explains supported capabilities, setup requirements, and the
+LINE Developers Console. The credential privacy note follows below the columns.
 
 Breadcrumbs use a semantic navigation landmark with an ordered trail. Ancestors
 are router links that underline on hover; the current page is medium weight and
