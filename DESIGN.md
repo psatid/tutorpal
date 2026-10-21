@@ -144,7 +144,7 @@ components:
     padding: "2px 8px"
     font: "12px / 500"
     border: "1px solid {variant} / 25%"
-    variants: "primary, info, success, warning, destructive"
+    variants: "primary, neutral, info, success, warning, destructive"
   card-row:
     backgroundColor: "{colors.card}"
     border: "1px solid {colors.border}"
@@ -392,9 +392,10 @@ Number inputs hide their spinners and blur on wheel.
 ### Badges
 
 20px high, `rounded-md`, 2px × 8px padding, 12px / 500, with 12px icons. The
-variants are `primary`, `info`, `success`, `warning` and `destructive`. Each uses
-its container fill, its container-foreground text and a border of its
-foreground at 25%.
+variants are `primary`, `neutral`, `info`, `success`, `warning` and
+`destructive`. Semantic variants use their container fill, their
+container-foreground text and a border of their foreground at 25%. `neutral`
+uses a `muted` fill, `secondary-foreground` text and a `border` hairline.
 
 ### Rows and cards
 
@@ -437,9 +438,38 @@ muted.
 
 The desktop rail is white with a `border` divider and `secondary-foreground`
 text. The current route uses `aria-current="page"` with indigo text at 600 and
-no fill. Hover uses `background` (#F6F9FC). Groups (Settings) expand with a
-rotating chevron. The user menu sits at the bottom with an indigo initials
-avatar. The mobile header is a white `jun-header` bar with a bottom hairline.
+no fill. Hover uses `background` (#F6F9FC). Integrations follows Students as a
+direct item. Account access remains in the user menu, which sits at the bottom
+with an indigo initials avatar. The mobile header is a white `jun-header` bar
+with a bottom hairline.
+
+The Integrations screen uses a centered 960px content column. Provider cards
+use a 48px muted mark tile, a title and one-line description, a text-plus-icon
+status badge, and a 44px action. Messaging and Online classes are separate
+groups. Coming-soon providers remain informational and are not focusable.
+
+LINE configuration uses a centered 1040px shell with a muted 48px provider mark,
+a title, and a neutral Supported badge. The main setup column and About panel
+stack until their container reaches 824px; at that threshold, they use a 520px /
+280px split with a 24px gap.
+The mobile breadcrumb uses a 44px “All integrations” parent link. The progress
+list numbers the credential and test-recipient steps; the “Send a test message”
+step appears only after the API confirms `testRecipientConnected`. Connection
+state comes from `configured` and `testRecipientConnected`, not a local status
+label. The connected summary shows only the account name, Basic ID, verification
+time, and test-message action. Account details use semantic label/value rows;
+credential edit fields start blank because saved secrets are never read back.
+The About panel explains supported capabilities, setup requirements, the LINE
+Developers Console, and credential privacy.
+
+Breadcrumbs use a semantic navigation landmark with an ordered trail. Ancestors
+are router links that underline on hover; the current page is medium weight and
+truncates. In the default responsive mode, the full trail appears from `md` and
+a 44px parent back link appears below it. That back link uses the indigo link
+color, a `muted` hover fill and the standard 3px focus ring. `always` keeps the
+parent back link at every width, while `never` keeps the full trail at every
+width. When a parent has no route target, keep the full trail visible rather
+than showing a noninteractive back control.
 
 ### Drawers and dialogs
 

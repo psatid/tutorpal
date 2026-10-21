@@ -9,10 +9,10 @@ The standalone class and hour-addition flow is described in
 
 ## Navigation
 
-- Jun Layout provides one responsive side rail for Home, Classes, Schedule, Courses, Settings, and Students. Below `md` it is an overlay drawer; from `md` through below `lg` it becomes a 48px icon rail; at `lg` and above it expands to 15rem and can be manually collapsed or expanded. Students is the final item because enrollment is optional when starting a class.
+- Jun Layout provides one responsive side rail for Home, Classes, Schedule, Courses, Students, and Integrations. Below `md` it is an overlay drawer; from `md` through below `lg` it becomes a 48px icon rail; at `lg` and above it expands to 15rem and can be manually collapsed or expanded. Integrations follows Students; Account remains in the user menu.
 - The mobile bottom navigation has been removed so navigation has a single, consistent home across screen sizes.
 - List and detail routes activate the same parent navigation item.
-- The shared top bar shows the active screen name from the existing navigation labels, with Settings used for settings routes and their nested pages. Settings is a collapsible group whose first child is LINE connection; `/settings` redirects to `/settings/line` rather than rendering a settings overview.
+- The shared top bar shows the active screen name from the existing navigation labels. `/integrations` and its nested routes activate the Integrations item. `/settings` redirects to `/settings/account`; `/settings/line` remains a compatibility redirect to `/integrations/line`.
 
 ## Workspace pattern
 

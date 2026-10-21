@@ -15,4 +15,6 @@ export const APP_ROUTES = {
 	SETTINGS: "/settings",
 	ACCOUNT_SETTINGS: "/settings/account",
 	LINE_SETTINGS: "/settings/line",
+	INTEGRATIONS: "/integrations",
+	LINE_INTEGRATION: "/integrations/line",
 } as const;

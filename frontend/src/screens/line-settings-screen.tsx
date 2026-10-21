@@ -1,6 +1,6 @@
 import { type FormEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   CheckmarkCircle02Icon as CheckCircle2HugeIcon,
   CircleIcon as CircleHugeIcon,
@@ -9,17 +9,20 @@ import {
   PencilEdit01Icon as PencilHugeIcon,
   SecurityCheckIcon as ShieldCheckHugeIcon,
 } from "@hugeicons/core-free-icons";
-import { toast } from "sonner";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { Badge } from "@/components/common/badge";
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { Label } from "@/components/common/label";
 import { Skeleton } from "@/components/common/skeleton";
+import { IntegrationConfigLayout } from "@/components/integrations/integration-config-layout";
 import { lineQueryKeys } from "@/constants/query-keys/line-query-keys";
-import { useLineConnection } from "@/hooks/queries/use-line-connection";
+import { APP_ROUTES } from "@/constants/routes";
+import { type LineConnection, useLineConnection } from "@/hooks/queries/use-line-connection";
 import { DateTime } from "@/lib/date-time";
-import { cn } from "@/lib/utils";
 import {
   saveLineConnection,
   sendLineConnectionTestMessage,
@@ -34,10 +37,10 @@ const emptyCredentials: LineConnectionCredentials = {
 };
 
 const lineErrorTranslationKeys = {
-  LINE_CREDENTIALS_INVALID: "settings:line.credentialsInvalid",
-  LINE_CONNECTION_REQUIRED: "settings:line.connectionRequired",
-  LINE_TEST_RECIPIENT_REQUIRED: "settings:line.testRecipientRequired",
-  LINE_TEST_ACCOUNT_NOT_FRIEND: "settings:line.testAccountNotFriend",
+  LINE_CREDENTIALS_INVALID: "lineConfiguration.errors.credentialsInvalid",
+  LINE_CONNECTION_REQUIRED: "lineConfiguration.errors.connectionRequired",
+  LINE_TEST_RECIPIENT_REQUIRED: "lineConfiguration.errors.testRecipientRequired",
+  LINE_TEST_ACCOUNT_NOT_FRIEND: "lineConfiguration.errors.testAccountNotFriend",
 } as const;
 
 function isLineSettingsErrorCode(
@@ -67,67 +70,133 @@ function connectionError(error: unknown, t: TFunction, fallback: string) {
     : fallback;
 }
 
-export function LineSettingsScreen() {
-  const { t } = useTranslation(["settings"]);
+export function LineSettingsScreen({
+  testRecipient,
+}: {
+  testRecipient?: "connected" | "error";
+}) {
+  const { t } = useTranslation("integrations");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [credentials, setCredentials] = useState(emptyCredentials);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isReconcilingTestRecipient, setIsReconcilingTestRecipient] = useState(
+    testRecipient === "connected",
+  );
+  const accessTokenRef = useRef<HTMLInputElement>(null);
   const editCredentialsRef = useRef<HTMLButtonElement>(null);
-  const formHeadingRef = useRef<HTMLHeadingElement>(null);
+  const contentHeadingRef = useRef<HTMLHeadingElement>(null);
+  const handledTestRecipientRef = useRef<string | null>(null);
   const connection = useLineConnection();
+
+  function announceSuccess(message: string) {
+    setActionError(null);
+    toast.success(message);
+  }
+
+  function showFailure(message: string) {
+    setActionError(message);
+  }
 
   const save = useMutation({
     mutationFn: saveLineConnection,
+    onMutate: () => {
+      setActionError(null);
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(lineQueryKeys.connection(), data);
       setCredentials(emptyCredentials);
       setEditing(false);
-      toast.success(t("settings:line.saved"));
+      announceSuccess(t("lineConfiguration.messages.saved"));
+      window.requestAnimationFrame(() => contentHeadingRef.current?.focus());
     },
-    onError: (error) => toast.error(connectionError(error, t, t("settings:line.saveFailed"))),
+    onError: (error) => {
+      showFailure(connectionError(error, t, t("lineConfiguration.messages.saveFailed")));
+    },
   });
 
   const connectTestAccount = useMutation({
     mutationFn: startLineTestRecipientAuthorization,
+    onMutate: () => {
+      setActionError(null);
+    },
     onSuccess: (authUrl) => window.location.assign(authUrl),
-    onError: (error) => toast.error(connectionError(error, t, t("settings:line.connectTestFailed"))),
+    onError: (error) => {
+      showFailure(
+        connectionError(error, t, t("lineConfiguration.messages.connectTestFailed")),
+      );
+    },
   });
 
   const sendTest = useMutation({
     mutationFn: sendLineConnectionTestMessage,
-    onSuccess: () => toast.success(t("settings:line.testSent")),
-    onError: (error) => toast.error(connectionError(error, t, t("settings:line.testFailed"))),
+    onMutate: () => {
+      setActionError(null);
+    },
+    onSuccess: () => announceSuccess(t("lineConfiguration.messages.testSent")),
+    onError: (error) => {
+      showFailure(connectionError(error, t, t("lineConfiguration.messages.testFailed")));
+    },
   });
 
   useEffect(() => {
-    const testRecipient = new URLSearchParams(window.location.search).get("testRecipient");
-    if (testRecipient === "connected") {
-      queryClient.invalidateQueries({ queryKey: lineQueryKeys.connection() });
-      toast.success(t("settings:line.testAccountConnected"));
-      window.history.replaceState({}, "", "/settings/line");
-    }
+    if (!testRecipient || handledTestRecipientRef.current === testRecipient) return;
+
+    handledTestRecipientRef.current = testRecipient;
+    void navigate({ to: APP_ROUTES.LINE_INTEGRATION, search: {}, replace: true });
+
     if (testRecipient === "error") {
-      toast.error(t("settings:line.testAccountFailed"));
-      window.history.replaceState({}, "", "/settings/line");
+      setIsReconcilingTestRecipient(false);
+      showFailure(t("lineConfiguration.messages.testAccountFailed"));
+      return;
     }
-  }, [queryClient, t]);
+
+    setIsReconcilingTestRecipient(true);
+    void connection.refetch()
+      .then((result) => {
+        if (!result.isError && result.data?.testRecipientConnected) {
+          announceSuccess(t("lineConfiguration.messages.testAccountConnected"));
+        } else {
+          showFailure(t("lineConfiguration.messages.testAccountFailed"));
+        }
+      })
+      .catch(() => showFailure(t("lineConfiguration.messages.testAccountFailed")))
+      .finally(() => setIsReconcilingTestRecipient(false));
+  }, [connection.refetch, navigate, t, testRecipient]);
 
   useEffect(() => {
     if (!editing) return;
 
     const frame = window.requestAnimationFrame(() => {
-      formHeadingRef.current?.focus();
+      accessTokenRef.current?.focus();
     });
 
     return () => window.cancelAnimationFrame(frame);
   }, [editing]);
 
-  const configuredConnection = connection.data?.configured ? connection.data : undefined;
-  const testRecipientConnected = configuredConnection?.testRecipientConnected;
+  const visibleConnection =
+    !connection.isLoading && !connection.isError ? connection.data : undefined;
+  const configuredConnection = visibleConnection?.configured ? visibleConnection : undefined;
+  const testRecipientConnected =
+    Boolean(visibleConnection?.testRecipientConnected) && !isReconcilingTestRecipient;
   const isBusy = save.isPending || connectTestAccount.isPending || sendTest.isPending;
 
   function updateCredential(field: keyof LineConnectionCredentials, value: string) {
     setCredentials((current) => ({ ...current, [field]: value }));
+  }
+
+  function openCredentialEditor() {
+    setCredentials(emptyCredentials);
+    setActionError(null);
+    setEditing(true);
+  }
+
+  function cancelCredentialEditor() {
+    setCredentials(emptyCredentials);
+    setActionError(null);
+    setEditing(false);
+    window.requestAnimationFrame(() => editCredentialsRef.current?.focus());
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -135,314 +204,639 @@ export function LineSettingsScreen() {
     save.mutate(credentials);
   }
 
+  function retryConnection() {
+    setActionError(null);
+    void connection.refetch().then((result) => {
+      if (!result.isError) {
+        window.requestAnimationFrame(() => contentHeadingRef.current?.focus());
+      }
+    });
+  }
+
+  const mainContent = connection.isLoading ? (
+    <LineSettingsSkeleton />
+  ) : connection.isError ? (
+    <ConnectionErrorState isRetrying={connection.isFetching} onRetry={retryConnection} />
+  ) : configuredConnection && !editing ? (
+    <ConfiguredConnectionPanel
+      connection={configuredConnection}
+      actionError={actionError}
+      contentHeadingRef={contentHeadingRef}
+      editCredentialsRef={editCredentialsRef}
+      isBusy={isBusy}
+      isConnectingTestAccount={connectTestAccount.isPending}
+      isSendingTest={sendTest.isPending}
+      testRecipientConnected={testRecipientConnected}
+      onConnectTestAccount={() => connectTestAccount.mutate()}
+      onEditCredentials={openCredentialEditor}
+      onSendTest={() => sendTest.mutate()}
+    />
+  ) : (
+    <CredentialsForm
+      actionError={actionError}
+      accessTokenRef={accessTokenRef}
+      contentHeadingRef={contentHeadingRef}
+      credentials={credentials}
+      editing={editing}
+      isSaving={save.isPending}
+      onCancel={cancelCredentialEditor}
+      onSubmit={submit}
+      updateCredential={updateCredential}
+    />
+  );
+
   return (
-    <section className="mx-auto w-full max-w-2xl pb-8">
-      <header className="mb-8 min-w-0">
-        <h1 className="text-2xl font-normal tracking-[-0.02em] text-foreground">
-          {t("settings:line.title")}
-        </h1>
-        <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
-          {t("settings:line.description")}
-        </p>
-      </header>
+    <IntegrationConfigLayout
+      parentLabel={t("title")}
+      mobileParentLabel={t("lineConfiguration.allIntegrations")}
+      parentTo={APP_ROUTES.INTEGRATIONS}
+      title={t("line.name")}
+      badgeLabel={t("lineConfiguration.supported")}
+      description={t("lineConfiguration.description")}
+      providerMark={<img alt="" className="size-8" src="/line-mark.svg" />}
+      aside={
+        <LineAboutPanel
+          connection={visibleConnection}
+          testRecipientConnected={testRecipientConnected}
+        />
+      }
+    >
+      {visibleConnection ? (
+        <LineSetupProgress
+          configured={visibleConnection.configured}
+          testRecipientConnected={testRecipientConnected}
+        />
+      ) : null}
+      {mainContent}
+    </IntegrationConfigLayout>
+  );
+}
 
-      {connection.isLoading ? <LineSettingsSkeleton /> : null}
+type ConfiguredConnectionPanelProps = {
+  connection: LineConnection;
+  actionError: string | null;
+  contentHeadingRef: RefObject<HTMLHeadingElement | null>;
+  editCredentialsRef: RefObject<HTMLButtonElement | null>;
+  isBusy: boolean;
+  isConnectingTestAccount: boolean;
+  isSendingTest: boolean;
+  testRecipientConnected: boolean;
+  onConnectTestAccount: () => void;
+  onEditCredentials: () => void;
+  onSendTest: () => void;
+};
 
-      {connection.isError ? (
-        <div className="rounded-lg border border-border bg-card p-6 text-center">
-          <p className="text-sm text-muted-foreground" role="alert">
-            {t("settings:line.connectionError")}
-          </p>
-          <Button className="mt-4" variant="outline" onClick={() => void connection.refetch()}>
-            {t("settings:line.retry")}
+function ConfiguredConnectionPanel({
+  connection,
+  actionError,
+  contentHeadingRef,
+  editCredentialsRef,
+  isBusy,
+  isConnectingTestAccount,
+  isSendingTest,
+  testRecipientConnected,
+  onConnectTestAccount,
+  onEditCredentials,
+  onSendTest,
+}: ConfiguredConnectionPanelProps) {
+  const { t } = useTranslation("integrations");
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-5" aria-labelledby="line-connection-heading">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <Badge className="gap-1.5" variant={testRecipientConnected ? "success" : "neutral"}>
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-4"
+              icon={testRecipientConnected ? CheckCircle2HugeIcon : CircleHugeIcon}
+              strokeWidth={2}
+            />
+            {testRecipientConnected
+              ? t("lineConfiguration.connectionStatus.testRecipientConnected")
+              : t("lineConfiguration.connectionStatus.credentialsConfigured")}
+          </Badge>
+          <h2
+            ref={contentHeadingRef}
+            id="line-connection-heading"
+            tabIndex={-1}
+            className="mt-3 rounded-sm break-words text-xl font-medium tracking-[-0.01em] text-foreground focus:outline-none focus:ring-[3px] focus:ring-primary/35 focus:ring-offset-2"
+          >
+            {connection.accountName ?? t("line.name")}
+          </h2>
+          {connection.accountBasicId || connection.lastVerifiedAt ? (
+            <dl className="mt-5 divide-y divide-border border-t border-border text-sm leading-6">
+              {connection.accountBasicId ? (
+                <div className="grid grid-cols-2 gap-3 py-3">
+                  <dt className="text-muted-foreground">
+                    {t("lineConfiguration.account.basicId")}
+                  </dt>
+                  <dd className="min-w-0 break-all text-right text-foreground">
+                    {connection.accountBasicId}
+                  </dd>
+                </div>
+              ) : null}
+              {connection.lastVerifiedAt ? (
+                <div className="grid grid-cols-2 gap-3 py-3">
+                  <dt className="text-muted-foreground">
+                    {t("lineConfiguration.account.lastVerified")}
+                  </dt>
+                  <dd className="min-w-0 break-words text-right text-foreground">
+                    {DateTime.formatDateTime(connection.lastVerifiedAt)}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
+        </div>
+        <HugeiconsIcon
+          aria-hidden="true"
+          className="size-6 shrink-0 text-muted-foreground"
+          icon={ShieldCheckHugeIcon}
+          strokeWidth={2}
+        />
+      </div>
+
+      <ActionFeedback message={actionError} />
+
+      <div className="mt-5 border-t border-border pt-5">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-5"
+                icon={MessageCircleHugeIcon}
+                strokeWidth={2}
+              />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-medium text-foreground">
+                {testRecipientConnected
+                  ? t("lineConfiguration.testMessage.title")
+                  : t("lineConfiguration.testRecipient.title")}
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {testRecipientConnected
+                  ? t("lineConfiguration.testMessage.description")
+                  : t("lineConfiguration.testRecipient.description")}
+              </p>
+            </div>
+          </div>
+          {testRecipientConnected ? (
+            <Button
+              className="w-full sm:w-auto"
+              disabled={isBusy}
+              leftIcon={MessageCircleHugeIcon}
+              loading={isSendingTest}
+              onClick={onSendTest}
+            >
+              {t("lineConfiguration.testMessage.action")}
+            </Button>
+          ) : (
+            <Button
+              className="w-full sm:w-auto"
+              disabled={isBusy}
+              leftIcon={CheckCircle2HugeIcon}
+              loading={isConnectingTestAccount}
+              onClick={onConnectTestAccount}
+            >
+              {t("lineConfiguration.testRecipient.action")}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-5 border-t border-border pt-5">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-5"
+                icon={KeyRoundHugeIcon}
+                strokeWidth={2}
+              />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-medium text-foreground">{t("lineConfiguration.credentials.title")}</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {t("lineConfiguration.credentials.summaryDescription")}
+              </p>
+            </div>
+          </div>
+          <Button
+            ref={editCredentialsRef}
+            className="w-full sm:w-auto"
+            disabled={isBusy}
+            leftIcon={PencilHugeIcon}
+            onClick={onEditCredentials}
+            variant="outline"
+          >
+            {t("lineConfiguration.credentials.edit")}
           </Button>
         </div>
-      ) : null}
-
-      {!connection.isLoading && !connection.isError ? (
-        <>
-          <ConnectionSummary connection={configuredConnection} />
-
-          {configuredConnection && !editing ? (
-            <div className="mt-5 overflow-hidden rounded-lg border border-border bg-card">
-              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex min-w-0 gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <HugeiconsIcon icon={MessageCircleHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="font-medium text-foreground">{t("settings:line.testTitle")}</h2>
-                    <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
-                      {testRecipientConnected
-                        ? t("settings:line.testReady")
-                        : t("settings:line.testSetup")}
-                    </p>
-                  </div>
-                </div>
-                {testRecipientConnected ? (
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => sendTest.mutate()}
-                    loading={sendTest.isPending}
-                    leftIcon={MessageCircleHugeIcon}
-                  >
-                    {t("settings:line.sendTest")}
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => connectTestAccount.mutate()}
-                    loading={connectTestAccount.isPending}
-                    leftIcon={CheckCircle2HugeIcon}
-                  >
-                    {t("settings:line.connectTestAccount")}
-                  </Button>
-                )}
-              </div>
-
-              <div className="border-t border-border" />
-
-              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex min-w-0 gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-                    <HugeiconsIcon icon={KeyRoundHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="font-medium text-foreground">{t("settings:line.credentials")}</h2>
-                    <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
-                      {t("settings:line.credentialsDescription")}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  ref={editCredentialsRef}
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={() => setEditing(true)}
-                  disabled={isBusy}
-                  leftIcon={PencilHugeIcon}
-                >
-                  {t("settings:line.editCredentials")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <CredentialsForm
-              editing={editing}
-              formHeadingRef={formHeadingRef}
-              isSaving={save.isPending}
-              onCancel={() => {
-                setEditing(false);
-                window.requestAnimationFrame(() => editCredentialsRef.current?.focus());
-              }}
-              onSubmit={submit}
-              credentials={credentials}
-              updateCredential={updateCredential}
-            />
-          )}
-        </>
-      ) : null}
-
-      <p className="mt-5 text-center text-sm leading-6 text-muted-foreground">
-        {t("settings:line.privacyNote")}
-      </p>
+      </div>
     </section>
   );
 }
 
-type ConnectionSummaryProps = {
-  connection:
-    | {
-        accountName?: string;
-        accountBasicId?: string | null;
-        lastVerifiedAt?: string;
-      }
-    | undefined;
-};
-
-function ConnectionSummary({ connection }: ConnectionSummaryProps) {
-  const { t } = useTranslation(["settings"]);
-  const isConnected = Boolean(connection);
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p
-            className={cn(
-              "flex items-center gap-2 text-sm font-semibold",
-              isConnected ? "text-success-container-foreground" : "text-muted-foreground",
-            )}
-            role="status"
-          >
-            {isConnected ? (
-              <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} className="size-4 shrink-0" aria-hidden="true" />
-            ) : (
-              <HugeiconsIcon icon={CircleHugeIcon} strokeWidth={2} className="size-4 shrink-0" aria-hidden="true" />
-            )}
-            {isConnected ? t("settings:line.connected") : t("settings:line.notConnected")}
-          </p>
-          {isConnected ? (
-            <>
-              <h2 className="mt-3 break-words text-xl font-medium tracking-[-0.01em] text-foreground">
-                {connection?.accountName}
-              </h2>
-              {connection?.accountBasicId ? (
-                <p className="mt-1 break-words text-sm text-muted-foreground">{connection.accountBasicId}</p>
-              ) : null}
-            </>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              {t("settings:line.setupHelp")}
-            </p>
-          )}
-        </div>
-        <HugeiconsIcon icon={ShieldCheckHugeIcon} strokeWidth={2}
-          className={cn(
-            "size-6 shrink-0",
-            isConnected ? "text-primary" : "text-muted-foreground/60",
-          )}
-          aria-hidden="true"
-        />
-      </div>
-      {isConnected && connection?.lastVerifiedAt ? (
-        <div className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-          {t("settings:line.lastVerified", {
-            date: DateTime.formatDateTime(connection.lastVerifiedAt),
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function LineSettingsSkeleton() {
-  const { t } = useTranslation(["settings"]);
-
-  return (
-    <div className="space-y-5" role="status" aria-label={t("settings:line.checking")}>
-      <div className="rounded-lg border border-border bg-card p-5">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="mt-4 h-6 w-48" />
-        <Skeleton className="mt-2 h-4 w-32" />
-        <Skeleton className="mt-5 h-px w-full" />
-        <Skeleton className="mt-4 h-4 w-44" />
-      </div>
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 gap-3">
-            <Skeleton className="size-10 shrink-0 rounded-full" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="mt-2 h-4 w-full max-w-md" />
-            </div>
-          </div>
-          <Skeleton className="h-11 w-full sm:w-40" />
-        </div>
-        <div className="border-t border-border" />
-        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 gap-3">
-            <Skeleton className="size-10 shrink-0 rounded-full" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="mt-2 h-4 w-full max-w-md" />
-            </div>
-          </div>
-          <Skeleton className="h-11 w-full sm:w-40" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 type CredentialsFormProps = {
+  actionError: string | null;
+  accessTokenRef: RefObject<HTMLInputElement | null>;
+  contentHeadingRef: RefObject<HTMLHeadingElement | null>;
+  credentials: LineConnectionCredentials;
   editing: boolean;
-  formHeadingRef: RefObject<HTMLHeadingElement | null>;
   isSaving: boolean;
   onCancel: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  credentials: LineConnectionCredentials;
   updateCredential: (field: keyof LineConnectionCredentials, value: string) => void;
 };
 
 function CredentialsForm({
+  actionError,
+  accessTokenRef,
+  contentHeadingRef,
+  credentials,
   editing,
-  formHeadingRef,
   isSaving,
   onCancel,
   onSubmit,
-  credentials,
   updateCredential,
 }: CredentialsFormProps) {
-  const { t } = useTranslation(["settings"]);
+  const { t } = useTranslation("integrations");
 
   return (
-    <form onSubmit={onSubmit} className="mt-5 rounded-lg border border-border bg-card p-5">
-      <div className="mb-6 flex gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <HugeiconsIcon icon={KeyRoundHugeIcon} strokeWidth={2} className="size-5" aria-hidden="true" />
+    <form
+      aria-busy={isSaving || undefined}
+      className="rounded-lg border border-border bg-card p-5"
+      onSubmit={onSubmit}
+    >
+      <div className="flex min-w-0 gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-5"
+            icon={KeyRoundHugeIcon}
+            strokeWidth={2}
+          />
         </span>
-        <div>
+        <div className="min-w-0">
           <h2
-            ref={formHeadingRef}
+            ref={contentHeadingRef}
             tabIndex={-1}
-            className="font-medium text-foreground outline-none"
+            className="rounded-sm font-medium text-foreground focus:outline-none focus:ring-[3px] focus:ring-primary/35 focus:ring-offset-2"
           >
-            {editing ? t("settings:line.updateTitle") : t("settings:line.connectTitle")}
+            {editing
+              ? t("lineConfiguration.credentials.editTitle")
+              : t("lineConfiguration.credentials.connectTitle")}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("settings:line.setupHelp")}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {t("lineConfiguration.credentials.description")}
+          </p>
         </div>
       </div>
 
-      <div className="space-y-5">
+      <ActionFeedback message={actionError} />
+
+      <div className="mt-6 space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="line-access-token">{t("settings:line.accessToken")}</Label>
+          <CredentialFieldLabel
+            htmlFor="line-access-token"
+            label={t("lineConfiguration.credentials.accessToken")}
+          />
           <Input
+            ref={accessTokenRef}
             id="line-access-token"
             type="password"
             autoComplete="off"
             aria-describedby="line-access-token-help"
+            disabled={isSaving}
             required
             value={credentials.messagingAccessToken}
             onChange={(event) => updateCredential("messagingAccessToken", event.target.value)}
           />
           <p id="line-access-token-help" className="text-sm leading-6 text-muted-foreground">
-            {t("settings:line.accessTokenHelp")}
+            {t("lineConfiguration.credentials.accessTokenHelp")}
           </p>
         </div>
+
         <div className="space-y-2">
-          <Label htmlFor="line-login-channel-id">{t("settings:line.loginChannelId")}</Label>
+          <CredentialFieldLabel
+            htmlFor="line-login-channel-id"
+            label={t("lineConfiguration.credentials.loginChannelId")}
+          />
           <Input
             id="line-login-channel-id"
             autoComplete="off"
+            aria-describedby="line-login-channel-id-help"
+            disabled={isSaving}
             required
             value={credentials.loginChannelId}
             onChange={(event) => updateCredential("loginChannelId", event.target.value)}
           />
+          <p id="line-login-channel-id-help" className="text-sm leading-6 text-muted-foreground">
+            {t("lineConfiguration.credentials.loginChannelIdHelp")}
+          </p>
         </div>
+
         <div className="space-y-2">
-          <Label htmlFor="line-login-channel-secret">{t("settings:line.loginChannelSecret")}</Label>
+          <CredentialFieldLabel
+            htmlFor="line-login-channel-secret"
+            label={t("lineConfiguration.credentials.loginChannelSecret")}
+          />
           <Input
             id="line-login-channel-secret"
             type="password"
             autoComplete="off"
+            aria-describedby="line-login-channel-secret-help"
+            disabled={isSaving}
             required
             value={credentials.loginChannelSecret}
             onChange={(event) => updateCredential("loginChannelSecret", event.target.value)}
           />
+          <p id="line-login-channel-secret-help" className="text-sm leading-6 text-muted-foreground">
+            {t("lineConfiguration.credentials.loginChannelSecretHelp")}
+          </p>
         </div>
       </div>
 
       <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         {editing ? (
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={isSaving}>
-            {t("settings:cancel")}
+          <Button
+            className="w-full sm:w-auto"
+            disabled={isSaving}
+            onClick={onCancel}
+            type="button"
+            variant="ghost"
+          >
+            {t("lineConfiguration.actions.cancel")}
           </Button>
         ) : null}
-        <Button type="submit" className="w-full sm:w-auto" loading={isSaving}>
-          {t("settings:line.saveAndVerify")}
+        <Button className="w-full sm:w-auto" loading={isSaving} type="submit">
+          {t("lineConfiguration.credentials.save")}
         </Button>
       </div>
     </form>
+  );
+}
+
+function CredentialFieldLabel({ htmlFor, label }: { htmlFor: string; label: string }) {
+  const { t } = useTranslation("integrations");
+
+  return (
+    <Label htmlFor={htmlFor}>
+      {label}
+      <span aria-hidden="true" className="ml-1 text-destructive">
+        *
+      </span>
+      <span className="sr-only"> {t("lineConfiguration.credentials.required")}</span>
+    </Label>
+  );
+}
+
+function ActionFeedback({ message }: { message: string | null }) {
+  if (!message) return null;
+
+  return (
+    <p
+      className="mt-5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-6 text-destructive"
+      role="alert"
+    >
+      {message}
+    </p>
+  );
+}
+
+type SetupStepStatus = "complete" | "next" | "available" | "upcoming";
+
+function LineSetupProgress({
+  configured,
+  testRecipientConnected,
+}: {
+  configured: boolean;
+  testRecipientConnected: boolean;
+}) {
+  const { t } = useTranslation("integrations");
+  const steps: Array<{ label: string; status: SetupStepStatus }> = [
+    {
+      label: t("lineConfiguration.setupProgress.steps.credentials"),
+      status: configured ? "complete" : "next",
+    },
+    {
+      label: t("lineConfiguration.setupProgress.steps.testRecipient"),
+      status: testRecipientConnected ? "complete" : configured ? "next" : "upcoming",
+    },
+  ];
+
+  if (testRecipientConnected) {
+    steps.push({
+      label: t("lineConfiguration.setupProgress.steps.testMessage"),
+      status: "available",
+    });
+  }
+
+  return (
+    <section
+      aria-labelledby="line-setup-progress-heading"
+      className="mb-5 rounded-lg border border-border bg-card p-4"
+    >
+      <h2 id="line-setup-progress-heading" className="font-medium text-foreground">
+        {t("lineConfiguration.setupProgress.title")}
+      </h2>
+      <ol
+        className={
+          testRecipientConnected
+            ? "mt-3 grid gap-3 sm:grid-cols-3"
+            : "mt-3 grid gap-3 sm:grid-cols-2"
+        }
+      >
+        {steps.map((step, index) => (
+          <SetupProgressStep
+            key={step.label}
+            label={step.label}
+            number={index + 1}
+            status={step.status}
+          />
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function SetupProgressStep({
+  label,
+  number,
+  status,
+}: {
+  label: string;
+  number: number;
+  status: SetupStepStatus;
+}) {
+  const { t } = useTranslation("integrations");
+  const statusLabel =
+    status === "complete"
+      ? t("lineConfiguration.setupProgress.status.complete")
+      : status === "next"
+        ? t("lineConfiguration.setupProgress.status.next")
+        : status === "available"
+          ? t("lineConfiguration.setupProgress.status.available")
+          : t("lineConfiguration.setupProgress.status.upcoming");
+
+  return (
+    <li className="flex min-w-0 gap-2">
+      {status === "complete" ? (
+        <HugeiconsIcon
+          aria-hidden="true"
+          className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+          icon={CheckCircle2HugeIcon}
+          strokeWidth={2}
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[0.625rem] font-medium text-muted-foreground"
+        >
+          {number}
+        </span>
+      )}
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">
+          <span className="sr-only">{t("lineConfiguration.setupProgress.step", { number })}:</span>{" "}
+          {label}
+        </p>
+        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{statusLabel}</p>
+      </div>
+    </li>
+  );
+}
+
+function ConnectionErrorState({
+  isRetrying,
+  onRetry,
+}: {
+  isRetrying: boolean;
+  onRetry: () => void;
+}) {
+  const { t } = useTranslation("integrations");
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-5" aria-labelledby="line-connection-error-heading">
+      <h2 id="line-connection-error-heading" className="font-medium text-foreground">
+        {t("lineConfiguration.connectionError.title")}
+      </h2>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground" role="alert">
+        {t("line.connectionError")}
+      </p>
+      <Button
+        className="mt-5 w-full sm:w-auto"
+        loading={isRetrying}
+        onClick={onRetry}
+        variant="outline"
+      >
+        {t("retry")}
+      </Button>
+    </section>
+  );
+}
+
+function LineSettingsSkeleton() {
+  const { t } = useTranslation("integrations");
+
+  return (
+    <div className="space-y-5" role="status" aria-label={t("lineConfiguration.loading")}>
+      <div className="rounded-lg border border-border bg-card p-5">
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="mt-4 h-7 w-48" />
+        <Skeleton className="mt-2 h-4 w-36" />
+        <Skeleton className="mt-5 h-px w-full" />
+        <Skeleton className="mt-5 h-20 w-full" />
+      </div>
+      <div className="rounded-lg border border-border bg-card p-5">
+        <div className="flex min-w-0 gap-3">
+          <Skeleton className="size-10 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="mt-2 h-4 w-full" />
+          </div>
+        </div>
+        <Skeleton className="mt-5 h-11 w-full sm:w-40" />
+      </div>
+    </div>
+  );
+}
+
+function LineAboutPanel({
+  connection,
+  testRecipientConnected,
+}: {
+  connection: LineConnection | undefined;
+  testRecipientConnected: boolean;
+}) {
+  const { t } = useTranslation("integrations");
+  const hasIncompleteSetup = Boolean(
+    connection && (!connection.configured || !testRecipientConnected),
+  );
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-5" aria-labelledby="line-about-heading">
+      <h2 id="line-about-heading" className="font-medium text-foreground">
+        {t("lineConfiguration.about.title")}
+      </h2>
+      <div className="mt-4">
+        <h3 className="text-sm font-medium text-foreground">
+          {t("lineConfiguration.about.capabilitiesTitle")}
+        </h3>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          {t("lineConfiguration.about.capabilitiesDescription")}
+        </p>
+      </div>
+
+      {connection && hasIncompleteSetup ? (
+        <div className="mt-5 border-t border-border pt-5">
+          <h3 className="text-sm font-medium text-foreground">
+            {t("lineConfiguration.about.requirementsTitle")}
+          </h3>
+          <ul className="mt-3 space-y-3 text-sm leading-6 text-muted-foreground">
+            <AboutRequirement complete={connection.configured}>
+              {t("lineConfiguration.about.requirements.officialAccount")}
+            </AboutRequirement>
+            <AboutRequirement complete={connection.configured}>
+              {t("lineConfiguration.about.requirements.channels")}
+            </AboutRequirement>
+            <AboutRequirement complete={testRecipientConnected}>
+              {t("lineConfiguration.about.requirements.testRecipient")}
+            </AboutRequirement>
+          </ul>
+        </div>
+      ) : null}
+
+      <a
+        className="mt-5 flex min-h-11 w-full items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        href="https://developers.line.biz/console/"
+        rel="noreferrer"
+        target="_blank"
+      >
+        {t("lineConfiguration.about.developersConsole")}
+      </a>
+
+      <p className="mt-5 border-t border-border pt-5 text-sm leading-6 text-muted-foreground">
+        {t("privacyNote")}
+      </p>
+    </section>
+  );
+}
+
+function AboutRequirement({ complete, children }: { complete: boolean; children: string }) {
+  return (
+    <li className="flex min-w-0 gap-2">
+      <HugeiconsIcon
+        aria-hidden="true"
+        className="mt-1 size-4 shrink-0 text-muted-foreground"
+        icon={complete ? CheckCircle2HugeIcon : CircleHugeIcon}
+        strokeWidth={2}
+      />
+      <span className="min-w-0">{children}</span>
+    </li>
   );
 }

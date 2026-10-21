@@ -195,7 +195,7 @@ Register these exact provider callback URLs, using the deployed
 
 The user portal exposes social actions only when the server's `/v1/config`
 response enables them. Account settings uses the controlled LINE enrollment
-endpoint; the existing `/settings/line` page remains the separate LINE
-Messaging API credentials screen. Run `make db-migrate-deploy-production`
-before first production enablement so the provider identity uniqueness
-migration has been applied.
+endpoint. `/integrations/line` is the canonical LINE Messaging API integration
+screen; `/settings/line` redirects there for compatibility. Run
+`make db-migrate-deploy-production` before first production enablement so the
+provider identity uniqueness migration has been applied.

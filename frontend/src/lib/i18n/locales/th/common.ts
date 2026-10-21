@@ -54,6 +54,7 @@ const th = {
     close: "ปิด",
     closeNamed: "ปิด {{title}}",
     primaryNavigation: "การนำทางหลัก",
+    breadcrumb: "เส้นทางนำทาง",
     pagination: "การแบ่งหน้า",
     previousPage: "ไปหน้าก่อนหน้า",
     nextPage: "ไปหน้าถัดไป",

@@ -15,7 +15,7 @@ import {
 	UnlinkLineRequestSchema,
 	UnlinkLineResponseResolver,
 } from "../schemas";
-import { LineService } from "../services";
+import { type LineCallbackStateKind, LineService } from "../services";
 import type { AppEnv } from "../types/hono-env";
 
 export type LineRouteDependencies = {
@@ -75,32 +75,67 @@ export function createLineRoutes({
 				"/callback",
 				describeRoute({
 					tags: ["line"],
-					description: "LINE OAuth callback — exchanges code and links student",
+					description:
+						"Handle LINE callbacks for student linking and test-recipient authorization, redirecting provider errors to the relevant frontend result.",
 					parameters: [
 						{
 							name: "code",
 							in: "query",
-							required: true,
+							required: false,
 							schema: { type: "string" },
+							description:
+								"Authorization code returned only after successful LINE authorization; absent when LINE returns an OAuth error.",
 						},
 						{
 							name: "state",
 							in: "query",
 							required: true,
 							schema: { type: "string" },
+							description:
+								"State returned by LINE. TutorPal uses it to classify and correlate the callback; missing state redirects to line-link?error=missing_params.",
+						},
+						{
+							name: "error",
+							in: "query",
+							required: false,
+							schema: { type: "string" },
+							description:
+								"LINE OAuth error code returned when authorization fails.",
 						},
 					],
 					responses: {
-						302: { description: "Redirects to frontend success/error page" },
+						302: {
+							description:
+								"Redirects student linking to success or error feedback and test-recipient authorization to connected or error feedback.",
+						},
 					},
 				}),
 				async (c) => {
 					const code = c.req.query("code");
 					const state = c.req.query("state");
+					const providerError = c.req.query("error");
 
-					if (!code || !state) {
+					if (!state) {
 						return c.redirect(
 							`${getFrontendUrl()}/line-link?error=missing_params`,
+						);
+					}
+
+					let callbackState: LineCallbackStateKind = "unknown";
+					try {
+						callbackState = await lineService.classifyCallbackState(state);
+					} catch (error) {
+						console.error("line callback state classification failed", error);
+					}
+
+					if (providerError || !code) {
+						if (callbackState === "test-recipient") {
+							return c.redirect(
+								`${getFrontendUrl()}/settings/line?testRecipient=error`,
+							);
+						}
+						return c.redirect(
+							`${getFrontendUrl()}/line-link?error=${providerError ? "link_failed" : "missing_params"}`,
 						);
 					}
 
@@ -116,6 +151,11 @@ export function createLineRoutes({
 						);
 					} catch (error) {
 						console.error("line callback failed", error);
+						if (callbackState === "test-recipient") {
+							return c.redirect(
+								`${getFrontendUrl()}/settings/line?testRecipient=error`,
+							);
+						}
 						return c.redirect(
 							`${getFrontendUrl()}/line-link?error=link_failed`,
 						);

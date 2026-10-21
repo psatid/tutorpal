@@ -31,6 +31,14 @@ export class LineRepository implements ILineRepository {
 		return record;
 	}
 
+	async hasToken(token: string): Promise<boolean> {
+		const record = await this.prisma.lineLinkToken.findUnique({
+			where: { token },
+			select: { id: true },
+		});
+		return Boolean(record);
+	}
+
 	async markTokenUsed(tokenId: string): Promise<void> {
 		await this.prisma.lineLinkToken.update({
 			where: { id: tokenId },
@@ -90,6 +98,14 @@ export class LineRepository implements ILineRepository {
 			return null;
 		}
 		return record;
+	}
+
+	async hasTestRecipientToken(token: string): Promise<boolean> {
+		const record = await this.prisma.lineTestRecipientToken.findUnique({
+			where: { token },
+			select: { id: true },
+		});
+		return Boolean(record);
 	}
 
 	async markTestRecipientTokenUsed(tokenId: string): Promise<void> {

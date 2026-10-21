@@ -12,6 +12,7 @@ import schedules from "./locales/en/schedules";
 import navigation from "./locales/en/navigation";
 import settings from "./locales/en/settings";
 import courses from "./locales/en/courses";
+import integrations from "./locales/en/integrations";
 import thCommon from "./locales/th/common";
 import thAuth from "./locales/th/auth";
 import thLogin from "./locales/th/login";
@@ -22,6 +23,7 @@ import thSchedules from "./locales/th/schedules";
 import thNavigation from "./locales/th/navigation";
 import thSettings from "./locales/th/settings";
 import thCourses from "./locales/th/courses";
+import thIntegrations from "./locales/th/integrations";
 
 export const LANGUAGE_PREFERENCE_KEY = "tutorpal-language";
 export const supportedLanguages = ["en", "th"] as const;
@@ -56,6 +58,7 @@ const resources = {
     navigation: navigation as Record<string, unknown>,
     settings: settings as Record<string, unknown>,
     courses: courses as Record<string, unknown>,
+    integrations: integrations as Record<string, unknown>,
   },
   th: {
     common: thCommon as Record<string, unknown>,
@@ -68,6 +71,7 @@ const resources = {
     navigation: thNavigation as Record<string, unknown>,
     settings: thSettings as Record<string, unknown>,
     courses: thCourses as Record<string, unknown>,
+    integrations: thIntegrations as Record<string, unknown>,
   },
 };
 
@@ -102,6 +106,7 @@ void i18n
       "navigation",
       "settings",
       "courses",
+      "integrations",
     ],
     defaultNS: "common",
   })

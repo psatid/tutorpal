@@ -7,6 +7,7 @@ const th = {
   classes: "ชั้นเรียน",
   courses: "หลักสูตร",
   schedules: "ตารางเรียน",
+  integrations: "การเชื่อมต่อ",
   settings: "การตั้งค่า",
   lineConnection: "การเชื่อมต่อ LINE",
   primaryNavigation: "การนำทางหลัก",

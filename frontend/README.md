@@ -45,9 +45,11 @@ email/password as the primary path and shows only the providers explicitly
 enabled by the server.
 
 Existing tutors can review linked sign-in methods at `/settings/account`.
-Connect LINE there after signing in with password or Google. The existing
-`/settings/line` route is for a tutor's LINE Official Account Messaging API
-credentials and is intentionally separate from LINE sign-in.
+Connect LINE there after signing in with password or Google. Messaging
+integrations live at `/integrations`; `/integrations/line` manages a tutor's
+LINE Official Account Messaging API credentials and remains separate from LINE
+sign-in. `/settings/line` redirects to the canonical integration route and
+preserves recognized test-recipient callback results.
 
 Provider callback registration, Worker environment variables, and the database
 identity migration are documented in
