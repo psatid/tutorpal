@@ -221,8 +221,8 @@ type Provider = "line" | "zoom" | "google-meet";
 function ProviderMark({ provider }: { provider: Provider }) {
   const src: Record<Provider, string> = {
     line: "/icons/line/default.svg",
-    zoom: "/icons/zoom/default.svg",
-    "google-meet": "/icons/google-meet/default.svg",
+    zoom: "/icons/zoom/zoom-2025.svg",
+    "google-meet": "/icons/google-meet/google-meet-2026.svg",
   };
 
   return (
