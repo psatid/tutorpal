@@ -69,6 +69,49 @@ export class Class {
 		return new Class(toClassDetails(response));
 	}
 
+	static getStudentEnrollmentToggleDecision(
+		currentStudentIds: readonly string[],
+		candidateStudentIds: readonly string[],
+	): {
+		kind: "select" | "deselect" | "unchanged";
+		nextStudentIds: string[];
+	} {
+		const normalizedCurrentStudentIds = [...new Set(currentStudentIds)];
+		const normalizedCandidateStudentIds = [...new Set(candidateStudentIds)];
+
+		if (normalizedCandidateStudentIds.length === 0) {
+			return {
+				kind: "unchanged",
+				nextStudentIds: [...normalizedCurrentStudentIds],
+			};
+		}
+
+		const currentStudentIdSet = new Set(normalizedCurrentStudentIds);
+		const candidateStudentIdSet = new Set(normalizedCandidateStudentIds);
+		const areAllCandidatesSelected = normalizedCandidateStudentIds.every((id) =>
+			currentStudentIdSet.has(id),
+		);
+
+		if (areAllCandidatesSelected) {
+			return {
+				kind: "deselect",
+				nextStudentIds: normalizedCurrentStudentIds.filter(
+					(id) => !candidateStudentIdSet.has(id),
+				),
+			};
+		}
+
+		return {
+			kind: "select",
+			nextStudentIds: [
+				...normalizedCurrentStudentIds,
+				...normalizedCandidateStudentIds.filter(
+					(id) => !currentStudentIdSet.has(id),
+				),
+			],
+		};
+	}
+
 	getId() {
 		return this.data.id;
 	}

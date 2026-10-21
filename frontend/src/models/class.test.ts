@@ -65,3 +65,109 @@ describe("Class hour accounting", () => {
 		expect(classData.hasNoAvailableHours()).toBe(true);
 	});
 });
+
+describe("Class student enrollment selection", () => {
+	it("toggles a single student enrollment", () => {
+		const selected = Class.getStudentEnrollmentToggleDecision([], ["student-1"]);
+		const deselected = Class.getStudentEnrollmentToggleDecision(
+			selected.nextStudentIds,
+			["student-1"],
+		);
+
+		expect(selected).toEqual({
+			kind: "select",
+			nextStudentIds: ["student-1"],
+		});
+		expect(deselected).toEqual({
+			kind: "deselect",
+			nextStudentIds: [],
+		});
+	});
+
+	it("appends missing bulk candidates in candidate order while preserving hidden IDs", () => {
+		expect(
+			Class.getStudentEnrollmentToggleDecision(
+				["hidden-student", "already-selected"],
+				["already-selected", "student-b", "student-a"],
+			),
+		).toEqual({
+			kind: "select",
+			nextStudentIds: [
+				"hidden-student",
+				"already-selected",
+				"student-b",
+				"student-a",
+			],
+		});
+	});
+
+	it("deselects only visible candidates and leaves hidden IDs selected", () => {
+		expect(
+			Class.getStudentEnrollmentToggleDecision(
+				["hidden-before", "student-a", "student-b", "hidden-after"],
+				["student-b", "student-a"],
+			),
+		).toEqual({
+			kind: "deselect",
+			nextStudentIds: ["hidden-before", "hidden-after"],
+		});
+	});
+
+	it("normalizes duplicate IDs while retaining stable current and candidate order", () => {
+		expect(
+			Class.getStudentEnrollmentToggleDecision(
+				["hidden-student", "already-selected", "hidden-student"],
+				["student-b", "already-selected", "student-b", "student-a"],
+			),
+		).toEqual({
+			kind: "select",
+			nextStudentIds: [
+				"hidden-student",
+				"already-selected",
+				"student-b",
+				"student-a",
+			],
+		});
+	});
+
+	it("does not mutate frozen inputs while normalizing a selection", () => {
+		const currentStudentIds = Object.freeze([
+			"hidden-student",
+			"hidden-student",
+			"student-a",
+		]);
+		const candidateStudentIds = Object.freeze(["student-b", "student-b"]);
+
+		const decision = Class.getStudentEnrollmentToggleDecision(
+			currentStudentIds,
+			candidateStudentIds,
+		);
+
+		expect(decision).toEqual({
+			kind: "select",
+			nextStudentIds: ["hidden-student", "student-a", "student-b"],
+		});
+		expect(decision.nextStudentIds).not.toBe(currentStudentIds);
+		expect(currentStudentIds).toEqual([
+			"hidden-student",
+			"hidden-student",
+			"student-a",
+		]);
+		expect(candidateStudentIds).toEqual(["student-b", "student-b"]);
+	});
+
+	it("returns a fresh normalized result for empty candidates", () => {
+		const currentStudentIds = ["hidden-student", "hidden-student", "student-a"];
+
+		const decision = Class.getStudentEnrollmentToggleDecision(
+			currentStudentIds,
+			[],
+		);
+
+		expect(decision).toEqual({
+			kind: "unchanged",
+			nextStudentIds: ["hidden-student", "student-a"],
+		});
+		expect(decision.nextStudentIds).not.toBe(currentStudentIds);
+	});
+});

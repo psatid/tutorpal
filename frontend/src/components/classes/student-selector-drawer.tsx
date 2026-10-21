@@ -12,6 +12,7 @@ import { ResponsiveDrawer } from "@/components/common/responsive-drawer";
 import { Skeleton } from "@/components/common/skeleton";
 import { useStudents } from "@/hooks/queries/use-students";
 import { cn } from "@/lib/utils";
+import { Class } from "@/models/class";
 
 interface StudentSelectorDrawerProps {
 	isOpen: boolean;
@@ -38,7 +39,9 @@ export function StudentSelectorDrawer({
 
 	useEffect(() => {
 		if (!isOpen) return;
-		setLocalSelectedIds(selectedIds);
+		setLocalSelectedIds(
+			Class.getStudentEnrollmentToggleDecision(selectedIds, []).nextStudentIds,
+		);
 		setSearchQuery("");
 	}, [isOpen, selectedIds]);
 
@@ -52,26 +55,27 @@ export function StudentSelectorDrawer({
 				student.getGrade().toString().includes(query),
 		);
 	}, [searchQuery, students]);
+	const visibleStudentIds = useMemo(
+		() => filteredStudents.map((student) => student.getId()),
+		[filteredStudents],
+	);
+	const visibleStudentToggleDecision =
+		Class.getStudentEnrollmentToggleDecision(
+			localSelectedIds,
+			visibleStudentIds,
+		);
 
 	function toggleStudent(studentId: string) {
 		setLocalSelectedIds((currentIds) =>
-			currentIds.includes(studentId)
-				? currentIds.filter((id) => id !== studentId)
-				: [...currentIds, studentId],
+			Class.getStudentEnrollmentToggleDecision(currentIds, [studentId])
+				.nextStudentIds,
 		);
 	}
 
 	function toggleVisibleStudents() {
-		const visibleIds = filteredStudents.map((student) => student.getId());
-		if (visibleIds.length === 0) return;
-
-		const allVisibleSelected = visibleIds.every((id) =>
-			localSelectedIds.includes(id),
-		);
 		setLocalSelectedIds((currentIds) =>
-			allVisibleSelected
-				? currentIds.filter((id) => !visibleIds.includes(id))
-				: [...currentIds, ...visibleIds.filter((id) => !currentIds.includes(id))],
+			Class.getStudentEnrollmentToggleDecision(currentIds, visibleStudentIds)
+				.nextStudentIds,
 		);
 	}
 
@@ -79,12 +83,6 @@ export function StudentSelectorDrawer({
 		setSearchQuery("");
 		onOpenChange(false);
 	}
-
-	const allVisibleSelected =
-		filteredStudents.length > 0 &&
-		filteredStudents.every((student) =>
-			localSelectedIds.includes(student.getId()),
-		);
 
 	return (
 		<ResponsiveDrawer
@@ -115,7 +113,7 @@ export function StudentSelectorDrawer({
 							type="button"
 							variant="ghost"
 						>
-							{allVisibleSelected
+							{visibleStudentToggleDecision.kind === "deselect"
 								? t("classes:selector.deselectAll")
 								: t("classes:selector.selectAll")}
 						</Button>
