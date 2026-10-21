@@ -89,9 +89,14 @@ describe("IntegrationsScreen", () => {
     connectionState.isLoading = true;
     renderIntegrations();
 
-    expect(
-      await screen.findByRole("status", { name: "Loading LINE integration" }),
-    ).toHaveAttribute("aria-busy", "true");
+    const loadingCard = await screen.findByRole("status", {
+      name: "Loading LINE integration",
+    });
+
+    expect(loadingCard).toHaveAttribute("aria-busy", "true");
+    expect(loadingCard).toHaveClass("flex-col", "sm:flex-row");
+    expect(loadingCard.firstElementChild).toHaveClass("flex", "flex-1");
+    expect(loadingCard.lastElementChild).toHaveClass("h-11", "w-full", "sm:w-28");
     expect(screen.queryByRole("link", { name: /LINE/i })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Zoom" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Google Meet" })).toBeVisible();
@@ -118,6 +123,8 @@ describe("IntegrationsScreen", () => {
     expect(providerMark.closest('[aria-hidden="true"]')).not.toBeNull();
 
     const retry = within(lineCard).getByRole("button", { name: "Retry" });
+    expect(lineCard).toHaveClass("flex-col", "sm:flex-row");
+    expect(lineCard.lastElementChild).toHaveClass("w-full", "sm:w-auto");
     retry.focus();
     await user.keyboard("{Enter}");
 
@@ -165,6 +172,58 @@ describe("IntegrationsScreen", () => {
       "href",
       "/integrations/line",
     );
+  });
+
+  it("uses the same responsive card shell for every provider", async () => {
+    connectionState.data = {
+      configured: false,
+      testRecipientConnected: false,
+    };
+    renderIntegrations();
+
+    for (const provider of ["LINE", "Zoom", "Google Meet"]) {
+      const card = await getIntegrationCard(provider);
+      const heading = within(card).getByRole("heading", { name: provider });
+      const content = card.firstElementChild;
+      const providerMark = within(card).getByAltText("").closest("span");
+      const nameRow = heading.parentElement;
+      const badge = within(card).getByText(
+        provider === "LINE" ? "Not connected" : "Coming soon",
+      );
+
+      expect(card).toHaveClass(
+        "flex",
+        "min-w-0",
+        "flex-col",
+        "gap-5",
+        "sm:flex-row",
+        "sm:items-center",
+      );
+      expect(content).toHaveClass("flex", "min-w-0", "flex-1", "items-start");
+      expect(providerMark).toHaveClass("size-12", "shrink-0");
+      expect(content).toContainElement(providerMark);
+      expect(content).toContainElement(heading);
+      expect(nameRow).toHaveClass("flex", "flex-wrap", "items-start");
+      expect(
+        within(card).getByText(
+          provider === "LINE"
+            ? "Message students from your LINE Official Account."
+            : "Create and manage online class meetings.",
+        ),
+      ).not.toHaveClass("truncate");
+      expect(badge.parentElement).toHaveClass(
+        "ml-auto",
+        "max-[22rem]:basis-full",
+        "max-[22rem]:text-right",
+      );
+    }
+
+    const lineCard = await getIntegrationCard("LINE");
+    const setup = within(lineCard).getByRole("link", { name: "Set up LINE" });
+
+    expect(lineCard.lastElementChild).toHaveClass("w-full", "shrink-0", "sm:w-auto");
+    expect(lineCard.lastElementChild).toContainElement(setup);
+    expect(setup).toHaveClass("w-full", "sm:w-auto");
   });
 
   it("keeps unavailable providers visible but noninteractive", async () => {

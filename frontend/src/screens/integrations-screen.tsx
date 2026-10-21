@@ -5,6 +5,7 @@ import {
   CheckmarkCircle02Icon as CheckCircleHugeIcon,
   CircleIcon as CircleHugeIcon,
 } from "@hugeicons/core-free-icons";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import { Badge } from "@/components/common/badge";
@@ -43,11 +44,20 @@ export function IntegrationsScreen() {
           {isConnectionLoading ? (
             <IntegrationCardSkeleton label={t("integrations:loadingLine")} />
           ) : connection.isError ? (
-            <LineConnectionErrorCard
-              message={t("integrations:line.connectionError")}
+            <IntegrationCard
+              action={
+                <Button
+                  className="min-h-11 w-full sm:w-auto"
+                  onClick={() => void connection.refetch()}
+                  variant="outline"
+                >
+                  {t("integrations:retry")}
+                </Button>
+              }
+              alert
+              description={t("integrations:line.connectionError")}
               name={t("integrations:line.name")}
-              onRetry={() => void connection.refetch()}
-              retryLabel={t("integrations:retry")}
+              provider="line"
             />
           ) : (
             <IntegrationCard
@@ -73,11 +83,24 @@ export function IntegrationsScreen() {
                   : t("integrations:line.notConnected")
               }
               action={
-                connection.data?.configured
-                  ? t("integrations:line.manage")
-                  : t("integrations:line.setUp")
+                <Button
+                  className="min-h-11 w-full sm:w-auto"
+                  render={<Link to={APP_ROUTES.LINE_INTEGRATION} />}
+                  variant={
+                    connection.data?.configured ? "outline" : "default"
+                  }
+                >
+                  {connection.data?.configured
+                    ? t("integrations:line.manage")
+                    : t("integrations:line.setUp")}
+                  <HugeiconsIcon
+                    aria-hidden="true"
+                    className="ml-1 size-4"
+                    icon={ArrowRightHugeIcon}
+                    strokeWidth={2}
+                  />
+                </Button>
               }
-              to={APP_ROUTES.LINE_INTEGRATION}
             />
           )}
         </div>
@@ -93,17 +116,19 @@ export function IntegrationsScreen() {
         <div
           className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]"
         >
-          <ComingSoonCard
+          <IntegrationCard
             description={t("integrations:zoom.description")}
             name={t("integrations:zoom.name")}
-            label={t("integrations:zoom.comingSoon")}
             provider="zoom"
+            status="coming-soon"
+            statusLabel={t("integrations:zoom.comingSoon")}
           />
-          <ComingSoonCard
+          <IntegrationCard
             description={t("integrations:googleMeet.description")}
             name={t("integrations:googleMeet.name")}
-            label={t("integrations:googleMeet.comingSoon")}
             provider="google-meet"
+            status="coming-soon"
+            statusLabel={t("integrations:googleMeet.comingSoon")}
           />
         </div>
       </section>
@@ -118,144 +143,75 @@ export function IntegrationsScreen() {
 function IntegrationCard({
   accountBasicId,
   accountName,
+  action,
+  alert,
   description,
   name,
   provider,
   status,
   statusLabel,
-  action,
-  to,
 }: {
   accountBasicId?: string | null;
   accountName?: string;
+  action?: ReactNode;
+  alert?: boolean;
   description: string;
   name: string;
   provider: Provider;
-  status: "connected" | "not-connected";
-  statusLabel: string;
-  action: string;
-  to: string;
+  status?: "connected" | "not-connected" | "coming-soon";
+  statusLabel?: string;
 }) {
   return (
     <article
       className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
     >
-      <ProviderMark provider={provider} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold text-foreground">{name}</h3>
-          <Badge
-            className="gap-1.5"
-            variant={status === "connected" ? "success" : "neutral"}
+      <div className="flex min-w-0 flex-1 items-start gap-4">
+        <ProviderMark provider={provider} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
+            <h3 className="min-w-0 break-words font-semibold text-foreground">
+              {name}
+            </h3>
+            {status && statusLabel ? (
+              <div className="ml-auto max-[22rem]:basis-full max-[22rem]:text-right">
+                <Badge
+                  className="gap-1.5"
+                  variant={status === "connected" ? "success" : "neutral"}
+                >
+                  <HugeiconsIcon
+                    aria-hidden="true"
+                    className="size-3.5"
+                    icon={
+                      status === "connected"
+                        ? CheckCircleHugeIcon
+                        : CircleHugeIcon
+                    }
+                    strokeWidth={2}
+                  />
+                  {statusLabel}
+                </Badge>
+              </div>
+            ) : null}
+          </div>
+          <p
+            className="mt-1 text-sm leading-5 text-muted-foreground"
+            role={alert ? "alert" : undefined}
           >
-            <HugeiconsIcon
-              aria-hidden="true"
-              className="size-3.5"
-              icon={
-                status === "connected" ? CheckCircleHugeIcon : CircleHugeIcon
-              }
-              strokeWidth={2}
-            />
-            {statusLabel}
-          </Badge>
-        </div>
-        <p className="mt-1 truncate text-sm leading-5 text-muted-foreground">
-          {description}
-        </p>
-        {accountName ? (
-          <p className="mt-2 truncate text-sm font-medium text-foreground">
-            {accountName}
+            {description}
           </p>
-        ) : null}
-        {accountBasicId ? (
-          <p className="truncate text-sm text-muted-foreground">
-            {accountBasicId}
-          </p>
-        ) : null}
-      </div>
-      <Button
-        className="min-h-11 w-full shrink-0 sm:w-auto"
-        render={<Link to={to} />}
-        variant={status === "connected" ? "outline" : "default"}
-      >
-        {action}
-        <HugeiconsIcon
-          aria-hidden="true"
-          className="ml-1 size-4"
-          icon={ArrowRightHugeIcon}
-          strokeWidth={2}
-        />
-      </Button>
-    </article>
-  );
-}
-
-function ComingSoonCard({
-  description,
-  name,
-  label,
-  provider,
-}: {
-  description: string;
-  name: string;
-  label: string;
-  provider: Provider;
-}) {
-  return (
-    <article
-      className="flex min-w-0 items-start gap-4 rounded-xl border border-border bg-card p-5"
-    >
-      <ProviderMark provider={provider} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold text-foreground">{name}</h3>
-          <Badge className="gap-1.5" variant="neutral">
-            <HugeiconsIcon
-              aria-hidden="true"
-              className="size-3.5"
-              icon={CircleHugeIcon}
-              strokeWidth={2}
-            />
-            {label}
-          </Badge>
+          {accountName ? (
+            <p className="mt-2 truncate text-sm font-medium text-foreground">
+              {accountName}
+            </p>
+          ) : null}
+          {accountBasicId ? (
+            <p className="truncate text-sm text-muted-foreground">
+              {accountBasicId}
+            </p>
+          ) : null}
         </div>
-        <p className="mt-1 truncate text-sm leading-5 text-muted-foreground">
-          {description}
-        </p>
       </div>
-    </article>
-  );
-}
-
-function LineConnectionErrorCard({
-  message,
-  name,
-  onRetry,
-  retryLabel,
-}: {
-  message: string;
-  name: string;
-  onRetry: () => void;
-  retryLabel: string;
-}) {
-  return (
-    <article
-      className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
-    >
-      <ProviderMark provider="line" />
-      <div className="min-w-0 flex-1">
-        <h3 className="font-semibold text-foreground">{name}</h3>
-        <p className="mt-1 text-sm leading-5 text-muted-foreground" role="alert">
-          {message}
-        </p>
-      </div>
-      <Button
-        className="min-h-11 w-full shrink-0 sm:w-auto"
-        onClick={onRetry}
-        variant="outline"
-      >
-        {retryLabel}
-      </Button>
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </article>
   );
 }
@@ -284,15 +240,20 @@ function IntegrationCardSkeleton({ label }: { label: string }) {
     <div
       aria-busy="true"
       aria-label={label}
-      className="flex items-center gap-5 rounded-xl border border-border bg-card p-5"
+      className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
       role="status"
     >
-      <Skeleton className="size-12 shrink-0 rounded-xl" />
-      <div className="min-w-0 flex-1 space-y-2">
-        <Skeleton className="h-5 w-36" />
-        <Skeleton className="h-4 w-64 max-w-full" />
+      <div className="flex min-w-0 flex-1 items-start gap-4">
+        <Skeleton className="size-12 shrink-0 rounded-xl" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="ml-auto h-5 w-24 max-[22rem]:basis-full" />
+          </div>
+          <Skeleton className="h-4 w-64 max-w-full" />
+        </div>
       </div>
-      <Skeleton className="h-11 w-28 shrink-0 rounded-full" />
+      <Skeleton className="h-11 w-full shrink-0 rounded-full sm:w-28" />
     </div>
   );
 }
