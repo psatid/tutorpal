@@ -1,6 +1,5 @@
 import type { GetV1Courses200DataItem } from "@/api/generated/models/getV1Courses200DataItem";
 import type { GetV1CoursesById200 } from "@/api/generated/models/getV1CoursesById200";
-import { calculateCourseRevenue } from "@/lib/course-pricing";
 import { DateTime } from "@/lib/date-time";
 import type { CoursePricingMode } from "@/types/course";
 
@@ -27,6 +26,21 @@ export class Course {
 		return new Course(toCourseDetails(response));
 	}
 
+	static calculateDefaultRevenue(
+		defaultTotalHours: number,
+		pricingMode: CoursePricingMode,
+		priceAmount: number | null,
+	): number | null {
+		if (priceAmount === null) return null;
+
+		const amount =
+			pricingMode === "hourly_rate"
+				? priceAmount * defaultTotalHours
+				: priceAmount;
+
+		return Math.round((amount + Number.EPSILON) * 100) / 100;
+	}
+
 	getId() {
 		return this.data.id;
 	}
@@ -40,7 +54,7 @@ export class Course {
 	}
 
 	getDefaultRevenue() {
-		return calculateCourseRevenue(
+		return Course.calculateDefaultRevenue(
 			this.data.defaultTotalHours,
 			this.data.pricingMode,
 			this.data.priceAmount,

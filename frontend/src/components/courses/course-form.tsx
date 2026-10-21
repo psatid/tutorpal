@@ -10,9 +10,8 @@ import {
 	useCreateCourse,
 	useUpdateCourse,
 } from "@/hooks/mutations/use-courses";
-import { calculateCourseRevenue } from "@/lib/course-pricing";
 import { DateTime } from "@/lib/date-time";
-import type { Course } from "@/models/course";
+import { Course } from "@/models/course";
 import {
 	COURSE_PRICING_MODES,
 	type CoursePricingMode,
@@ -64,7 +63,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
 		(pricingMode === "hourly_rate" &&
 			(parsedDefaultTotalHours === null || parsedDefaultTotalHours <= 0))
 			? null
-			: calculateCourseRevenue(
+			: Course.calculateDefaultRevenue(
 					parsedDefaultTotalHours ?? 0,
 					pricingMode,
 					parsedPriceAmount,
