@@ -447,10 +447,11 @@ with a bottom hairline.
 
 The Integrations screen uses a centered 960px content column inside the shared
 screen gutter. Provider cards use a neutral 48px mark tile containing the
-bundled [theSVG](https://github.com/GLINCKER/thesvg) LINE, Zoom, or Google Meet
-mark beside its title and description, a right-aligned text-plus-icon status
-badge, and an optional 44px action. Descriptions wrap without clipping in
-narrow cards; the badge moves to a right-aligned line when needed. The LINE
+bundled [theSVG](https://github.com/GLINCKER/thesvg) LINE, Zoom 2025, or Google
+Meet 2026 mark beside its title and description. Each card has a right-aligned
+text-plus-icon status badge and an optional 44px action. Descriptions wrap
+without clipping in narrow cards; the badge moves to a right-aligned line when
+needed. The LINE
 action sits below the content on narrow screens and trails it from `sm`.
 Messaging and Online classes are separate groups. Coming-soon providers remain
 informational and are not focusable.
