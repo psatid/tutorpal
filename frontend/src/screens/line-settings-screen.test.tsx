@@ -90,9 +90,9 @@ function getCredentialInputs() {
 }
 
 function expectSetupProgress(
-  expectedSteps: Array<{ label: string; status: string }>,
+  expectedSteps: Array<{ label: string; number: number; status: string }>,
 ) {
-  const progress = screen.getByRole("region", { name: "LINE setup" });
+  const progress = screen.getByRole("list", { name: "LINE setup" });
   const steps = within(progress).getAllByRole("listitem");
 
   expect(steps).toHaveLength(expectedSteps.length);
@@ -102,7 +102,7 @@ function expectSetupProgress(
       throw new Error(`Expected setup step ${index + 1}`);
     }
 
-    expect(step).toHaveTextContent(`Step ${index + 1}:`);
+    expect(step).toHaveTextContent(`Step ${expectedStep.number}:`);
     expect(step).toHaveTextContent(expectedStep.label);
     expect(step).toHaveTextContent(expectedStep.status);
 
@@ -110,7 +110,7 @@ function expectSetupProgress(
     if (expectedStep.status === "Complete") {
       expect(ordinal).toBeNull();
     } else {
-      expect(ordinal).toHaveTextContent(String(index + 1));
+      expect(ordinal).toHaveTextContent(String(expectedStep.number));
       expect(ordinal).toHaveClass("size-5", "rounded-full");
     }
   });
@@ -192,7 +192,7 @@ describe("LineSettingsScreen", () => {
       "target",
       "_blank",
     );
-    const providerMark = document.querySelector<HTMLImageElement>('img[src="/line-mark.svg"]');
+    const providerMark = document.querySelector<HTMLImageElement>('img[src="/icons/line/default.svg"]');
     if (!providerMark) {
       throw new Error("Expected the bundled LINE provider mark.");
     }
@@ -231,8 +231,8 @@ describe("LineSettingsScreen", () => {
 
     renderLineSettings();
 
-    expect(screen.getByRole("heading", { name: "Connect LINE" })).toBeVisible();
-    const saveCredentials = screen.getByRole("button", { name: "Save credentials" });
+    expect(screen.getByRole("heading", { name: "Connect your official account" })).toBeVisible();
+    const saveCredentials = screen.getByRole("button", { name: "Save and verify" });
     expect(saveCredentials).toHaveClass("w-full", "sm:w-auto");
     const { inputs, values } = await fillCredentials(user);
     expect(inputs.accessToken).toHaveAttribute("required");
@@ -267,6 +267,33 @@ describe("LineSettingsScreen", () => {
     expect(inputs.loginChannelSecret).toHaveValue(values.loginChannelSecret);
   });
 
+  it("lets keyboard users reveal and hide the access token", async () => {
+    const user = userEvent.setup();
+    connectionState.data = makeConnection({ configured: false });
+
+    renderLineSettings();
+
+    const { accessToken } = getCredentialInputs();
+    expect(accessToken).toHaveAttribute("type", "password");
+
+    const showToken = screen.getByRole("button", { name: "Show access token" });
+    expect(showToken).toHaveAttribute("aria-pressed", "false");
+    showToken.focus();
+    await user.keyboard("{Enter}");
+
+    expect(accessToken).toHaveAttribute("type", "text");
+    const hideToken = screen.getByRole("button", { name: "Hide access token" });
+    expect(hideToken).toHaveAttribute("aria-pressed", "true");
+    expect(hideToken).toHaveFocus();
+    await user.keyboard(" ");
+
+    expect(accessToken).toHaveAttribute("type", "password");
+    expect(screen.getByRole("button", { name: "Show access token" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
   it("moves successful first-time setup to the configured-without-recipient state", async () => {
     const user = userEvent.setup();
     connectionState.data = makeConnection({ configured: false });
@@ -278,14 +305,36 @@ describe("LineSettingsScreen", () => {
 
     renderLineSettings();
 
-    const initialProgress = expectSetupProgress([
-      { label: "Save credentials", status: "Next" },
-      { label: "Connect test recipient", status: "Complete earlier steps first" },
-    ]);
-    expect(within(initialProgress).queryByText("Send a test message")).not.toBeInTheDocument();
+    const setupLists = screen.getAllByRole("list", { name: "LINE setup" });
+    expect(setupLists).toHaveLength(1);
+
+    const initialProgress = setupLists[0];
+    if (!initialProgress) {
+      throw new Error("Expected the unconfigured LINE setup list.");
+    }
+
+    const [credentialsStep, testRecipientStep, testMessageStep] = within(
+      initialProgress,
+    ).getAllByRole("listitem");
+
+    expect(credentialsStep).toHaveTextContent("Step 1");
+    expect(
+      within(credentialsStep!).getByRole("heading", {
+        name: "Connect your official account",
+      }),
+    ).toBeVisible();
+    expect(
+      within(credentialsStep!).getByRole("button", { name: "Save and verify" }),
+    ).toBeVisible();
+
+    expect(testRecipientStep).toHaveTextContent("Step 2: Connect test recipient");
+    expect(testRecipientStep).toHaveTextContent("Complete earlier steps first");
+    expect(testMessageStep).toHaveTextContent("Step 3: Send a test message");
+    expect(testMessageStep).toHaveTextContent("Complete earlier steps first");
+    expect(within(initialProgress).queryAllByRole("button")).toHaveLength(2);
 
     await fillCredentials(user);
-    await user.click(screen.getByRole("button", { name: "Save credentials" }));
+    await user.click(screen.getByRole("button", { name: "Save and verify" }));
 
     expect(await screen.findByText("Credentials configured")).toBeVisible();
     expect(screen.getByRole("button", { name: "Connect test recipient" })).toBeVisible();
@@ -299,10 +348,11 @@ describe("LineSettingsScreen", () => {
     flushAnimationFrames();
     expect(connectionHeading).toHaveFocus();
     const configuredProgress = expectSetupProgress([
-      { label: "Save credentials", status: "Complete" },
-      { label: "Connect test recipient", status: "Next" },
+      { label: "Save credentials", number: 1, status: "Complete" },
+      { label: "Connect test recipient", number: 2, status: "Next" },
+      { label: "Send a test message", number: 3, status: "Complete earlier steps first" },
     ]);
-    expect(within(configuredProgress).queryByText("Send a test message")).not.toBeInTheDocument();
+    expect(within(configuredProgress).getByRole("button", { name: "Connect test recipient" })).toBeVisible();
     expect(toast.success).toHaveBeenCalledWith("LINE credentials saved.");
     expect(screen.queryByLabelText(/Messaging API channel access token/i)).not.toBeInTheDocument();
   });
@@ -354,9 +404,9 @@ describe("LineSettingsScreen", () => {
     expect(screen.getByText("Test recipient connected")).toBeVisible();
     expect(screen.getByRole("heading", { name: "TutorPal Academy" })).toBeVisible();
     expectSetupProgress([
-      { label: "Save credentials", status: "Complete" },
-      { label: "Connect test recipient", status: "Complete" },
-      { label: "Send a test message", status: "Available" },
+      { label: "Save credentials", number: 1, status: "Complete" },
+      { label: "Connect test recipient", number: 2, status: "Complete" },
+      { label: "Send a test message", number: 3, status: "Available" },
     ]);
     expect(screen.getByText("Basic ID")).toBeVisible();
     expect(screen.getByText("@tutorpal")).toBeVisible();
@@ -443,10 +493,11 @@ describe("LineSettingsScreen", () => {
 
     await waitFor(() => expect(connectionState.refetch).toHaveBeenCalledTimes(1));
     const reconcilingProgress = expectSetupProgress([
-      { label: "Save credentials", status: "Complete" },
-      { label: "Connect test recipient", status: "Next" },
+      { label: "Save credentials", number: 1, status: "Complete" },
+      { label: "Connect test recipient", number: 2, status: "Next" },
+      { label: "Send a test message", number: 3, status: "Complete earlier steps first" },
     ]);
-    expect(within(reconcilingProgress).queryByText("Send a test message")).not.toBeInTheDocument();
+    expect(within(reconcilingProgress).getByRole("button", { name: "Connect test recipient" })).toBeVisible();
 
     const confirmedConnection = makeConnection({ testRecipientConnected: true });
     connectionState.data = confirmedConnection;
@@ -465,9 +516,9 @@ describe("LineSettingsScreen", () => {
     );
     await waitFor(() =>
       expectSetupProgress([
-        { label: "Save credentials", status: "Complete" },
-        { label: "Connect test recipient", status: "Complete" },
-        { label: "Send a test message", status: "Available" },
+        { label: "Save credentials", number: 1, status: "Complete" },
+        { label: "Connect test recipient", number: 2, status: "Complete" },
+        { label: "Send a test message", number: 3, status: "Available" },
       ]),
     );
     expect(toast.success).toHaveBeenCalledWith("Test recipient connected.");

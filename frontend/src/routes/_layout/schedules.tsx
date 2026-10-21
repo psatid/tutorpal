@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_layout/schedules")({
 
 function SchedulesRoute() {
   return (
-    <ScreenLayout padding="none">
+    <ScreenLayout className="h-[calc(100dvh-3rem)] min-h-0">
       <SchedulesScreen />
     </ScreenLayout>
   );

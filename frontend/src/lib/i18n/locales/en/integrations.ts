@@ -58,7 +58,7 @@ export default {
     credentials: {
       title: "LINE credentials",
       summaryDescription: "Update the credentials for this LINE connection.",
-      connectTitle: "Connect LINE",
+      connectTitle: "Connect your official account",
       editTitle: "Update LINE credentials",
       description: "Enter credentials from your LINE Developers Console. Saved secrets are never shown here.",
       accessToken: "Messaging API channel access token",
@@ -68,7 +68,9 @@ export default {
       loginChannelSecret: "LINE Login channel secret",
       loginChannelSecretHelp: "Use the channel secret from your LINE Login channel.",
       required: "Required",
-      save: "Save credentials",
+      showToken: "Show access token",
+      hideToken: "Hide access token",
+      save: "Save and verify",
       edit: "Edit credentials",
     },
     actions: {
@@ -76,9 +78,9 @@ export default {
     },
     about: {
       title: "About LINE",
-      capabilitiesTitle: "What you can do",
+      capabilitiesTitle: "What it does",
       capabilitiesDescription: "Send tutoring messages and test delivery through your LINE Official Account.",
-      requirementsTitle: "Setup requirements",
+      requirementsTitle: "You’ll need",
       requirements: {
         officialAccount: "A LINE Official Account",
         channels: "A Messaging API channel and LINE Login channel",

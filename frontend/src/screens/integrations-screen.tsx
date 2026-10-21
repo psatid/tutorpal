@@ -20,7 +20,7 @@ export function IntegrationsScreen() {
     (!connection.isError && connection.data === undefined);
 
   return (
-    <section className="mx-auto w-full max-w-[960px] px-1 pb-10 pt-4 sm:px-3 sm:pt-6">
+    <section className="mx-auto w-full max-w-[960px] pb-10">
       <header className="mb-8">
         <h1 className="font-headline text-2xl font-semibold tracking-tight text-foreground">
           {t("integrations:title")}
@@ -140,7 +140,7 @@ function IntegrationCard({
     <article
       className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
     >
-      <ProviderMark name={name} provider={provider} />
+      <ProviderMark provider={provider} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-semibold text-foreground">{name}</h3>
@@ -205,7 +205,7 @@ function ComingSoonCard({
     <article
       className="flex min-w-0 items-start gap-4 rounded-xl border border-border bg-card p-5"
     >
-      <ProviderMark name={name} provider={provider} />
+      <ProviderMark provider={provider} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-semibold text-foreground">{name}</h3>
@@ -242,7 +242,7 @@ function LineConnectionErrorCard({
     <article
       className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
     >
-      <ProviderMark name={name} provider="line" />
+      <ProviderMark provider="line" />
       <div className="min-w-0 flex-1">
         <h3 className="font-semibold text-foreground">{name}</h3>
         <p className="mt-1 text-sm leading-5 text-muted-foreground" role="alert">
@@ -262,28 +262,19 @@ function LineConnectionErrorCard({
 
 type Provider = "line" | "zoom" | "google-meet";
 
-function ProviderMark({
-  name,
-  provider,
-}: {
-  name: string;
-  provider: Provider;
-}) {
-  const label: Record<Provider, string> = {
-    line: "LINE",
-    zoom: "zoom",
-    "google-meet": "Meet",
+function ProviderMark({ provider }: { provider: Provider }) {
+  const src: Record<Provider, string> = {
+    line: "/icons/line/default.svg",
+    zoom: "/icons/zoom/default.svg",
+    "google-meet": "/icons/google-meet/default.svg",
   };
 
   return (
     <span
-      aria-label={name}
-      className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-foreground"
-      role="img"
+      aria-hidden="true"
+      className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted p-2"
     >
-      <span className="text-[0.625rem] font-bold tracking-[-0.04em]">
-        {label[provider]}
-      </span>
+      <img alt="" className="size-8 object-contain" src={src[provider]} />
     </span>
   );
 }

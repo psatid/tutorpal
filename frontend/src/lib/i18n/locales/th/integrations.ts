@@ -61,7 +61,7 @@ const th = {
     credentials: {
       title: "ข้อมูลรับรอง LINE",
       summaryDescription: "อัปเดตข้อมูลรับรองสำหรับการเชื่อมต่อ LINE นี้",
-      connectTitle: "เชื่อมต่อ LINE",
+      connectTitle: "เชื่อมต่อ Official Account ของคุณ",
       editTitle: "อัปเดตข้อมูลรับรอง LINE",
       description: "กรอกข้อมูลรับรองจาก LINE Developers Console ระบบจะไม่แสดงค่าลับที่บันทึกไว้ที่นี่",
       accessToken: "Messaging API channel access token",
@@ -71,7 +71,9 @@ const th = {
       loginChannelSecret: "LINE Login channel secret",
       loginChannelSecretHelp: "ใช้ channel secret จาก LINE Login channel ของคุณ",
       required: "จำเป็น",
-      save: "บันทึกข้อมูลรับรอง",
+      showToken: "แสดงโทเค็นการเข้าถึง",
+      hideToken: "ซ่อนโทเค็นการเข้าถึง",
+      save: "บันทึกและตรวจสอบ",
       edit: "แก้ไขข้อมูลรับรอง",
     },
     actions: {
@@ -81,7 +83,7 @@ const th = {
       title: "เกี่ยวกับ LINE",
       capabilitiesTitle: "สิ่งที่ทำได้",
       capabilitiesDescription: "ส่งข้อความการสอนและทดสอบการส่งผ่าน LINE Official Account ของคุณ",
-      requirementsTitle: "สิ่งที่ต้องเตรียม",
+      requirementsTitle: "สิ่งที่คุณต้องมี",
       requirements: {
         officialAccount: "LINE Official Account",
         channels: "Messaging API channel และ LINE Login channel",

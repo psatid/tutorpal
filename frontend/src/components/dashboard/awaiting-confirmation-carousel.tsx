@@ -1,6 +1,7 @@
 import { type KeyboardEvent, type RefObject, type UIEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
+import { ScreenLayoutEdge } from "@/components/layout/screen-layout";
 import { Skeleton } from "@/components/common/skeleton";
 import { DateTime } from "@/lib/date-time";
 import { Schedule } from "@/models/schedule";
@@ -164,10 +165,11 @@ export function AwaitingConfirmationCarousel({
       ) : schedules.length === 0 ? (
         <AwaitingConfirmationEmpty />
       ) : (
-        <div
+        <ScreenLayoutEdge
+          mobileOnly
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
-          className="mt-4 -mx-3 w-[calc(100%+1.5rem)] min-w-0 max-w-none snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:mx-0 sm:w-auto sm:max-w-full"
+          className="mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           onKeyDown={handleScrollportKeyDown}
           onScroll={handleScroll}
           role="group"
@@ -200,7 +202,7 @@ export function AwaitingConfirmationCarousel({
               />
             ) : null}
           </ol>
-        </div>
+        </ScreenLayoutEdge>
       )}
     </section>
   );
@@ -321,10 +323,11 @@ function AwaitingConfirmationSkeleton({
   loadingLabel: string;
 }) {
   return (
-    <div
+    <ScreenLayoutEdge
+      mobileOnly
       aria-describedby={instructionId}
       aria-labelledby={titleId}
-      className="mt-4 -mx-3 w-[calc(100%+1.5rem)] min-w-0 max-w-none overflow-x-hidden pb-2 sm:mx-0 sm:w-auto sm:max-w-full"
+      className="mt-4 min-w-0 overflow-x-hidden pb-2"
       role="status"
     >
       <span className="sr-only" id={instructionId}>
@@ -346,7 +349,7 @@ function AwaitingConfirmationSkeleton({
           </div>
         ))}
       </div>
-    </div>
+    </ScreenLayoutEdge>
   );
 }
 

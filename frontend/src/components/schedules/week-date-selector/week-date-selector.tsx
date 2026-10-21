@@ -365,7 +365,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
 
   const selector = (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-      <div className="shrink-0 px-3 pt-2 sm:px-4 lg:px-6">
+      <div className="shrink-0 pt-2">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 min-[360px]:flex-nowrap">
           <div className="min-w-0 basis-full min-[360px]:basis-auto min-[360px]:flex-1">
             <DateField
