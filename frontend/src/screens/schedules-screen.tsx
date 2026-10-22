@@ -37,7 +37,6 @@ import {
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { WorkspaceErrorState } from "@/components/workspaces/workspace-state";
-import { ScreenLayoutEdge } from "@/components/layout/screen-layout";
 import { DateTime } from "@/lib/date-time";
 import type { Schedule } from "@/models/schedule";
 
@@ -71,8 +70,7 @@ export function SchedulesScreen() {
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
-  const [noShowSchedule, setNoShowSchedule] =
-		useState<Schedule | null>(null);
+  const [noShowSchedule, setNoShowSchedule] = useState<Schedule | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
 
@@ -110,7 +108,9 @@ export function SchedulesScreen() {
   const filteredSchedules = useMemo(() => {
     if (!schedules) return [];
     if (viewMode === "week" || statusFilter === "ALL") return schedules;
-	return schedules.filter((schedule) => schedule.getStatus() === statusFilter);
+    return schedules.filter(
+      (schedule) => schedule.getStatus() === statusFilter,
+    );
   }, [schedules, statusFilter, viewMode]);
 
   const handleAddSchedule = (trigger: HTMLButtonElement | null) => {
@@ -157,23 +157,23 @@ export function SchedulesScreen() {
   };
 
   const handleViewSchedule = (
-		schedule: Schedule,
+    schedule: Schedule,
     trigger?: HTMLButtonElement,
   ) => {
     if (trigger) {
       activeTriggerRef.current = trigger;
     }
 
-		setSelectedScheduleId(schedule.getId());
+    setSelectedScheduleId(schedule.getId());
     setDrawerMode("view");
     setIsDrawerOpen(true);
   };
 
-	const handleDeleteSchedule = (schedule: Schedule) => {
+  const handleDeleteSchedule = (schedule: Schedule) => {
     toast(t("schedules:delete.confirm"), {
       action: {
         label: t("schedules:delete.confirmButton"),
-			onClick: () => deleteMutation.mutate(schedule.getId()),
+        onClick: () => deleteMutation.mutate(schedule.getId()),
       },
       cancel: {
         label: t("schedules:delete.cancelButton"),
@@ -182,14 +182,14 @@ export function SchedulesScreen() {
     });
   };
 
-	const handleCompleteSchedule = (schedule: Schedule) => {
+  const handleCompleteSchedule = (schedule: Schedule) => {
     const hoursToDeduct = DateTime.formatDurationHours(
-		schedule.getDurationHours(),
+      schedule.getDurationHours(),
     );
     toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
       action: {
         label: t("schedules:complete.confirmButton"),
-			onClick: () => completeMutation.mutate(schedule.getId()),
+        onClick: () => completeMutation.mutate(schedule.getId()),
       },
       cancel: {
         label: t("schedules:complete.cancelButton"),
@@ -198,14 +198,14 @@ export function SchedulesScreen() {
     });
   };
 
-	const handleRestoreHours = (schedule: Schedule) => {
+  const handleRestoreHours = (schedule: Schedule) => {
     const hoursToRestore = DateTime.formatDurationHours(
-		schedule.getDurationHours(),
+      schedule.getDurationHours(),
     );
     toast(t("schedules:restore.confirm", { hours: hoursToRestore }), {
       action: {
         label: t("schedules:restore.confirmButton"),
-			onClick: () => restoreMutation.mutate(schedule.getId()),
+        onClick: () => restoreMutation.mutate(schedule.getId()),
       },
       cancel: {
         label: t("schedules:restore.cancelButton"),
@@ -214,7 +214,7 @@ export function SchedulesScreen() {
     });
   };
 
-	const handleNoShowSchedule = (schedule: Schedule) => {
+  const handleNoShowSchedule = (schedule: Schedule) => {
     setNoShowSchedule(schedule);
   };
 
@@ -284,7 +284,12 @@ export function SchedulesScreen() {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="mb-6 flex size-20 items-center justify-center rounded-xl bg-primary-container">
-            <HugeiconsIcon icon={CalendarDaysHugeIcon} strokeWidth={2} aria-hidden="true" className="size-10 text-primary" />
+            <HugeiconsIcon
+              icon={CalendarDaysHugeIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="size-10 text-primary"
+            />
           </div>
           <h2 className="mb-2 font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
             {hasFilters ? t("schedules:noResults") : t("schedules:noSchedules")}
@@ -340,7 +345,7 @@ export function SchedulesScreen() {
       <div className="space-y-2">
         {filteredSchedules.map((schedule) => (
           <ScheduleCard
-			key={schedule.getId()}
+            key={schedule.getId()}
             schedule={schedule}
             onView={() => handleViewSchedule(schedule)}
             onDelete={() => handleDeleteSchedule(schedule)}
@@ -354,7 +359,7 @@ export function SchedulesScreen() {
   };
 
   const renderDayScheduleResults = () => (
-    <div className="min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
+    <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-0 lg:px-6">
       {renderScheduleContent("day")}
     </div>
   );
@@ -384,11 +389,9 @@ export function SchedulesScreen() {
                 mode="layout"
               >
                 <TabsPanel className="flex min-h-0 flex-1 flex-col" value="day">
-                  <ScreenLayoutEdge className="mb-2 w-auto shrink-0">
-                    {day}
-                  </ScreenLayoutEdge>
+                  <div className="mb-2 shrink-0">{day}</div>
 
-                  <div className="mb-2 shrink-0">
+                  <div className="mb-2 shrink-0 px-3 sm:px-4 lg:px-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1">
                         <Input
@@ -420,7 +423,7 @@ export function SchedulesScreen() {
                       onValueChange={setStatusFilter}
                       value={statusFilter}
                     >
-                      <div className="mb-2 shrink-0 overflow-x-auto">
+                      <div className="mb-2 shrink-0 overflow-x-auto px-3 sm:px-4 lg:px-6">
                         <TabsList
                           activateOnFocus={false}
                           aria-label={t("schedules:drawer.status.label")}
@@ -463,19 +466,14 @@ export function SchedulesScreen() {
                   className="flex min-h-0 flex-1 flex-col"
                   value="week"
                 >
-                  <ScreenLayoutEdge className="mb-2 w-auto shrink-0">
-                    {week}
-                  </ScreenLayoutEdge>
+                  <div className="mb-2 shrink-0">{week}</div>
 
                   {isWeeklyTimelineVisible ? (
-                    <ScreenLayoutEdge
-                      mobileOnly
-                      className="flex min-h-0 flex-1 flex-col pb-0"
-                    >
-                      {renderScheduleContent("week")}
-                    </ScreenLayoutEdge>
-                  ) : (
                     <div className="flex min-h-0 flex-1 flex-col pb-0">
+                      {renderScheduleContent("week")}
+                    </div>
+                  ) : (
+                    <div className="flex min-h-0 flex-1 flex-col px-3 pb-0 sm:px-4 lg:px-6">
                       {renderScheduleContent("week")}
                     </div>
                   )}

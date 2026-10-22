@@ -288,19 +288,27 @@ describe("SchedulesScreen weekly timeline integration", () => {
     expect(modeContent).toContainElement(
       screen.getByRole("group", { name: "Schedule date selector" }),
     );
-    expect(
-      screen.getByRole("group", { name: "Schedule date selector" }).closest(".-mx-3"),
-    ).toHaveClass("-mx-3", "sm:-mx-4", "lg:-mx-6");
+    const dateSelector = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    expect(dateSelector.closest(".-mx-3")).toBeNull();
     expect(modeContent).toContainElement(
       screen.getByRole("tab", { name: "All" }),
     );
     expect(modeContent).toContainElement(screen.getByText("Mathematics"));
     const sharedControls = getSharedHeaderControls();
     const periodControl = sharedControls.previousElementSibling;
+    const scheduleHeader = sharedControls.parentElement?.parentElement;
 
     expect(modeContent).not.toContainElement(sharedControls);
     expect(periodControl).not.toBeNull();
     expect(modeContent).not.toContainElement(periodControl as HTMLElement);
+    expect(scheduleHeader).toHaveClass(
+      "shrink-0",
+      "px-3",
+      "sm:px-4",
+      "lg:px-6",
+    );
     expect(modeContent).not.toContainElement(
       screen.getByRole("button", { name: "Today" }),
     );
@@ -312,9 +320,17 @@ describe("SchedulesScreen weekly timeline integration", () => {
         screen.getByRole("region", { name: "Weekly schedule timeline" }),
       ).toBeInTheDocument();
     });
-    expect(
-      screen.getByRole("region", { name: "Weekly schedule timeline" }).closest(".-mx-3"),
-    ).toHaveClass("-mx-3", "sm:mx-0");
+    const weeklyTimeline = screen.getByRole("region", {
+      name: "Weekly schedule timeline",
+    });
+    expect(weeklyTimeline.closest(".-mx-3")).toBeNull();
+    expect(weeklyTimeline.parentElement).toHaveClass(
+      "flex",
+      "min-h-0",
+      "flex-1",
+      "flex-col",
+      "pb-0",
+    );
 		expect(
 			screen.queryByPlaceholderText("Search by class..."),
 		).not.toBeInTheDocument();

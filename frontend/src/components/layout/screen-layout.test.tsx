@@ -15,6 +15,24 @@ describe("ScreenLayout", () => {
     );
   });
 
+  it("allows a route to own responsive gutters for a full-bleed layout", () => {
+    render(
+      <ScreenLayout data-testid="full-bleed-screen" fullBleed>
+        Full-bleed screen content
+      </ScreenLayout>,
+    );
+
+    expect(screen.getByTestId("full-bleed-screen")).toHaveClass(
+      "min-w-0",
+      "bg-background",
+    );
+    expect(screen.getByTestId("full-bleed-screen")).not.toHaveClass(
+      "p-3",
+      "sm:p-4",
+      "lg:p-6",
+    );
+  });
+
   it("supports full and mobile-only gutter escapes", () => {
     render(
       <>

@@ -1,16 +1,20 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/utils";
 
-type ScreenLayoutProps = ComponentPropsWithoutRef<"div">;
+type ScreenLayoutProps = ComponentPropsWithoutRef<"div"> & {
+  fullBleed?: boolean;
+};
 
 export function ScreenLayout({
   className,
+  fullBleed = false,
   ...props
 }: ScreenLayoutProps) {
   return (
     <div
       className={cn(
-        "min-w-0 bg-background p-3 sm:p-4 lg:p-6",
+        "min-w-0 bg-background",
+        !fullBleed && "p-3 sm:p-4 lg:p-6",
         className,
       )}
       {...props}

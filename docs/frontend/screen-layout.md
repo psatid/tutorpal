@@ -19,18 +19,23 @@ fixed viewport positioning; they use the same reveal transition. Reuse
 other components that need the same entrance and exit behavior; wrap keyed
 children with `AnimatePresence` when an exit animation is needed.
 
-- Use `ScreenLayout` on authenticated screens. It owns the page background and
-  responsive gutters (`p-3 sm:p-4 lg:p-6`); child screens should not add a
-  second page-edge padding layer.
+- Use `ScreenLayout` on authenticated screens. By default it owns the page
+  background and responsive gutters (`p-3 sm:p-4 lg:p-6`); child screens should
+  not add a second page-edge padding layer. Use `fullBleed` when a screen needs
+  its entire content pane, then add responsive gutters only to its controls and
+  reading content.
 - Use `ScreenLayoutEdge` for a horizontal rail that must reach beyond those
   gutters. By default it cancels the gutters at every width; `mobileOnly`
   cancels them below `sm` and keeps the normal content edge above it. The
   wrapper does not own scrolling or add a transform, so the rail keeps its
-  own scroll behavior and leading/trailing inset.
+  own scroll behavior and leading/trailing inset. An ancestor that hides
+  overflow can clip the escaped area; use a `fullBleed` screen for rails inside
+  such panels.
 - Home uses the mobile edge variant for the populated and loading confirmation
-  rails. Schedules uses the default edge variant for its Day and Week date
-  rails and the mobile edge variant for the populated Week timeline. Its
-  controls, loading/error states, and Day results keep the regular gutters.
+  rails. Schedules uses `ScreenLayout fullBleed` so its Day and Week date rails
+  and loaded Week timeline fill the content pane without edge wrappers. Its
+  selector controls, Day toolbar and results, and Week loading/error states
+  add their own `px-3 sm:px-4 lg:px-6` gutters.
 - Child workspace shells should use these gutters as their page edge and avoid
   adding a second horizontal padding layer to headers, toolbars, or list
   containers. Component-level padding, such as card content padding, remains
