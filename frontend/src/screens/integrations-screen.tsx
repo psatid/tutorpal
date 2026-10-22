@@ -168,29 +168,27 @@ function IntegrationCard({
       <div className="flex min-w-0 flex-1 items-start gap-4">
         <ProviderMark provider={provider} />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="min-w-0 break-words font-semibold text-foreground">
               {name}
             </h3>
             {status && statusLabel ? (
-              <div className="ml-auto max-[22rem]:basis-full max-[22rem]:text-right">
-                <Badge
-                  className="gap-1.5"
-                  variant={status === "connected" ? "success" : "neutral"}
-                >
-                  <HugeiconsIcon
-                    aria-hidden="true"
-                    className="size-3.5"
-                    icon={
-                      status === "connected"
-                        ? CheckCircleHugeIcon
-                        : CircleHugeIcon
-                    }
-                    strokeWidth={2}
-                  />
-                  {statusLabel}
-                </Badge>
-              </div>
+              <Badge
+                className="gap-1.5"
+                variant={status === "connected" ? "success" : "neutral"}
+              >
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="size-3.5"
+                  icon={
+                    status === "connected"
+                      ? CheckCircleHugeIcon
+                      : CircleHugeIcon
+                  }
+                  strokeWidth={2}
+                />
+                {statusLabel}
+              </Badge>
             ) : null}
           </div>
           <p
@@ -248,7 +246,7 @@ function IntegrationCardSkeleton({ label }: { label: string }) {
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Skeleton className="h-5 w-24" />
-            <Skeleton className="ml-auto h-5 w-24 max-[22rem]:basis-full" />
+            <Skeleton className="h-5 w-24" />
           </div>
           <Skeleton className="h-4 w-64 max-w-full" />
         </div>

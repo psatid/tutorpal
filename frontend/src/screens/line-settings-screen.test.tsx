@@ -200,8 +200,11 @@ describe("LineSettingsScreen", () => {
     expect(providerMark.closest('[aria-hidden="true"]')).not.toBeNull();
     expect(screen.queryByRole("img", { name: "LINE" })).not.toBeInTheDocument();
     expect(screen.getByRole("complementary").parentElement).toHaveClass(
-      "@[824px]:grid-cols-[minmax(0,32.5rem)_minmax(0,1fr)]",
+      "@[824px]:grid-cols-[minmax(0,1fr)_17.5rem]",
     );
+    expect(within(screen.getByRole("complementary")).getByText(
+      "Your connection details are encrypted and used only for your teaching workspace.",
+    )).toBeVisible();
   });
 
   it("retries a LINE-specific connection error from the keyboard", async () => {
@@ -222,7 +225,7 @@ describe("LineSettingsScreen", () => {
     await waitFor(() => expect(connectionState.refetch).toHaveBeenCalledTimes(1));
   });
 
-  it("shows a blank, labelled setup form and preserves input after a mapped save error", async () => {
+  it("shows a compact labelled setup form and preserves input after a mapped save error", async () => {
     const user = userEvent.setup();
     connectionState.data = makeConnection({ configured: false });
     lineSettingsApi.saveLineConnection.mockRejectedValue({
@@ -231,20 +234,29 @@ describe("LineSettingsScreen", () => {
 
     renderLineSettings();
 
-    expect(screen.getByRole("heading", { name: "Connect your official account" })).toBeVisible();
+    const setupHeading = screen.getByRole("heading", {
+      name: /Step 1:\s*Connect your official account/,
+    });
+    expect(setupHeading).toBeVisible();
+    const credentialsStep = setupHeading.closest("li");
+    const form = credentialsStep?.querySelector("form");
+    const setupRow = form?.firstElementChild;
+    const numberRail = setupRow?.firstElementChild;
+    const formContent = numberRail?.nextElementSibling;
+
+    expect(numberRail).toHaveAttribute("aria-hidden", "true");
+    expect(numberRail).toHaveClass("size-6", "rounded-full");
+    expect(formContent).toHaveClass("min-w-0", "flex-1");
     const saveCredentials = screen.getByRole("button", { name: "Save and verify" });
     expect(saveCredentials).toHaveClass("w-full", "sm:w-auto");
     const { inputs, values } = await fillCredentials(user);
     expect(inputs.accessToken).toHaveAttribute("required");
     expect(inputs.accessToken).toHaveAttribute("aria-describedby", "line-access-token-help");
-    expect(inputs.loginChannelId).toHaveAttribute(
-      "aria-describedby",
-      "line-login-channel-id-help",
-    );
-    expect(inputs.loginChannelSecret).toHaveAttribute(
-      "aria-describedby",
-      "line-login-channel-secret-help",
-    );
+    expect(inputs.loginChannelId).not.toHaveAttribute("aria-describedby");
+    expect(inputs.loginChannelSecret).not.toHaveAttribute("aria-describedby");
+    expect(inputs.accessToken).toHaveAttribute("placeholder", "Paste the long-lived token");
+    expect(inputs.loginChannelId).toHaveAttribute("placeholder", "10-digit ID");
+    expect(credentialsStep?.querySelectorAll(".text-destructive")).toHaveLength(0);
 
     await user.click(saveCredentials);
 
@@ -265,6 +277,16 @@ describe("LineSettingsScreen", () => {
     expect(inputs.accessToken).toHaveValue(values.accessToken);
     expect(inputs.loginChannelId).toHaveValue(values.loginChannelId);
     expect(inputs.loginChannelSecret).toHaveValue(values.loginChannelSecret);
+  });
+
+  it("localizes the concise credential placeholders", async () => {
+    await i18n.changeLanguage("th");
+    connectionState.data = makeConnection({ configured: false });
+
+    renderLineSettings();
+
+    expect(screen.getByPlaceholderText("วางโทเค็นแบบ long-lived")).toBeVisible();
+    expect(screen.getByPlaceholderText("ID 10 หลัก")).toBeVisible();
   });
 
   it("lets keyboard users reveal and hide the access token", async () => {
@@ -318,19 +340,26 @@ describe("LineSettingsScreen", () => {
     ).getAllByRole("listitem");
 
     expect(credentialsStep).toHaveTextContent("Step 1");
-    expect(
-      within(credentialsStep!).getByRole("heading", {
-        name: "Connect your official account",
-      }),
-    ).toBeVisible();
+    const credentialsHeading = within(credentialsStep!).getByRole("heading", {
+      name: /Step 1:\s*Connect your official account/,
+    });
+    expect(credentialsHeading).toBeVisible();
     expect(
       within(credentialsStep!).getByRole("button", { name: "Save and verify" }),
     ).toBeVisible();
 
     expect(testRecipientStep).toHaveTextContent("Step 2: Connect test recipient");
-    expect(testRecipientStep).toHaveTextContent("Complete earlier steps first");
+    const testRecipientStatus = within(testRecipientStep!).getByText(
+      "Complete earlier steps first",
+    );
+    expect(testRecipientStatus).toHaveClass("sr-only");
+    expect(testRecipientStep).toHaveClass("mt-5");
     expect(testMessageStep).toHaveTextContent("Step 3: Send a test message");
-    expect(testMessageStep).toHaveTextContent("Complete earlier steps first");
+    const testMessageStatus = within(testMessageStep!).getByText(
+      "Complete earlier steps first",
+    );
+    expect(testMessageStatus).toHaveClass("sr-only");
+    expect(testMessageStep).toHaveClass("mt-3");
     expect(within(initialProgress).queryAllByRole("button")).toHaveLength(2);
 
     await fillCredentials(user);
@@ -433,7 +462,9 @@ describe("LineSettingsScreen", () => {
     const editCredentials = screen.getByRole("button", { name: "Edit credentials" });
     await user.click(editCredentials);
 
-    const editHeading = screen.getByRole("heading", { name: "Update LINE credentials" });
+    const editHeading = screen.getByRole("heading", {
+      name: /Step 1:\s*Update LINE credentials/,
+    });
     expect(editHeading).toBeVisible();
     expect(editHeading).toHaveAttribute("tabindex", "-1");
     expect(editHeading).toHaveClass(

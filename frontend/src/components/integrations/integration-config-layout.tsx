@@ -54,7 +54,7 @@ export function IntegrationConfigLayout({
         </div>
       </header>
 
-      <div className="mt-6 grid min-w-0 gap-6 @[824px]:grid-cols-[minmax(0,32.5rem)_minmax(0,1fr)]">
+      <div className="mt-6 grid min-w-0 gap-6 @[824px]:grid-cols-[minmax(0,1fr)_17.5rem]">
         <div className="min-w-0">{children}</div>
         <aside className="min-w-0 @[824px]:w-[17.5rem] @[824px]:justify-self-end">{aside}</aside>
       </div>

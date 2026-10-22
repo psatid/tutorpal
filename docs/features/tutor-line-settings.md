@@ -12,7 +12,8 @@ Integrations, separate from Account settings and social sign-in.
 - The side rail links directly to `/integrations`; Account remains available in
   the user menu.
 - `/integrations` groups LINE under Messaging and lists Zoom and Google Meet as
-  coming soon under Online classes.
+  coming soon under Online classes. Each provider card places its status badge
+  beside the provider title.
 - `/integrations/line` lets a tutor save and verify their Messaging API token and
   LINE Login credentials, connect their own LINE account for test messages,
   and send a private test message.
@@ -22,13 +23,15 @@ Integrations, separate from Account settings and social sign-in.
 - The LINE connection screen uses the shared integration configuration
   layout inside the standard authenticated screen gutter: an Integrations
   breadcrumb, a Supported badge, a main setup column, and an About panel. The
-  credential form and numbered setup steps share one card. Step 2 enables the
+  credential form and numbered setup steps share one card. The form expands
+  beside the About panel on wide screens, with its heading, fields, and action
+  aligned after the Step 1 number. Step 2 enables the
   test-recipient authorization after credentials are configured; Step 3
   enables the test-message action after the recipient is connected. The token
   has a visibility control, and the channel ID and secret sit side by side
   from `sm`. The connected summary shows supported account metadata and the
   test-message action. Credential editing starts with blank fields, setup
-  errors remain inline, and the privacy note follows below the columns.
+  errors remain inline, and the privacy note sits beneath the About panel.
 - LINE, Zoom, and Google Meet provider marks are bundled locally from
   [theSVG](https://github.com/GLINCKER/thesvg), with no runtime icon request.
 - Language selection remains in the authenticated top bar and log out remains
