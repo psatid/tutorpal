@@ -45,10 +45,7 @@ import {
 import { cn } from "@/lib/utils";
 import { RecurringSchedulePattern } from "@/models/recurring-schedule";
 import { Schedule } from "@/models/schedule";
-import {
-  type ScheduleFormData,
-  createScheduleSchema,
-} from "@/types/schedule";
+import { type ScheduleFormData, createScheduleSchema } from "@/types/schedule";
 
 export type { DrawerMode } from "@/components/common/responsive-drawer";
 
@@ -100,7 +97,7 @@ export function ScheduleDrawer({
     setValue,
   } = useForm<ScheduleFormData>({
     resolver: zodResolver(createScheduleSchema(t)),
-	defaultValues: Schedule.getFormDefaults(selectedDateValue, initialTime),
+    defaultValues: Schedule.getFormDefaults(selectedDateValue, initialTime),
   });
   const classIdValue = useWatch({ control, name: "classId" });
   const recurring = useWatch({ control, name: "recurring" });
@@ -146,7 +143,7 @@ export function ScheduleDrawer({
 
   useEffect(() => {
     if (!isOpen || mode === "create") {
-		reset(Schedule.getFormDefaults(selectedDateValue, initialTime));
+      reset(Schedule.getFormDefaults(selectedDateValue, initialTime));
       if (!isOpen) {
         setIsClassDrawerOpen(false);
         setIsNoShowDialogOpen(false);
@@ -155,13 +152,13 @@ export function ScheduleDrawer({
     }
 
     if (scheduleData) {
-		reset(scheduleData.getFormValues());
+      reset(scheduleData.getFormValues());
     }
   }, [initialTime, isOpen, mode, reset, scheduleData, selectedDateValue]);
 
   const createMutation = useCreateSchedule({
     onSuccess: () => {
-		reset(Schedule.getFormDefaults(selectedDateValue, initialTime));
+      reset(Schedule.getFormDefaults(selectedDateValue, initialTime));
       onOpenChange(false);
       onCreateSuccess?.();
     },
@@ -177,24 +174,25 @@ export function ScheduleDrawer({
   const restoreMutation = useRestoreHours();
 
   const onSubmit = (data: ScheduleFormData) => {
-	if (isCreateSubmissionBlocked) {
+    if (isCreateSubmissionBlocked) {
       return;
     }
 
     if (mode === "create") {
-		const command = Schedule.toCreateCommand(data);
-		if (command) createMutation.mutate(command);
+      const command = Schedule.toCreateCommand(data);
+      if (command) createMutation.mutate(command);
     } else if (mode === "edit" && scheduleId) {
-		const command = Schedule.toUpdateCommand(data);
-		if (command) updateMutation.mutate({ id: scheduleId, data: command });
+      const command = Schedule.toUpdateCommand(data);
+      if (command) updateMutation.mutate({ id: scheduleId, data: command });
     }
   };
 
   const focusFirstOverlappingRecurringTime = () => {
     const scheduleItems = getValues("recurring.scheduleItems") ?? [];
-	const firstOverlappingIndex = RecurringSchedulePattern.fromFormItems(
-		scheduleItems,
-	).getFirstOverlappingItemIndexByTime();
+    const firstOverlappingIndex =
+      RecurringSchedulePattern.fromFormItems(
+        scheduleItems,
+      ).getFirstOverlappingItemIndexByTime();
 
     if (firstOverlappingIndex !== undefined) {
       setFocus(`recurring.scheduleItems.${firstOverlappingIndex}.time`);
@@ -239,9 +237,9 @@ export function ScheduleDrawer({
 
   const isScheduleActionPending =
     completeMutation.isPending || restoreMutation.isPending;
-	const noShowNote = scheduleData?.getNoShowNote()?.trim();
+  const noShowNote = scheduleData?.getNoShowNote()?.trim();
   const scheduleStatus = scheduleData
-		? statusColors[scheduleData.getStatus()]
+    ? statusColors[scheduleData.getStatus()]
     : undefined;
   const ScheduleStatusIcon = scheduleStatus?.icon;
 
@@ -249,12 +247,12 @@ export function ScheduleDrawer({
     if (!scheduleData || isScheduleActionPending) return;
 
     const hoursToDeduct = DateTime.formatDurationHours(
-		scheduleData.getDurationHours(),
+      scheduleData.getDurationHours(),
     );
     toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
       action: {
         label: t("schedules:complete.confirmButton"),
-			onClick: () => completeMutation.mutate(scheduleData.getId()),
+        onClick: () => completeMutation.mutate(scheduleData.getId()),
       },
       cancel: {
         label: t("schedules:complete.cancelButton"),
@@ -267,12 +265,12 @@ export function ScheduleDrawer({
     if (!scheduleData || isScheduleActionPending) return;
 
     const hoursToRestore = DateTime.formatDurationHours(
-		scheduleData.getDurationHours(),
+      scheduleData.getDurationHours(),
     );
     toast(t("schedules:restore.confirm", { hours: hoursToRestore }), {
       action: {
         label: t("schedules:restore.confirmButton"),
-			onClick: () => restoreMutation.mutate(scheduleData.getId()),
+        onClick: () => restoreMutation.mutate(scheduleData.getId()),
       },
       cancel: {
         label: t("schedules:restore.cancelButton"),
@@ -288,7 +286,7 @@ export function ScheduleDrawer({
         className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
         role="group"
       >
-		{scheduleData.canComplete() ? (
+        {scheduleData.canComplete() ? (
           <>
             <Button
               disabled={isScheduleActionPending}
@@ -312,7 +310,7 @@ export function ScheduleDrawer({
             </Button>
           </>
         ) : null}
-		{scheduleData.canRestore() && (
+        {scheduleData.canRestore() && (
           <Button
             disabled={isScheduleActionPending}
             loading={restoreMutation.isPending}
@@ -374,9 +372,13 @@ export function ScheduleDrawer({
           {mode === "view" && scheduleData && scheduleStatus ? (
             <Badge variant={scheduleStatus.badgeVariant}>
               {ScheduleStatusIcon ? (
-                <HugeiconsIcon aria-hidden="true" icon={ScheduleStatusIcon} strokeWidth={2} />
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  icon={ScheduleStatusIcon}
+                  strokeWidth={2}
+                />
               ) : null}
-			{t(`schedules:status.${scheduleData.getStatus()}`)}
+              {t(`schedules:status.${scheduleData.getStatus()}`)}
             </Badge>
           ) : null}
 
@@ -442,12 +444,16 @@ export function ScheduleDrawer({
               role={hasSelectedClassAvailabilityError ? "alert" : "status"}
             >
               {isSelectedClassAvailabilityLoading ? (
-                <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2}
+                <HugeiconsIcon
+                  icon={Loader2HugeIcon}
+                  strokeWidth={2}
                   aria-hidden="true"
                   className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground"
                 />
               ) : (
-                <HugeiconsIcon icon={CircleAlertHugeIcon} strokeWidth={2}
+                <HugeiconsIcon
+                  icon={CircleAlertHugeIcon}
+                  strokeWidth={2}
                   aria-hidden="true"
                   className={cn(
                     "mt-0.5 size-4 shrink-0",
@@ -485,7 +491,9 @@ export function ScheduleDrawer({
                   : "border-border bg-muted/50",
               )}
             >
-              <HugeiconsIcon icon={CircleAlertHugeIcon} strokeWidth={2}
+              <HugeiconsIcon
+                icon={CircleAlertHugeIcon}
+                strokeWidth={2}
                 aria-hidden="true"
                 className={cn(
                   "mt-0.5 size-4 shrink-0",
@@ -626,7 +634,7 @@ export function ScheduleDrawer({
                     aria-describedby={describedBy}
                     aria-errormessage={fieldState.error ? errorId : undefined}
                     aria-invalid={!!fieldState.error}
-                    className="min-h-24 w-full min-w-0 resize-y rounded-md border border-input bg-card px-3 py-2 text-base text-card-foreground transition-colors outline-none placeholder:text-muted-foreground hover:border-input-hover focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 md:text-sm"
+                    className="min-h-24 w-full min-w-0 resize-y rounded-md border border-input bg-card px-3 py-2 text-base text-card-foreground transition-colors outline-none placeholder:text-placeholder-foreground hover:border-input-hover focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 md:text-sm"
                     disabled={isDisabled}
                     id="schedule-notes"
                     placeholder={t("schedules:drawer.notes.placeholder")}

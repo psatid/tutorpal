@@ -36,10 +36,7 @@ import { useInfiniteAwaitingConfirmationSchedules } from "@/hooks/queries/use-in
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useClasses } from "@/hooks/queries/use-classes";
 import { DateTime } from "@/lib/date-time";
-import {
-  formatDuration,
-  statusColors,
-} from "@/lib/schedule-utils";
+import { formatDuration, statusColors } from "@/lib/schedule-utils";
 import { Schedule } from "@/models/schedule";
 import { cn } from "@/lib/utils";
 
@@ -76,15 +73,12 @@ function getScheduledSummary(
   }
 
   for (const schedule of schedules) {
-    if (
-		!schedule.isScheduled() ||
-		resolvedScheduleIds.has(schedule.getId())
-    ) {
+    if (!schedule.isScheduled() || resolvedScheduleIds.has(schedule.getId())) {
       continue;
     }
 
     summary.count += 1;
-		summary.plannedMinutes += schedule.getDurationMinutes();
+    summary.plannedMinutes += schedule.getDurationMinutes();
   }
 
   return summary;
@@ -122,14 +116,13 @@ export function DashboardScreen() {
   const [resolvedScheduleIds, setResolvedScheduleIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const [noShowSchedule, setNoShowSchedule] =
-		useState<Schedule | null>(null);
+  const [noShowSchedule, setNoShowSchedule] = useState<Schedule | null>(null);
   const [homeAnnouncement, setHomeAnnouncement] = useState("");
   const scheduledSummary = getScheduledSummary(schedules, resolvedScheduleIds);
   const awaitingConfirmationSchedules =
     awaitingConfirmationQuery.data?.pages
       .flatMap((page) => page.schedules)
-		.filter((schedule) => !resolvedScheduleIds.has(schedule.getId())) ?? [];
+      .filter((schedule) => !resolvedScheduleIds.has(schedule.getId())) ?? [];
   const isMutationPending = completeMutation.isPending;
   const isAwaitingConfirmation = confirmationLock !== null;
   const isConfirmationBusy = isMutationPending || isAwaitingConfirmation;
@@ -163,8 +156,8 @@ export function DashboardScreen() {
     const nextResolvedIds = new Set(resolvedScheduleIdsRef.current);
 
     for (const schedule of schedules) {
-		if (!schedule.isScheduled()) {
-			nextResolvedIds.delete(schedule.getId());
+      if (!schedule.isScheduled()) {
+        nextResolvedIds.delete(schedule.getId());
       }
     }
 
@@ -219,30 +212,30 @@ export function DashboardScreen() {
 
   const queueConfirmationSuccessFocus = (scheduleId: string) => {
     const scheduleIndex = awaitingConfirmationSchedules.findIndex(
-		(schedule) => schedule.getId() === scheduleId,
+      (schedule) => schedule.getId() === scheduleId,
     );
     const neighboringSchedule =
       scheduleIndex >= 0
         ? (awaitingConfirmationSchedules[scheduleIndex + 1] ??
           awaitingConfirmationSchedules[scheduleIndex - 1])
         : awaitingConfirmationSchedules.find(
-			(schedule) => schedule.getId() !== scheduleId,
+            (schedule) => schedule.getId() !== scheduleId,
           );
 
     setConfirmationFocusTarget({
-		completeActionScheduleId: neighboringSchedule?.getId() ?? null,
+      completeActionScheduleId: neighboringSchedule?.getId() ?? null,
     });
   };
 
-	const handleCompleteSchedule = (schedule: Schedule) => {
-		const scheduleId = schedule.getId();
-		const lock = acquireConfirmationLock(scheduleId);
+  const handleCompleteSchedule = (schedule: Schedule) => {
+    const scheduleId = schedule.getId();
+    const lock = acquireConfirmationLock(scheduleId);
     if (!lock) {
       return;
     }
 
     const hoursToDeduct = DateTime.formatDurationHours(
-		schedule.getDurationHours(),
+      schedule.getDurationHours(),
     );
     let wasConfirmed = false;
     let isConfirmationClosed = false;
@@ -262,11 +255,11 @@ export function DashboardScreen() {
           }
 
           wasConfirmed = true;
-			setCompletingScheduleId(scheduleId);
-			completeMutation.mutate(scheduleId, {
+          setCompletingScheduleId(scheduleId);
+          completeMutation.mutate(scheduleId, {
             onSuccess: () => {
-				markScheduleResolved(scheduleId);
-				queueConfirmationSuccessFocus(scheduleId);
+              markScheduleResolved(scheduleId);
+              queueConfirmationSuccessFocus(scheduleId);
             },
             onSettled: () => {
               setCompletingScheduleId(null);
@@ -285,10 +278,10 @@ export function DashboardScreen() {
   };
 
   const handleNoShowSchedule = (
-		schedule: Schedule,
+    schedule: Schedule,
     trigger: HTMLButtonElement,
   ) => {
-		const lock = acquireConfirmationLock(schedule.getId());
+    const lock = acquireConfirmationLock(schedule.getId());
     if (!lock) {
       return;
     }
@@ -310,7 +303,7 @@ export function DashboardScreen() {
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl">
+    <section className="mx-auto w-full max-w-7xl">
       <header className="border-b border-border pb-6 sm:pb-8">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
@@ -320,7 +313,7 @@ export function DashboardScreen() {
               day: "numeric",
             })}
           </p>
-          <h1 className="mt-1 text-4xl font-normal tracking-[-0.025em] text-foreground sm:text-[2.5rem]">
+          <h1 className="mt-1 text-4xl font-normal tracking-tight text-foreground sm:text-[2.5rem]">
             {t("dashboard:today.title")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground sm:text-base">
@@ -430,8 +423,8 @@ export function DashboardScreen() {
           if (!open) closeNoShowDialog();
         }}
         onSuccess={(schedule) => {
-			markScheduleResolved(schedule.getId());
-			queueConfirmationSuccessFocus(schedule.getId());
+          markScheduleResolved(schedule.getId());
+          queueConfirmationSuccessFocus(schedule.getId());
           shouldFocusConfirmationHeadingAfterNoShowSuccessRef.current = true;
         }}
         open={noShowSchedule !== null}
@@ -486,7 +479,7 @@ function GettingStartedChecklist({
   const hasHours = classes.some(
     (classData) => classData.getHoursData().totalHours > 0,
   );
-	const hasSchedule = (schedulesQuery.data?.length ?? 0) > 0;
+  const hasSchedule = (schedulesQuery.data?.length ?? 0) > 0;
   const completedSteps =
     Number(hasClass) + Number(hasHours) + Number(hasSchedule);
   const isLoading =
@@ -1063,17 +1056,18 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
               : isLast
                 ? "top-0 bottom-[calc(100%_-_1.875rem)]"
                 : "inset-y-0";
-		const status = statusColors[schedule.getStatus()] ?? statusColors.SCHEDULED;
+        const status =
+          statusColors[schedule.getStatus()] ?? statusColors.SCHEDULED;
         const StatusIcon = status.icon ?? Clock3HugeIcon;
         const ScheduleTypeIcon =
-			schedule.getType() === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
-		const startTime = schedule.getStartTimeLabel();
-		const endTime = schedule.getEndTimeLabel();
+          schedule.getType() === "ONLINE" ? MonitorHugeIcon : MapPinHugeIcon;
+        const startTime = schedule.getStartTimeLabel();
+        const endTime = schedule.getEndTimeLabel();
 
         return (
           <li
             className="relative grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 px-4 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:px-5"
-			key={schedule.getId()}
+            key={schedule.getId()}
           >
             <span
               aria-hidden="true"
@@ -1107,7 +1101,7 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
             >
               <div className="flex min-w-0 items-center gap-2">
                 <p className="min-w-0 flex-1 truncate font-semibold leading-5 text-foreground">
-					{schedule.getClassName()}
+                  {schedule.getClassName()}
                 </p>
                 <Badge className="shrink-0 gap-1" variant={status.badgeVariant}>
                   <HugeiconsIcon
@@ -1116,7 +1110,7 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                     icon={StatusIcon}
                     strokeWidth={2}
                   />
-					{t(`schedules:status.${schedule.getStatus()}`)}
+                  {t(`schedules:status.${schedule.getStatus()}`)}
                 </Badge>
               </div>
               <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
@@ -1127,11 +1121,11 @@ function TodayAgenda({ schedules }: { schedules: DashboardSchedule[] }) {
                     icon={ScheduleTypeIcon}
                     strokeWidth={2}
                   />
-					{t(`schedules:type.${schedule.getType()}`)}
+                  {t(`schedules:type.${schedule.getType()}`)}
                 </span>
                 <span aria-hidden="true">•</span>
                 <span className="tabular-nums">
-					{formatDuration(schedule.getDurationMinutes(), t)}
+                  {formatDuration(schedule.getDurationMinutes(), t)}
                 </span>
               </p>
             </div>

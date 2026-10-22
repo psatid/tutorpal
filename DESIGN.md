@@ -12,6 +12,7 @@ colors:
   foreground: "#0D253D"
   secondary-foreground: "#273951"
   muted-foreground: "#61718A"
+  placeholder-foreground: "#68788D"
   background: "#F6F9FC"
   card: "#FFFFFF"
   popover: "#FFFFFF"
@@ -130,6 +131,8 @@ components:
   text-input:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
+    placeholderColor: "{colors.placeholder-foreground}"
+    placeholderWeight: 300
     border: "1px solid {colors.input}"
     hover: "border {colors.input-hover}"
     focus: "border {colors.ring} + 3px ring {colors.primary} / 35%"
@@ -240,7 +243,8 @@ control layout; primitives control visual language.
 | `input-hover` | #C4D3E2 | Input hover boundary, drawer grab handle |
 | `foreground` | #0D253D | Primary text (15.6:1 on white) |
 | `secondary-foreground` | #273951 | Supporting text, sidebar text (11.7:1) |
-| `muted-foreground` | #61718A | Metadata, helper, placeholder (5.0:1) |
+| `muted-foreground` | #61718A | Metadata and helper text (5.0:1) |
+| `placeholder-foreground` | #68788D | Input, select, textarea, and time-field placeholders (4.51:1 on white; 4.92:1 on dark card) |
 | `overlay-navy` | #0D253D | Drawer and dialog backdrop at 45% |
 | `inverse` / `inverse-foreground` | #0D253D / #FFFFFF | Dark summary band (class balance); use `inverse-foreground/70` etc. for secondary text and `/20` for dividers |
 | `avatar-neutral` / `-foreground` | #273951 / #FFFFFF | Unknown-student avatar, avatar group count |
@@ -387,9 +391,12 @@ backdrop blur; the jun edge-sidebar blur is explicitly disabled.
 horizontal padding. Text is 16px on mobile (to avoid iOS zoom) and 14px from
 `md`. Hover changes the border to `input-hover`. Focus uses a `ring` border plus
 a 3px indigo ring at 35%. Invalid fields (`aria-invalid`) use a destructive
-border and a 3px destructive ring at 20%. Placeholders use `muted-foreground`.
-A leading icon sits 12px from the left in muted ink, and the input pads to 36px.
-Number inputs hide their spinners and blur on wheel.
+border and a 3px destructive ring at 20%. Placeholders use
+`placeholder-foreground` at `font-light` (300), including Select, textareas,
+and the custom time-field overlay; the token keeps at least 4.5:1 contrast on
+light and dark field surfaces. A leading icon sits 12px from the left in muted
+ink, and the input pads to 36px. Number inputs hide their spinners and blur on
+wheel.
 
 ### Badges
 

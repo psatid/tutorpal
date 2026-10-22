@@ -42,10 +42,7 @@ type AwaitingConfirmationCarouselProps = {
   completingScheduleId: string | null;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onComplete: (schedule: Schedule) => void;
-  onNoShow: (
-    schedule: Schedule,
-    trigger: HTMLButtonElement,
-  ) => void;
+  onNoShow: (schedule: Schedule, trigger: HTMLButtonElement) => void;
   onRetry: () => void;
   onLoadMore: () => Promise<unknown>;
 };
@@ -103,11 +100,7 @@ export function AwaitingConfirmationCarousel({
   }, [isFetchingNextPage, isFetchNextPageError, schedules.length]);
 
   const requestNextPage = () => {
-    if (
-      !hasNextPage ||
-      isFetchingNextPage ||
-      loadMoreRequestRef.current
-    ) {
+    if (!hasNextPage || isFetchingNextPage || loadMoreRequestRef.current) {
       return;
     }
 
@@ -325,8 +318,7 @@ export function AwaitingConfirmationCarousel({
       ) : schedules.length === 0 ? (
         <AwaitingConfirmationEmpty />
       ) : (
-        <ScreenLayoutEdge
-          mobileOnly
+        <div
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
           className={`mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
@@ -353,14 +345,14 @@ export function AwaitingConfirmationCarousel({
           </p>
           <ol className="flex min-w-max gap-3 sm:gap-4">
             {schedules.map((schedule) => (
-                <AwaitingConfirmationCard
-                  completing={completingScheduleId === schedule.getId()}
-                  disabled={isBusy}
-                  key={schedule.getId()}
-                  onComplete={onComplete}
-                  onNoShow={onNoShow}
-                  schedule={schedule}
-                />
+              <AwaitingConfirmationCard
+                completing={completingScheduleId === schedule.getId()}
+                disabled={isBusy}
+                key={schedule.getId()}
+                onComplete={onComplete}
+                onNoShow={onNoShow}
+                schedule={schedule}
+              />
             ))}
             {isFetchingNextPage ? (
               <AwaitingConfirmationLoadingMore
@@ -375,7 +367,7 @@ export function AwaitingConfirmationCarousel({
               />
             ) : null}
           </ol>
-        </ScreenLayoutEdge>
+        </div>
       )}
     </section>
   );
@@ -392,22 +384,19 @@ function AwaitingConfirmationCard({
   disabled: boolean;
   completing: boolean;
   onComplete: (schedule: Schedule) => void;
-  onNoShow: (
-    schedule: Schedule,
-    trigger: HTMLButtonElement,
-  ) => void;
+  onNoShow: (schedule: Schedule, trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation(["dashboard", "schedules"]);
-	const startDate = DateTime.fromDateOnlyString(schedule.getDate());
+  const startDate = DateTime.fromDateOnlyString(schedule.getDate());
   const date = DateTime.formatDate(startDate, {
     weekday: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-	const startTime = schedule.getStartTimeLabel();
-	const endTime = schedule.getEndClockTimeLabel();
-	const { endDate, endDayOffset } = schedule.getEndDateData();
+  const startTime = schedule.getStartTimeLabel();
+  const endTime = schedule.getEndClockTimeLabel();
+  const { endDate, endDayOffset } = schedule.getEndDateData();
   const endDateLabel = DateTime.formatDate(endDate, {
     weekday: "long",
     month: "long",
@@ -425,16 +414,16 @@ function AwaitingConfirmationCard({
   return (
     <li className="w-[17rem] shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72">
       <p className="text-sm font-medium text-muted-foreground">
-		<time dateTime={schedule.getDate()}>{date}</time>
+        <time dateTime={schedule.getDate()}>{date}</time>
       </p>
       <p
         className="mt-3 min-h-10 line-clamp-2 wrap-break-word font-semibold leading-5 text-foreground"
-		title={schedule.getClassName()}
+        title={schedule.getClassName()}
       >
-		{schedule.getClassName()}
+        {schedule.getClassName()}
       </p>
       <p className="mt-2 text-sm font-medium tabular-nums text-foreground">
-		<time dateTime={`${schedule.getDate()}T${startTime}`}>{startTime}</time>
+        <time dateTime={`${schedule.getDate()}T${startTime}`}>{startTime}</time>
         <span aria-hidden="true"> – </span>
         <time
           aria-label={endDayOffset > 0 ? endDateTimeLabel : undefined}
@@ -456,12 +445,12 @@ function AwaitingConfirmationCard({
       <div className="mt-5 grid grid-cols-2 gap-2">
         <Button
           aria-label={t("dashboard:today.awaitingConfirmation.completeAction", {
-			className: schedule.getClassName(),
+            className: schedule.getClassName(),
             date,
             time: timeRange,
           })}
           disabled={disabled}
-		id={getAwaitingConfirmationCompleteActionId(schedule.getId())}
+          id={getAwaitingConfirmationCompleteActionId(schedule.getId())}
           loading={completing}
           onClick={() => onComplete(schedule)}
           type="button"
@@ -470,7 +459,7 @@ function AwaitingConfirmationCard({
         </Button>
         <Button
           aria-label={t("dashboard:today.awaitingConfirmation.noShowAction", {
-			className: schedule.getClassName(),
+            className: schedule.getClassName(),
             date,
             time: timeRange,
           })}
@@ -555,7 +544,12 @@ function AwaitingConfirmationError({
       <p className="text-sm text-muted-foreground" role="alert">
         {description}
       </p>
-      <Button className="mt-4" onClick={onRetry} type="button" variant="outline">
+      <Button
+        className="mt-4"
+        onClick={onRetry}
+        type="button"
+        variant="outline"
+      >
         {retryLabel}
       </Button>
     </div>
@@ -595,7 +589,12 @@ function AwaitingConfirmationLoadMoreError({
       <p className="text-sm text-muted-foreground" role="alert">
         {description}
       </p>
-      <Button className="mt-4" onClick={onRetry} type="button" variant="outline">
+      <Button
+        className="mt-4"
+        onClick={onRetry}
+        type="button"
+        variant="outline"
+      >
         {retryLabel}
       </Button>
     </li>

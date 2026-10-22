@@ -62,7 +62,7 @@ function SelectTrigger({
         aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-active:border-primary 
         data-active:bg-primary/10 data-active:text-primary data-active:[&_svg]:text-primary 
         dark:data-active:border-primary dark:data-active:bg-primary dark:data-active:text-primary-foreground 
-        dark:data-active:[&_svg]:text-primary-foreground data-placeholder:text-muted-foreground 
+        dark:data-active:[&_svg]:text-primary-foreground data-placeholder:text-placeholder-foreground
         data-[size=md]:h-11 data-[size=sm]:h-9 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex 
         *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 hover:border-input-hover
         [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer`,
@@ -230,7 +230,11 @@ function SelectScrollDownButton({
       )}
       {...props}
     >
-      <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} aria-hidden="true" />
+      <HugeiconsIcon
+        icon={ArrowDown01Icon}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
     </SelectPrimitive.ScrollDownArrow>
   );
 }

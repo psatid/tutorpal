@@ -46,3 +46,4 @@ Each application also has a local Makefile with targets suited to that app:
 - [Agent Team Workflow](agent-team-workflow.md)
 - [Feature Implementation History](features/README.md)
 - [Schedule Date Navigation Research](research/schedule-date-navigation.md)
+- [Video Meeting Integration Research](research/video-meeting-integrations.md)

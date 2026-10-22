@@ -21,7 +21,7 @@ export function IntegrationsScreen() {
     (!connection.isError && connection.data === undefined);
 
   return (
-    <section className="mx-auto w-full max-w-[960px] pb-10">
+    <section className="pb-10 mx-auto w-full max-w-7xl">
       <header className="mb-8">
         <h1 className="font-headline text-2xl font-semibold tracking-tight text-foreground">
           {t("integrations:title")}
@@ -31,16 +31,17 @@ export function IntegrationsScreen() {
         </p>
       </header>
 
-      <section aria-labelledby="messaging-integrations-heading" className="mb-8">
+      <section
+        aria-labelledby="messaging-integrations-heading"
+        className="mb-8"
+      >
         <h2
           className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
           id="messaging-integrations-heading"
         >
           {t("integrations:groups.messaging")}
         </h2>
-        <div
-          className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]"
-        >
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]">
           {isConnectionLoading ? (
             <IntegrationCardSkeleton label={t("integrations:loadingLine")} />
           ) : connection.isError ? (
@@ -86,9 +87,7 @@ export function IntegrationsScreen() {
                 <Button
                   className="min-h-11 w-full sm:w-auto"
                   render={<Link to={APP_ROUTES.LINE_INTEGRATION} />}
-                  variant={
-                    connection.data?.configured ? "outline" : "default"
-                  }
+                  variant={connection.data?.configured ? "outline" : "default"}
                 >
                   {connection.data?.configured
                     ? t("integrations:line.manage")
@@ -106,16 +105,17 @@ export function IntegrationsScreen() {
         </div>
       </section>
 
-      <section aria-labelledby="online-class-integrations-heading" className="mb-8">
+      <section
+        aria-labelledby="online-class-integrations-heading"
+        className="mb-8"
+      >
         <h2
           className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
           id="online-class-integrations-heading"
         >
           {t("integrations:groups.onlineClasses")}
         </h2>
-        <div
-          className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]"
-        >
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]">
           <IntegrationCard
             description={t("integrations:zoom.description")}
             name={t("integrations:zoom.name")}
@@ -162,9 +162,7 @@ function IntegrationCard({
   statusLabel?: string;
 }) {
   return (
-    <article
-      className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
-    >
+    <article className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-start gap-4">
         <ProviderMark provider={provider} />
         <div className="min-w-0 flex-1">
@@ -209,7 +207,9 @@ function IntegrationCard({
           ) : null}
         </div>
       </div>
-      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
+      {action ? (
+        <div className="w-full shrink-0 sm:w-auto">{action}</div>
+      ) : null}
     </article>
   );
 }

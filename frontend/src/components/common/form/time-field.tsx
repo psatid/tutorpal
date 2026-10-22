@@ -89,7 +89,7 @@ function TimeField({
         {placeholder && !isFocused && !hasValue ? (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-9 right-3 z-10 flex items-center truncate text-base text-muted-foreground md:text-sm"
+            className="pointer-events-none absolute inset-y-0 left-9 right-3 z-10 flex items-center truncate text-base text-placeholder-foreground md:text-sm"
           >
             {placeholder}
           </span>

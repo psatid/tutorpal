@@ -33,8 +33,8 @@ export type NoShowSchedule = Schedule;
 interface NoShowScheduleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-	schedule: NoShowSchedule | null;
-	onSuccess?: (schedule: NoShowSchedule) => void;
+  schedule: NoShowSchedule | null;
+  onSuccess?: (schedule: NoShowSchedule) => void;
   finalFocus?: ComponentProps<typeof DialogPrimitive.Popup>["finalFocus"];
 }
 
@@ -49,7 +49,7 @@ export function NoShowScheduleDialog({
   const [deductHours, setDeductHours] = useState<boolean | null>(null);
   const [note, setNote] = useState("");
   const deductHoursInputRef = useRef<HTMLInputElement>(null);
-	const scheduleId = schedule?.getId();
+  const scheduleId = schedule?.getId();
   const noShowMutation = useNoShowSchedule({
     onSuccess: () => {
       if (schedule) onSuccess?.(schedule);
@@ -73,16 +73,16 @@ export function NoShowScheduleDialog({
 
   if (!schedule) return null;
 
-	const hours = DateTime.formatDurationHours(schedule.getDurationHours());
-	const startTime = schedule.getStartTimeLabel();
-	const endTime = schedule.getEndClockTimeLabel();
-	const startDate = DateTime.fromDateOnlyString(schedule.getDate());
+  const hours = DateTime.formatDurationHours(schedule.getDurationHours());
+  const startTime = schedule.getStartTimeLabel();
+  const endTime = schedule.getEndClockTimeLabel();
+  const startDate = DateTime.fromDateOnlyString(schedule.getDate());
   const date = DateTime.formatDate(startDate, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
-	const { endDate, endDayOffset } = schedule.getEndDateData();
+  const { endDate, endDayOffset } = schedule.getEndDateData();
   const endDateLabel = DateTime.formatDate(endDate, {
     weekday: "long",
     month: "long",
@@ -115,7 +115,7 @@ export function NoShowScheduleDialog({
     if (deductHours === null || noShowMutation.isPending) return;
 
     noShowMutation.mutate({
-		id: schedule.getId(),
+      id: schedule.getId(),
       deductHours,
       note: note.trim() || undefined,
     });
@@ -156,19 +156,24 @@ export function NoShowScheduleDialog({
               />
             }
           >
-            <HugeiconsIcon icon={XHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
+            <HugeiconsIcon
+              icon={XHugeIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="size-4"
+            />
           </DialogPrimitive.Close>
 
           <div className="rounded-lg border border-border bg-muted px-3 py-3">
             <p className="font-medium wrap-break-word text-foreground">
-				{schedule.getClassName()}
+              {schedule.getClassName()}
             </p>
             <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm text-muted-foreground">
               <dt>{t("noShow.session.date")}</dt>
               <dd className="min-w-0 text-right text-foreground">{date}</dd>
               <dt>{t("noShow.session.time")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-				<time dateTime={`${schedule.getDate()}T${startTime}`}>
+                <time dateTime={`${schedule.getDate()}T${startTime}`}>
                   {startTime}
                 </time>
                 <span aria-hidden="true"> – </span>
@@ -192,7 +197,7 @@ export function NoShowScheduleDialog({
               </dd>
               <dt>{t("noShow.session.duration")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-					{formatDuration(schedule.getDurationMinutes(), t)}
+                {formatDuration(schedule.getDurationMinutes(), t)}
               </dd>
             </dl>
           </div>
@@ -270,7 +275,7 @@ export function NoShowScheduleDialog({
               </p>
               <textarea
                 aria-describedby="no-show-note-description"
-                className="mt-2 min-h-24 w-full resize-y rounded-md border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-input-hover focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+                className="mt-2 min-h-24 w-full resize-y rounded-md border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none transition-colors placeholder:text-placeholder-foreground hover:border-input-hover focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-primary/35 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
                 disabled={noShowMutation.isPending}
                 id="no-show-note"
                 onChange={(event) => setNote(event.target.value)}
@@ -290,7 +295,12 @@ export function NoShowScheduleDialog({
               loading={noShowMutation.isPending}
               type="submit"
             >
-              <HugeiconsIcon icon={CheckHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
+              <HugeiconsIcon
+                icon={CheckHugeIcon}
+                strokeWidth={2}
+                aria-hidden="true"
+                className="size-4"
+              />
               {submitLabel}
             </Button>
           </form>
