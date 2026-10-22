@@ -38,6 +38,9 @@ make end-time eligibility decisions in the browser.
   server time; later requests pass its opaque `nextCursor` so that pagination
   remains stable. Reaching the end of the native horizontal scroll rail loads
   the next page when one exists.
+- Mouse users can drag noninteractive card content to scroll an overflowing
+  rail. Card actions remain clickable; touch, wheel, and keyboard scrolling
+  continue to work independently.
 - The Home screen does not poll for new ended sessions. They appear when the
   normal query lifecycle refetches, such as on a later Home visit.
 

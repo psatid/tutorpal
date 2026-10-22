@@ -1,4 +1,12 @@
-import { type KeyboardEvent, type RefObject, type UIEvent, useRef } from "react";
+import {
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+  type UIEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/common/button";
 import { ScreenLayoutEdge } from "@/components/layout/screen-layout";
@@ -7,7 +15,17 @@ import { DateTime } from "@/lib/date-time";
 import { Schedule } from "@/models/schedule";
 
 const LOAD_MORE_THRESHOLD = 160;
+const MOUSE_DRAG_THRESHOLD = 6;
 const COMPLETE_ACTION_ID_PREFIX = "awaiting-confirmation-complete-action-";
+
+function isDragExcludedTarget(target: EventTarget | null) {
+  return (
+    target instanceof Element &&
+    target.closest(
+      "button, a, input, select, textarea, [contenteditable], [data-no-drag]",
+    ) !== null
+  );
+}
 
 export function getAwaitingConfirmationCompleteActionId(scheduleId: string) {
   return `${COMPLETE_ACTION_ID_PREFIX}${encodeURIComponent(scheduleId)}`;
@@ -51,6 +69,38 @@ export function AwaitingConfirmationCarousel({
   const titleId = "sessions-to-confirm-title";
   const instructionId = "sessions-to-confirm-instruction";
   const loadMoreRequestRef = useRef(false);
+  const mouseDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startScrollLeft: number;
+    isDragging: boolean;
+  } | null>(null);
+  const hoveredScrollportRef = useRef<HTMLDivElement | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [isPointerDragging, setIsPointerDragging] = useState(false);
+
+  useEffect(() => {
+    const updateHoveredOverflow = () => {
+      const scrollport = hoveredScrollportRef.current;
+
+      if (!scrollport?.isConnected) {
+        if (scrollport) {
+          hoveredScrollportRef.current = null;
+          setIsOverflowing(false);
+        }
+
+        return;
+      }
+
+      setIsOverflowing(scrollport.scrollWidth > scrollport.clientWidth);
+    };
+
+    updateHoveredOverflow();
+    window.addEventListener("resize", updateHoveredOverflow);
+
+    return () => window.removeEventListener("resize", updateHoveredOverflow);
+  }, [isFetchingNextPage, isFetchNextPageError, schedules.length]);
 
   const requestNextPage = () => {
     if (
@@ -128,6 +178,116 @@ export function AwaitingConfirmationCarousel({
     }
   };
 
+  const finishMouseDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = mouseDragRef.current;
+
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    mouseDragRef.current = null;
+
+    if (gesture.isDragging) {
+      event.currentTarget.style.removeProperty("scroll-snap-type");
+      setIsPointerDragging(false);
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleMousePointerDown = (
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => {
+    const scrollport = event.currentTarget;
+
+    if (
+      event.pointerType !== "mouse" ||
+      !event.isPrimary ||
+      event.button !== 0 ||
+      isDragExcludedTarget(event.target) ||
+      scrollport.scrollWidth <= scrollport.clientWidth
+    ) {
+      return;
+    }
+
+    mouseDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startScrollLeft: scrollport.scrollLeft,
+      isDragging: false,
+    };
+    scrollport.setPointerCapture(event.pointerId);
+  };
+
+  const handleMousePointerEnter = (
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => {
+    if (event.pointerType !== "mouse") {
+      return;
+    }
+
+    hoveredScrollportRef.current = event.currentTarget;
+    setIsOverflowing(
+      event.currentTarget.scrollWidth > event.currentTarget.clientWidth,
+    );
+  };
+
+  const handleMousePointerLeave = (
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => {
+    if (
+      event.pointerType === "mouse" &&
+      hoveredScrollportRef.current === event.currentTarget
+    ) {
+      hoveredScrollportRef.current = null;
+      setIsOverflowing(false);
+    }
+  };
+
+  const handleMousePointerMove = (
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => {
+    const gesture = mouseDragRef.current;
+
+    if (!gesture) {
+      if (event.pointerType === "mouse") {
+        hoveredScrollportRef.current = event.currentTarget;
+        setIsOverflowing(
+          event.currentTarget.scrollWidth > event.currentTarget.clientWidth,
+        );
+      }
+
+      return;
+    }
+
+    if (gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const horizontalDistance = event.clientX - gesture.startX;
+    const verticalDistance = event.clientY - gesture.startY;
+
+    if (!gesture.isDragging) {
+      if (
+        Math.abs(horizontalDistance) < MOUSE_DRAG_THRESHOLD ||
+        Math.abs(horizontalDistance) <= Math.abs(verticalDistance)
+      ) {
+        return;
+      }
+
+      gesture.isDragging = true;
+      event.currentTarget.style.scrollSnapType = "none";
+      setIsPointerDragging(true);
+    }
+
+    event.preventDefault();
+    event.currentTarget.scrollLeft =
+      gesture.startScrollLeft - horizontalDistance;
+  };
+
   return (
     <section
       aria-busy={isLoading || isFetchingNextPage || isBusy}
@@ -169,8 +329,21 @@ export function AwaitingConfirmationCarousel({
           mobileOnly
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
-          className="mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className={`mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+            isPointerDragging
+              ? "cursor-grabbing"
+              : isOverflowing
+                ? "cursor-grab"
+                : ""
+          }`}
           onKeyDown={handleScrollportKeyDown}
+          onLostPointerCapture={finishMouseDrag}
+          onPointerCancel={finishMouseDrag}
+          onPointerDown={handleMousePointerDown}
+          onPointerEnter={handleMousePointerEnter}
+          onPointerLeave={handleMousePointerLeave}
+          onPointerMove={handleMousePointerMove}
+          onPointerUp={finishMouseDrag}
           onScroll={handleScroll}
           role="group"
           tabIndex={0}
