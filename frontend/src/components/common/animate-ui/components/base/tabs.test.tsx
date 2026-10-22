@@ -13,7 +13,7 @@ vi.mock("framer-motion", async (importOriginal) => {
   };
 });
 
-vi.mock("@/components/ui/animate-ui/primitives/effects/highlight", () => ({
+vi.mock("@/components/common/animate-ui/primitives/effects/highlight", () => ({
   Highlight: ({
     children,
     className,

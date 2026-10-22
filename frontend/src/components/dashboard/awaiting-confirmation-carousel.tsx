@@ -318,7 +318,8 @@ export function AwaitingConfirmationCarousel({
       ) : schedules.length === 0 ? (
         <AwaitingConfirmationEmpty />
       ) : (
-        <div
+        <ScreenLayoutEdge
+          mobileOnly
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
           className={`mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
@@ -367,7 +368,7 @@ export function AwaitingConfirmationCarousel({
               />
             ) : null}
           </ol>
-        </div>
+        </ScreenLayoutEdge>
       )}
     </section>
   );

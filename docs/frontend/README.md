@@ -7,6 +7,12 @@
 - [React Query API Integration](react-query-api-integration.md)
 - [Date-Time Handling](date-time.md)
 
+## Verification
+
+The user frontend build type-checks application code and excludes test files.
+Run `make -C frontend check` from the repository root to type-check both the
+application and tests; run `make -C frontend run SCRIPT=test` to execute Vitest.
+
 ## Marketing site
 
 The public marketing app is separate from the authenticated frontend. See its

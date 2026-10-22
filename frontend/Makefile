@@ -16,7 +16,7 @@ help:
 	@printf '%s\n' \
 		'TutorPal user frontend commands' \
 		'  make dev                              Start Vite development server' \
-		'  make check                            Type-check the app' \
+		'  make check                            Type-check the app and tests' \
 		'  make build                            Type-check and build the app' \
 		'  make build-dev                        Type-check and build with dev settings' \
 		'  make pages-build                      Generate API client and build for Pages' \
@@ -43,6 +43,7 @@ build-dev:
 
 check:
 	$(BUNX) tsc --noEmit
+	$(BUNX) tsc --noEmit --project tsconfig.test.json
 
 pages-build:
 	$(BUN) run build --mode "$(ENV)"
