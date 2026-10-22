@@ -203,7 +203,7 @@ describe("IntegrationsScreen", () => {
       expect(providerMark).toHaveClass("size-12", "shrink-0");
       expect(content).toContainElement(providerMark);
       expect(content).toContainElement(heading);
-      expect(nameRow).toHaveClass("flex", "flex-wrap", "items-start");
+      expect(nameRow).toHaveClass("flex", "flex-wrap", "items-center", "gap-2");
       expect(
         within(card).getByText(
           provider === "LINE"
@@ -211,11 +211,8 @@ describe("IntegrationsScreen", () => {
             : "Create and manage online class meetings.",
         ),
       ).not.toHaveClass("truncate");
-      expect(badge.parentElement).toHaveClass(
-        "ml-auto",
-        "max-[22rem]:basis-full",
-        "max-[22rem]:text-right",
-      );
+      expect(nameRow).toContainElement(badge);
+      expect(badge.parentElement).not.toHaveClass("ml-auto");
     }
 
     const lineCard = await getIntegrationCard("LINE");

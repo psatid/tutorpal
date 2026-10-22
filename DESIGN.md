@@ -448,30 +448,33 @@ with a bottom hairline.
 The Integrations screen uses a centered 960px content column inside the shared
 screen gutter. Provider cards use a neutral 48px mark tile containing the
 bundled [theSVG](https://github.com/GLINCKER/thesvg) LINE, Zoom 2025, or Google
-Meet 2026 mark beside its title and description. Each card has a right-aligned
-text-plus-icon status badge and an optional 44px action. Descriptions wrap
-without clipping in narrow cards; the badge moves to a right-aligned line when
-needed. The LINE
-action sits below the content on narrow screens and trails it from `sm`.
+Meet 2026 mark beside its title and description. Each card has a text-plus-icon
+status badge beside its title and an optional 44px action.
+Titles, badges, and descriptions wrap without clipping in narrow cards. The
+LINE action sits below the content on narrow screens and trails it from `sm`.
 Messaging and Online classes are separate groups. Coming-soon providers remain
 informational and are not focusable.
 
 LINE configuration uses a centered 1040px shell with a neutral 48px provider mark,
 a title, and a neutral Supported badge. The main setup column and About panel
-stack until their container reaches 824px; at that threshold, they use a 520px /
-280px split with a 24px gap.
+stack until their container reaches 824px; at that threshold, the main column
+takes the remaining width beside a fixed 280px About panel with a 24px gap
+(736px / 24px / 280px in the 1040px shell).
 The mobile breadcrumb uses a 44px “All integrations” parent link. The progress
-list lives in the same bordered setup card as the credential form. The form is
-Step 1, followed by divided Step 2 (test recipient) and Step 3 (test message)
-rows. Steps stay muted until their API prerequisites are met. The token field
-has a keyboard-operable visibility button, and the channel ID and secret fields
-sit side by side from `sm`. Connection
+list lives in the same bordered setup card as the credential form. A numbered
+Step 1 rail aligns the heading, token field, channel fields, and action in one
+content column. Only the token field has helper text. Divided Step 2 (test
+recipient) and Step 3 (test message) rows follow the form and stay muted until
+their API prerequisites are met. The token field has a keyboard-operable
+visibility button, and the channel ID and secret fields sit side by side from
+`sm`. Connection
 state comes from `configured` and `testRecipientConnected`, not a local status
 label. The connected summary shows only the account name, Basic ID, verification
 time, and test-message action. Account details use semantic label/value rows;
 credential edit fields start blank because saved secrets are never read back.
 The About panel explains supported capabilities, setup requirements, and the
-LINE Developers Console. The credential privacy note follows below the columns.
+LINE Developers Console. The credential privacy note sits beneath the About
+panel.
 
 Breadcrumbs use a semantic navigation landmark with an ordered trail. Ancestors
 are router links that underline on hover; the current page is medium weight and

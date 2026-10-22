@@ -266,11 +266,11 @@ export function LineSettingsScreen({
       badgeLabel={t("lineConfiguration.supported")}
       description={t("lineConfiguration.description")}
       providerMark={<img alt="" className="size-8" src="/icons/line/default.svg" />}
-      aside={<LineAboutPanel connection={visibleConnection} testRecipientConnected={testRecipientConnected} />}
-      footer={
-        <p className="mt-6 max-w-[32.5rem] text-xs leading-5 text-muted-foreground">
-          {t("privacyNote")}
-        </p>
+      aside={
+        <div className="space-y-6">
+          <LineAboutPanel connection={visibleConnection} testRecipientConnected={testRecipientConnected} />
+          <p className="text-xs leading-5 text-muted-foreground">{t("privacyNote")}</p>
+        </div>
       }
     >
       {mainContent}
@@ -468,142 +468,139 @@ function CredentialsForm({
         <li className="min-w-0">
           <form aria-busy={isSaving || undefined} onSubmit={onSubmit}>
             <div className="flex min-w-0 gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-                <HugeiconsIcon
-                  aria-hidden="true"
-                  className="size-5"
-                  icon={KeyRoundHugeIcon}
-                  strokeWidth={2}
-                />
+              <span
+                aria-hidden="true"
+                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+              >
+                1
               </span>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
-                  {t("lineConfiguration.setupProgress.step", { number: 1 })}
-                </p>
+              <div className="min-w-0 flex-1">
                 <h2
                   ref={contentHeadingRef}
                   tabIndex={-1}
-                  className="mt-1 rounded-sm font-medium text-foreground focus:outline-none focus:ring-[3px] focus:ring-primary/35 focus:ring-offset-2"
+                  className="rounded-sm font-medium text-foreground focus:outline-none focus:ring-[3px] focus:ring-primary/35 focus:ring-offset-2"
                 >
+                  <span className="sr-only">
+                    {t("lineConfiguration.setupProgress.step", { number: 1 })}: {" "}
+                  </span>
                   {editing
                     ? t("lineConfiguration.credentials.editTitle")
                     : t("lineConfiguration.credentials.connectTitle")}
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">
                   {t("lineConfiguration.credentials.description")}
                 </p>
-              </div>
-            </div>
 
-            <ActionFeedback message={actionError} />
+                <ActionFeedback message={actionError} />
 
-            <div className="mt-6 space-y-5">
-              <div className="space-y-2">
-                <CredentialFieldLabel
-                  htmlFor="line-access-token"
-                  label={t("lineConfiguration.credentials.accessToken")}
-                />
-                <Input
-                  ref={accessTokenRef}
-                  id="line-access-token"
-                  type={showAccessToken ? "text" : "password"}
-                  autoComplete="off"
-                  aria-describedby="line-access-token-help"
-                  disabled={isSaving}
-                  required
-                  value={credentials.messagingAccessToken}
-                  onChange={(event) => updateCredential("messagingAccessToken", event.target.value)}
-                  rightAdornment={
-                    <button
-                      aria-label={accessTokenToggleLabel}
-                      aria-pressed={showAccessToken}
-                      className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50"
+                <div className="mt-5 space-y-4">
+                  <div className="space-y-2">
+                    <CredentialFieldLabel
+                      htmlFor="line-access-token"
+                      label={t("lineConfiguration.credentials.accessToken")}
+                    />
+                    <Input
+                      ref={accessTokenRef}
+                      id="line-access-token"
+                      type={showAccessToken ? "text" : "password"}
+                      autoComplete="off"
+                      aria-describedby="line-access-token-help"
                       disabled={isSaving}
-                      onClick={() => setShowAccessToken((visible) => !visible)}
-                      title={accessTokenToggleLabel}
-                      type="button"
-                    >
-                      <HugeiconsIcon
-                        aria-hidden="true"
-                        className="size-4"
-                        icon={AccessTokenToggleIcon}
-                        strokeWidth={2}
+                      placeholder={t("lineConfiguration.credentials.accessTokenPlaceholder")}
+                      required
+                      value={credentials.messagingAccessToken}
+                      onChange={(event) => updateCredential("messagingAccessToken", event.target.value)}
+                      rightAdornment={
+                        <button
+                          aria-label={accessTokenToggleLabel}
+                          aria-pressed={showAccessToken}
+                          className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50"
+                          disabled={isSaving}
+                          onClick={() => setShowAccessToken((visible) => !visible)}
+                          title={accessTokenToggleLabel}
+                          type="button"
+                        >
+                          <HugeiconsIcon
+                            aria-hidden="true"
+                            className="size-4"
+                            icon={AccessTokenToggleIcon}
+                            strokeWidth={2}
+                          />
+                        </button>
+                      }
+                    />
+                    <p id="line-access-token-help" className="text-sm leading-5 text-muted-foreground">
+                      {t("lineConfiguration.credentials.accessTokenHelp")}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <CredentialFieldLabel
+                        htmlFor="line-login-channel-id"
+                        label={t("lineConfiguration.credentials.loginChannelId")}
                       />
-                    </button>
-                  }
-                />
-                <p id="line-access-token-help" className="text-sm leading-6 text-muted-foreground">
-                  {t("lineConfiguration.credentials.accessTokenHelp")}
-                </p>
-              </div>
+                      <Input
+                        id="line-login-channel-id"
+                        autoComplete="off"
+                        disabled={isSaving}
+                        placeholder={t("lineConfiguration.credentials.loginChannelIdPlaceholder")}
+                        required
+                        value={credentials.loginChannelId}
+                        onChange={(event) => updateCredential("loginChannelId", event.target.value)}
+                      />
+                    </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <CredentialFieldLabel
-                    htmlFor="line-login-channel-id"
-                    label={t("lineConfiguration.credentials.loginChannelId")}
-                  />
-                  <Input
-                    id="line-login-channel-id"
-                    autoComplete="off"
-                    aria-describedby="line-login-channel-id-help"
-                    disabled={isSaving}
-                    required
-                    value={credentials.loginChannelId}
-                    onChange={(event) => updateCredential("loginChannelId", event.target.value)}
-                  />
-                  <p id="line-login-channel-id-help" className="text-sm leading-6 text-muted-foreground">
-                    {t("lineConfiguration.credentials.loginChannelIdHelp")}
-                  </p>
+                    <div className="space-y-2">
+                      <CredentialFieldLabel
+                        htmlFor="line-login-channel-secret"
+                        label={t("lineConfiguration.credentials.loginChannelSecret")}
+                      />
+                      <Input
+                        id="line-login-channel-secret"
+                        type="password"
+                        autoComplete="off"
+                        disabled={isSaving}
+                        required
+                        value={credentials.loginChannelSecret}
+                        onChange={(event) => updateCredential("loginChannelSecret", event.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <CredentialFieldLabel
-                    htmlFor="line-login-channel-secret"
-                    label={t("lineConfiguration.credentials.loginChannelSecret")}
-                  />
-                  <Input
-                    id="line-login-channel-secret"
-                    type="password"
-                    autoComplete="off"
-                    aria-describedby="line-login-channel-secret-help"
-                    disabled={isSaving}
-                    required
-                    value={credentials.loginChannelSecret}
-                    onChange={(event) => updateCredential("loginChannelSecret", event.target.value)}
-                  />
-                  <p id="line-login-channel-secret-help" className="text-sm leading-6 text-muted-foreground">
-                    {t("lineConfiguration.credentials.loginChannelSecretHelp")}
-                  </p>
+                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-start">
+                  <Button className="w-full sm:w-auto" loading={isSaving} type="submit">
+                    {t("lineConfiguration.credentials.save")}
+                  </Button>
+                  {editing ? (
+                    <Button
+                      className="w-full sm:w-auto"
+                      disabled={isSaving}
+                      onClick={onCancel}
+                      type="button"
+                      variant="ghost"
+                    >
+                      {t("lineConfiguration.actions.cancel")}
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </div>
-
-            <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:justify-start">
-              <Button className="w-full sm:w-auto" loading={isSaving} type="submit">
-                {t("lineConfiguration.credentials.save")}
-              </Button>
-              {editing ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  disabled={isSaving}
-                  onClick={onCancel}
-                  type="button"
-                  variant="ghost"
-                >
-                  {t("lineConfiguration.actions.cancel")}
-                </Button>
-              ) : null}
-            </div>
-
           </form>
         </li>
         <SetupProgressStep
+          compact
+          className="mt-5"
+          hideUpcomingStatus
           label={t("lineConfiguration.setupProgress.steps.testRecipient")}
           number={2}
           status="upcoming"
         />
         <SetupProgressStep
+          compact
+          className="mt-3"
+          hideUpcomingStatus
           label={t("lineConfiguration.setupProgress.steps.testMessage")}
           number={3}
           status="upcoming"
@@ -619,9 +616,6 @@ function CredentialFieldLabel({ htmlFor, label }: { htmlFor: string; label: stri
   return (
     <Label htmlFor={htmlFor}>
       {label}
-      <span aria-hidden="true" className="ml-1 text-destructive">
-        *
-      </span>
       <span className="sr-only"> {t("lineConfiguration.credentials.required")}</span>
     </Label>
   );
@@ -711,11 +705,17 @@ function LineSetupProgress({
 
 function SetupProgressStep({
   action,
+  className,
+  compact = false,
+  hideUpcomingStatus = false,
   label,
   number,
   status,
 }: {
   action?: ReactNode;
+  className?: string;
+  compact?: boolean;
+  hideUpcomingStatus?: boolean;
   label: string;
   number: number;
   status: SetupStepStatus;
@@ -731,7 +731,9 @@ function SetupProgressStep({
           : t("lineConfiguration.setupProgress.status.upcoming");
 
   return (
-    <li className="flex min-w-0 gap-2 border-t border-border pt-3 first:border-t-0 first:pt-0">
+    <li
+      className={`flex min-w-0 gap-2 border-t border-border pt-3 ${compact ? "" : "first:border-t-0 first:pt-0"} ${className ?? ""}`}
+    >
       {status === "complete" ? (
         <HugeiconsIcon
           aria-hidden="true"
@@ -752,7 +754,11 @@ function SetupProgressStep({
           <span className="sr-only">{t("lineConfiguration.setupProgress.step", { number })}:</span>{" "}
           {label}
         </p>
-        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{statusLabel}</p>
+        {hideUpcomingStatus && status === "upcoming" ? (
+          <span className="sr-only">{statusLabel}</span>
+        ) : (
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{statusLabel}</p>
+        )}
         {action ? <div className="mt-3">{action}</div> : null}
       </div>
     </li>
@@ -792,23 +798,41 @@ function LineSettingsSkeleton() {
   const { t } = useTranslation("integrations");
 
   return (
-    <div className="space-y-5" role="status" aria-label={t("lineConfiguration.loading")}>
-      <div className="rounded-lg border border-border bg-card p-5">
-        <Skeleton className="h-5 w-28" />
-        <Skeleton className="mt-4 h-7 w-48" />
-        <Skeleton className="mt-2 h-4 w-36" />
-        <Skeleton className="mt-5 h-px w-full" />
-        <Skeleton className="mt-5 h-20 w-full" />
-      </div>
+    <div role="status" aria-label={t("lineConfiguration.loading")}>
       <div className="rounded-lg border border-border bg-card p-5">
         <div className="flex min-w-0 gap-3">
-          <Skeleton className="size-10 shrink-0 rounded-full" />
+          <Skeleton className="size-6 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
             <Skeleton className="h-5 w-36" />
-            <Skeleton className="mt-2 h-4 w-full" />
+            <Skeleton className="mt-2 h-4 w-full max-w-md" />
+            <div className="mt-5 space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-52" />
+                <Skeleton className="h-11 w-full" />
+                <Skeleton className="h-4 w-full max-w-md" />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-11 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-11 w-full" />
+                </div>
+              </div>
+            </div>
+            <Skeleton className="mt-5 h-11 w-full sm:w-40" />
           </div>
         </div>
-        <Skeleton className="mt-5 h-11 w-full sm:w-40" />
+        <div className="mt-5 flex gap-2 border-t border-border pt-3">
+          <Skeleton className="size-5 shrink-0 rounded-full" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <div className="mt-3 flex gap-2 border-t border-border pt-3">
+          <Skeleton className="size-5 shrink-0 rounded-full" />
+          <Skeleton className="h-4 w-36" />
+        </div>
       </div>
     </div>
   );

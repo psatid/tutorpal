@@ -82,7 +82,7 @@ describe("IntegrationConfigLayout", () => {
       renderLayout(contentWidth);
 
       const { aside, contentGrid, layout } = getLayoutElements();
-      const gridColumnsClass = "@[824px]:grid-cols-[minmax(0,32.5rem)_minmax(0,1fr)]";
+      const gridColumnsClass = "@[824px]:grid-cols-[minmax(0,1fr)_17.5rem]";
 
       expect(layout).toHaveClass("@container", "w-full", "max-w-[1040px]");
       expect(contentGrid).toHaveClass("grid", "min-w-0", "gap-6", gridColumnsClass);
