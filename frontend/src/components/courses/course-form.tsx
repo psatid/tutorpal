@@ -7,6 +7,10 @@ import {
 } from "@/components/common/field";
 import { RHFInputField } from "@/components/common/form/rhf";
 import {
+	RadioGroup,
+	RadioGroupItem,
+} from "@/components/common/radio-group";
+import {
 	useCreateCourse,
 	useUpdateCourse,
 } from "@/hooks/mutations/use-courses";
@@ -119,23 +123,19 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
 						<FieldLegend>
 							{t("courses:form.priceTypeLegend")}
 						</FieldLegend>
-						<div className="grid gap-3">
+						<RadioGroup
+							inputRef={field.ref}
+							name={field.name}
+							onBlur={field.onBlur}
+							onValueChange={field.onChange}
+							value={field.value}
+						>
 							{COURSE_PRICING_MODES.map((mode) => (
 								<label
-									className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-input px-3 py-3 transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50 ${
-										field.value === mode
-											? "border-primary bg-primary/5"
-											: ""
-									}`}
+									className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-input px-3 py-3 transition-colors motion-reduce:transition-none has-data-checked:border-primary has-data-checked:bg-primary/5 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50"
 									key={mode}
 								>
-									<input
-										checked={field.value === mode}
-										name="course-pricing-mode"
-										onChange={() => field.onChange(mode)}
-										type="radio"
-										value={mode}
-									/>
+									<RadioGroupItem value={mode} />
 									<span className="space-y-1">
 										<span className="block text-sm font-medium text-foreground">
 											{t(
@@ -150,7 +150,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
 									</span>
 								</label>
 							))}
-						</div>
+						</RadioGroup>
 					</FieldSet>
 				)}
 			/>

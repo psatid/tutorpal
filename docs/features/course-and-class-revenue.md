@@ -38,6 +38,9 @@ ledger, so later course-price changes do not change historical revenue.
 
 - Courses remain in the existing workspace, with course names linking to the
   new `/courses/$courseId` detail route.
+- The course drawer uses the shared radio group for its two pricing choices;
+  the full choice card is clickable, and keyboard selection updates the price
+  field and revenue preview.
 - Course detail shows pricing, default hours, recorded hours, and revenue made.
 - Class detail shows recorded revenue in the existing balance panel and revenue
   beside each immutable hour-addition history row.
