@@ -89,7 +89,7 @@ void i18n
       order: ["localStorage", "navigator"],
       lookupLocalStorage: LANGUAGE_PREFERENCE_KEY,
       caches: [],
-      convertDetectedLanguage: (language) =>
+      convertDetectedLanguage: (language: string) =>
         normalizeLanguage(language) ?? language,
     },
     interpolation: {
