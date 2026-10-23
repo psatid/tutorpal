@@ -1,7 +1,7 @@
 # Backend Model Conventions
 
 TutorPal keeps the current backend layering by folder: `routes`, `services`,
-`repositories`, `schemas`, and `types`. Models live under `backend/src/models`
+`repositories`, `schemas`, and `types`. Models live under `apps/backend/src/models`
 and provide the internal representation used inside the backend application.
 
 ## Flow
@@ -17,7 +17,7 @@ and provide the internal representation used inside the backend application.
 - DTOs remain API-facing response shapes. Models are the internal application
   shape.
 - DTO date/time serialization should use `DateTime` from
-  `backend/src/lib/date-time.ts`.
+  `apps/backend/src/lib/date-time.ts`.
 
 For student data, use `Student.fromStudentPrisma(...)` when converting
 persistence records and `student.toStudentDTO()` or

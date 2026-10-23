@@ -65,8 +65,7 @@ migration with an actionable failure instead of being silently merged.
 Run the migration before enabling provider credentials in production:
 
 ```sh
-cd backend
-make db-migrate-deploy-production
+make -C apps/backend db-migrate-deploy-production
 ```
 
 Resolve any reported duplicate provider identities manually, then rerun the

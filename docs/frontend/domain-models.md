@@ -1,13 +1,13 @@
 # Frontend Domain Model Conventions
 
 This guide defines the model boundary for the user-facing app in
-`frontend/`. The admin portal is outside this convention for now. For the
+`apps/frontend/`. The admin portal is outside this convention for now. For the
 backend equivalent, see [Backend Model Conventions](../backend/domain-models.md).
 For API and query wiring, see [React Query API Integration](react-query-api-integration.md).
 
 ## Responsibility boundary
 
-Frontend domain models are class-based objects in `frontend/src/models/` that
+Frontend domain models are class-based objects in `apps/frontend/src/models/` that
 hold application-owned data and deterministic behavior. They own entity
 mapping and normalization, business calculations and invariants, status and
 eligibility decisions, domain-relevant state transitions, and derived domain

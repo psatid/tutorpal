@@ -2,7 +2,7 @@
 name: TutorPal
 version: alpha
 description: Stripe-inspired product design for calm, precise tutoring operations
-source: frontend/src/index.css (:root) and frontend/src/components/common
+source: packages/ui/src/styles.css (:root) and packages/ui/src/components
 colors:
   primary: "#533AFD"
   primary-hover: "#4434D4"
@@ -175,8 +175,10 @@ components:
 # Design system: TutorPal
 
 > This document describes what the code ships. Token values come from
-> `frontend/src/index.css` (`:root`), and component specs come from
-> `frontend/src/components/common`. When you change a token or a primitive,
+> `packages/ui/src/styles.css` (`:root`), and component specs come from
+> `packages/ui/src/components`. The admin portal keeps its local components and
+> overrides `--accent` to lavender in `apps/admin-frontend/src/index.css`. When you
+> change a token or a primitive,
 > update this file in the same change.
 
 ## Overview

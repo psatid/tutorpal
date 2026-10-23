@@ -136,9 +136,9 @@ remain and records residual validation risks.
 
 ## Baseline validation
 
-- Frontend: run `bun run build` from `frontend/`, then perform targeted browser
+- Frontend: run `bun run build` from `apps/frontend/`, then perform targeted browser
   checks when the changed behavior and available environment require them.
-- Backend: run `bun test` and `bun run check` from `backend/`.
+- Backend: run `bun test` and `bun run check` from `apps/backend/`.
 
 Frontend testers may add minimal test support when repeatable task coverage
 justifies it, but this team setup does not bootstrap a frontend test framework.

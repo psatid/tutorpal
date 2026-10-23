@@ -1,7 +1,7 @@
 # Backend Date-Time Handling
 
 Backend date and time handling should go through `DateTime` in
-`backend/src/lib/date-time.ts`.
+`apps/backend/src/lib/date-time.ts`.
 
 ## Policies
 

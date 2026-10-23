@@ -1,8 +1,9 @@
 # Frontend Date-Time Handling
 
-Frontend date and time handling must go through `DateTime` in
-`frontend/src/lib/date-time.ts`. The utility is built on `date-fns` and mirrors
-the backend boundary: date-only values are distinct from timestamps.
+Tutor application date and time handling must go through `DateTime` in
+`apps/frontend/src/lib/date-time.ts`. The shared UI package has a private locale-aware
+date helper for its calendar and date controls. Both preserve the backend
+boundary: date-only values are distinct from timestamps.
 
 ## Data shapes
 
@@ -55,8 +56,9 @@ native `Date` values, and existing `DateTime` instances.
 
 ## Placement rules
 
-- Import `date-fns` only in `src/lib/date-time.ts`; application code uses the
-  `DateTime` API.
+- Tutor application code imports `date-fns` only in
+  `apps/frontend/src/lib/date-time.ts` and uses the `DateTime` API. Shared UI
+  controls use their private helper in `packages/ui/src/lib/date-time.ts`.
 - Models may expose reusable formatted or derived date data through methods.
   Screens and components keep translated labels and local interaction state.
 - Format outgoing calendar values with `.toDateOnlyString()` rather than

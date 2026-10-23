@@ -1,6 +1,6 @@
 # Marketing asset provenance
 
-The Astro homepage in `marketing-frontend/` uses original semantic HTML/CSS
+The Astro homepage in `apps/marketing-frontend/` uses original semantic HTML/CSS
 product illustrations on a light canvas. The approved Concept A draws on the
 centered headline, generous whitespace, and floating-card composition of
 [ChronoTask](https://dribbble.com/shots/25000009-ChronoTask-Landing-Page), with
@@ -44,7 +44,7 @@ screenshots. Illustrative controls do not impersonate working application action
 ## LINE reminder
 
 The notification uses the real message shape from
-`backend/src/repositories/class-reminder.repository.ts`:
+`apps/backend/src/repositories/class-reminder.repository.ts`:
 
 ```text
 Class reminder
@@ -67,7 +67,7 @@ Reuse the existing TutorPal app icon. The 96px UI/favicon derivative preserves i
 appearance while reducing the asset from 391,358 to 6,878 bytes; organization
 metadata retains the original. Inter and Noto Sans Thai are self-hosted
 from their Fontsource packages, with OFL license copies in
-`marketing-frontend/public/licenses/`. Optional hero entrance/floating motion uses CSS with small script coordination;
+`apps/marketing-frontend/public/licenses/`. Optional hero entrance/floating motion uses CSS with small script coordination;
 static HTML is the default when scripts are disabled, motion is reduced, or
 enhancement setup fails. A bounded landing-only head guard prepares optional
 reveal targets before paint and permanently releases unclaimed preparation after

@@ -75,7 +75,7 @@ polling. Both use Hyperdrive for database access.
 | Resource | Current configuration | Responsibility |
 | --- | --- | --- |
 | DNS zone | <code>tutorpal.io</code> | Authoritative DNS, proxying, and TLS for application hostnames |
-| User portal Pages project | <code>tutorpal-tutor-portal-dev</code> | Static frontend deployment from <code>frontend/dist</code> |
+| User portal Pages project | <code>tutorpal-tutor-portal-dev</code> | Static frontend deployment from <code>apps/frontend/dist</code> |
 | Production marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
 | Production marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
 | Development marketing Worker | <code>tutorpal-marketing-dev</code> | Prerendered Astro marketing pages and public assets |
@@ -123,8 +123,8 @@ Pages custom-domain configuration is managed in the Pages project. See the
 
 The frontend is a static Vite/React SPA:
 
-- Source directory: <code>frontend</code>
-- Build output: <code>frontend/dist</code>
+- Source directory: <code>apps/frontend</code>
+- Build output: <code>apps/frontend/dist</code>
 - API origin: build-time <code>VITE_API_URL</code>
 - Routing: Pages serves <code>index.html</code> for TanStack Router deep links
 - Runtime backend: the Worker at <code>https://dev.api.tutorpal.io</code>
@@ -138,19 +138,29 @@ entrypoint, or Workers Static Assets. A direct upload deployment can be
 performed with:
 
 ~~~bash
-cd frontend
+make workspace-install
+cd apps/frontend
 export VITE_API_URL="https://dev.api.tutorpal.io"
 export VITE_ADMIN_APP_URL="https://dev.admin.tutorpal.io"
-bun run generate:api
 bun run build --mode dev
 bunx wrangler pages deploy dist --project-name tutorpal-tutor-portal-dev
 ~~~
+
+The admin portal follows the same root install, then builds from
+<code>apps/admin-frontend</code> and uploads <code>apps/admin-frontend/dist</code> to
+<code>tutorpal-admin-portal-dev</code>. The root commands
+<code>make deploy-dev APP=tutor-portal</code> and
+<code>make deploy-dev APP=admin-portal</code> perform these builds and uploads.
+Both development Pages projects are direct-upload projects with no Git provider;
+they have no Pages Git build root or build command to configure. Each Vite build
+bundles the local <code>@tutorpal/ui</code> workspace source and styles into its
+own static output.
 
 The API URL is public because it is compiled into the browser bundle. Never
 put a secret in a <code>VITE_*</code> variable.
 
 The admin portal is a separate static Pages application from
-<code>admin-frontend</code>. Locally it runs on <code>http://localhost:5175</code>
+<code>apps/admin-frontend</code>. Locally it runs on <code>http://localhost:5175</code>
 and uses <code>VITE_API_URL</code> plus <code>VITE_USER_APP_URL</code>. Its route
 surface contains only the admin login and one protected User management
 workspace. The frontend checks for an authenticated <code>admin</code> role for
@@ -175,30 +185,30 @@ include both portal origins.
 
 ## Marketing site
 
-The public marketing application lives in <code>marketing-frontend</code>.
+The public marketing application lives in <code>apps/marketing-frontend</code>.
 Astro generates complete English HTML at <code>/</code> and Thai HTML at
 <code>/th/</code>, along with <code>/robots.txt</code>,
 <code>/sitemap.xml</code>, and a static 404 page. Each locale has a self-canonical
 URL and reciprocal language alternates; English is the unprefixed default.
 The canonical origin is <code>https://tutorpal.io</code>.
 
-The Worker serves <code>marketing-frontend/dist</code> as static assets, without
+The Worker serves <code>apps/marketing-frontend/dist</code> as static assets, without
 a request-time Astro runtime or adapter. GSAP and a decorative Three.js light
 field enhance the HTML in the browser. No content or conversion depends on
 WebGL, and reduced-motion and mobile presentations remain in natural flow.
 
 Run <code>make marketing-dev</code> for Astro development with hot reload, and
-<code>make -C marketing-frontend cf-dev</code> to build assets then run the
+<code>make -C apps/marketing-frontend cf-dev</code> to build assets then run the
 development Worker locally through Wrangler. Use
 <code>make marketing-build</code> to check and build. Publish production with
 <code>make deploy APP=marketing-frontend</code> and development with
 <code>make deploy-dev APP=marketing-frontend</code>. The configs are
-<code>marketing-frontend/wrangler/prod/wrangler.marketing.prod.jsonc</code>
+<code>apps/marketing-frontend/wrangler/prod/wrangler.marketing.prod.jsonc</code>
 for <code>tutorpal-marketing</code> at <code>tutorpal.io</code> and
-<code>marketing-frontend/wrangler/dev/wrangler.marketing.dev.jsonc</code> for
+<code>apps/marketing-frontend/wrangler/dev/wrangler.marketing.dev.jsonc</code> for
 <code>tutorpal-marketing-dev</code> at <code>dev.tutorpal.io</code>. Both serve
-<code>marketing-frontend/dist</code> with the static 404-page handler. Build,
-preview, and <code>make -C marketing-frontend cf-check ENV=dev</code> do not
+<code>apps/marketing-frontend/dist</code> with the static 404-page handler. Build,
+preview, and <code>make -C apps/marketing-frontend cf-check ENV=dev</code> do not
 publish or modify the Cloudflare account.
 
 Every primary CTA links to <code>https://app.tutorpal.io</code>. Public signup
@@ -206,7 +216,7 @@ availability is controlled by the separate application. The marketing site has
 no signup logic, beta-interest API, forms, tracking, database, KV, Turnstile,
 Discord integration, or required secrets. Older beta-flow documentation and
 configuration no longer describe this application. See the
-[marketing README](../marketing-frontend/README.md) for commands and configuration.
+[marketing README](../apps/marketing-frontend/README.md) for commands and configuration.
 
 Both static portals intentionally exclude crawlers with both a
 <code>&lt;meta name="robots" content="noindex, nofollow" /&gt;</code> directive and
@@ -232,16 +242,16 @@ frontend build variables <code>VITE_USER_APP_URL</code> and
 ## Backend infrastructure
 
 The development API Worker configuration is
-[backend/wrangler/dev/wrangler.api.dev.jsonc](../backend/wrangler/dev/wrangler.api.dev.jsonc)
+[apps/backend/wrangler/dev/wrangler.api.dev.jsonc](../apps/backend/wrangler/dev/wrangler.api.dev.jsonc)
 and its module entrypoint is
-[backend/src/cloudflare-worker.ts](../backend/src/cloudflare-worker.ts). The
+[apps/backend/src/cloudflare-worker.ts](../apps/backend/src/cloudflare-worker.ts). The
 development reminder Worker configuration is
-[backend/wrangler/dev/wrangler.reminders.dev.jsonc](../backend/wrangler/dev/wrangler.reminders.dev.jsonc)
+[apps/backend/wrangler/dev/wrangler.reminders.dev.jsonc](../apps/backend/wrangler/dev/wrangler.reminders.dev.jsonc)
 and its module entrypoint is
-[backend/src/cloudflare-reminder-worker.ts](../backend/src/cloudflare-reminder-worker.ts).
+[apps/backend/src/cloudflare-reminder-worker.ts](../apps/backend/src/cloudflare-reminder-worker.ts).
 Production uses the matching
-[API](../backend/wrangler/prod/wrangler.api.prod.jsonc) and
-[reminder](../backend/wrangler/prod/wrangler.reminders.prod.jsonc) configs.
+[API](../apps/backend/wrangler/prod/wrangler.api.prod.jsonc) and
+[reminder](../apps/backend/wrangler/prod/wrangler.reminders.prod.jsonc) configs.
 
 The Workers have separate responsibilities:
 
@@ -271,7 +281,7 @@ API Worker second, removing the old API cron after the new schedule is active.
 For independent recovery operations, use
 <code>make deploy-dev APP=backend-reminders</code> or run the explicit backend
 targets <code>make reminders-deploy-dev</code> and <code>make deploy-dev</code>
-from <code>backend</code>. <code>--keep-vars</code> preserves variables and secrets
+from <code>apps/backend</code>. <code>--keep-vars</code> preserves variables and secrets
 managed in the Cloudflare dashboard. Keep deployed configuration and dashboard
 values consistent; binding names and resource IDs must match both Wrangler
 files.
@@ -279,9 +289,9 @@ files.
 Local database setup follows the repository workflow:
 <code>make db-setup</code> starts the Compose Postgres service and applies
 committed migrations. For remote dev migrations, run
-<code>make -C backend db-migrate-deploy-dev</code>; for production, prepare the
-ignored <code>backend/.env.production</code> file and run
-<code>make -C backend db-migrate-deploy-production</code>.
+<code>make -C apps/backend db-migrate-deploy-dev</code>; for production, prepare the
+ignored <code>apps/backend/.env.production</code> file and run
+<code>make -C apps/backend db-migrate-deploy-production</code>.
 
 Backend Worker checks default to <code>dev</code>; deployment environment is
 selected with the root <code>deploy-dev</code> or <code>deploy</code> target.
@@ -294,7 +304,7 @@ production deployment while any of those placeholders remain. Direct Wrangler
 package scripts remain explicit and must not be used for production until the
 placeholders have been replaced. Local Wrangler `.dev.vars` files are resolved
 next to the selected config; use the Git-ignored
-<code>backend/wrangler/dev/.dev.vars</code> for local development secrets.
+<code>apps/backend/wrangler/dev/.dev.vars</code> for local development secrets.
 
 ## Data and integration flows
 
@@ -360,7 +370,7 @@ Cron trigger after cutover.
 ## Runtime configuration contract
 
 The current development Worker values in
-<code>backend/wrangler/dev/wrangler.api.dev.jsonc</code> use these origins:
+<code>apps/backend/wrangler/dev/wrangler.api.dev.jsonc</code> use these origins:
 
 | Variable | Current value |
 | --- | --- |
@@ -436,17 +446,17 @@ The health endpoint should return HTTP <code>200</code> with
 For Worker execution logs, use the Worker Observability view or run:
 
 ~~~bash
-cd backend
+cd apps/backend
 bunx wrangler tail tutorpal-api-dev
 bunx wrangler tail tutorpal-reminders-dev
 ~~~
 
 ## Related references
 
-- [Development API Worker configuration](../backend/wrangler/dev/wrangler.api.dev.jsonc)
-- [Development reminder Worker configuration](../backend/wrangler/dev/wrangler.reminders.dev.jsonc)
-- [Production API Worker configuration](../backend/wrangler/prod/wrangler.api.prod.jsonc)
-- [Production reminder Worker configuration](../backend/wrangler/prod/wrangler.reminders.prod.jsonc)
+- [Development API Worker configuration](../apps/backend/wrangler/dev/wrangler.api.dev.jsonc)
+- [Development reminder Worker configuration](../apps/backend/wrangler/dev/wrangler.reminders.dev.jsonc)
+- [Production API Worker configuration](../apps/backend/wrangler/prod/wrangler.api.prod.jsonc)
+- [Production reminder Worker configuration](../apps/backend/wrangler/prod/wrangler.reminders.prod.jsonc)
 - [Cloudflare Workers Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
 - [Cloudflare Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)
 - [Cloudflare Pages custom domains](https://developers.cloudflare.com/pages/configuration/custom-domains/)

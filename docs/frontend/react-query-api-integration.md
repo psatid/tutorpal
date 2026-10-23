@@ -12,7 +12,7 @@ ownership and behavior are defined in
 > their owning class model.
 
 The admin portal follows the same generated-client boundary. Its Orval
-configuration lives at `admin-frontend/orval.config.ts`, and its ignored client
+configuration lives at `apps/admin-frontend/orval.config.ts`, and its ignored client
 output is regenerated automatically before development and production builds.
 
 ## Goals

@@ -1,0 +1,91 @@
+import { useTranslation } from "react-i18next";
+import { Avatar, AvatarFallback } from "@tutorpal/ui/avatar";
+import { Badge } from "@tutorpal/ui/badge";
+import { Button } from "@tutorpal/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon as ArrowLeftHugeIcon,
+  PencilEdit01Icon as PencilHugeIcon,
+  CallIcon as PhoneHugeIcon,
+  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
+  Alert01Icon as TriangleAlertHugeIcon,
+} from "@hugeicons/core-free-icons";
+import { Student } from "@/models/student";
+import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
+
+interface StudentInfoHeaderProps {
+  studentData: Student;
+  onBack: () => void;
+  onEdit: () => void;
+}
+
+export function StudentInfoHeader({
+  studentData,
+  onBack,
+  onEdit,
+}: StudentInfoHeaderProps) {
+  const { t } = useTranslation(["students"]);
+  const data = studentData.getDetailsHeaderData();
+
+  return (
+    <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="-ml-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/35"
+          aria-label={t("students:studentDetail.back")}
+        >
+          <HugeiconsIcon icon={ArrowLeftHugeIcon} strokeWidth={2} aria-hidden="true" className="w-5 h-5 text-on-surface" />
+        </button>
+
+        <Avatar size="lg">
+          <AvatarFallback className={`${nameToneAvatarClasses[getNameTone(data.name)]} font-semibold`}>
+            {data.initials}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <h1 className="truncate font-headline text-xl font-medium tracking-[-0.01em] text-on-surface">
+            {data.name}
+          </h1>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onEdit}
+          aria-label={t("students:studentDetail.editStudent")}
+        >
+          <HugeiconsIcon icon={PencilHugeIcon} strokeWidth={2} aria-hidden="true" className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <Badge variant="info">
+          {t("students:grade", { grade: data.grade })}
+        </Badge>
+
+        {data.phoneNumber && (
+          <Badge className="gap-1" variant="info">
+            <HugeiconsIcon icon={PhoneHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
+            {data.phoneNumber}
+          </Badge>
+        )}
+
+        {data.isLineLinked && (
+          <Badge className="gap-1" variant="success">
+            <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
+            LINE
+          </Badge>
+        )}
+        {data.needsLineRelink && (
+          <Badge className="gap-1" variant="warning">
+            <HugeiconsIcon icon={TriangleAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="w-3 h-3" />
+            {t("students:line.needsRelink")}
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}

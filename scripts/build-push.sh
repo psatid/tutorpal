@@ -101,7 +101,8 @@ for component in "${COMPONENTS[@]}"; do
     docker buildx build --platform linux/amd64 \
         --build-arg "APP_COMPONENT=${component}" \
         -t "${local_image}:git-${GIT_SHA}" \
-        ./backend --load
+        --load \
+        -f apps/backend/Dockerfile .
     docker tag "${local_image}:git-${GIT_SHA}" "${local_image}:latest"
     print_success "${component} image built successfully"
 done

@@ -61,8 +61,8 @@ Before enabling the Cloudflare reminder Worker:
 
    For production, replace every
    `REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID` and `.invalid` value in
-   `backend/wrangler/prod/wrangler.api.prod.jsonc` and
-   `backend/wrangler/prod/wrangler.reminders.prod.jsonc`, provision production
+   `apps/backend/wrangler/prod/wrangler.api.prod.jsonc` and
+   `apps/backend/wrangler/prod/wrangler.reminders.prod.jsonc`, provision production
    secrets, then run `make deploy APP=backend`. The Makefile blocks
    that deployment until the placeholders are removed.
 

@@ -1,7 +1,7 @@
 # Authenticated Screen Layout
 
 Screens rendered under the `/_layout` route use `ScreenLayout` from
-`frontend/src/components/layout/screen-layout.tsx`. The authenticated route
+`apps/frontend/src/components/layout/screen-layout.tsx`. The authenticated route
 shell owns only navigation, geometry, and its background.
 
 Authenticated route content is wrapped in `ContentReveal`, which shares the
@@ -15,7 +15,7 @@ animation, while later tab changes keep the shared transition. Mobile Add
 buttons render through a body portal so the page blur does not change their
 fixed viewport positioning; they use the same reveal transition. Reuse
 `ContentReveal` from
-`frontend/src/components/ui/animate-ui/components/base/content-reveal.tsx` for
+`packages/ui/src/components/animate-ui/components/base/content-reveal.tsx` for
 other components that need the same entrance and exit behavior; wrap keyed
 children with `AnimatePresence` when an exit animation is needed.
 

@@ -1,5 +1,6 @@
 # Frontend Documentation
 
+- [Shared UI package](shared-ui.md)
 - [Error Handling](error-handling.md)
 - [Authenticated Screen Layout](screen-layout.md)
 - [Form Handling](form-handling.md)
@@ -10,14 +11,14 @@
 ## Verification
 
 The user frontend build type-checks application code and excludes test files.
-Run `make -C frontend check` from the repository root to type-check both the
-application and tests; run `make -C frontend run SCRIPT=test` to execute Vitest.
+Run `make -C apps/frontend check` from the repository root to type-check both the
+application and tests; run `make -C apps/frontend run SCRIPT=test` to execute Vitest.
 
 ## Marketing site
 
 The public marketing app is separate from the authenticated frontend. See its
-[README](../../marketing-frontend/README.md) and
-[design direction](../../marketing-frontend/DESIGN.md). Astro prerenders complete
+[README](../../apps/marketing-frontend/README.md) and
+[design direction](../../apps/marketing-frontend/DESIGN.md). Astro prerenders complete
 English HTML at `/` and Thai HTML at `/th/`. The homepage uses a cool-white canvas, navy oversized typography, indigo CTAs,
 and four floating white desktop hero cards. The lesson card has a peach Scheduled
 tag. Its weekly calendar has twelve English

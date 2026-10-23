@@ -1,0 +1,5 @@
+{
+  "name": "@tutorpal/workspace",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"]
+}

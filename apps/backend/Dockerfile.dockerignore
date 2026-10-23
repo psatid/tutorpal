@@ -1,0 +1,24 @@
+# Docker builds use the repository root as context. Include only the workspace
+# metadata and backend sources copied by apps/backend/Dockerfile.
+**
+!package.json
+!bun.lock
+!apps/
+!apps/backend/
+!apps/backend/package.json
+!apps/frontend/
+!apps/frontend/package.json
+!apps/admin-frontend/
+!apps/admin-frontend/package.json
+!apps/marketing-frontend/
+!apps/marketing-frontend/package.json
+!packages/
+!packages/ui/
+!packages/ui/package.json
+!apps/backend/prisma/
+!apps/backend/prisma/**
+!apps/backend/src/
+!apps/backend/src/**
+!apps/backend/scripts/
+!apps/backend/scripts/build-api.ts
+!apps/backend/tsconfig.json

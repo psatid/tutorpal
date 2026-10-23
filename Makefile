@@ -16,11 +16,11 @@ $(error Select the deployment environment with 'deploy' or 'deploy-dev'; omit EN
 endif
 endif
 
-.PHONY: help dev build build-dev check test \
+.PHONY: help workspace-install dev build build-dev check test \
 	frontend-dev admin-dev marketing-dev backend-dev \
 	frontend-build admin-build marketing-build backend-build \
 	frontend-build-dev admin-build-dev marketing-build-dev backend-build-dev \
-	frontend-check admin-check marketing-check backend-check admin-test marketing-test backend-test \
+	frontend-check admin-check marketing-check backend-check ui-check frontend-test ui-test admin-test marketing-test backend-test \
 	frontend-run admin-run marketing-run backend-run script frontend-deploy frontend-deploy-dev \
 	admin-deploy admin-deploy-dev marketing-deploy marketing-deploy-dev backend-deploy backend-deploy-dev \
 	backend-reminders-deploy backend-reminders-deploy-dev deploy deploy-dev \
@@ -31,6 +31,7 @@ help:
 		'TutorPal repository commands' \
 		'' \
 		'Development:' \
+		'  make workspace-install               Install all apps and shared packages' \
 		'  make dev                              Set up local Postgres, then start all apps' \
 		'  make frontend-dev                     Start the user frontend' \
 		'  make admin-dev                        Start the admin frontend' \
@@ -41,7 +42,7 @@ help:
 		'  make build                            Build production artifacts for all apps' \
 		'  make build-dev                        Build dev artifacts for apps with dev config' \
 		'  make check                            Run checks across all apps' \
-		'  make test                             Run backend, admin, and marketing tests' \
+		'  make test                             Run UI, user frontend, backend, admin, and marketing tests' \
 		'  make frontend-run SCRIPT=build        Run a user frontend package script' \
 		'  make admin-run SCRIPT=build           Run an admin frontend package script' \
 		'  make marketing-run SCRIPT=build       Run a marketing frontend package script' \
@@ -54,8 +55,8 @@ help:
 		'  make db-down                         Stop local Postgres (keep data)' \
 		'  make db-logs                         Follow local Postgres logs' \
 		'  make db-shell                        Open psql in the local database' \
-		'  make -C backend db-migrate-deploy-dev Apply committed migrations to dev' \
-		'  make -C backend db-migrate-deploy-production Apply committed migrations to production' \
+		'  make -C apps/backend db-migrate-deploy-dev Apply committed migrations to dev' \
+		'  make -C apps/backend db-migrate-deploy-production Apply committed migrations to production' \
 		'' \
 		'Deployment:' \
 		'  make backend-build                     Bundle-check production Workers' \
@@ -79,23 +80,26 @@ help:
 		'  make docker-push                      Build and push backend images' \
 		'  make release ENV=dev [GIT_SHA=...]    Promote backend images to an environment'
 
+workspace-install:
+	bun install --frozen-lockfile
+
 dev: db-setup
 	+$(MAKE) -j4 frontend-dev admin-dev marketing-dev backend-dev
 
 frontend-dev:
-	+$(MAKE) -C frontend dev
+	+$(MAKE) -C apps/frontend dev
 
 frontend-dev-host:
-	+$(MAKE) -C frontend dev-host
+	+$(MAKE) -C apps/frontend dev-host
 
 admin-dev:
-	+$(MAKE) -C admin-frontend dev
+	+$(MAKE) -C apps/admin-frontend dev
 
 marketing-dev:
-	+$(MAKE) -C marketing-frontend dev
+	+$(MAKE) -C apps/marketing-frontend dev
 
 backend-dev:
-	+$(MAKE) -C backend dev
+	+$(MAKE) -C apps/backend dev
 
 build:
 	+$(MAKE) -j4 frontend-build admin-build marketing-build backend-build
@@ -104,103 +108,112 @@ build-dev:
 	+$(MAKE) -j4 frontend-build-dev admin-build-dev marketing-build-dev backend-build-dev
 
 check:
-	+$(MAKE) -j4 frontend-check admin-check marketing-check backend-check
+	+$(MAKE) -j5 ui-check frontend-check admin-check marketing-check backend-check
 
 test:
-	+$(MAKE) -j3 admin-test marketing-test backend-test
+	+$(MAKE) -j5 ui-test frontend-test admin-test marketing-test backend-test
+
+ui-check:
+	bun run --cwd packages/ui check
+
+ui-test:
+	bun run --cwd packages/ui test
+
+frontend-test:
+	bun run --cwd apps/frontend test
 
 frontend-build:
-	+$(MAKE) -C frontend build
+	+$(MAKE) -C apps/frontend build
 
 admin-build:
-	+$(MAKE) -C admin-frontend build
+	+$(MAKE) -C apps/admin-frontend build
 
 marketing-build:
-	+$(MAKE) -C marketing-frontend build
+	+$(MAKE) -C apps/marketing-frontend build
 
 backend-build:
-	+$(MAKE) -C backend build
+	+$(MAKE) -C apps/backend build
 
 frontend-build-dev:
-	+$(MAKE) -C frontend build-dev
+	+$(MAKE) -C apps/frontend build-dev
 
 admin-build-dev:
-	+$(MAKE) -C admin-frontend build-dev
+	+$(MAKE) -C apps/admin-frontend build-dev
 
 marketing-build-dev:
-	+$(MAKE) -C marketing-frontend build-dev
+	+$(MAKE) -C apps/marketing-frontend build-dev
 
 backend-build-dev:
-	+$(MAKE) -C backend build-dev
+	+$(MAKE) -C apps/backend build-dev
 
 frontend-check:
-	+$(MAKE) -C frontend check
+	+$(MAKE) -C apps/frontend check
 
 admin-check:
-	+$(MAKE) -C admin-frontend check
+	+$(MAKE) -C apps/admin-frontend check
 
 marketing-check:
-	+$(MAKE) -C marketing-frontend check
+	+$(MAKE) -C apps/marketing-frontend check
 
 backend-check:
-	+$(MAKE) -C backend check ENV=dev
+	+$(MAKE) -C apps/backend check ENV=dev
 
 admin-test:
-	+$(MAKE) -C admin-frontend test
+	+$(MAKE) -C apps/admin-frontend test
 
 marketing-test:
-	+$(MAKE) -C marketing-frontend test
+	+$(MAKE) -C apps/marketing-frontend test
 
 backend-test:
-	+$(MAKE) -C backend test
+	+$(MAKE) -C apps/backend test
 
 frontend-run:
-	+$(MAKE) -C frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
+	+$(MAKE) -C apps/frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
 
 admin-run:
-	+$(MAKE) -C admin-frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
+	+$(MAKE) -C apps/admin-frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
 
 marketing-run:
-	+$(MAKE) -C marketing-frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
+	+$(MAKE) -C apps/marketing-frontend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
 
 backend-run:
-	+$(MAKE) -C backend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
+	+$(MAKE) -C apps/backend run SCRIPT="$(SCRIPT)" ARGS="$(ARGS)"
 
 script:
 	@test -n "$(SCRIPT)" || { echo 'Usage: make script SCRIPT=<script-name> [ARGS="..."]'; exit 2; }
 	./scripts/$(SCRIPT) $(ARGS)
 
 frontend-deploy:
-	+$(MAKE) -C frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)"
+	+$(MAKE) -C apps/frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)"
 
 frontend-deploy-dev:
-	+$(MAKE) -C frontend deploy-dev
+	+$(MAKE) -C apps/frontend deploy-dev
 
 admin-deploy:
-	+$(MAKE) -C admin-frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)"
+	+$(MAKE) -C apps/admin-frontend deploy PAGES_PROJECT="$(PAGES_PROJECT)"
 
 admin-deploy-dev:
-	+$(MAKE) -C admin-frontend deploy-dev
+	+$(MAKE) -C apps/admin-frontend deploy-dev
 
 marketing-deploy:
-	+$(MAKE) -C marketing-frontend deploy
+	+$(MAKE) -C apps/marketing-frontend deploy
 
 marketing-deploy-dev:
-	+$(MAKE) -C marketing-frontend deploy-dev
+	+$(MAKE) -C apps/marketing-frontend deploy-dev
 
 backend-deploy:
-	+$(MAKE) -C backend reminders-deploy
-	+$(MAKE) -C backend deploy
+	+$(MAKE) -C apps/backend reminders-deploy
+	+$(MAKE) -C apps/backend deploy
 
 backend-deploy-dev:
-	+$(MAKE) -C backend reminders-deploy-dev
-	+$(MAKE) -C backend deploy-dev
+	+$(MAKE) -C apps/backend reminders-deploy-dev
+	+$(MAKE) -C apps/backend deploy-dev
 
 backend-reminders-deploy:
-	+$(MAKE) -C backend reminders-deploy
+	+$(MAKE) -C apps/backend reminders-deploy
 
 backend-reminders-deploy-dev:
-	+$(MAKE) -C backend reminders-deploy-dev
+	+$(MAKE) -C apps/backend reminders-deploy-dev
 
 deploy:
 	@test -n "$(APP)" || { echo 'APP must be backend, backend-reminders, tutor-portal, admin-portal, or marketing-frontend.'; exit 2; }
@@ -237,16 +250,16 @@ db-shell:
 	docker compose exec postgres psql -U postgres -d tutorpal_db
 
 db-setup: db-up
-	+$(MAKE) -C backend db-migrate-local
+	+$(MAKE) -C apps/backend db-migrate-local
 
 db-migrate:
-	+$(MAKE) -C backend db-migrate
+	+$(MAKE) -C apps/backend db-migrate
 
 db-migrate-deploy:
-	+$(MAKE) -C backend db-migrate-deploy
+	+$(MAKE) -C apps/backend db-migrate-deploy
 
 db-generate:
-	+$(MAKE) -C backend db-generate
+	+$(MAKE) -C apps/backend db-generate
 
 ################################################################################
 # DEPRECATED

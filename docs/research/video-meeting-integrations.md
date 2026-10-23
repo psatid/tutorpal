@@ -4,10 +4,10 @@ Research checked on 2026-10-21. This note compares a tutor-supplied URL with thr
 
 ## TutorPal starting point
 
-- `Class` has no meeting-link field; `Schedule` and `RecurringSchedule` have `ON_SITE`/`ONLINE` types and notes. See [`schema.prisma`](../../backend/prisma/schema.prisma).
-- Reminder discovery stores a rendered message, then delivery sends that stored message. Revalidation checks the schedule, start time, enrollment, and LINE eligibility, but does not rebuild changed content. A link changed after discovery could therefore be stale in a retry. See [`class-reminder.repository.ts`](../../backend/src/repositories/class-reminder.repository.ts), [`class-reminder.service.ts`](../../backend/src/services/class-reminder.service.ts), and [LINE class reminders](../features/line-class-reminders.md).
-- Existing Google social login is tutor sign-in; the configured provider does not request Calendar or Meet API scopes. It is not evidence of consent or tokens usable for meeting creation. See [`auth-factory.ts`](../../backend/src/lib/auth-factory.ts) and [social login](../features/social-login.md).
-- The integration screen labels Zoom and Google Meet “Coming soon.” See [`integrations-screen.tsx`](../../frontend/src/screens/integrations-screen.tsx). Recurring schedule edits can version future sessions from an effective date; link behavior will need an explicit policy for that boundary. See [recurring schedule editing](../features/recurring-schedule-editing.md).
+- `Class` has no meeting-link field; `Schedule` and `RecurringSchedule` have `ON_SITE`/`ONLINE` types and notes. See [`schema.prisma`](../../apps/backend/prisma/schema.prisma).
+- Reminder discovery stores a rendered message, then delivery sends that stored message. Revalidation checks the schedule, start time, enrollment, and LINE eligibility, but does not rebuild changed content. A link changed after discovery could therefore be stale in a retry. See [`class-reminder.repository.ts`](../../apps/backend/src/repositories/class-reminder.repository.ts), [`class-reminder.service.ts`](../../apps/backend/src/services/class-reminder.service.ts), and [LINE class reminders](../features/line-class-reminders.md).
+- Existing Google social login is tutor sign-in; the configured provider does not request Calendar or Meet API scopes. It is not evidence of consent or tokens usable for meeting creation. See [`auth-factory.ts`](../../apps/backend/src/lib/auth-factory.ts) and [social login](../features/social-login.md).
+- The integration screen labels Zoom and Google Meet “Coming soon.” See [`integrations-screen.tsx`](../../apps/frontend/src/screens/integrations-screen.tsx). Recurring schedule edits can version future sessions from an effective date; link behavior will need an explicit policy for that boundary. See [recurring schedule editing](../features/recurring-schedule-editing.md).
 
 ## Options and provider constraints
 

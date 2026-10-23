@@ -6,7 +6,7 @@ rendering and for URLs that do not match the route tree.
 ## Global route errors
 
 The router's `defaultErrorComponent` renders the shared fallback in
-`frontend/src/components/route-fallback.tsx`. It provides:
+`apps/frontend/src/components/route-fallback.tsx`. It provides:
 
 - Friendly copy without exposing exception messages or stack traces
 - Development-only console logging for the caught error

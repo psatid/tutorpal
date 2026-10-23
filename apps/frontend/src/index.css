@@ -1,0 +1,19 @@
+@import "@tutorpal/ui/styles.css";
+
+@layer utilities {
+  .workspace-refinement-rail {
+    scrollbar-width: none;
+  }
+
+  .workspace-refinement-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .jun-edgeSidebar::before {
+    backdrop-filter: none;
+  }
+
+  .jun-header {
+    @apply border-b border-border bg-sidebar;
+  }
+}
