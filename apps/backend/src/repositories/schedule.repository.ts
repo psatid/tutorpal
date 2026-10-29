@@ -47,6 +47,20 @@ type AwaitingConfirmationScheduleRow = {
 	className: string;
 };
 
+type AwaitingConfirmationCountRow = {
+	total: bigint;
+};
+
+function toSafeAwaitingConfirmationTotal(total: bigint): number {
+	if (total < 0n || total > BigInt(Number.MAX_SAFE_INTEGER)) {
+		throw new RangeError(
+			"Awaiting-confirmation total cannot be represented safely as a number",
+		);
+	}
+
+	return Number(total);
+}
+
 export class ScheduleRepository implements IScheduleRepository {
 	constructor(private readonly prisma: PrismaClient = defaultPrisma) {}
 
@@ -213,6 +227,17 @@ export class ScheduleRepository implements IScheduleRepository {
 			limit: number;
 		},
 	): Promise<AwaitingConfirmationRepositoryPage> {
+		const eligibilityPredicate = Prisma.sql`
+			class_record."tutorId" = ${tutorId}
+			AND schedule.status = 'SCHEDULED'
+			AND (
+				(
+					schedule.date::timestamp
+					+ schedule.time * INTERVAL '1 minute'
+					+ schedule."durationSeconds" * INTERVAL '1 second'
+				) AT TIME ZONE 'Asia/Bangkok'
+			) <= ${input.asOf.toDate()}
+		`;
 		const afterPredicate = input.after
 			? Prisma.sql`
 				AND (
@@ -226,58 +251,69 @@ export class ScheduleRepository implements IScheduleRepository {
 				)
 			`
 			: Prisma.empty;
-		const rows = await this.prisma.$queryRaw<AwaitingConfirmationScheduleRow[]>`
-			SELECT
-				schedule.id,
-				schedule."classId",
-				schedule."recurringScheduleId",
-				schedule.date,
-				schedule.time,
-				schedule."durationSeconds",
-				schedule.notes,
-				schedule."noShowNote",
-				schedule.status,
-				schedule.type,
-				schedule."createdAt",
-				schedule."updatedAt",
-				class_record.name AS "className"
-			FROM schedules AS schedule
-			INNER JOIN classes AS class_record
-				ON class_record.id = schedule."classId"
-			WHERE class_record."tutorId" = ${tutorId}
-				AND schedule.status = 'SCHEDULED'
-				AND (
-					(
-						schedule.date::timestamp
-						+ schedule.time * INTERVAL '1 minute'
-						+ schedule."durationSeconds" * INTERVAL '1 second'
-					) AT TIME ZONE 'Asia/Bangkok'
-				) <= ${input.asOf.toDate()}
-				${afterPredicate}
-			ORDER BY schedule.date ASC, schedule.time ASC, schedule.id ASC
-			LIMIT ${input.limit + 1}
-		`;
-		const hasNext = rows.length > input.limit;
-		const data = rows.slice(0, input.limit).map((row) =>
-			ScheduleModel.fromSchedulePrisma({
-				...row,
-				class: { name: row.className },
-			}),
-		);
-		const lastSchedule = data[data.length - 1];
 
-		return {
-			data,
-			hasNext,
-			nextAfter:
-				hasNext && lastSchedule
-					? {
-							date: DateTime.from(lastSchedule.date).toDateOnlyString(),
-							time: lastSchedule.time,
-							id: lastSchedule.id,
-						}
-					: undefined,
-		};
+		return this.prisma.$transaction(
+			async (tx) => {
+				const countRows = await tx.$queryRaw<AwaitingConfirmationCountRow[]>`
+					SELECT COUNT(*) AS total
+					FROM schedules AS schedule
+					INNER JOIN classes AS class_record
+						ON class_record.id = schedule."classId"
+					WHERE ${eligibilityPredicate}
+				`;
+				const total = countRows[0]?.total;
+				if (total === undefined) {
+					throw new Error("Awaiting-confirmation count query returned no row");
+				}
+
+				const rows = await tx.$queryRaw<AwaitingConfirmationScheduleRow[]>`
+					SELECT
+						schedule.id,
+						schedule."classId",
+						schedule."recurringScheduleId",
+						schedule.date,
+						schedule.time,
+						schedule."durationSeconds",
+						schedule.notes,
+						schedule."noShowNote",
+						schedule.status,
+						schedule.type,
+						schedule."createdAt",
+						schedule."updatedAt",
+						class_record.name AS "className"
+					FROM schedules AS schedule
+					INNER JOIN classes AS class_record
+						ON class_record.id = schedule."classId"
+					WHERE ${eligibilityPredicate}
+						${afterPredicate}
+					ORDER BY schedule.date ASC, schedule.time ASC, schedule.id ASC
+					LIMIT ${input.limit + 1}
+				`;
+				const hasNext = rows.length > input.limit;
+				const data = rows.slice(0, input.limit).map((row) =>
+					ScheduleModel.fromSchedulePrisma({
+						...row,
+						class: { name: row.className },
+					}),
+				);
+				const lastSchedule = data[data.length - 1];
+
+				return {
+					data,
+					total: toSafeAwaitingConfirmationTotal(total),
+					hasNext,
+					nextAfter:
+						hasNext && lastSchedule
+							? {
+									date: DateTime.from(lastSchedule.date).toDateOnlyString(),
+									time: lastSchedule.time,
+									id: lastSchedule.id,
+								}
+							: undefined,
+				};
+			},
+			{ isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+		);
 	}
 
 	async findById(id: string, tutorId?: string): Promise<ScheduleModel | null> {

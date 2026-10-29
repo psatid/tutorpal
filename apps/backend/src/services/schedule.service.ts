@@ -388,6 +388,7 @@ export class ScheduleService {
 		return {
 			data: page.data,
 			pagination: {
+				total: page.total,
 				hasNext: page.hasNext,
 				nextCursor:
 					page.hasNext && page.nextAfter

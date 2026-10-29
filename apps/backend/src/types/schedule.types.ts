@@ -137,6 +137,7 @@ export interface AwaitingConfirmationAfter {
 export interface AwaitingConfirmationPage {
 	data: ScheduleModel[];
 	pagination: {
+		total: number;
 		hasNext: boolean;
 		nextCursor: string | null;
 	};
@@ -144,6 +145,7 @@ export interface AwaitingConfirmationPage {
 
 export interface AwaitingConfirmationRepositoryPage {
 	data: ScheduleModel[];
+	total: number;
 	hasNext: boolean;
 	nextAfter?: AwaitingConfirmationAfter;
 }

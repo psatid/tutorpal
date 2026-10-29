@@ -29,7 +29,8 @@ make end-time eligibility decisions in the browser.
   retaining the full name for assistive technology and a hover title.
 - The API includes only `SCHEDULED` sessions whose scheduled end time has been
   reached, using `Asia/Bangkok` as the eligibility time zone and an inclusive
-  end-time boundary. The ordered list uses the scheduled start date and time.
+  end-time boundary. Its `pagination.total` is the full eligible count before
+  cursor filtering. The ordered list uses the scheduled start date and time.
 - The displayed date is the session's start date. For a session that crosses
   midnight, the rail and no-show dialog use the true end-date `dateTime`,
   announce the full localized end date, and visibly include its day offset such

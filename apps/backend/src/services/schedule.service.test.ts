@@ -304,6 +304,7 @@ describe("ScheduleService awaiting confirmation", () => {
 				if (calls.length === 1) {
 					return {
 						data: [schedule()],
+						total: 3,
 						hasNext: true,
 						nextAfter: boundary,
 					};
@@ -312,7 +313,7 @@ describe("ScheduleService awaiting confirmation", () => {
 				if (boundaryStatus !== "COMPLETED") {
 					throw new Error("The cursor boundary must change before page two");
 				}
-				return { data: [schedule()], hasNext: false };
+				return { data: [schedule()], total: 2, hasNext: false };
 			},
 		} as unknown as IScheduleRepository;
 		const service = confirmationService(repository);
@@ -336,6 +337,7 @@ describe("ScheduleService awaiting confirmation", () => {
 		);
 
 		expect(firstPage.pagination).toEqual({
+			total: 3,
 			hasNext: true,
 			nextCursor: expect.any(String),
 		});
@@ -352,7 +354,11 @@ describe("ScheduleService awaiting confirmation", () => {
 			after: boundary,
 			limit: 1,
 		});
-		expect(secondPage.pagination).toEqual({ hasNext: false, nextCursor: null });
+		expect(secondPage.pagination).toEqual({
+			total: 2,
+			hasNext: false,
+			nextCursor: null,
+		});
 	});
 
 	test("rejects a client-forged future snapshot or keyset tuple before querying", async () => {
@@ -367,6 +373,7 @@ describe("ScheduleService awaiting confirmation", () => {
 				repositoryCalls += 1;
 				return {
 					data: [schedule()],
+					total: 1,
 					hasNext: true,
 					nextAfter: boundary,
 				};
@@ -420,6 +427,7 @@ describe("ScheduleService awaiting confirmation", () => {
 				repositoryCalls += 1;
 				return {
 					data: [schedule()],
+					total: 1,
 					hasNext: true,
 					nextAfter: boundary,
 				};
@@ -466,7 +474,7 @@ describe("ScheduleService awaiting confirmation", () => {
 					after: input.after,
 					limit: input.limit,
 				});
-				return { data: [], hasNext: false };
+				return { data: [], total: 0, hasNext: false };
 			},
 		} as unknown as IScheduleRepository;
 		const validPayload: ConfirmationCursorPayload = {

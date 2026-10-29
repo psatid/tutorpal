@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	AwaitingConfirmationPageSchema,
 	AwaitingConfirmationQuerySchema,
 	CreateScheduleSchema,
 	NoShowScheduleSchema,
@@ -192,6 +193,29 @@ describe("schedule request contracts", () => {
 				false,
 			);
 		}
+	});
+
+	test("validates a nonnegative integral confirmation total", () => {
+		const page = {
+			data: [],
+			pagination: { total: 0, hasNext: false, nextCursor: null },
+		};
+
+		expect(AwaitingConfirmationPageSchema.parse(page)).toEqual(page);
+		for (const total of [-1, 1.5, Number.NaN]) {
+			expect(
+				AwaitingConfirmationPageSchema.safeParse({
+					...page,
+					pagination: { ...page.pagination, total },
+				}).success,
+			).toBe(false);
+		}
+		expect(
+			AwaitingConfirmationPageSchema.safeParse({
+				data: [],
+				pagination: { hasNext: false, nextCursor: null },
+			}).success,
+		).toBe(false);
 	});
 
 	test("accepts an inclusive date range up to 31 calendar days", () => {

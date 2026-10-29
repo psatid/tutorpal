@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { DateTime } from "../lib/date-time";
 import type {
 	RecurringScheduleCreatePlan,
@@ -104,6 +104,10 @@ type AwaitingConfirmationRow = Omit<ScheduleRow, "class"> & {
 	className: string;
 };
 
+type AwaitingConfirmationCountRow = {
+	total: bigint;
+};
+
 type CapturedRawQuery = {
 	strings: TemplateStringsArray;
 	values: unknown[];
@@ -171,26 +175,58 @@ function flattenRawQuery(query: CapturedRawQuery): {
 	return { sql, values };
 }
 
-function makeAwaitingConfirmationRepositoryFixture(
-	rows: AwaitingConfirmationRow[],
-) {
-	let query: CapturedRawQuery | undefined;
-	const client = {
+function makeAwaitingConfirmationRepositoryFixture({
+	rows,
+	total = BigInt(rows.length),
+}: {
+	rows: AwaitingConfirmationRow[];
+	total?: bigint;
+}) {
+	const queries: CapturedRawQuery[] = [];
+	let transactionCalls = 0;
+	let transactionOptions: unknown;
+	const transaction = {
 		$queryRaw: async (
 			strings: TemplateStringsArray,
 			...values: unknown[]
-		): Promise<AwaitingConfirmationRow[]> => {
-			query = { strings, values };
-			return rows;
+		): Promise<AwaitingConfirmationCountRow[] | AwaitingConfirmationRow[]> => {
+			const query = { strings, values };
+			queries.push(query);
+			return flattenRawQuery(query).sql.includes("SELECT COUNT(*) AS total")
+				? [{ total }]
+				: rows;
+		},
+	};
+	const client = {
+		$transaction: async <T>(
+			work: (tx: never) => Promise<T>,
+			options: unknown,
+		): Promise<T> => {
+			transactionCalls += 1;
+			transactionOptions = options;
+			return work(transaction as never);
 		},
 	} as unknown as PrismaClient;
 
+	function getQuery(kind: "count" | "page") {
+		const query = queries.find((candidate) => {
+			const isCount = flattenRawQuery(candidate).sql.includes(
+				"SELECT COUNT(*) AS total",
+			);
+			return kind === "count" ? isCount : !isCount;
+		});
+		if (!query)
+			throw new Error(`Expected an awaiting-confirmation ${kind} query`);
+		return flattenRawQuery(query);
+	}
+
 	return {
 		repository: new ScheduleRepository(client),
-		getQuery: () => {
-			if (!query) throw new Error("Expected an awaiting-confirmation query");
-			return flattenRawQuery(query);
-		},
+		getCountQuery: () => getQuery("count"),
+		getPageQuery: () => getQuery("page"),
+		getRawQueryCount: () => queries.length,
+		getTransactionCalls: () => transactionCalls,
+		getTransactionOptions: () => transactionOptions,
 	};
 }
 
@@ -460,24 +496,27 @@ function makeRecurringRepositoryFixture({
 }
 
 describe("ScheduleRepository awaiting confirmation", () => {
-	test("uses a tutor-scoped, Bangkok end-time keyset query for confirmation pages", async () => {
-		const fixture = makeAwaitingConfirmationRepositoryFixture([
-			awaitingConfirmationRow({
-				id: "same-time-second",
-				date: new Date("2026-08-10T00:00:00.000Z"),
-				time: 1_410,
-				durationSeconds: 3_600n,
-			}),
-			awaitingConfirmationRow({
-				id: "next-day",
-				date: new Date("2026-08-11T00:00:00.000Z"),
-				time: 30,
-			}),
-			awaitingConfirmationRow({
-				id: "later-page",
-				date: new Date("2026-08-12T00:00:00.000Z"),
-			}),
-		]);
+	test("counts the full tutor-scoped Bangkok-eligible set before applying the keyset page", async () => {
+		const fixture = makeAwaitingConfirmationRepositoryFixture({
+			rows: [
+				awaitingConfirmationRow({
+					id: "same-time-second",
+					date: new Date("2026-08-10T00:00:00.000Z"),
+					time: 1_410,
+					durationSeconds: 3_600n,
+				}),
+				awaitingConfirmationRow({
+					id: "next-day",
+					date: new Date("2026-08-11T00:00:00.000Z"),
+					time: 30,
+				}),
+				awaitingConfirmationRow({
+					id: "later-page",
+					date: new Date("2026-08-12T00:00:00.000Z"),
+				}),
+			],
+			total: 7n,
+		});
 
 		const page = await fixture.repository.findAwaitingConfirmationPage(
 			"tutor-1",
@@ -497,6 +536,7 @@ describe("ScheduleRepository awaiting confirmation", () => {
 			"same-time-second",
 			"next-day",
 		]);
+		expect(page.total).toBe(7);
 		expect(page.hasNext).toBe(true);
 		expect(page.nextAfter).toEqual({
 			date: "2026-08-11",
@@ -504,23 +544,44 @@ describe("ScheduleRepository awaiting confirmation", () => {
 			id: "next-day",
 		});
 
-		const query = fixture.getQuery();
-		expect(query.sql).toContain('class_record."tutorId" = ?');
-		expect(query.sql).toContain("AND schedule.status = 'SCHEDULED'");
-		expect(query.sql).toContain(
-			"schedule.\"durationSeconds\" * INTERVAL '1 second'",
-		);
-		expect(query.sql).toContain("AT TIME ZONE 'Asia/Bangkok'");
-		expect(query.sql).toContain(") <= ?");
-		expect(query.sql).toContain("schedule.date > ?::date");
-		expect(query.sql).toContain("schedule.time > ?");
-		expect(query.sql).toContain("schedule.id > ?");
-		expect(query.sql).toContain(
+		expect(fixture.getTransactionCalls()).toBe(1);
+		expect(fixture.getTransactionOptions()).toEqual({
+			isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+		});
+		expect(fixture.getRawQueryCount()).toBe(2);
+
+		const countQuery = fixture.getCountQuery();
+		const pageQuery = fixture.getPageQuery();
+		for (const query of [countQuery, pageQuery]) {
+			expect(query.sql).toContain('class_record."tutorId" = ?');
+			expect(query.sql).toContain("AND schedule.status = 'SCHEDULED'");
+			expect(query.sql).toContain(
+				"schedule.\"durationSeconds\" * INTERVAL '1 second'",
+			);
+			expect(query.sql).toContain("AT TIME ZONE 'Asia/Bangkok'");
+			expect(query.sql).toContain(") <= ?");
+		}
+		expect(countQuery.sql).not.toContain("schedule.date > ?::date");
+		expect(countQuery.sql).not.toContain("ORDER BY");
+		expect(countQuery.sql).not.toContain("LIMIT");
+		expect(
+			countQuery.values.map((value) =>
+				value instanceof Date ? value.toISOString() : value,
+			),
+		).toEqual(["tutor-1", "2026-08-10T17:30:00.000Z"]);
+
+		expect(pageQuery.sql).toContain("schedule.date > ?::date");
+		expect(pageQuery.sql).toContain("schedule.time > ?");
+		expect(pageQuery.sql).toContain("schedule.id > ?");
+		expect(pageQuery.sql).toContain(
 			"ORDER BY schedule.date ASC, schedule.time ASC, schedule.id ASC",
 		);
-		expect(query.sql).toContain("LIMIT ?");
+		expect(pageQuery.sql).toContain("LIMIT ?");
+		expect(pageQuery.sql.indexOf("AT TIME ZONE 'Asia/Bangkok'")).toBeLessThan(
+			pageQuery.sql.indexOf("schedule.date > ?::date"),
+		);
 		expect(
-			query.values.map((value) =>
+			pageQuery.values.map((value) =>
 				value instanceof Date ? value.toISOString() : value,
 			),
 		).toEqual([
@@ -536,10 +597,33 @@ describe("ScheduleRepository awaiting confirmation", () => {
 		]);
 	});
 
+	test("accepts a zero count as a valid empty confirmation page", async () => {
+		const fixture = makeAwaitingConfirmationRepositoryFixture({
+			rows: [],
+			total: 0n,
+		});
+
+		const page = await fixture.repository.findAwaitingConfirmationPage(
+			"tutor-1",
+			{
+				asOf: DateTime.from("2026-08-11T00:00:00.000Z"),
+				limit: 1,
+			},
+		);
+
+		expect(page).toEqual({
+			data: [],
+			total: 0,
+			hasNext: false,
+			nextAfter: undefined,
+		});
+	});
+
 	test("returns no cursor boundary for a terminal confirmation page", async () => {
-		const fixture = makeAwaitingConfirmationRepositoryFixture([
-			awaitingConfirmationRow({ id: "terminal-session" }),
-		]);
+		const fixture = makeAwaitingConfirmationRepositoryFixture({
+			rows: [awaitingConfirmationRow({ id: "terminal-session" })],
+			total: 1n,
+		});
 
 		const page = await fixture.repository.findAwaitingConfirmationPage(
 			"tutor-1",
@@ -552,8 +636,25 @@ describe("ScheduleRepository awaiting confirmation", () => {
 		expect(page.data.map((schedule) => schedule.id)).toEqual([
 			"terminal-session",
 		]);
+		expect(page.total).toBe(1);
 		expect(page.hasNext).toBe(false);
 		expect(page.nextAfter).toBeUndefined();
+	});
+
+	test("rejects a count that cannot be represented safely as a number", async () => {
+		const fixture = makeAwaitingConfirmationRepositoryFixture({
+			rows: [],
+			total: BigInt(Number.MAX_SAFE_INTEGER) + 1n,
+		});
+
+		await expect(
+			fixture.repository.findAwaitingConfirmationPage("tutor-1", {
+				asOf: DateTime.from("2026-08-11T00:00:00.000Z"),
+				limit: 1,
+			}),
+		).rejects.toThrow(
+			"Awaiting-confirmation total cannot be represented safely as a number",
+		);
 	});
 });
 

@@ -237,6 +237,7 @@ export const AwaitingConfirmationQuerySchema = z.object({
 export const AwaitingConfirmationPageSchema = z.object({
 	data: z.array(ScheduleSchema),
 	pagination: z.object({
+		total: z.number().int().nonnegative(),
 		hasNext: z.boolean(),
 		nextCursor: z.string().nullable(),
 	}),

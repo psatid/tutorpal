@@ -65,7 +65,11 @@ const scheduleService = {
 		awaitingConfirmationCalls += 1;
 		return {
 			data: [onlineSchedule],
-			pagination: { hasNext: true, nextCursor: "next-confirmation-page" },
+			pagination: {
+				total: 1,
+				hasNext: true,
+				nextCursor: "next-confirmation-page",
+			},
 		};
 	},
 	getScheduleById: async (id: string, tutorId: string) => {
@@ -188,7 +192,11 @@ describe("schedule routes", () => {
 					updatedAt: "2026-08-01T00:00:00.000Z",
 				},
 			],
-			pagination: { hasNext: true, nextCursor: "next-confirmation-page" },
+			pagination: {
+				total: 1,
+				hasNext: true,
+				nextCursor: "next-confirmation-page",
+			},
 		});
 		expect(awaitingConfirmationTutorId).toBe("tutor-1");
 		expect(awaitingConfirmationQuery).toEqual({
