@@ -1,10 +1,12 @@
-# Home Today Hub
+# Home Today Hub and Sessions to Confirm
 
 **Overview:** The Home screen combines an independent Today agenda with a
 server-backed rail for sessions that have ended and still need a result. The
 agenda continues to use the existing date-filtered schedules query. The
 confirmation rail uses `GET /v1/schedules/awaiting-confirmation` and does not
-make end-time eligibility decisions in the browser.
+make end-time eligibility decisions in the browser. That same query also
+supplies the Schedules warning banner, its responsive review drawer, and the
+Schedules sidebar badge.
 
 ## Behavior
 
@@ -44,6 +46,19 @@ make end-time eligibility decisions in the browser.
   continue to work independently.
 - The Home screen does not poll for new ended sessions. They appear when the
   normal query lifecycle refetches, such as on a later Home visit.
+- Schedules shows a warning-token banner below the page heading when sessions
+  await confirmation. Review opens the responsive drawer: a side panel on
+  desktop and a bottom sheet on mobile. The drawer groups sessions by their
+  scheduled start date, oldest first, and shows only class, time, duration, and
+  Complete and No show actions. Rows neither navigate nor show learner names.
+- The Schedules sidebar badge uses the same full `pagination.total` count as
+  the banner and drawer, displays `99+` above 99, and exposes the exact count in
+  its accessible name. The banner and badge are hidden during initial loading,
+  initial query error, and when the count is zero. Cached content remains
+  visible during background refresh; later-page failures have an inline retry.
+- The shared confirmation query uses the existing query refresh lifecycle and
+  mutation invalidation; it does not poll. The drawer remains open after the
+  last successful action and shows “All caught up” when no sessions remain.
 
 ## Confirmation and data updates
 

@@ -82,6 +82,7 @@ export type ScheduleUpdateCommand = {
 export type AwaitingConfirmationSchedulePage = {
 	schedules: Schedule[];
 	pagination: {
+		total: number;
 		hasNext: boolean;
 		nextCursor: string | null;
 	};

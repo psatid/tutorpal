@@ -116,7 +116,11 @@ vi.mock("@/hooks/queries/use-infinite-awaiting-confirmation-schedules", () => ({
 			pageParams: [],
 			pages: [
 				{
-					pagination: { hasNext: false, nextCursor: null },
+					pagination: {
+						hasNext: false,
+						nextCursor: null,
+						total: queryState.awaitingConfirmation.length,
+					},
 					schedules: queryState.awaitingConfirmation,
 				},
 			],

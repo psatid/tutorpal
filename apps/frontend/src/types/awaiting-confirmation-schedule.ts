@@ -9,6 +9,7 @@ export type AwaitingConfirmationSchedule = {
 export type AwaitingConfirmationSchedulePage = {
 	schedules: AwaitingConfirmationSchedule[];
 	pagination: {
+		total: number;
 		hasNext: boolean;
 		nextCursor: string | null;
 	};

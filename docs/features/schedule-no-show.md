@@ -2,15 +2,20 @@
 
 **Overview**: Tutors can record a no-show with an explicit choice about deducting class hours, plus an optional note.
 
-## Current behavior (October 11, 2026)
+## Current behavior (October 30, 2026)
 
 - `PATCH /v1/schedules/:id/no-show` requires `deductHours` and accepts an optional `note`.
 - Deducting hours sets the schedule to `NO_SHOW` and records the active hour deduction. The session continues to count against class capacity.
 - Choosing not to deduct sets the schedule to `CANCELLED`, releases its reservation, and does not create a deduction.
 - The dialog starts with neither choice selected. Its note is stored as `noShowNote`, separately from general schedule notes.
-- The same dialog is available from the schedule drawer, Schedule list, Home, and class detail.
+- The same dialog is available from the schedule drawer, Schedule list, Home,
+  the Schedules sessions-to-confirm drawer, and class detail.
 - The drawer's view-mode actions are Complete and No Show for scheduled sessions, and Restore for completed or no-show sessions. Delete remains available from the schedule row's overflow menu, not the drawer footer. The action row and editable status are hidden in edit mode.
 - When opened from schedule details, the No Show dialog overlays and blocks the drawer beneath it. Closing the dialog returns focus to the No Show action; after a successful update, focus returns to Edit.
+- When opened from the Schedules sessions-to-confirm drawer, the dialog returns
+  focus to its No show action when the row remains available; after a successful
+  action removes the row, focus moves to the next available Complete action or
+  the confirmation section heading.
 - Whole-hour values in user-facing schedule confirmations omit `.0`; fractional hour values retain their precision.
 - Complete and Restore remain dedicated lifecycle actions. Generic schedule updates cannot change status.
 - Completed and deducted no-show sessions can be restored to `CANCELLED`; the active deduction is marked restored.

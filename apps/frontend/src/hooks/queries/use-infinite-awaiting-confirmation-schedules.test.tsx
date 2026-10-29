@@ -23,10 +23,12 @@ function makePage({
 	id,
 	hasNext,
 	nextCursor,
+	total = 2,
 }: {
 	id: string;
 	hasNext: boolean;
 	nextCursor: string | null;
+	total?: number;
 }) {
 	return {
 		data: [
@@ -45,7 +47,7 @@ function makePage({
 				updatedAt: "2026-10-01T00:00:00.000Z",
 			},
 		],
-		pagination: { hasNext, nextCursor },
+		pagination: { hasNext, nextCursor, total },
 	};
 }
 
@@ -98,6 +100,7 @@ describe("useInfiniteAwaitingConfirmationSchedules", () => {
 		expect(firstSelectedPage?.pagination).toEqual({
 			hasNext: true,
 			nextCursor: "cursor-2",
+			total: 2,
 		});
 		expect(firstSelectedPage?.schedules[0]).toBeInstanceOf(Schedule);
 		expect(firstSelectedPage?.schedules[0]?.getId()).toBe("schedule-1");

@@ -13,6 +13,10 @@ const queryState = vi.hoisted(() => ({
 	schedules: [] as Schedule[],
 }));
 
+const sessionsToConfirm = vi.hoisted(() => ({
+  onCloseAutoFocus: null as (() => void) | null,
+}));
+
 const completeMutation = vi.hoisted(() => ({
   error: null as Error | null,
   isError: false,
@@ -95,6 +99,13 @@ vi.mock("@/components/schedules/no-show-schedule-dialog", () => ({
   NoShowScheduleDialog: () => null,
 }));
 
+vi.mock("@/components/schedules/sessions-to-confirm", () => ({
+  SessionsToConfirm: ({ onCloseAutoFocus }: { onCloseAutoFocus: () => void }) => {
+    sessionsToConfirm.onCloseAutoFocus = onCloseAutoFocus;
+    return null;
+  },
+}));
+
 vi.mock("@/components/workspaces/workspace-fab", () => ({
   WorkspaceFab: ({
     label,
@@ -168,6 +179,7 @@ describe("SchedulesScreen weekly timeline integration", () => {
     queryState.calls = [];
     queryState.refetch.mockReset();
     queryState.schedules = [];
+    sessionsToConfirm.onCloseAutoFocus = null;
     completeMutation.error = null;
     completeMutation.isError = false;
     completeMutation.isPending = false;
@@ -222,6 +234,36 @@ describe("SchedulesScreen weekly timeline integration", () => {
     await waitFor(() => {
       expect(queryState.calls.at(-1)).toMatchObject({ search: "algebra" });
     });
+  });
+
+  it("returns drawer-close focus to the Day search through SessionsToConfirm", () => {
+    render(<SchedulesScreen />);
+
+    const search = screen.getByPlaceholderText("Search by class...");
+    sessionsToConfirm.onCloseAutoFocus?.();
+
+    expect(search).toHaveFocus();
+  });
+
+  it("returns final caught-up drawer-close focus to the visible Week date selector", async () => {
+    const user = userEvent.setup();
+    render(<SchedulesScreen />);
+
+    await user.click(screen.getByRole("tab", { name: "Week" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByPlaceholderText("Search by class..."),
+      ).not.toBeInTheDocument(),
+    );
+
+    const dateSelectorTrigger = document.querySelector<HTMLButtonElement>(
+      "[data-schedules-date-selector-trigger]",
+    );
+    expect(dateSelectorTrigger).toBeVisible();
+
+    sessionsToConfirm.onCloseAutoFocus?.();
+
+    expect(dateSelectorTrigger).toHaveFocus();
   });
 
   it("opens the shared completion dialog from a Day card before mutating", async () => {

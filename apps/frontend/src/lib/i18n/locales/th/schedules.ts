@@ -15,6 +15,35 @@ const th = {
 	duration: "{{minutes}} นาที",
 	durationHours: "{{hours}} ชม.",
 	durationHoursMinutes: "{{hours}} ชม. {{minutes}} นาที",
+	awaitingConfirmation: {
+		banner: {
+			label_one: "มี {{count}} ช่วงเรียนที่ต้องยืนยัน",
+			label_other: "มี {{count}} ช่วงเรียนที่ต้องยืนยัน",
+			title_one: "มี {{count}} ช่วงเรียนที่ต้องยืนยัน",
+			title_other: "มี {{count}} ช่วงเรียนที่ต้องยืนยัน",
+			description:
+				"ช่วงเรียนที่ค้างยืนยันเก่าที่สุดคือ {{date}} ยืนยันเพื่อให้ชั่วโมงของผู้เรียนถูกต้อง",
+			descriptionFallback: "ยืนยันช่วงเรียนเพื่อให้ชั่วโมงของผู้เรียนถูกต้อง",
+			action: "ตรวจสอบช่วงเรียน",
+		},
+		drawer: {
+			title: "ช่วงเรียนที่ต้องยืนยัน",
+			description: "เรียงจากช่วงเรียนที่เก่าที่สุดก่อน",
+			listLabel: "ช่วงเรียนที่รอยืนยัน",
+			loading: "กำลังโหลดช่วงเรียนที่ต้องยืนยัน…",
+			error: "ไม่สามารถโหลดช่วงเรียนที่ต้องยืนยันได้",
+			retry: "ลองอีกครั้ง",
+			loadingMore: "กำลังโหลดช่วงเรียนที่ต้องยืนยันเพิ่ม…",
+			loadMoreError: "ไม่สามารถโหลดช่วงเรียนที่ต้องยืนยันเพิ่มได้",
+			allCaughtUpTitle: "จัดการครบแล้ว",
+			allCaughtUpDescription:
+				"ช่วงเรียนทั้งหมดที่ต้องบันทึกผลได้รับการจัดการแล้ว",
+			completeAction:
+				"บันทึก {{className}} เวลา {{time}} ระยะเวลา {{duration}} ว่าเสร็จสิ้น",
+			noShowAction:
+				"บันทึก {{className}} เวลา {{time}} ระยะเวลา {{duration}} ว่าไม่มาเรียน",
+		},
+	},
 	validation: {
 		classRequired: "จำเป็นต้องเลือกชั้นเรียน",
 		dateRequired: "จำเป็นต้องเลือกวันที่",

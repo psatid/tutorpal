@@ -17,6 +17,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
 import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule-dialog";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
+import { SessionsToConfirm } from "@/components/schedules/sessions-to-confirm";
 import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import {
   ScheduleDrawer,
@@ -51,6 +52,8 @@ const SCHEDULE_STATUS_FILTERS = [
   "NO_SHOW",
   "CANCELLED",
 ] as const;
+const DATE_SELECTOR_TRIGGER_SELECTOR =
+  "[data-schedules-date-selector-trigger]";
 
 export function SchedulesScreen() {
   const { t } = useTranslation(["schedules"]);
@@ -155,6 +158,17 @@ export function SchedulesScreen() {
 
     document
       .querySelector<HTMLButtonElement>("[data-timeline-active-cell]")
+      ?.focus();
+  };
+
+  const focusSessionsToConfirmCloseTarget = () => {
+    if (viewMode === "day" && scheduleSearchRef.current?.isConnected) {
+      scheduleSearchRef.current.focus();
+      return;
+    }
+
+    document
+      .querySelector<HTMLButtonElement>(DATE_SELECTOR_TRIGGER_SELECTOR)
       ?.focus();
   };
 
@@ -362,6 +376,9 @@ export function SchedulesScreen() {
           : "flex min-h-[calc(100vh-200px)] flex-col"
       }
     >
+      <SessionsToConfirm
+        onCloseAutoFocus={focusSessionsToConfirmCloseTarget}
+      />
       <MotionConfig reducedMotion="user">
         <Tabs
           className="flex min-h-0 flex-1 flex-col gap-0"

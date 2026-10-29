@@ -4,6 +4,8 @@ export default {
   classes: "Classes",
   courses: "Courses",
   schedules: "Schedules",
+  schedulesWithAwaitingConfirmation:
+    "Schedules, {{count}} sessions to confirm",
   integrations: "Integrations",
   settings: "Settings",
   lineConnection: "LINE connection",

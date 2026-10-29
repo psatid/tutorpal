@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@tutorpal/ui/avatar";
+import { Badge } from "@tutorpal/ui/badge";
 import { Button } from "@tutorpal/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@tutorpal/ui/dropdown-menu";
 import { APP_ROUTES } from "@/constants/routes";
+import { useInfiniteAwaitingConfirmationSchedules } from "@/hooks/queries/use-infinite-awaiting-confirmation-schedules";
 import { useSession } from "@/hooks/use-session";
 import { getAppLanguage, setAppLanguage } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -50,7 +52,13 @@ export const AppSidebar = ({
   const { t } = useTranslation(["common", "navigation", "settings"]);
   const { session } = useSession();
   const location = useLocation();
+  const awaitingConfirmationQuery = useInfiniteAwaitingConfirmationSchedules();
   const currentLanguage = getAppLanguage();
+  const awaitingConfirmationTotal =
+    awaitingConfirmationQuery.data?.pages[0]?.pagination.total ?? 0;
+  const shouldShowAwaitingConfirmationBadge =
+    awaitingConfirmationQuery.data !== undefined &&
+    awaitingConfirmationTotal > 0;
   const currentNavigationItem = SIDE_BAR_CONFIG.find((item) =>
     "href" in item
       ? isNavigationItemActive(location.pathname, item)
@@ -164,7 +172,16 @@ export const AppSidebar = ({
                 {SIDE_BAR_CONFIG.map((item) => {
                   if ("href" in item) {
                     return (
-                      <NavigationLink key={item.href} navigationItem={item} />
+                      <NavigationLink
+                        awaitingConfirmationTotal={
+                          item.href === APP_ROUTES.SCHEDULES &&
+                          shouldShowAwaitingConfirmationBadge
+                            ? awaitingConfirmationTotal
+                            : null
+                        }
+                        key={item.href}
+                        navigationItem={item}
+                      />
                     );
                   }
 
@@ -225,9 +242,11 @@ export const AppSidebar = ({
 };
 
 const NavigationLink = ({
+  awaitingConfirmationTotal = null,
   navigationItem,
   variant = "default",
 }: {
+  awaitingConfirmationTotal?: number | null;
   navigationItem: SingleNavigationItem;
   variant?: "default" | "nested";
 }) => {
@@ -235,13 +254,26 @@ const NavigationLink = ({
   const location = useLocation();
   const active = isNavigationItemActive(location.pathname, navigationItem);
   const label = t(navigationItem.labelKey);
+  const accessibleLabel =
+    awaitingConfirmationTotal === null
+      ? label
+      : t("schedulesWithAwaitingConfirmation", {
+          count: awaitingConfirmationTotal,
+        });
+  const visualBadgeCount =
+    awaitingConfirmationTotal !== null
+      ? awaitingConfirmationTotal > 99
+        ? "99+"
+        : String(awaitingConfirmationTotal)
+      : null;
+
   return (
     <li className="jun-sidebarMenuItem" key={navigationItem.href}>
       <Link
         aria-current={active ? "page" : undefined}
-        aria-label={label}
+        aria-label={accessibleLabel}
         className={cn(
-          "jun-sidebarMenuButton",
+          "jun-sidebarMenuButton relative",
           active && "text-primary hover:text-primary font-semibold",
         )}
         preload="intent"
@@ -257,6 +289,15 @@ const NavigationLink = ({
           />
         )}
         <span className="jun-sidebarText">{label}</span>
+        {visualBadgeCount ? (
+          <Badge
+            aria-hidden="true"
+            className="absolute top-0.5 right-0.5 z-10 h-4 min-w-4 px-1 text-[10px] leading-none"
+            variant="primary"
+          >
+            {visualBadgeCount}
+          </Badge>
+        ) : null}
       </Link>
     </li>
   );

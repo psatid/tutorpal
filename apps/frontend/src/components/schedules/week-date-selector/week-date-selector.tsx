@@ -383,6 +383,7 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               }
               trigger={
                 <button
+                  data-schedules-date-selector-trigger
                   type="button"
                   className="group flex min-h-11 items-center gap-1.5 rounded-full py-1.5 font-headline text-base font-semibold text-foreground transition-colors focus-visible:outline-none hover:cursor-pointer"
                 >

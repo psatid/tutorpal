@@ -12,6 +12,34 @@ export default {
 	duration: "{{minutes}} min",
 	durationHours: "{{hours}} h",
 	durationHoursMinutes: "{{hours}} h {{minutes}} min",
+	awaitingConfirmation: {
+		banner: {
+			label_one: "{{count}} session to confirm",
+			label_other: "{{count}} sessions to confirm",
+			title_one: "{{count}} session needs confirmation",
+			title_other: "{{count}} sessions need confirmation",
+			description:
+				"The oldest pending session is {{date}}. Confirm it to keep student hours accurate.",
+			descriptionFallback:
+				"Confirm sessions to keep student hours accurate.",
+			action: "Review sessions",
+		},
+		drawer: {
+			title: "Sessions to confirm",
+			description: "Oldest sessions appear first.",
+			listLabel: "Sessions awaiting confirmation",
+			loading: "Loading sessions to confirm…",
+			error: "We couldn't load sessions to confirm.",
+			retry: "Try again",
+			loadingMore: "Loading more sessions to confirm…",
+			loadMoreError: "We couldn't load more sessions to confirm.",
+			allCaughtUpTitle: "All caught up",
+			allCaughtUpDescription:
+				"Every session that needed a record has been handled.",
+			completeAction: "Complete {{className}} at {{time}} for {{duration}}",
+			noShowAction: "Mark {{className}} at {{time}} for {{duration}} as no show",
+		},
+	},
 	validation: {
 		classRequired: "Class is required.",
 		dateRequired: "Date is required.",

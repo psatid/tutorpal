@@ -7,6 +7,8 @@ const th = {
   classes: "ชั้นเรียน",
   courses: "หลักสูตร",
   schedules: "ตารางเรียน",
+  schedulesWithAwaitingConfirmation:
+    "ตารางเรียน มี {{count}} ช่วงเรียนที่ต้องยืนยัน",
   integrations: "การเชื่อมต่อ",
   settings: "การตั้งค่า",
   lineConnection: "การเชื่อมต่อ LINE",
