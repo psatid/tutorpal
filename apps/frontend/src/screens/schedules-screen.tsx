@@ -9,13 +9,13 @@ import { MotionConfig } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
-  useCompleteSchedule,
   useDeleteSchedule,
   useRestoreHours,
 } from "@/hooks/mutations/use-schedules";
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
+import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule-dialog";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { WorkspaceFab } from "@/components/workspaces/workspace-fab";
 import {
@@ -70,6 +70,9 @@ export function SchedulesScreen() {
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
+  const [completeSchedule, setCompleteSchedule] = useState<Schedule | null>(
+    null,
+  );
   const [noShowSchedule, setNoShowSchedule] = useState<Schedule | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
@@ -102,7 +105,6 @@ export function SchedulesScreen() {
   } = useSchedules(scheduleQuery);
 
   const deleteMutation = useDeleteSchedule();
-  const completeMutation = useCompleteSchedule();
   const restoreMutation = useRestoreHours();
 
   const filteredSchedules = useMemo(() => {
@@ -183,19 +185,7 @@ export function SchedulesScreen() {
   };
 
   const handleCompleteSchedule = (schedule: Schedule) => {
-    const hoursToDeduct = DateTime.formatDurationHours(
-      schedule.getDurationHours(),
-    );
-    toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
-      action: {
-        label: t("schedules:complete.confirmButton"),
-        onClick: () => completeMutation.mutate(schedule.getId()),
-      },
-      cancel: {
-        label: t("schedules:complete.cancelButton"),
-        onClick: () => {},
-      },
-    });
+    setCompleteSchedule(schedule);
   };
 
   const handleRestoreHours = (schedule: Schedule) => {
@@ -502,6 +492,15 @@ export function SchedulesScreen() {
         onCloseAutoFocus={focusTrigger}
         initialTime={initialCreateTime}
         selectedDate={selectedDate}
+      />
+      <CompleteScheduleDialog
+        finalFocus={scheduleSearchRef}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompleteSchedule(null);
+          }
+        }}
+        schedule={completeSchedule}
       />
       <NoShowScheduleDialog
         finalFocus={scheduleSearchRef}

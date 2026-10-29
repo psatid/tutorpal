@@ -25,6 +25,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@tutorpal/ui/dropdown-menu";
+import { DateTime } from "@/lib/date-time";
 import { getNameTone, nameToneAvatarClasses } from "@/lib/name-tone";
 import { cn } from "@/lib/utils";
 import { Class } from "@/models/class";
@@ -68,28 +69,25 @@ export function ClassRow({
 			event.currentTarget.click();
 		}
 	};
-	const balanceLabel =
-		data.balanceState === "no-hours"
+	const hoursLeft = Math.max(data.totalHours - data.usedHours, 0);
+	const roundedHoursLeft = Math.round((hoursLeft + Number.EPSILON) * 100) / 100;
+	const hasNoHours = data.totalHours <= 0;
+	const hoursLeftLabel =
+		hasNoHours
 			? t("classes:balance.noHours")
-			: data.balanceState === "all-scheduled"
-				? t("classes:balance.allScheduled")
-			: data.balanceState === "exhausted"
-				? t("classes:balance.exhausted")
-				: t("classes:balance.available", {
-					hours: data.formattedRemainingHours,
+			: t("classes:hoursLeft", {
+					count: roundedHoursLeft,
+					hours: DateTime.formatDurationHours(roundedHoursLeft),
 				});
-	const accountingLabel = t("classes:balance.accounting", {
-		scheduled: data.formattedScheduledHours,
-		used: data.formattedUsedHours,
-	});
+	const rowDescription = [data.studentNames.join(", "), hoursLeftLabel]
+		.filter(Boolean)
+		.join(". ");
 
 	return (
 		<li className="scroll-mt-28 md:scroll-mt-32">
 			<div className="flex min-h-20 items-center gap-3 rounded-lg border border-border bg-card px-4 py-4 transition-colors motion-reduce:transition-none hover:bg-surface focus-within:bg-surface">
 				<Button
-					aria-describedby={
-						students.length > 0 ? studentDescriptionId : undefined
-					}
+					aria-describedby={studentDescriptionId}
 					aria-label={t("classes:viewDetailsFor", { name: data.displayName })}
 					className="group h-auto min-h-11 min-w-0 flex-1 justify-start gap-3 rounded-lg px-0 py-0 text-left hover:bg-transparent focus-visible:ring-offset-2"
 					onClick={onOpen}
@@ -101,11 +99,11 @@ export function ClassRow({
 						<p className="max-w-full truncate font-semibold text-foreground">
 							{data.displayName}
 						</p>
+						<span className="sr-only" id={studentDescriptionId}>
+							{rowDescription}
+						</span>
 						{students.length > 0 ? (
 							<>
-								<span className="sr-only" id={studentDescriptionId}>
-									{data.studentNames.join(", ")}
-								</span>
 								<AvatarGroup aria-hidden="true" className="mt-2">
 									{displayedStudents.map((student) => (
 										<Avatar key={student.getId()} size="sm">
@@ -122,43 +120,23 @@ export function ClassRow({
 								</AvatarGroup>
 							</>
 						) : null}
-						<div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm sm:hidden">
-							<span
-								className={cn(
-									"font-medium",
-									data.balanceState === "exhausted" && "text-warning",
-								)}
-							>
-								{balanceLabel}
-							</span>
-							<span className="text-muted-foreground">
-								{t("classes:balance.total", {
-									hours: data.formattedTotalHours,
-								})}
-							</span>
-						</div>
-						<p className="mt-1 text-xs tabular-nums text-muted-foreground sm:hidden">
-							{accountingLabel}
-						</p>
-					</div>
-					<div className="hidden shrink-0 text-right sm:block">
 						<p
 							className={cn(
-								"font-medium tabular-nums",
-								data.balanceState === "exhausted" && "text-warning",
+								"mt-2 break-words whitespace-normal font-medium text-foreground tabular-nums sm:hidden",
+								hasNoHours && "text-muted-foreground",
 							)}
 						>
-							{balanceLabel}
-						</p>
-						<p className="mt-1 text-xs text-muted-foreground tabular-nums">
-							{t("classes:balance.total", {
-								hours: data.formattedTotalHours,
-							})}
-						</p>
-						<p className="mt-1 text-xs text-muted-foreground tabular-nums">
-							{accountingLabel}
+							{hoursLeftLabel}
 						</p>
 					</div>
+					<p
+						className={cn(
+							"hidden shrink-0 text-right font-medium text-foreground tabular-nums sm:block",
+							hasNoHours && "text-muted-foreground",
+						)}
+					>
+						{hoursLeftLabel}
+					</p>
 				</Button>
 				<Button
 					className="hidden shrink-0 sm:inline-flex"

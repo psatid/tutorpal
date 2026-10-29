@@ -132,10 +132,6 @@ export function IntegrationsScreen() {
           />
         </div>
       </section>
-
-      <p className="text-center text-xs leading-5 text-muted-foreground">
-        {t("integrations:privacyNote")}
-      </p>
     </section>
   );
 }

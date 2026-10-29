@@ -1,4 +1,5 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
 	forwardRef,
 	type AnchorHTMLAttributes,
@@ -27,11 +28,12 @@ const queryState = vi.hoisted(() => ({
 }));
 
 const completeMutation = vi.hoisted(() => ({
+	error: null as Error | null,
+	isError: false,
 	isPending: false,
-	mutate: vi.fn(),
+	mutateAsync: vi.fn(),
+	reset: vi.fn(),
 }));
-
-const confirmationToast = vi.hoisted(() => vi.fn());
 
 const noShowDialog = vi.hoisted(() => ({
 	props: null as unknown,
@@ -65,8 +67,6 @@ vi.mock("@/contexts/auth-context", () => ({
 vi.mock("@/hooks/mutations/use-schedules", () => ({
 	useCompleteSchedule: () => completeMutation,
 }));
-
-vi.mock("sonner", () => ({ toast: confirmationToast }));
 
 vi.mock("@/hooks/queries/use-classes", () => ({
 	useClasses: () => ({
@@ -202,11 +202,6 @@ type MockNoShowDialogProps = {
 	schedule: Schedule | null;
 };
 
-type CompleteMutationOptions = {
-	onSettled: () => void;
-	onSuccess: () => void;
-};
-
 type MockScheduleDrawerProps = {
 	isOpen: boolean;
 	onCreateSuccess: () => void;
@@ -266,9 +261,12 @@ describe("DashboardScreen", () => {
 		queryState.classesIsLoading = false;
 		queryState.awaitingConfirmation = [];
 		queryState.awaitingConfirmationError = false;
+		completeMutation.error = null;
+		completeMutation.isError = false;
 		completeMutation.isPending = false;
-		completeMutation.mutate.mockReset();
-		confirmationToast.mockReset();
+		completeMutation.mutateAsync.mockReset();
+		completeMutation.mutateAsync.mockResolvedValue(undefined);
+		completeMutation.reset.mockReset();
 		noShowDialog.props = null;
 		classDrawer.props = null;
 		scheduleDrawer.props = null;
@@ -468,7 +466,8 @@ describe("DashboardScreen", () => {
 		).toBeVisible();
 	});
 
-	it("returns completed last-card success focus to the visibly focusable confirmation heading", () => {
+	it("keeps the dashboard lock while confirmation is open and returns last-card success focus to the heading", async () => {
+		const user = userEvent.setup();
 		const schedule = makeAwaitingConfirmationSchedule();
 		queryState.awaitingConfirmation = [schedule];
 		stubSynchronousAnimationFrame();
@@ -477,36 +476,39 @@ describe("DashboardScreen", () => {
 		const complete = screen.getByRole("button", {
 			name: /Complete Biology refresher/i,
 		});
-		act(() => complete.click());
+		await user.click(complete);
 
-		expect(confirmationToast).toHaveBeenCalledTimes(1);
+		const dialog = screen.getByRole("alertdialog", {
+			name: "Complete this schedule?",
+		});
+		expect(completeMutation.mutateAsync).not.toHaveBeenCalled();
 		expect(complete).toBeDisabled();
 		expect(
-			screen.getByRole("region", { name: "Sessions to confirm" }),
+			document.querySelector(
+				'[aria-labelledby="sessions-to-confirm-title"]',
+			),
 		).toHaveAttribute("aria-busy", "true");
 
-		const [, toastOptions] = confirmationToast.mock.calls[0] ?? [];
-		act(() => {
-			(toastOptions as { action: { onClick: () => void } }).action.onClick();
-		});
+		await user.click(within(dialog).getByRole("button", { name: "Complete" }));
 
-		expect(completeMutation.mutate).toHaveBeenCalledWith(
-			schedule.getId(),
-			expect.any(Object),
-		);
-		const [, mutationOptions] = completeMutation.mutate.mock.calls[0] ?? [];
-		act(() => {
-			(mutationOptions as CompleteMutationOptions).onSuccess();
-			(mutationOptions as CompleteMutationOptions).onSettled();
+		await waitFor(() => {
+			expect(completeMutation.mutateAsync).toHaveBeenCalledWith(
+				schedule.getId(),
+			);
+			expect(
+				screen.queryByText(schedule.getClassName()),
+			).not.toBeInTheDocument();
+			expect(
+				document.querySelector(
+					'[aria-labelledby="sessions-to-confirm-title"]',
+				),
+			).toHaveAttribute("aria-busy", "false");
 		});
-
-		expect(
-			screen.queryByText(schedule.getClassName()),
-		).not.toBeInTheDocument();
-		expectConfirmationHeadingFocus();
+		await waitFor(expectConfirmationHeadingFocus);
 	});
 
-	it("moves completed-session success focus to the next remaining Complete action", () => {
+	it("moves completed-session success focus to the next remaining Complete action", async () => {
+		const user = userEvent.setup();
 		const completedSchedule = makeAwaitingConfirmationSchedule();
 		const nextSchedule = makeAwaitingConfirmationSchedule({
 			className: "Chemistry practice",
@@ -519,45 +521,88 @@ describe("DashboardScreen", () => {
 		const complete = screen.getByRole("button", {
 			name: /Complete Biology refresher/i,
 		});
-		act(() => complete.click());
-		const [, toastOptions] = confirmationToast.mock.calls[0] ?? [];
-		act(() => {
-			(toastOptions as { action: { onClick: () => void } }).action.onClick();
+		await user.click(complete);
+		const dialog = screen.getByRole("alertdialog", {
+			name: "Complete this schedule?",
 		});
-		const [, mutationOptions] = completeMutation.mutate.mock.calls[0] ?? [];
-		act(() => {
-			(mutationOptions as CompleteMutationOptions).onSuccess();
-			(mutationOptions as CompleteMutationOptions).onSettled();
-		});
+		await user.click(within(dialog).getByRole("button", { name: "Complete" }));
 
-		expect(
-			screen.queryByText(completedSchedule.getClassName()),
-		).not.toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: /Complete Chemistry practice/i }),
-		).toHaveFocus();
+		await waitFor(() => {
+			expect(
+				screen.queryByText(completedSchedule.getClassName()),
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: /Complete Chemistry practice/i }),
+			).toHaveFocus();
+		});
 	});
 
-	it("keeps a failed completion actionable after its mutation settles", () => {
+	it("keeps the dashboard lock through pending and localized error until cancellation", async () => {
+		const user = userEvent.setup();
+		let rejectMutation: ((error: Error) => void) | undefined;
+		completeMutation.mutateAsync.mockImplementationOnce(
+			() =>
+				new Promise<void>((_resolve, reject) => {
+					rejectMutation = reject;
+				}),
+		);
 		const schedule = makeAwaitingConfirmationSchedule();
 		queryState.awaitingConfirmation = [schedule];
-		render(<DashboardScreen />);
+		const { rerender } = render(<DashboardScreen />);
 
 		const complete = screen.getByRole("button", {
 			name: /Complete Biology refresher/i,
 		});
-		act(() => complete.click());
-		const [, toastOptions] = confirmationToast.mock.calls[0] ?? [];
-		act(() => {
-			(toastOptions as { action: { onClick: () => void } }).action.onClick();
+		await user.click(complete);
+		const dialog = screen.getByRole("alertdialog", {
+			name: "Complete this schedule?",
 		});
-		const [, mutationOptions] = completeMutation.mutate.mock.calls[0] ?? [];
-		act(() => {
-			(mutationOptions as CompleteMutationOptions).onSettled();
+		await user.click(within(dialog).getByRole("button", { name: "Complete" }));
+
+		await waitFor(() => {
+			expect(completeMutation.mutateAsync).toHaveBeenCalledWith(
+				schedule.getId(),
+			);
 		});
 
+		completeMutation.isPending = true;
+		rerender(<DashboardScreen />);
+
+		expect(screen.getByRole("alertdialog")).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
+		expect(complete).toBeDisabled();
+		await user.keyboard("{Escape}");
+		expect(screen.getByRole("alertdialog")).toBeVisible();
+
+		const rawError = new Error("Complete request failed");
+		completeMutation.error = rawError;
+		completeMutation.isError = true;
+		completeMutation.isPending = false;
+		await act(async () => {
+			rejectMutation?.(rawError);
+		});
+		rerender(<DashboardScreen />);
+
+		expect(screen.getByRole("alertdialog")).toBeVisible();
+		expect(screen.getByRole("alert")).toHaveTextContent(
+			"Failed to complete schedule. Please try again.",
+		);
 		expect(screen.getByText(schedule.getClassName())).toBeVisible();
-		expect(complete).toBeEnabled();
+		expect(complete).toBeDisabled();
+
+		await user.click(
+			within(screen.getByRole("alertdialog")).getByRole("button", {
+				name: "Cancel",
+			}),
+		);
+
+		await waitFor(() => expect(complete).toBeEnabled());
+		expect(screen.getByRole("alertdialog")).toHaveAttribute(
+			"data-closed",
+			"",
+		);
 	});
 
 	it("moves no-show success focus to the next remaining Complete action", () => {

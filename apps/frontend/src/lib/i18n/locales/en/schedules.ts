@@ -65,7 +65,11 @@ export default {
 	},
 	complete: {
 		action: "Complete",
-		confirm: "Complete this schedule and deduct {{hours}} hours?",
+		title: "Complete this schedule?",
+		confirm_one:
+			"This schedule will be marked as completed and {{hours}} hour will be deducted.",
+		confirm_other:
+			"This schedule will be marked as completed and {{hours}} hours will be deducted.",
 		confirmButton: "Complete",
 		cancelButton: "Cancel",
 	},

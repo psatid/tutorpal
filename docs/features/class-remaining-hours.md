@@ -86,12 +86,26 @@ exhausted; only active deductions reaching the class total does.
 
 ## Current frontend presentation
 
-Class cards and rows retain their available and total-hour balance while also
-showing a localized `Scheduled · Used` accounting line. The class detail header
-shows available and total hours, then scheduled and used hours; its progress bar
-represents used hours divided by total hours. Capacity messages in the one-time
-and recurring schedule flows name the relevant balance state and offer the
-existing Add hours action.
+The Classes list `ClassRow` intentionally has its own deduction-based summary:
+
+```text
+No hours added yet: totalHours <= 0
+Hours left: max(totalHours - usedHours, 0)
+```
+
+For display, the balance is rounded to two decimal places before its localized
+number and plural form are selected.
+
+It does not use `scheduledHours` or `remainingHours`, so a fully scheduled class
+with no deductions shows its full total as hours left. The row does not display
+the total or a `Scheduled · Used` line.
+
+Class cards and the class-detail header retain their capacity-oriented
+presentation. They show the available and total-hour balance along with the
+localized `Scheduled · Used` accounting line; the detail progress bar represents
+used hours divided by total hours. Capacity messages in the one-time and
+recurring schedule flows name the relevant balance state and offer the existing
+Add hours action.
 
 Scheduling capacity continues to use `remainingHours`. When no capacity remains
 but used hours are still below the total, the UI presents **All hours scheduled**

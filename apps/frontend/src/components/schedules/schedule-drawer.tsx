@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ScheduleTypeField } from "@/components/schedules/schedule-type-field";
 import { WeekdayTimeSelector } from "@/components/schedules/weekday-time-selector";
 import { ClassSelectorDrawer } from "@/components/schedules/class-selector-drawer";
+import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule-dialog";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { Badge } from "@tutorpal/ui/badge";
 import { Button } from "@tutorpal/ui/button";
@@ -29,7 +30,6 @@ import {
   ResponsiveDrawer,
 } from "@tutorpal/ui/responsive-drawer";
 import {
-  useCompleteSchedule,
   useCreateSchedule,
   useRestoreHours,
   useUpdateSchedule,
@@ -79,11 +79,16 @@ export function ScheduleDrawer({
   const { t } = useTranslation(["schedules", "classes"]);
   const navigate = useNavigate();
   const classTriggerRef = useRef<HTMLInputElement>(null);
+  const completeButtonRef = useRef<HTMLButtonElement>(null);
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const noShowButtonRef = useRef<HTMLButtonElement>(null);
+  const shouldFocusEditAfterCompleteRef = useRef(false);
   const shouldFocusEditAfterNoShowRef = useRef(false);
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
   const [isNoShowDialogOpen, setIsNoShowDialogOpen] = useState(false);
+  const [completeSchedule, setCompleteSchedule] = useState<Schedule | null>(
+    null,
+  );
   const selectedDateValue = selectedDate
     ? DateTime.from(selectedDate).toDateOnlyString()
     : "";
@@ -147,6 +152,8 @@ export function ScheduleDrawer({
       if (!isOpen) {
         setIsClassDrawerOpen(false);
         setIsNoShowDialogOpen(false);
+        setCompleteSchedule(null);
+        shouldFocusEditAfterCompleteRef.current = false;
       }
       return;
     }
@@ -170,7 +177,6 @@ export function ScheduleDrawer({
       onModeChange("view");
     },
   });
-  const completeMutation = useCompleteSchedule();
   const restoreMutation = useRestoreHours();
 
   const onSubmit = (data: ScheduleFormData) => {
@@ -235,8 +241,7 @@ export function ScheduleDrawer({
     });
   };
 
-  const isScheduleActionPending =
-    completeMutation.isPending || restoreMutation.isPending;
+  const isScheduleActionPending = restoreMutation.isPending;
   const noShowNote = scheduleData?.getNoShowNote()?.trim();
   const scheduleStatus = scheduleData
     ? statusColors[scheduleData.getStatus()]
@@ -246,19 +251,8 @@ export function ScheduleDrawer({
   const handleComplete = () => {
     if (!scheduleData || isScheduleActionPending) return;
 
-    const hoursToDeduct = DateTime.formatDurationHours(
-      scheduleData.getDurationHours(),
-    );
-    toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
-      action: {
-        label: t("schedules:complete.confirmButton"),
-        onClick: () => completeMutation.mutate(scheduleData.getId()),
-      },
-      cancel: {
-        label: t("schedules:complete.cancelButton"),
-        onClick: () => {},
-      },
-    });
+    shouldFocusEditAfterCompleteRef.current = false;
+    setCompleteSchedule(scheduleData);
   };
 
   const handleRestore = () => {
@@ -290,8 +284,8 @@ export function ScheduleDrawer({
           <>
             <Button
               disabled={isScheduleActionPending}
-              loading={completeMutation.isPending}
               onClick={handleComplete}
+              ref={completeButtonRef}
               type="button"
             >
               {t("schedules:complete.action")}
@@ -358,7 +352,7 @@ export function ScheduleDrawer({
   return (
     <ResponsiveDrawer
       footer={footer}
-      coverContent={isNoShowDialogOpen}
+      coverContent={completeSchedule !== null || isNoShowDialogOpen}
       onCloseAutoFocus={onCloseAutoFocus}
       onOpenChange={onOpenChange}
       open={isOpen}
@@ -656,6 +650,22 @@ export function ScheduleDrawer({
           ) : null}
         </FieldGroup>
       </form>
+      <CompleteScheduleDialog
+        finalFocus={() =>
+          shouldFocusEditAfterCompleteRef.current
+            ? editButtonRef.current
+            : (completeButtonRef.current ?? editButtonRef.current)
+        }
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompleteSchedule(null);
+          }
+        }}
+        onSuccess={() => {
+          shouldFocusEditAfterCompleteRef.current = true;
+        }}
+        schedule={completeSchedule}
+      />
       <NoShowScheduleDialog
         finalFocus={() =>
           shouldFocusEditAfterNoShowRef.current

@@ -181,6 +181,12 @@ describe("IntegrationsScreen", () => {
     };
     renderIntegrations();
 
+    expect(
+      screen.queryByText(
+        "Your connection details are encrypted and used only for your teaching workspace.",
+      ),
+    ).not.toBeInTheDocument();
+
     for (const provider of ["LINE", "Zoom", "Google Meet"]) {
       const card = await getIntegrationCard(provider);
       const heading = within(card).getByRole("heading", { name: provider });

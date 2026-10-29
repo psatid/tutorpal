@@ -13,6 +13,14 @@ const queryState = vi.hoisted(() => ({
 	schedules: [] as Schedule[],
 }));
 
+const completeMutation = vi.hoisted(() => ({
+  error: null as Error | null,
+  isError: false,
+  isPending: false,
+  mutateAsync: vi.fn(),
+  reset: vi.fn(),
+}));
+
 vi.mock("@/hooks/queries/use-schedules", () => ({
   useSchedules: (params?: Record<string, string | undefined>) => {
     queryState.calls.push(params ?? {});
@@ -26,7 +34,7 @@ vi.mock("@/hooks/queries/use-schedules", () => ({
 }));
 
 vi.mock("@/hooks/mutations/use-schedules", () => ({
-  useCompleteSchedule: () => ({ mutate: vi.fn() }),
+  useCompleteSchedule: () => completeMutation,
   useDeleteSchedule: () => ({ mutate: vi.fn() }),
   useRestoreHours: () => ({ mutate: vi.fn() }),
 }));
@@ -160,6 +168,12 @@ describe("SchedulesScreen weekly timeline integration", () => {
     queryState.calls = [];
     queryState.refetch.mockReset();
     queryState.schedules = [];
+    completeMutation.error = null;
+    completeMutation.isError = false;
+    completeMutation.isPending = false;
+    completeMutation.mutateAsync.mockReset();
+    completeMutation.mutateAsync.mockResolvedValue(undefined);
+    completeMutation.reset.mockReset();
     const rect = {} as DOMRect;
     vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue({
       0: rect,
@@ -207,6 +221,32 @@ describe("SchedulesScreen weekly timeline integration", () => {
     });
     await waitFor(() => {
       expect(queryState.calls.at(-1)).toMatchObject({ search: "algebra" });
+    });
+  });
+
+  it("opens the shared completion dialog from a Day card before mutating", async () => {
+    const user = userEvent.setup();
+    const schedule = makeSchedule();
+    queryState.schedules = [schedule];
+    render(<SchedulesScreen />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Mathematics" }),
+    );
+    await user.click(await screen.findByRole("menuitem", { name: "Complete" }));
+
+    const dialog = screen.getByRole("alertdialog", {
+      name: "Complete this schedule?",
+    });
+    expect(completeMutation.reset).toHaveBeenCalledTimes(1);
+    expect(completeMutation.mutateAsync).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Complete" }));
+
+    await waitFor(() => {
+      expect(completeMutation.mutateAsync).toHaveBeenCalledWith(
+        schedule.getId(),
+      );
     });
   });
 

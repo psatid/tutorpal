@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { schedulesKeys } from "@/hooks/queries/query-keys";
@@ -193,8 +193,9 @@ describe("schedule confirmation mutations", () => {
 		expect(onSuccess).toHaveBeenCalledTimes(1);
 	});
 
-	it("keeps the confirmation feed untouched and reports a completion failure", async () => {
-		api.complete.mockRejectedValue(new Error("Complete request failed"));
+	it("keeps the confirmation feed untouched and exposes a completion failure to its caller", async () => {
+		const error = new Error("Complete request failed");
+		api.complete.mockRejectedValue(error);
 		const queryClient = createQueryClient();
 		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 		const { result } = renderHook(() => useCompleteSchedule(), {
@@ -205,7 +206,11 @@ describe("schedule confirmation mutations", () => {
 			await result.current.mutateAsync("schedule-1").catch(() => undefined);
 		});
 
-		expect(toast.error).toHaveBeenCalledWith("Complete request failed");
+		await waitFor(() => {
+			expect(result.current.isError).toBe(true);
+		});
+		expect(result.current.error).toBe(error);
+		expect(toast.error).not.toHaveBeenCalled();
 		expect(invalidateQueries).not.toHaveBeenCalled();
 	});
 

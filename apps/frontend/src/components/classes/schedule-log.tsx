@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type RefObject, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -32,6 +32,7 @@ type ScheduleLogSection = "upcoming" | "recent";
 const UPCOMING_PREVIEW_COUNT = 3;
 
 interface ScheduleLogProps {
+  headingRef?: RefObject<HTMLHeadingElement | null>;
   section: ScheduleLogSection;
 	schedules: Schedule[];
   hasData: boolean;
@@ -252,6 +253,7 @@ function ScheduleRow({
 }
 
 export function ScheduleLog({
+  headingRef,
   section,
   schedules,
   hasData,
@@ -319,7 +321,12 @@ export function ScheduleLog({
     <section aria-labelledby={titleId} className="rounded-xl border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-medium tracking-[-0.01em] text-on-surface" id={titleId}>
+          <h2
+            className="rounded-sm text-lg font-medium tracking-[-0.01em] text-on-surface outline-none focus:ring-[3px] focus:ring-primary/35 focus:ring-offset-2"
+            id={titleId}
+            ref={headingRef}
+            tabIndex={-1}
+          >
             {t(`classDetail.${isUpcoming ? "upcomingTitle" : "recentTitle"}`)}
           </h2>
           {isUpcoming ? (

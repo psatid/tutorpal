@@ -18,7 +18,6 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { Badge } from "@tutorpal/ui/badge";
 import { Button, buttonVariants } from "@tutorpal/ui/button";
 import { Skeleton } from "@tutorpal/ui/skeleton";
@@ -27,11 +26,11 @@ import {
   AwaitingConfirmationCarousel,
   getAwaitingConfirmationCompleteActionId,
 } from "@/components/dashboard/awaiting-confirmation-carousel";
+import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule-dialog";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { ScheduleDrawer } from "@/components/schedules/schedule-drawer";
 import { APP_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/auth-context";
-import { useCompleteSchedule } from "@/hooks/mutations/use-schedules";
 import { useInfiniteAwaitingConfirmationSchedules } from "@/hooks/queries/use-infinite-awaiting-confirmation-schedules";
 import { useSchedules } from "@/hooks/queries/use-schedules";
 import { useClasses } from "@/hooks/queries/use-classes";
@@ -97,9 +96,10 @@ export function DashboardScreen() {
     date: today,
   });
   const awaitingConfirmationQuery = useInfiniteAwaitingConfirmationSchedules();
-  const completeMutation = useCompleteSchedule();
   const confirmationLockIdRef = useRef(0);
   const confirmationLockRef = useRef<ConfirmationLock | null>(null);
+  const completeLockRef = useRef<ConfirmationLock | null>(null);
+  const completeFocusScheduleIdRef = useRef<string | null>(null);
   const noShowLockRef = useRef<ConfirmationLock | null>(null);
   const resolvedScheduleIdsRef = useRef(new Set<string>());
   const schedulesLinkRef = useRef<HTMLAnchorElement>(null);
@@ -108,9 +108,9 @@ export function DashboardScreen() {
   const shouldFocusConfirmationHeadingAfterNoShowSuccessRef = useRef(false);
   const [confirmationLock, setConfirmationLock] =
     useState<ConfirmationLock | null>(null);
-  const [completingScheduleId, setCompletingScheduleId] = useState<
-    string | null
-  >(null);
+  const [completeSchedule, setCompleteSchedule] = useState<Schedule | null>(
+    null,
+  );
   const [confirmationFocusTarget, setConfirmationFocusTarget] =
     useState<ConfirmationFocusTarget | null>(null);
   const [resolvedScheduleIds, setResolvedScheduleIds] = useState<Set<string>>(
@@ -123,9 +123,7 @@ export function DashboardScreen() {
     awaitingConfirmationQuery.data?.pages
       .flatMap((page) => page.schedules)
       .filter((schedule) => !resolvedScheduleIds.has(schedule.getId())) ?? [];
-  const isMutationPending = completeMutation.isPending;
-  const isAwaitingConfirmation = confirmationLock !== null;
-  const isConfirmationBusy = isMutationPending || isAwaitingConfirmation;
+  const isConfirmationBusy = confirmationLock !== null;
 
   useEffect(() => {
     if (!confirmationFocusTarget || isConfirmationBusy) {
@@ -183,7 +181,6 @@ export function DashboardScreen() {
   const acquireConfirmationLock = (scheduleId: string) => {
     if (
       confirmationLockRef.current ||
-      isMutationPending ||
       resolvedScheduleIdsRef.current.has(scheduleId)
     ) {
       return null;
@@ -222,8 +219,11 @@ export function DashboardScreen() {
             (schedule) => schedule.getId() !== scheduleId,
           );
 
+    const neighboringScheduleId = neighboringSchedule?.getId() ?? null;
+
+    completeFocusScheduleIdRef.current = neighboringScheduleId;
     setConfirmationFocusTarget({
-      completeActionScheduleId: neighboringSchedule?.getId() ?? null,
+      completeActionScheduleId: neighboringScheduleId,
     });
   };
 
@@ -234,47 +234,30 @@ export function DashboardScreen() {
       return;
     }
 
-    const hoursToDeduct = DateTime.formatDurationHours(
-      schedule.getDurationHours(),
-    );
-    let wasConfirmed = false;
-    let isConfirmationClosed = false;
-    const releaseIfUnconfirmed = () => {
-      if (!wasConfirmed) {
-        isConfirmationClosed = true;
-        releaseConfirmationLock(lock);
-      }
-    };
+    completeLockRef.current = lock;
+    completeFocusScheduleIdRef.current = scheduleId;
+    setCompleteSchedule(schedule);
+  };
 
-    toast(t("schedules:complete.confirm", { hours: hoursToDeduct }), {
-      action: {
-        label: t("schedules:complete.confirmButton"),
-        onClick: () => {
-          if (wasConfirmed || isConfirmationClosed) {
-            return;
-          }
+  const handleCompleteScheduleSuccess = (schedule: Schedule) => {
+    const lock = completeLockRef.current;
+    const scheduleId = schedule.getId();
 
-          wasConfirmed = true;
-          setCompletingScheduleId(scheduleId);
-          completeMutation.mutate(scheduleId, {
-            onSuccess: () => {
-              markScheduleResolved(scheduleId);
-              queueConfirmationSuccessFocus(scheduleId);
-            },
-            onSettled: () => {
-              setCompletingScheduleId(null);
-              releaseConfirmationLock(lock);
-            },
-          });
-        },
-      },
-      cancel: {
-        label: t("schedules:complete.cancelButton"),
-        onClick: releaseIfUnconfirmed,
-      },
-      onAutoClose: releaseIfUnconfirmed,
-      onDismiss: releaseIfUnconfirmed,
-    });
+    markScheduleResolved(scheduleId);
+    queueConfirmationSuccessFocus(scheduleId);
+    completeLockRef.current = null;
+    if (lock) {
+      releaseConfirmationLock(lock);
+    }
+  };
+
+  const closeCompleteScheduleDialog = () => {
+    const lock = completeLockRef.current;
+    completeLockRef.current = null;
+    setCompleteSchedule(null);
+    if (lock) {
+      releaseConfirmationLock(lock);
+    }
   };
 
   const handleNoShowSchedule = (
@@ -336,7 +319,7 @@ export function DashboardScreen() {
       </header>
 
       <AwaitingConfirmationCarousel
-        completingScheduleId={completingScheduleId}
+        completingScheduleId={null}
         headingRef={confirmationHeadingRef}
         hasNextPage={awaitingConfirmationQuery.hasNextPage}
         isBusy={isConfirmationBusy}
@@ -406,6 +389,29 @@ export function DashboardScreen() {
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {homeAnnouncement}
       </p>
+      <CompleteScheduleDialog
+        finalFocus={() => {
+          const completeActionId = completeFocusScheduleIdRef.current
+            ? getAwaitingConfirmationCompleteActionId(
+                completeFocusScheduleIdRef.current,
+              )
+            : null;
+          const completeAction = completeActionId
+            ? document.getElementById(completeActionId)
+            : null;
+
+          return (
+            completeAction ??
+            confirmationHeadingRef.current ??
+            schedulesLinkRef.current
+          );
+        }}
+        onOpenChange={(open) => {
+          if (!open) closeCompleteScheduleDialog();
+        }}
+        onSuccess={handleCompleteScheduleSuccess}
+        schedule={completeSchedule}
+      />
       <NoShowScheduleDialog
         finalFocus={() => {
           if (shouldFocusConfirmationHeadingAfterNoShowSuccessRef.current) {

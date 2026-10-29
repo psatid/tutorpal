@@ -150,11 +150,6 @@ export const useCompleteSchedule = (options?: { onSuccess?: () => void }) => {
 			queryClient.invalidateQueries({ queryKey: studentsQueryKeys.all });
 			options?.onSuccess?.();
 		},
-		onError: (error: Error) => {
-			toast.error(
-				error.message || t("toast.completeError"),
-			);
-		},
 	});
 };
 

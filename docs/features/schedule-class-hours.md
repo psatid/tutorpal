@@ -108,3 +108,18 @@ when `remainingHours <= 0`. The UI calls hours exhausted only when
 `totalHours > 0 && usedHours >= totalHours`; zero-hour classes show **No hours
 added yet**, and fully scheduled classes with deductions below the total show
 **All hours scheduled**.
+
+## Completion confirmation (October 29, 2026)
+
+- Every **Complete** action now opens the same confirmation dialog from the
+  dashboard confirmation carousel, Schedules, class detail, and Schedule
+  Drawer. The dialog states the exact hours that will be deducted before the
+  completion request is made.
+- While completion is pending, the dialog keeps focus contained, disables its
+  actions and dismissal, and prevents duplicate submissions. Completion
+  failures remain inline for retry or cancellation; the successful completion
+  toast remains unchanged.
+- The previous interactive confirmation toast is no longer used for
+  completion. The dashboard retains its confirmation lock and moves focus to a
+  neighboring remaining session or the section heading after a successful
+  completion.

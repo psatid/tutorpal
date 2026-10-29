@@ -10,11 +10,14 @@ const mutations = vi.hoisted(() => ({
 	create: vi.fn(),
 	delete: vi.fn(),
 	complete: vi.fn(),
+	completeReset: vi.fn(),
 	restore: vi.fn(),
 	update: vi.fn(),
 }));
 
 const drawerState = vi.hoisted(() => ({
+	completeError: null as Error | null,
+	completeIsError: false,
 	completePending: false,
 	deletePending: false,
 	restorePending: false,
@@ -30,12 +33,17 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@tutorpal/ui/responsive-drawer", () => ({
-	ResponsiveDrawer: ({ children, footer, title }: {
+	ResponsiveDrawer: ({ children, coverContent, footer, title }: {
 		children: React.ReactNode;
+		coverContent?: boolean;
 		footer?: React.ReactNode;
 		title: string;
 	}) => (
-		<section aria-label={title} data-testid={`responsive-drawer-${title}`}>
+		<section
+			aria-label={title}
+			data-cover-content={coverContent ? "true" : "false"}
+			data-testid={`responsive-drawer-${title}`}
+		>
 			{children}
 			<footer data-testid="schedule-drawer-footer">{footer}</footer>
 		</section>
@@ -80,8 +88,11 @@ vi.mock("@/hooks/mutations/use-schedules", () => ({
 		mutate: mutations.delete,
 	}),
 	useCompleteSchedule: () => ({
+		error: drawerState.completeError,
+		isError: drawerState.completeIsError,
 		isPending: drawerState.completePending,
-		mutate: mutations.complete,
+		mutateAsync: mutations.complete,
+		reset: mutations.completeReset,
 	}),
 	useRestoreHours: () => ({
 		isPending: drawerState.restorePending,
@@ -162,8 +173,12 @@ describe("ScheduleDrawer", () => {
 		mutations.create.mockReset();
 		mutations.delete.mockReset();
 		mutations.complete.mockReset();
+		mutations.complete.mockResolvedValue(undefined);
+		mutations.completeReset.mockReset();
 		mutations.restore.mockReset();
 		mutations.update.mockReset();
+		drawerState.completeError = null;
+		drawerState.completeIsError = false;
 		drawerState.completePending = false;
 		drawerState.deletePending = false;
 		drawerState.restorePending = false;
@@ -458,6 +473,36 @@ describe("ScheduleDrawer", () => {
 		expect(dialog).toHaveAttribute("data-open", "true");
 	});
 
+	it("overlays the open drawer with completion confirmation before mutating", async () => {
+		const user = userEvent.setup();
+		renderScheduleDrawer("SCHEDULED");
+
+		const drawer = screen.getByTestId("responsive-drawer-Schedule Details");
+		expect(drawer).toHaveAttribute("data-cover-content", "false");
+
+		await user.click(
+			within(screen.getByLabelText("Schedule actions")).getByRole("button", {
+				name: "Complete",
+			}),
+		);
+
+		const dialog = screen.getByRole("alertdialog", {
+			name: "Complete this schedule?",
+		});
+		expect(dialog).toHaveTextContent(
+			"This schedule will be marked as completed and 1 hour will be deducted.",
+		);
+		expect(drawer).toBeInTheDocument();
+		expect(drawer).toHaveAttribute("data-cover-content", "true");
+		expect(mutations.complete).not.toHaveBeenCalled();
+
+		await user.click(within(dialog).getByRole("button", { name: "Complete" }));
+
+		await waitFor(() => {
+			expect(mutations.complete).toHaveBeenCalledWith("schedule-1");
+		});
+	});
+
 	it("provides the No Show trigger as the dialog's default focus-return target", () => {
 		renderScheduleDrawer("SCHEDULED");
 
@@ -476,8 +521,8 @@ describe("ScheduleDrawer", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("locks drawer actions while a schedule action is pending", () => {
-		drawerState.completePending = true;
+	it("locks drawer actions while restoring hours", () => {
+		drawerState.restorePending = true;
 		renderScheduleDrawer("SCHEDULED");
 
 		const actions = screen.getByLabelText("Schedule actions");

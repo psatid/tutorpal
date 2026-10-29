@@ -7,7 +7,6 @@ import { useClassDetails } from "@/hooks/queries/use-class-details";
 import { useClassSchedules } from "@/hooks/queries/use-class-schedules";
 import {
   useDeleteSchedule,
-  useCompleteSchedule,
   useRestoreHours,
 } from "@/hooks/mutations/use-schedules";
 import { ClassInfoHeader } from "@/components/classes/class-info-header";
@@ -24,6 +23,7 @@ import {
   ScheduleDrawer,
   type DrawerMode as ScheduleDrawerMode,
 } from "@/components/schedules/schedule-drawer";
+import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule-dialog";
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { Button } from "@tutorpal/ui/button";
 import { Skeleton } from "@tutorpal/ui/skeleton";
@@ -68,7 +68,6 @@ export function ClassDetailScreen({
   } = useClassSchedules(classId);
 
   const deleteScheduleMutation = useDeleteSchedule();
-  const completeMutation = useCompleteSchedule();
   const restoreMutation = useRestoreHours();
 
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
@@ -76,6 +75,7 @@ export function ClassDetailScreen({
   const classEditOriginRef = useRef<HTMLButtonElement | null>(null);
   const classHoursOriginRef = useRef<HTMLButtonElement | null>(null);
   const classHoursButtonRef = useRef<HTMLButtonElement | null>(null);
+  const upcomingSchedulesHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const addHoursIntentHandledRef = useRef(false);
   const returnToDashboardOnHoursAddedRef = useRef(returnToDashboardOnHoursAdded);
   const [isClassHoursDrawerOpen, setIsClassHoursDrawerOpen] = useState(false);
@@ -84,6 +84,9 @@ export function ClassDetailScreen({
   const [scheduleDrawerMode, setScheduleDrawerMode] =
     useState<ScheduleDrawerMode>("view");
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
+    null,
+  );
+  const [completeSchedule, setCompleteSchedule] = useState<Schedule | null>(
     null,
   );
   const [noShowSchedule, setNoShowSchedule] =
@@ -199,27 +202,9 @@ export function ClassDetailScreen({
 
   const handleCompleteSchedule = useCallback(
 	(schedule: Schedule) => {
-      const hoursToDeduct = DateTime.formatDurationHours(
-			schedule.getDurationHours(),
-      );
-      toast(
-        t("schedules:complete.confirm", {
-          hours: hoursToDeduct,
-          ns: "schedules",
-        }),
-        {
-          action: {
-            label: t("schedules:complete.confirmButton", { ns: "schedules" }),
-			onClick: () => completeMutation.mutate(schedule.getId()),
-          },
-          cancel: {
-            label: t("schedules:complete.cancelButton", { ns: "schedules" }),
-            onClick: () => {},
-          },
-        },
-      );
+      setCompleteSchedule(schedule);
     },
-    [completeMutation, t],
+    [],
   );
 
   const handleRestoreHours = useCallback(
@@ -382,6 +367,7 @@ export function ClassDetailScreen({
       ) : null}
 
       <ScheduleLog
+        headingRef={upcomingSchedulesHeadingRef}
         section="upcoming"
         schedules={schedules ?? []}
         hasData={schedules !== undefined}
@@ -459,6 +445,18 @@ export function ClassDetailScreen({
         mode={scheduleDrawerMode}
         scheduleId={selectedScheduleId}
         onModeChange={setScheduleDrawerMode}
+      />
+
+      <CompleteScheduleDialog
+        finalFocus={() =>
+          upcomingSchedulesHeadingRef.current ?? classHoursButtonRef.current
+        }
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompleteSchedule(null);
+          }
+        }}
+        schedule={completeSchedule}
       />
 
       <NoShowScheduleDialog
