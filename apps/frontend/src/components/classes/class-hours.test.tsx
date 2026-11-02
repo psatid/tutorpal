@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GetV1ClassesById200 } from "@/api/generated/models/getV1ClassesById200";
 import { ClassCard } from "@/components/classes/class-card";
@@ -64,7 +65,7 @@ describe("class-hour surfaces", () => {
 		);
 
 		expect(screen.getByText("0/10 hours")).toBeVisible();
-		expect(screen.getByText("All hours scheduled")).toBeVisible();
+		expect(screen.getAllByText("All hours scheduled")[0]).toBeVisible();
 		expect(screen.getByText("Scheduled 10 · Used 0")).toBeVisible();
 	});
 
@@ -202,21 +203,63 @@ describe("class-hour surfaces", () => {
 					usedHours: 3,
 				})}
 				onAddHours={vi.fn()}
+				onAddSchedule={vi.fn()}
 				onBack={vi.fn()}
 				onEdit={vi.fn()}
 			/>,
 		);
 
-		expect(screen.getByText("All hours scheduled")).toBeVisible();
-		expect(screen.getByText("Scheduled 7 · Used 3")).toBeVisible();
+		expect(screen.getAllByText("All hours scheduled")[0]).toBeVisible();
+		expect(screen.getByText("3 used")).toBeVisible();
+		expect(screen.getByText("7 scheduled")).toBeVisible();
+		expect(screen.getByText("0 available")).toBeVisible();
+
+		expect(
+			within(screen.getByRole("navigation", { name: "Class navigation" })).getByText(
+				"Algebra 1",
+			),
+		).toHaveAttribute("aria-current", "page");
 
 		const progress = screen.getByRole("progressbar", {
-			name: "Hours used",
+			name: "Class hours breakdown",
 		});
 		expect(progress).toHaveAttribute("aria-valuemin", "0");
 		expect(progress).toHaveAttribute("aria-valuemax", "10");
 		expect(progress).toHaveAttribute("aria-valuenow", "3");
-		expect(progress).toHaveAttribute("aria-valuetext", "3 of 10 hours used");
+		expect(progress).toHaveAttribute(
+			"aria-valuetext",
+			"10 hours total: 3 used, 7 scheduled, 0 available",
+		);
+	});
+
+	it("reveals every enrolled student from the summary roster", async () => {
+		const user = userEvent.setup();
+		render(
+			<ClassInfoHeader
+				classData={makeClass({
+					students: [
+						{ grade: 6, id: "student-1", name: "Ada Lovelace", phoneNumber: null },
+						{ grade: 7, id: "student-2", name: "Grace Hopper", phoneNumber: null },
+						{ grade: 8, id: "student-3", name: "Katherine Johnson", phoneNumber: null },
+						{ grade: 9, id: "student-4", name: "Annie Easley", phoneNumber: null },
+					],
+				})}
+				onAddHours={vi.fn()}
+				onAddSchedule={vi.fn()}
+				onBack={vi.fn()}
+				onEdit={vi.fn()}
+			/>,
+		);
+
+		await user.click(screen.getByRole("button", { name: /4 students/ }));
+		const roster = screen
+			.getAllByRole("list")
+			.find((list) => list.textContent?.includes("Ada Lovelace"));
+		if (!roster) throw new Error("Expected the student roster popover.");
+		expect(roster).toHaveTextContent("Ada Lovelace");
+		expect(roster).toHaveTextContent("Grace Hopper");
+		expect(roster).toHaveTextContent("Katherine Johnson");
+		expect(roster).toHaveTextContent("Annie Easley");
 	});
 
 	it("localizes the accounting line and state labels in Thai", async () => {

@@ -1,7 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ScheduleLog } from "@/components/classes/schedule-log";
+import {
+	ClassNextSession,
+	ClassSessions,
+} from "@/components/classes/schedule-log";
 import { DateTime } from "@/lib/date-time";
 import i18n from "@/lib/i18n/config";
 import { Schedule, type ScheduleDisplayInput } from "@/models/schedule";
@@ -24,13 +27,10 @@ function makeSchedule(
 	});
 }
 
-type ScheduleLogOverrides = Partial<
-	React.ComponentProps<typeof ScheduleLog>
->;
+type ClassSessionsOverrides = Partial<React.ComponentProps<typeof ClassSessions>>;
 
-function renderScheduleLog(overrides: ScheduleLogOverrides = {}) {
+function renderClassSessions(overrides: ClassSessionsOverrides = {}) {
 	const props = {
-		errorOwner: true,
 		hasData: true,
 		isError: false,
 		isLoading: false,
@@ -39,82 +39,26 @@ function renderScheduleLog(overrides: ScheduleLogOverrides = {}) {
 		onViewSchedule: vi.fn(),
 		referenceTime,
 		schedules: [] as Schedule[],
-		section: "upcoming" as const,
+		studentCount: 4,
 		...overrides,
 	};
 
-	return {
-		...render(<ScheduleLog {...props} />),
-		props,
-	};
+	return { ...render(<ClassSessions {...props} />), props };
 }
 
-describe("ScheduleLog", () => {
+describe("class session surfaces", () => {
 	beforeEach(async () => {
 		await i18n.changeLanguage("en");
 		vi.clearAllMocks();
 	});
 
-	it("uses Schedule lifecycle and deterministic starts to order upcoming rows and dispatch actions", async () => {
+	it("separates upcoming and recent sessions, shows date rows, and dispatches row actions", async () => {
 		const user = userEvent.setup();
-		const next = makeSchedule({
-			id: "next",
-			notes: "First upcoming",
-			time: 10 * 60,
-		});
+		const next = makeSchedule({ id: "next", notes: "First upcoming" });
 		const later = makeSchedule({
 			id: "later",
 			notes: "Later upcoming",
 			time: 11 * 60,
-		});
-		const alreadyStarted = makeSchedule({
-			id: "already-started",
-			notes: "Already started",
-			time: 8 * 60,
-		});
-		const completed = makeSchedule({
-			id: "completed",
-			notes: "Completed",
-			status: "COMPLETED",
-			time: 12 * 60,
-		});
-		const onCompleteSchedule = vi.fn();
-		const { props } = renderScheduleLog({
-			onCompleteSchedule,
-			schedules: [later, completed, alreadyStarted, next],
-		});
-
-		const list = screen.getByRole("list");
-		const scheduleRows = within(list)
-			.getAllByRole("button")
-			.filter((button) => !button.getAttribute("aria-label"));
-		expect(scheduleRows).toHaveLength(2);
-		expect(scheduleRows[0]).toHaveTextContent("10:00 – 11:00");
-		expect(scheduleRows[1]).toHaveTextContent("11:00 – 12:00");
-		expect(screen.queryByText("Already started")).not.toBeInTheDocument();
-		expect(screen.queryByText("Completed")).not.toBeInTheDocument();
-
-		const nextRow = screen.getByRole("button", {
-			name: /10:00 – 11:00.*First upcoming/,
-		});
-		fireEvent.click(nextRow);
-		expect(props.onViewSchedule).toHaveBeenCalledWith(next);
-
-		await user.click(
-			screen.getByRole("button", {
-				name: "Actions for 10:00 – 11:00",
-			}),
-		);
-		await user.click(await screen.findByRole("menuitem", { name: "Complete" }));
-		expect(onCompleteSchedule).toHaveBeenCalledWith(next);
-	});
-
-	it("groups recent Schedule models and exposes only their eligible lifecycle actions", async () => {
-		const user = userEvent.setup();
-		const pastScheduled = makeSchedule({
-			id: "past-scheduled",
-			date: "2026-10-12",
-			time: 8 * 60,
 		});
 		const completed = makeSchedule({
 			id: "completed",
@@ -122,65 +66,152 @@ describe("ScheduleLog", () => {
 			status: "COMPLETED",
 			time: 14 * 60,
 		});
-		const onRestoreSchedule = vi.fn();
-		renderScheduleLog({
+		const { props } = renderClassSessions({
 			onCompleteSchedule: vi.fn(),
-			onNoShowSchedule: vi.fn(),
-			onRestoreSchedule,
-			section: "recent",
-			schedules: [completed, pastScheduled],
+			onRestoreSchedule: vi.fn(),
+			schedules: [later, completed, next],
 		});
 
-		const lists = screen.getAllByRole("list");
-		expect(lists).toHaveLength(2);
-		expect(lists[0]).toHaveTextContent("08:00 – 09:00");
-		expect(lists[1]).toHaveTextContent("14:00 – 15:00");
+		expect(screen.getByRole("heading", { name: "Sessions" })).toHaveAttribute(
+			"tabindex",
+			"-1",
+		);
+		expect(screen.getByRole("tab", { name: "Upcoming (2)" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+		expect(screen.getByText("10:00 – 11:00")).toBeVisible();
+		expect(screen.getByText("4 students")).toBeVisible();
+		expect(screen.getByText("Mon, Oct 12")).toBeVisible();
 
 		await user.click(
-			screen.getByRole("button", {
-				name: "Actions for 14:00 – 15:00",
-			}),
+			screen.getByRole("button", { name: /11:00 – 12:00.*Online/ }),
+		);
+		expect(props.onViewSchedule).toHaveBeenCalledWith(later);
+
+		await user.click(screen.getByRole("tab", { name: "Recent (1)" }));
+		expect(screen.getByText("Sun, Oct 11")).toBeVisible();
+		await user.click(
+			screen.getByRole("button", { name: "Actions for 14:00 – 15:00" }),
 		);
 		expect(await screen.findByRole("menuitem", { name: "Restore" })).toBeVisible();
 		expect(screen.queryByRole("menuitem", { name: "Complete" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("menuitem", { name: "No Show" })).not.toBeInTheDocument();
-		await user.click(screen.getByRole("menuitem", { name: "Restore" }));
-		expect(onRestoreSchedule).toHaveBeenCalledWith(completed);
 	});
 
-	it("renders loading, empty, and retryable error states", async () => {
+	it("renders the nearest next session with the actual student count and opens it", async () => {
 		const user = userEvent.setup();
-		const { props, rerender } = renderScheduleLog({
+		const nearer = makeSchedule({ id: "nearer", time: 10 * 60 });
+		const later = makeSchedule({ id: "later", time: 12 * 60 });
+		const onViewSchedule = vi.fn();
+
+		render(
+			<ClassNextSession
+				hasData
+				isError={false}
+				isLoading={false}
+				onRetry={vi.fn()}
+				onViewSchedule={onViewSchedule}
+				referenceTime={referenceTime}
+				schedules={[later, nearer]}
+				studentCount={3}
+			/>,
+		);
+
+		expect(screen.getByRole("heading", { name: "Next session" })).toBeVisible();
+		expect(screen.getByText("Oct")).toBeVisible();
+		expect(screen.getByText("12")).toBeVisible();
+		expect(screen.getByText("3 students")).toBeVisible();
+		await user.click(screen.getByRole("button", { name: "View" }));
+		expect(onViewSchedule).toHaveBeenCalledWith(nearer);
+	});
+
+	it("keeps Delete available from the featured session on desktop and mobile", async () => {
+		const user = userEvent.setup();
+		const schedule = makeSchedule({ id: "only-upcoming" });
+		const onDeleteSchedule = vi.fn();
+		const desktop = renderClassSessions({
+			onDeleteSchedule,
+			schedules: [schedule],
+		});
+
+		await user.click(
+			screen.getByRole("button", { name: "Actions for 10:00 – 11:00" }),
+		);
+		await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
+		expect(onDeleteSchedule).toHaveBeenCalledWith(schedule);
+		desktop.unmount();
+
+		render(
+			<ClassNextSession
+				hasData
+				isError={false}
+				isLoading={false}
+				onDeleteSchedule={onDeleteSchedule}
+				onRetry={vi.fn()}
+				onViewSchedule={vi.fn()}
+				referenceTime={referenceTime}
+				schedules={[schedule]}
+				studentCount={1}
+			/>,
+		);
+
+		await user.click(
+			screen.getByRole("button", { name: "Actions for 10:00 – 11:00" }),
+		);
+		await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
+		expect(onDeleteSchedule).toHaveBeenCalledTimes(2);
+	});
+
+	it("previews three upcoming sessions and expands the remaining loaded sessions on request", async () => {
+		const user = userEvent.setup();
+		renderClassSessions({
+			schedules: [
+				makeSchedule({ id: "one", time: 10 * 60 }),
+				makeSchedule({ id: "two", time: 11 * 60 }),
+				makeSchedule({ id: "three", time: 12 * 60 }),
+				makeSchedule({ id: "four", time: 13 * 60 }),
+			],
+		});
+
+		expect(screen.getByText("10:00 – 11:00")).toBeVisible();
+		expect(screen.getByText("11:00 – 12:00")).toBeVisible();
+		expect(screen.getByText("12:00 – 13:00")).toBeVisible();
+		expect(screen.queryByText("13:00 – 14:00")).not.toBeInTheDocument();
+
+		await user.click(
+			screen.getByRole("button", { name: "Show all upcoming sessions" }),
+		);
+		expect(screen.getByText("13:00 – 14:00")).toBeVisible();
+		expect(
+			screen.getByRole("button", { name: "Show fewer upcoming sessions" }),
+		).toBeVisible();
+	});
+
+	it("keeps loading, empty, and refresh-error states accessible", async () => {
+		const user = userEvent.setup();
+		const { props, rerender } = renderClassSessions({
 			hasData: false,
 			isLoading: true,
 		});
 
 		expect(screen.getByRole("status")).toHaveTextContent("Loading...");
 
-		rerender(
-			<ScheduleLog
-				{...props}
-				hasData={false}
-				isLoading={false}
-			/>,
-		);
-		await user.click(
-			screen.getByRole("button", { name: "Schedule a session" }),
-		);
+		rerender(<ClassSessions {...props} hasData isLoading={false} schedules={[]} />);
+		await user.click(screen.getByRole("button", { name: "Schedule a session" }));
 		expect(props.onAddSchedule).toHaveBeenCalledTimes(1);
 
 		rerender(
-			<ScheduleLog
+			<ClassSessions
 				{...props}
-				hasData={false}
+				hasData
 				isError
 				isLoading={false}
+				schedules={[makeSchedule()]}
 			/>,
 		);
-		expect(screen.getByRole("alert")).toHaveTextContent(
-			"Sessions couldn’t load. Try again.",
-		);
-		await user.click(screen.getByRole("button", { name: "Retry" }));
+		const refreshError = screen.getByRole("alert");
+		expect(refreshError).toHaveTextContent("Sessions may be out of date");
+		await user.click(within(refreshError).getByRole("button", { name: "Retry" }));
 		expect(props.onRetry).toHaveBeenCalledTimes(1);
 	});
 });

@@ -69,23 +69,22 @@ vi.mock("@/components/classes/recurring-schedule-section", () => ({
 }));
 
 vi.mock("@/components/classes/schedule-log", () => ({
-  ScheduleLog: ({
+  ClassNextSession: () => null,
+  ClassSessions: ({
     headingRef,
     onCompleteSchedule,
     schedules,
-    section,
   }: {
     headingRef?: RefObject<HTMLHeadingElement | null>;
     onCompleteSchedule?: (schedule: Schedule) => void;
     schedules: Schedule[];
-    section: "recent" | "upcoming";
   }) => {
     const schedule = schedules[0];
 
-    return section === "upcoming" && schedule ? (
+    return schedule ? (
       <section>
         <h2 ref={headingRef} tabIndex={-1}>
-          Upcoming sessions
+          Sessions
         </h2>
         <button onClick={() => onCompleteSchedule?.(schedule)} type="button">
           Complete upcoming schedule
@@ -113,6 +112,7 @@ function makeClass(): Class {
   return {
     getBalanceState: () => "available" as const,
     getRecurringSchedule: () => null,
+    getStudents: () => [],
     hasNoAvailableHours: () => false,
   } as unknown as Class;
 }
@@ -174,12 +174,12 @@ describe("ClassDetailScreen completion", () => {
     });
   });
 
-  it("returns cancellation focus to the upcoming ScheduleLog heading", async () => {
+  it("returns cancellation focus to the Sessions heading", async () => {
     const user = userEvent.setup();
     render(<ClassDetailScreen classId="class-1" />);
 
     const heading = screen.getByRole("heading", {
-      name: "Upcoming sessions",
+      name: "Sessions",
     });
     await user.click(
       screen.getByRole("button", { name: "Complete upcoming schedule" }),

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -10,37 +10,44 @@ import { useInfiniteClassHourAdditions } from "@/hooks/queries/use-infinite-clas
 
 export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 	const { t } = useTranslation(["classes", "common"]);
+	const [showAll, setShowAll] = useState(false);
 	const additionsQuery = useInfiniteClassHourAdditions(classId);
 	const additions = useMemo(
 		() =>
 			additionsQuery.data?.pages.flatMap((page) => page.additions) ?? [],
 		[additionsQuery.data],
 	);
+	const visibleAdditions = showAll ? additions : additions.slice(0, 2);
 
 	return (
 		<section
 			aria-labelledby="class-hour-additions-title"
-			className="space-y-3 rounded-xl border border-border bg-card p-4 sm:p-5"
+			className="rounded-xl border border-border bg-card p-4 sm:p-5"
 		>
-			<div className="flex items-center gap-3">
-				<div className="rounded-full bg-surface-container-low p-2">
-					<HugeiconsIcon icon={Clock3HugeIcon} strokeWidth={2} aria-hidden="true" className="size-4 text-on-surface" />
-				</div>
+			<div className="flex items-center justify-between gap-3">
+				<div className="flex min-w-0 items-center gap-2">
+					<HugeiconsIcon icon={Clock3HugeIcon} strokeWidth={2} aria-hidden="true" className="size-4 shrink-0 text-on-surface-variant" />
 				<h2
 					className="text-base font-medium tracking-[-0.01em] text-foreground"
 					id="class-hour-additions-title"
 				>
 					{t("classes:hourAdditions.historyTitle")}
 				</h2>
+				</div>
+				{additions.length > 2 ? (
+					<Button onClick={() => setShowAll((current) => !current)} size="sm" type="button" variant="ghost">
+						{t(`classes:hourAdditions.${showAll ? "showLess" : "viewAll"}`)}
+					</Button>
+				) : null}
 			</div>
 			{additionsQuery.isLoading ? (
-				<div className="space-y-3" role="status">
+				<div className="mt-4 space-y-3" role="status">
 					<span className="sr-only">{t("common:loading")}</span>
 					<Skeleton className="h-14 w-full" />
 					<Skeleton className="h-14 w-full" />
 				</div>
 			) : additionsQuery.isError ? (
-				<div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+				<div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
 					<p className="text-sm text-destructive" role="alert">
 						{t("classes:hourAdditions.historyError")}
 					</p>
@@ -55,13 +62,13 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 					</Button>
 				</div>
 			) : additions.length === 0 ? (
-				<p className="py-2 text-sm text-muted-foreground">
+				<p className="py-4 text-sm text-muted-foreground">
 					{t("classes:hourAdditions.historyEmpty")}
 				</p>
 			) : (
 				<>
-					<ul className="divide-y divide-border border-y border-border">
-						{additions.map((addition) => {
+					<ul className="mt-4 divide-y divide-border border-y border-border">
+						{visibleAdditions.map((addition) => {
 							const data = addition.getListItemData();
 							const sourceLabel =
 								data.source === "course"
@@ -98,7 +105,7 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 					</ul>
 					{additionsQuery.hasNextPage ? (
 						<Button
-							className="w-full"
+							className="mt-3 w-full"
 							loading={additionsQuery.isFetchingNextPage}
 							onClick={() => additionsQuery.fetchNextPage()}
 							type="button"

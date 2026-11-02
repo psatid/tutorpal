@@ -33,8 +33,7 @@ describe("RecurringScheduleSection", () => {
 		expect(within(section).getAllByText("Monday")).toHaveLength(1);
 		expect(within(section).getAllByText("Tuesday")).toHaveLength(1);
 		expect(section.textContent).toMatch(/Monday.*08:00.*14:00.*Tuesday.*09:00/);
-		expect(within(section).getByText("08:00 · 1 h")).toBeVisible();
-		expect(within(section).getByText("14:00 · 30 min")).toBeVisible();
+		expect(section).toHaveTextContent("08:00 · 1 h, 14:00 · 30 min");
 		expect(
 			within(section).getByRole("button", { name: "Edit recurring schedule" }),
 		).toBeVisible();

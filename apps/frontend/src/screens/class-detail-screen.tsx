@@ -14,7 +14,10 @@ import { ClassHourAdditionsDrawer } from "@/components/classes/class-hour-additi
 import { ClassHourAdditionsSection } from "@/components/classes/class-hour-additions-section";
 import { RecurringScheduleDrawer } from "@/components/classes/recurring-schedule-drawer";
 import { RecurringScheduleSection } from "@/components/classes/recurring-schedule-section";
-import { ScheduleLog } from "@/components/classes/schedule-log";
+import {
+  ClassNextSession,
+  ClassSessions,
+} from "@/components/classes/schedule-log";
 import {
   ClassDrawer,
   type DrawerMode,
@@ -77,7 +80,9 @@ export function ClassDetailScreen({
   const classHoursButtonRef = useRef<HTMLButtonElement | null>(null);
   const upcomingSchedulesHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const addHoursIntentHandledRef = useRef(false);
-  const returnToDashboardOnHoursAddedRef = useRef(returnToDashboardOnHoursAdded);
+  const returnToDashboardOnHoursAddedRef = useRef(
+    returnToDashboardOnHoursAdded,
+  );
   const [isClassHoursDrawerOpen, setIsClassHoursDrawerOpen] = useState(false);
 
   const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
@@ -89,10 +94,11 @@ export function ClassDetailScreen({
   const [completeSchedule, setCompleteSchedule] = useState<Schedule | null>(
     null,
   );
-  const [noShowSchedule, setNoShowSchedule] =
-		useState<Schedule | null>(null);
+  const [noShowSchedule, setNoShowSchedule] = useState<Schedule | null>(null);
   const [isRecurringDrawerOpen, setIsRecurringDrawerOpen] = useState(false);
-  const [scheduleReferenceTime, setScheduleReferenceTime] = useState(DateTime.now);
+  const [scheduleReferenceTime, setScheduleReferenceTime] = useState(
+    DateTime.now,
+  );
   const isClassNotFound = isClassNotFoundError(classError);
 
   useEffect(() => {
@@ -163,8 +169,8 @@ export function ClassDetailScreen({
     }
   }, [openHourAdditionsOnMount]);
 
-	const handleViewSchedule = useCallback((schedule: Schedule) => {
-		setSelectedScheduleId(schedule.getId());
+  const handleViewSchedule = useCallback((schedule: Schedule) => {
+    setSelectedScheduleId(schedule.getId());
     setScheduleDrawerMode("view");
     setIsScheduleDrawerOpen(true);
   }, []);
@@ -185,11 +191,11 @@ export function ClassDetailScreen({
   }, [handleAddHours]);
 
   const handleDeleteSchedule = useCallback(
-	(schedule: Schedule) => {
+    (schedule: Schedule) => {
       toast(t("schedules:delete.confirm", { ns: "schedules" }), {
         action: {
           label: t("schedules:delete.confirmButton", { ns: "schedules" }),
-			onClick: () => deleteScheduleMutation.mutate(schedule.getId()),
+          onClick: () => deleteScheduleMutation.mutate(schedule.getId()),
         },
         cancel: {
           label: t("schedules:delete.cancelButton", { ns: "schedules" }),
@@ -200,17 +206,14 @@ export function ClassDetailScreen({
     [deleteScheduleMutation, t],
   );
 
-  const handleCompleteSchedule = useCallback(
-	(schedule: Schedule) => {
-      setCompleteSchedule(schedule);
-    },
-    [],
-  );
+  const handleCompleteSchedule = useCallback((schedule: Schedule) => {
+    setCompleteSchedule(schedule);
+  }, []);
 
   const handleRestoreHours = useCallback(
-	(schedule: Schedule) => {
+    (schedule: Schedule) => {
       const hoursToRestore = DateTime.formatDurationHours(
-			schedule.getDurationHours(),
+        schedule.getDurationHours(),
       );
       toast(
         t("schedules:restore.confirm", {
@@ -220,7 +223,7 @@ export function ClassDetailScreen({
         {
           action: {
             label: t("schedules:restore.confirmButton", { ns: "schedules" }),
-			onClick: () => restoreMutation.mutate(schedule.getId()),
+            onClick: () => restoreMutation.mutate(schedule.getId()),
           },
           cancel: {
             label: t("schedules:restore.cancelButton", { ns: "schedules" }),
@@ -232,12 +235,9 @@ export function ClassDetailScreen({
     [restoreMutation, t],
   );
 
-  const handleNoShowSchedule = useCallback(
-		(schedule: Schedule) => {
-      setNoShowSchedule(schedule);
-    },
-    [],
-  );
+  const handleNoShowSchedule = useCallback((schedule: Schedule) => {
+    setNoShowSchedule(schedule);
+  }, []);
 
   const handleScheduleDrawerOpenChange = useCallback((open: boolean) => {
     setIsScheduleDrawerOpen(open);
@@ -253,26 +253,16 @@ export function ClassDetailScreen({
   if (isLoadingClass && !classData) {
     return (
       <div className="flex h-full flex-col gap-6 py-4">
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+        <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <Skeleton className="w-9 h-9 rounded-full" />
+            <Skeleton className="size-11 rounded-full" />
             <Skeleton className="h-7 w-2/5 rounded" />
             <Skeleton className="w-9 h-9 rounded-full" />
           </div>
-          <div className="mt-5 grid gap-5 border-t border-border pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,0.65fr)]">
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-24" />
-              <div className="flex flex-wrap gap-2">
-                <Skeleton className="h-8 w-28 rounded-full" />
-                <Skeleton className="h-8 w-24 rounded-full" />
-              </div>
-            </div>
-            <div className="space-y-3 rounded-lg bg-inverse p-4">
-              <Skeleton className="h-3 w-16 bg-inverse-foreground/20" />
-              <Skeleton className="h-7 w-36 bg-inverse-foreground/20" />
-              <Skeleton className="h-3 w-24 bg-inverse-foreground/20" />
-              <Skeleton className="h-11 w-28 rounded-full bg-inverse-foreground/20" />
-            </div>
+          <div className="grid rounded-xl border border-border bg-card sm:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="m-4 h-11 rounded" />
+            <Skeleton className="m-4 h-16 rounded" />
+            <Skeleton className="m-4 h-11 rounded" />
           </div>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -283,12 +273,12 @@ export function ClassDetailScreen({
             <Skeleton className="h-18 w-full rounded-none" />
           </div>
         </div>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.55fr)]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(18rem,1fr)]">
+          <Skeleton className="h-64 w-full rounded-xl" />
           <div className="space-y-6">
-            <Skeleton className="h-28 w-full rounded-xl" />
             <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-36 w-full rounded-xl" />
           </div>
-          <Skeleton className="h-44 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -313,7 +303,10 @@ export function ClassDetailScreen({
   if (!classData) {
     return (
       <div className="flex h-full items-center justify-center py-8">
-        <div className="w-full max-w-md rounded-xl border border-destructive/30 bg-card p-5" role="alert">
+        <div
+          className="w-full max-w-md rounded-xl border border-destructive/30 bg-card p-5"
+          role="alert"
+        >
           <h1 className="text-lg font-medium text-on-surface">
             {t("classDetail.loadError.title")}
           </h1>
@@ -341,6 +334,7 @@ export function ClassDetailScreen({
         addHoursButtonRef={classHoursButtonRef}
         classData={classData}
         onAddHours={handleAddHours}
+        onAddSchedule={handleAddSchedule}
         onBack={handleBack}
         onEdit={handleEditClass}
       />
@@ -366,44 +360,32 @@ export function ClassDetailScreen({
         </div>
       ) : null}
 
-      <ScheduleLog
-        headingRef={upcomingSchedulesHeadingRef}
-        section="upcoming"
+      <ClassNextSession
         schedules={schedules ?? []}
+        studentCount={classData.getStudents().length}
         hasData={schedules !== undefined}
         isError={isSchedulesError}
         isLoading={isLoadingSchedules}
-        errorOwner
         onRetry={() => {
           void refetchSchedules();
         }}
         referenceTime={scheduleReferenceTime}
         onViewSchedule={handleViewSchedule}
-        onAddSchedule={handleAddSchedule}
         onCompleteSchedule={handleCompleteSchedule}
         onNoShowSchedule={handleNoShowSchedule}
         onRestoreSchedule={handleRestoreHours}
         onDeleteSchedule={handleDeleteSchedule}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.55fr)] lg:items-start">
-        <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17.5rem),1fr))]">
-          <RecurringScheduleSection
-            balanceState={classData.getBalanceState()}
-            hasNoAvailableHours={classData.hasNoAvailableHours()}
-            onAddHours={handleAddHours}
-            recurringSchedule={classData.getRecurringSchedule()}
-            onEdit={handleOpenRecurringDrawer}
-            onCreate={handleOpenRecurringDrawer}
-          />
-
-          <ScheduleLog
-            section="recent"
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(18rem,1fr)] lg:items-start">
+        <div className="order-2 lg:order-1 lg:row-span-2">
+          <ClassSessions
+            headingRef={upcomingSchedulesHeadingRef}
             schedules={schedules ?? []}
+            studentCount={classData.getStudents().length}
             hasData={schedules !== undefined}
             isError={isSchedulesError}
             isLoading={isLoadingSchedules}
-            errorOwner={false}
             onRetry={() => {
               void refetchSchedules();
             }}
@@ -416,10 +398,19 @@ export function ClassDetailScreen({
             onDeleteSchedule={handleDeleteSchedule}
           />
         </div>
-
-        <aside>
+        <div className="order-1 lg:order-2 lg:col-start-2">
+          <RecurringScheduleSection
+            balanceState={classData.getBalanceState()}
+            hasNoAvailableHours={classData.hasNoAvailableHours()}
+            onAddHours={handleAddHours}
+            recurringSchedule={classData.getRecurringSchedule()}
+            onEdit={handleOpenRecurringDrawer}
+            onCreate={handleOpenRecurringDrawer}
+          />
+        </div>
+        <div className="order-3 lg:col-start-2">
           <ClassHourAdditionsSection classId={classId} />
-        </aside>
+        </div>
       </div>
 
       <ClassDrawer
