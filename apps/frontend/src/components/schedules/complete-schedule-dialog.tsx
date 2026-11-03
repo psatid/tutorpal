@@ -89,7 +89,6 @@ export function CompleteScheduleDialog({
     <AlertDialog onOpenChange={handleOpenChange} open={schedule !== null}>
       <AlertDialogContent
         aria-busy={isPending}
-        className="w-[calc(100%-2rem)] sm:w-full"
         finalFocus={finalFocus ?? true}
         initialFocus={() => document.getElementById(cancelButtonId)}
       >

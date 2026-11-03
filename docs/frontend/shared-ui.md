@@ -27,6 +27,16 @@ keeps its own i18n instance. Context-bearing libraries such as React,
 React Hook Form, and react-i18next must resolve to one instance in each
 portal; keep them as compatible peer dependencies when changing the package.
 
+Shared dialogs, alert dialogs, and drawers are Animate UI wrappers over Base UI.
+They keep the portal, focus, dismissal, and layering contract behind the
+`@tutorpal/ui` subpath seam; portal code must import those wrappers rather than
+Animate UI or Motion directly. `@animate-ui/react` and `motion` are runtime
+dependencies of the shared package, while both portals keep `@base-ui/react`
+aligned at `^1.9.0`. Animate UI's built-in reduced-motion policy uses opacity in
+place of spatial overlay transitions. Keep caller-provided focus targets,
+pending-dismissal guards, and `overlayLayers` unchanged when composing a custom
+overlay with the exported low-level popup and viewport components.
+
 Run `make ui-check` and `make ui-test` at the repository root for the package,
 then `make frontend-build` and `make admin-build` to verify both consumers.
 Portal builds use `tsc --noEmit` because the imported package source is outside

@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useLayoutEffect, useState } from "react";
+import { type CSSProperties, type ReactNode, useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -66,6 +66,7 @@ export function ResponsiveDrawer({
   useVisualViewportSizing = false,
 }: ResponsiveDrawerProps) {
   const { t } = useTranslation("common");
+  const drawerPopupRef = useRef<HTMLDivElement>(null);
   const [drawerPopup, setDrawerPopup] = useState<HTMLDivElement | null>(null);
   const [drawerContent, setDrawerContent] = useState<HTMLDivElement | null>(
     null,
@@ -185,6 +186,10 @@ export function ResponsiveDrawer({
   const dismissNestedDrawer = () => {
     if (layer === "nested") onOpenChange(false);
   };
+  const setDrawerPopupRef = useCallback((node: HTMLDivElement | null) => {
+    drawerPopupRef.current = node;
+    setDrawerPopup(node);
+  }, []);
 
   return (
     <Drawer
@@ -206,7 +211,8 @@ export function ResponsiveDrawer({
           className={layer === "nested" ? "pointer-events-none" : undefined}
         >
           <DrawerPopup
-            ref={setDrawerPopup}
+            ref={setDrawerPopupRef}
+            initialFocus={drawerPopupRef}
             layer={layer}
             className="pointer-events-auto"
             style={popupStyle}

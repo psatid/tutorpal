@@ -1,9 +1,19 @@
 import * as React from "react";
-import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
+import { AlertDialog as AlertDialogPrimitive } from "@animate-ui/react/primitives/base-ui/alert-dialog";
+import type { Transition } from "motion/react";
 
 import { cn } from "../lib/utils";
 import { Button } from "./button";
 import { overlayLayers } from "./overlay-layers";
+
+const alertDialogTransition = {
+  duration: 0.2,
+  ease: "easeOut",
+} satisfies Transition;
+const alertDialogExitTransition = {
+  duration: 0.15,
+  ease: "easeIn",
+} satisfies Transition;
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -29,10 +39,12 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate bg-overlay-navy/80 duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate bg-overlay-navy/80",
         overlayLayers.alertBackdrop,
         className,
       )}
+      exitTransition={alertDialogExitTransition}
+      transition={alertDialogTransition}
       {...props}
     />
   );
@@ -48,16 +60,25 @@ function AlertDialogContent({
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      <AlertDialogPrimitive.Popup
-        data-slot="alert-dialog-content"
-        data-size={size}
+      <AlertDialogPrimitive.Viewport
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 grid w-full -translate-x-1/2 -translate-y-1/2 gap-6 rounded-xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed inset-0 flex items-center justify-center p-4",
           overlayLayers.alertSurface,
-          className,
         )}
-        {...props}
-      />
+      >
+        <AlertDialogPrimitive.Popup
+          data-slot="alert-dialog-content"
+          data-size={size}
+          className={cn(
+            "group/alert-dialog-content grid w-full gap-6 rounded-xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md",
+            className,
+          )}
+          exitTransition={alertDialogExitTransition}
+          from="top"
+          transition={alertDialogTransition}
+          {...props}
+        />
+      </AlertDialogPrimitive.Viewport>
     </AlertDialogPortal>
   );
 }

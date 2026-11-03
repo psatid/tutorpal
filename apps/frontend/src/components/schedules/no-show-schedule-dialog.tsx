@@ -1,4 +1,3 @@
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Tick02Icon as CheckHugeIcon,
@@ -15,11 +14,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@tutorpal/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogDescription,
   DialogHeader,
   DialogOverlay,
+  DialogPopup,
   DialogPortal,
   DialogTitle,
+  DialogViewport,
 } from "@tutorpal/ui/dialog";
 import { overlayLayers } from "@tutorpal/ui/overlay-layers";
 import { useNoShowSchedule } from "@/hooks/mutations/use-schedules";
@@ -35,7 +37,7 @@ interface NoShowScheduleDialogProps {
   onOpenChange: (open: boolean) => void;
   schedule: NoShowSchedule | null;
   onSuccess?: (schedule: NoShowSchedule) => void;
-  finalFocus?: ComponentProps<typeof DialogPrimitive.Popup>["finalFocus"];
+  finalFocus?: ComponentProps<typeof DialogPopup>["finalFocus"];
 }
 
 export function NoShowScheduleDialog({
@@ -127,14 +129,14 @@ export function NoShowScheduleDialog({
         <DialogOverlay
           className={cn(
             overlayLayers.alertBackdrop,
-            "motion-reduce:animate-none motion-reduce:transition-none",
           )}
         />
-        <DialogPrimitive.Popup
+        <DialogViewport className="p-0">
+          <DialogPopup
           aria-busy={noShowMutation.isPending}
           className={cn(
             overlayLayers.alertSurface,
-            "fixed top-1/2 left-1/2 grid max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-popover-foreground shadow-transient-dialog outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 sm:p-6 sm:pb-6 motion-reduce:animate-none motion-reduce:transition-none",
+            "grid max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-lg gap-5 overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-popover-foreground shadow-transient-dialog outline-none sm:p-6 sm:pb-6",
           )}
           finalFocus={finalFocus ?? true}
           initialFocus={deductHoursInputRef}
@@ -143,7 +145,7 @@ export function NoShowScheduleDialog({
             <DialogTitle>{t("noShow.title")}</DialogTitle>
             <DialogDescription>{t("noShow.description")}</DialogDescription>
           </DialogHeader>
-          <DialogPrimitive.Close
+          <DialogClose
             disabled={noShowMutation.isPending}
             render={
               <Button
@@ -162,7 +164,7 @@ export function NoShowScheduleDialog({
               aria-hidden="true"
               className="size-4"
             />
-          </DialogPrimitive.Close>
+          </DialogClose>
 
           <div className="rounded-lg border border-border bg-muted px-3 py-3">
             <p className="font-medium wrap-break-word text-foreground">
@@ -304,7 +306,8 @@ export function NoShowScheduleDialog({
               {submitLabel}
             </Button>
           </form>
-        </DialogPrimitive.Popup>
+          </DialogPopup>
+        </DialogViewport>
       </DialogPortal>
     </Dialog>
   );

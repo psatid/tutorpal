@@ -1,11 +1,15 @@
 import * as React from "react"
 import { useTranslation } from "react-i18next"
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { Dialog as DialogPrimitive } from "@animate-ui/react/primitives/base-ui/dialog"
+import type { Transition } from "motion/react"
 
 import { cn } from "../lib/utils"
 import { Button } from "./button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
+
+const dialogTransition = { duration: 0.2, ease: "easeOut" } satisfies Transition
+const dialogExitTransition = { duration: 0.15, ease: "easeIn" } satisfies Transition
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -30,10 +34,41 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
+      className={cn("fixed inset-0 isolate z-50 bg-overlay-navy/45", className)}
+      exitTransition={dialogExitTransition}
+      transition={dialogTransition}
+      {...props}
+    />
+  )
+}
+
+function DialogViewport({
+  className,
+  ...props
+}: DialogPrimitive.Viewport.Props) {
+  return (
+    <DialogPrimitive.Viewport
+      data-slot="dialog-viewport"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-overlay-navy/45 duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 z-50 flex items-center justify-center p-4",
         className
       )}
+      {...props}
+    />
+  )
+}
+
+function DialogPopup({
+  className,
+  ...props
+}: DialogPrimitive.Popup.Props) {
+  return (
+    <DialogPrimitive.Popup
+      data-slot="dialog-popup"
+      className={cn("relative", className)}
+      exitTransition={dialogExitTransition}
+      from="top"
+      transition={dialogTransition}
       {...props}
     />
   )
@@ -52,31 +87,33 @@ function DialogContent({
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogPrimitive.Popup
-        data-slot="dialog-content"
-        className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-lg border border-border bg-popover p-6 text-sm text-popover-foreground shadow-transient-dialog duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className
-        )}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-4 right-4"
-                size="icon"
-              />
-            }
-          >
-            <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} aria-hidden="true" />
-            <span className="sr-only">{t("accessibility.close")}</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Popup>
+      <DialogViewport>
+        <DialogPopup
+          data-slot="dialog-content"
+          className={cn(
+            "grid w-full max-w-full gap-6 rounded-lg border border-border bg-popover p-6 text-sm text-popover-foreground shadow-transient-dialog outline-none sm:max-w-md",
+            className
+          )}
+          {...props}
+        >
+          {children}
+          {showCloseButton && (
+            <DialogClose
+              data-slot="dialog-close"
+              render={
+                <Button
+                  variant="ghost"
+                  className="absolute top-4 right-4"
+                  size="icon"
+                />
+              }
+            >
+              <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} aria-hidden="true" />
+              <span className="sr-only">{t("accessibility.close")}</span>
+            </DialogClose>
+          )}
+        </DialogPopup>
+      </DialogViewport>
     </DialogPortal>
   )
 }
@@ -112,9 +149,9 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>
+        <DialogClose render={<Button variant="outline" />}>
           {t("buttons.close")}
-        </DialogPrimitive.Close>
+        </DialogClose>
       )}
     </div>
   )
@@ -157,7 +194,9 @@ export {
   DialogFooter,
   DialogHeader,
   DialogOverlay,
+  DialogPopup,
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  DialogViewport,
 }

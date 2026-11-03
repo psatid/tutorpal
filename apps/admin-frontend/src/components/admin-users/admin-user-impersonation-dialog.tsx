@@ -1,4 +1,3 @@
-import { Dialog } from "@base-ui/react/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert01Icon as AlertTriangleHugeIcon,
@@ -6,6 +5,16 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { AdminUser } from "@/types/admin-user";
+import {
+	Dialog,
+	DialogClose,
+	DialogDescription,
+	DialogOverlay,
+	DialogPopup,
+	DialogPortal,
+	DialogTitle,
+	DialogViewport,
+} from "@tutorpal/ui/dialog";
 
 type AdminUserImpersonationDialogProps = {
 	user: AdminUser | null;
@@ -30,29 +39,29 @@ export function AdminUserImpersonationDialog({
 			: t("users.impersonation.confirm");
 
 	return (
-		<Dialog.Root
+		<Dialog
 			disablePointerDismissal={isPending}
 			onOpenChange={(open) => {
 				if (!isPending) onOpenChange(open);
 			}}
 			open={user !== null}
 		>
-			<Dialog.Portal>
-				<Dialog.Backdrop className="fixed inset-0 z-70 bg-overlay-navy/45 duration-150 data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0" />
-				<Dialog.Viewport className="fixed inset-0 z-80 flex items-center justify-center p-4 sm:p-6">
-					<Dialog.Popup
+			<DialogPortal>
+				<DialogOverlay className="z-70" />
+				<DialogViewport className="z-80 p-4 sm:p-6">
+					<DialogPopup
 						aria-busy={isPending}
-						className="w-full max-w-md rounded-xl border border-border bg-popover p-6 text-popover-foreground shadow-transient-dialog outline-none duration-150 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95"
+						className="w-full max-w-md rounded-xl border border-border bg-popover p-6 text-popover-foreground shadow-transient-dialog outline-none"
 					>
 						<div className="flex size-11 items-center justify-center rounded-full bg-warning-container text-warning">
 							<HugeiconsIcon icon={AlertTriangleHugeIcon} strokeWidth={2} aria-hidden="true" className="size-5" />
 						</div>
-						<Dialog.Title className="mt-5 text-lg font-semibold text-foreground">
+						<DialogTitle className="mt-5 text-lg font-semibold text-foreground">
 							{t("users.impersonation.title")}
-						</Dialog.Title>
-						<Dialog.Description className="mt-2 break-words text-sm leading-6 text-muted-foreground">
+						</DialogTitle>
+						<DialogDescription className="mt-2 break-words text-sm leading-6 text-muted-foreground">
 							{t("users.impersonation.description", { name: user?.name })}
-						</Dialog.Description>
+						</DialogDescription>
 						<p className="mt-3 text-sm leading-6 text-muted-foreground">
 							{t("users.impersonation.sameTabWarning")}
 						</p>
@@ -70,21 +79,21 @@ export function AdminUserImpersonationDialog({
 							</div>
 						) : null}
 						<div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-							<Dialog.Close
+							<DialogClose
 								disabled={isPending}
 								render={
 									<Button disabled={isPending} type="button" variant="outline" />
 								}
 							>
 								{t("users.actions.cancel")}
-							</Dialog.Close>
+							</DialogClose>
 							<Button loading={isPending} onClick={onConfirm} type="button">
 								{primaryActionLabel}
 							</Button>
 						</div>
-					</Dialog.Popup>
-				</Dialog.Viewport>
-			</Dialog.Portal>
-		</Dialog.Root>
+					</DialogPopup>
+				</DialogViewport>
+			</DialogPortal>
+		</Dialog>
 	);
 }

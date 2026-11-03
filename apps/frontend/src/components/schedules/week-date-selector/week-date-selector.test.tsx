@@ -744,41 +744,48 @@ describe("WeekDateSelector", () => {
   });
 
   it("smoothly centers a date selected from the calendar", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-14T12:00:00Z"));
     const user = userEvent.setup();
-    render(<SelectorFixture />);
 
-    const rail = screen.getByRole("group", {
-      name: "Schedule date selector",
-    });
-    Object.defineProperties(rail, {
-      clientWidth: { configurable: true, value: 320 },
-      scrollWidth: { configurable: true, value: 1600 },
-      scrollLeft: { configurable: true, writable: true, value: 0 },
-    });
+    try {
+      render(<SelectorFixture />);
 
-    const selectedDate = getDateButton("2026-10-16");
-    Object.defineProperties(selectedDate, {
-      offsetLeft: { configurable: true, value: 700 },
-      offsetWidth: { configurable: true, value: 56 },
-    });
-    establishInitialDateRailLayout(rail);
-    scrollToMock.mockClear();
+      const rail = screen.getByRole("group", {
+        name: "Schedule date selector",
+      });
+      Object.defineProperties(rail, {
+        clientWidth: { configurable: true, value: 320 },
+        scrollWidth: { configurable: true, value: 1600 },
+        scrollLeft: { configurable: true, writable: true, value: 0 },
+      });
 
-    await user.click(
-      screen.getByRole("button", { name: "Open calendar for October 2026" }),
-    );
-    const calendarDate = await screen.findByRole("button", {
-      name: /Friday, October 16, 2026/,
-    });
-    await user.click(calendarDate);
+      const selectedDate = getDateButton("2026-10-16");
+      Object.defineProperties(selectedDate, {
+        offsetLeft: { configurable: true, value: 700 },
+        offsetWidth: { configurable: true, value: 56 },
+      });
+      establishInitialDateRailLayout(rail);
+      scrollToMock.mockClear();
 
-    expect(screen.getByTestId("selected-date")).toHaveTextContent(
-      "2026-10-16",
-    );
-    expect(scrollToMock).toHaveBeenCalledWith({
-      left: 568,
-      behavior: "smooth",
-    });
+      await user.click(
+        screen.getByRole("button", { name: "Open calendar for October 2026" }),
+      );
+      const calendarDate = await screen.findByRole("button", {
+        name: /Friday, October 16, 2026/,
+      });
+      await user.click(calendarDate);
+
+      expect(screen.getByTestId("selected-date")).toHaveTextContent(
+        "2026-10-16",
+      );
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: 568,
+        behavior: "smooth",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("smoothly centers a parent-driven Week-mode date change", async () => {

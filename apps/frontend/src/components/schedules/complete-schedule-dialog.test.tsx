@@ -101,12 +101,13 @@ describe("CompleteScheduleDialog", () => {
     const dialog = screen.getByRole("alertdialog", {
       name: "Complete this schedule?",
     });
-    expect(dialog).toHaveClass("w-[calc(100%-2rem)]", "sm:w-full");
-    expect(
-      screen.getByText(
-        "This schedule will be marked as completed and 1.5 hours will be deducted.",
-      ),
-    ).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "This schedule will be marked as completed and 1.5 hours will be deducted.",
+        ),
+      ).toBeVisible(),
+    );
     expect(completeMutation.mutateAsync).not.toHaveBeenCalled();
 
     await user.click(within(dialog).getByRole("button", { name: "Complete" }));
@@ -119,14 +120,16 @@ describe("CompleteScheduleDialog", () => {
     expect(callbackOrder).toEqual(["success", "close"]);
   });
 
-  it("uses singular hour copy for a one-hour schedule", () => {
+  it("uses singular hour copy for a one-hour schedule", async () => {
     renderDialog({ schedule: makeSchedule({ durationMinutes: 60 }) });
 
-    expect(
-      screen.getByText(
-        "This schedule will be marked as completed and 1 hour will be deducted.",
-      ),
-    ).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "This schedule will be marked as completed and 1 hour will be deducted.",
+        ),
+      ).toBeVisible(),
+    );
   });
 
   it("cancels with either Cancel or Escape without mutating", async () => {
@@ -200,7 +203,9 @@ describe("CompleteScheduleDialog", () => {
 
     await user.keyboard("{Escape}");
 
-    expect(screen.getByRole("alertdialog")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole("alertdialog")).toBeVisible(),
+    );
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
 
     completeMutation.isPending = false;
@@ -227,7 +232,9 @@ describe("CompleteScheduleDialog", () => {
       <CompleteScheduleDialog onOpenChange={vi.fn()} schedule={schedule} />,
     );
 
-    expect(screen.getByRole("alertdialog")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole("alertdialog")).toBeVisible(),
+    );
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Failed to complete schedule. Please try again.",
     );
