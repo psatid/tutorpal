@@ -82,6 +82,13 @@ describe("AppSidebar awaiting-confirmation badge", () => {
 
     expect(badge).toHaveAttribute("aria-hidden", "true");
     expect(badge).toHaveClass("bg-primary-container", "text-primary-pressed");
+    expect(badge).toHaveClass(
+      "md:max-lg:top-0.5",
+      "md:max-lg:translate-y-0",
+      "md:group-data-[edge-collapsed]/sidebar:top-0.5",
+      "md:group-data-[edge-collapsed]/sidebar:translate-y-0",
+    );
+    expect(schedules.closest("aside")).toHaveClass("group/sidebar");
     expect(schedules).toHaveClass("relative");
   });
 

@@ -131,6 +131,7 @@ export const AppSidebar = ({
 
       <aside
         className="jun-edgeSidebar
+          group/sidebar
           jun-edgeSidebar-drawer
           md:jun-edgeSidebar-permanent
           md:jun-edgeSidebar-w-[280px]
@@ -292,7 +293,7 @@ const NavigationLink = ({
         {visualBadgeCount ? (
           <Badge
             aria-hidden="true"
-            className="absolute top-1/2 right-0.5 z-10 h-4 min-w-4 -translate-y-1/2 px-1 text-[10px] leading-none"
+            className="absolute top-1/2 right-0.5 z-10 h-4 min-w-4 -translate-y-1/2 px-1 text-[10px] leading-none md:max-lg:top-0.5 md:max-lg:translate-y-0 md:group-data-[edge-collapsed]/sidebar:top-0.5 md:group-data-[edge-collapsed]/sidebar:translate-y-0"
             variant="primary"
           >
             {visualBadgeCount}
