@@ -195,18 +195,34 @@ describe("SessionsToConfirm", () => {
     queryState.hasNextPage = true;
     renderSessions();
 
+    const alert = screen.getByRole("alert");
     const banner = screen.getByRole("button", {
       name: "12 sessions need confirmation Review sessions",
     });
-    expect(within(banner).queryByText("12")).not.toBeInTheDocument();
+    const action = alert.querySelector('[data-slot="alert-action"]');
+    const title = document.getElementById("sessions-to-confirm-banner-title");
+
+    expect(alert).toHaveClass(
+      "grid-cols-[2.5rem_minmax(0,1fr)]",
+      "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]",
+    );
+    expect(action).toHaveClass(
+      "static",
+      "col-start-2",
+      "sm:col-start-3",
+      "sm:row-start-1",
+    );
+    expect(banner).toHaveClass("h-11");
+    expect(title).toHaveClass("tabular-nums");
+    expect(
+      within(alert).queryByText("12", { exact: true }),
+    ).not.toBeInTheDocument();
     expect(banner).toHaveAttribute(
       "aria-labelledby",
       "sessions-to-confirm-banner-title sessions-to-confirm-banner-action",
     );
     expect(banner).not.toHaveAttribute("aria-describedby");
-    expect(
-      document.getElementById("sessions-to-confirm-banner-title"),
-    ).toHaveTextContent("12 sessions need confirmation");
+    expect(title).toHaveTextContent("12 sessions need confirmation");
     expect(
       document.getElementById("sessions-to-confirm-banner-action"),
     ).toHaveTextContent("Review sessions");

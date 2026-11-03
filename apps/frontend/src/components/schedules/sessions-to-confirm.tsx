@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertAction, AlertTitle } from "@tutorpal/ui/alert";
 import { Button } from "@tutorpal/ui/button";
 import { ResponsiveDrawer } from "@tutorpal/ui/responsive-drawer";
 import { Skeleton } from "@tutorpal/ui/skeleton";
@@ -249,44 +250,43 @@ export function SessionsToConfirm({
   return (
     <>
       {shouldShowBanner ? (
-        <button
-          aria-controls={DRAWER_CONTENT_ID}
-          aria-expanded={isDrawerOpen}
-          aria-labelledby={`${BANNER_TITLE_ID} ${BANNER_ACTION_ID}`}
-          className="mx-3 mt-3 flex shrink-0 w-[calc(100%-1.5rem)] cursor-pointer flex-col gap-3 rounded-lg border border-warning/30 bg-warning-container px-3 py-3 text-left transition-colors hover:bg-warning-container/80 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-warning-container-foreground sm:mx-4 sm:w-[calc(100%-2rem)] sm:flex-row sm:items-center sm:justify-between sm:px-4 lg:mx-6 lg:w-[calc(100%-3rem)] motion-reduce:transition-none"
-          onClick={() => setIsDrawerOpen(true)}
-          ref={bannerTriggerRef}
-          type="button"
+        <Alert
+          className="mx-3 mt-3 shrink-0 w-[calc(100%-1.5rem)] grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 border-warning/30 bg-warning-container px-3 py-3 text-warning-container-foreground sm:mx-4 sm:w-[calc(100%-2rem)] sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-4 lg:mx-6 lg:w-[calc(100%-3rem)]"
         >
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
-              <HugeiconsIcon
-                aria-hidden="true"
-                className="size-5"
-                icon={TriangleAlertHugeIcon}
-                strokeWidth={2}
-              />
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p
-                  className="font-semibold text-warning-container-foreground"
-                  id={BANNER_TITLE_ID}
-                >
-                  {t("awaitingConfirmation.banner.title", {
-                    count: outstandingTotal,
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
-          <span
-            className="shrink-0 text-sm font-medium text-warning-container-foreground"
-            id={BANNER_ACTION_ID}
-          >
-            {t("awaitingConfirmation.banner.action")}
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-5"
+              icon={TriangleAlertHugeIcon}
+              strokeWidth={2}
+            />
           </span>
-        </button>
+          <AlertTitle
+            className="min-w-0 line-clamp-none min-h-0 font-semibold leading-6 tabular-nums"
+            id={BANNER_TITLE_ID}
+          >
+            {t("awaitingConfirmation.banner.title", {
+              count: outstandingTotal,
+            })}
+          </AlertTitle>
+          <AlertAction className="static col-start-2 mt-2 sm:col-start-3 sm:row-start-1 sm:mt-0 sm:justify-self-end">
+            <Button
+              aria-controls={DRAWER_CONTENT_ID}
+              aria-expanded={isDrawerOpen}
+              aria-labelledby={`${BANNER_TITLE_ID} ${BANNER_ACTION_ID}`}
+              className="h-11 text-warning-container-foreground hover:bg-warning/10 hover:text-warning-container-foreground focus-visible:ring-warning-container-foreground"
+              onClick={() => setIsDrawerOpen(true)}
+              ref={bannerTriggerRef}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <span id={BANNER_ACTION_ID}>
+                {t("awaitingConfirmation.banner.action")}
+              </span>
+            </Button>
+          </AlertAction>
+        </Alert>
       ) : null}
 
       <ResponsiveDrawer

@@ -9,6 +9,7 @@
   },
   "exports": {
     "./accordion": "./src/components/accordion.tsx",
+    "./alert": "./src/components/alert.tsx",
     "./alert-dialog": "./src/components/alert-dialog.tsx",
     "./avatar": "./src/components/avatar.tsx",
     "./badge": "./src/components/badge.tsx",
