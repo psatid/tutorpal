@@ -18,10 +18,6 @@ export default {
 			label_other: "{{count}} sessions to confirm",
 			title_one: "{{count}} session needs confirmation",
 			title_other: "{{count}} sessions need confirmation",
-			description:
-				"The oldest pending session is {{date}}. Confirm it to keep student hours accurate.",
-			descriptionFallback:
-				"Confirm sessions to keep student hours accurate.",
 			action: "Review sessions",
 		},
 		drawer: {

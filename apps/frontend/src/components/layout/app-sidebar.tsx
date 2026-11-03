@@ -292,7 +292,7 @@ const NavigationLink = ({
         {visualBadgeCount ? (
           <Badge
             aria-hidden="true"
-            className="absolute top-0.5 right-0.5 z-10 h-4 min-w-4 px-1 text-[10px] leading-none"
+            className="absolute top-1/2 right-0.5 z-10 h-4 min-w-4 -translate-y-1/2 px-1 text-[10px] leading-none"
             variant="primary"
           >
             {visualBadgeCount}

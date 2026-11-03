@@ -198,24 +198,18 @@ describe("SessionsToConfirm", () => {
     const banner = screen.getByRole("button", {
       name: "12 sessions need confirmation Review sessions",
     });
-    expect(within(banner).getByText("12")).toHaveAttribute("aria-hidden", "true");
+    expect(within(banner).queryByText("12")).not.toBeInTheDocument();
     expect(banner).toHaveAttribute(
       "aria-labelledby",
       "sessions-to-confirm-banner-title sessions-to-confirm-banner-action",
     );
-    expect(banner).toHaveAttribute(
-      "aria-describedby",
-      "sessions-to-confirm-banner-description",
-    );
+    expect(banner).not.toHaveAttribute("aria-describedby");
     expect(
       document.getElementById("sessions-to-confirm-banner-title"),
     ).toHaveTextContent("12 sessions need confirmation");
     expect(
       document.getElementById("sessions-to-confirm-banner-action"),
     ).toHaveTextContent("Review sessions");
-    expect(
-      document.getElementById("sessions-to-confirm-banner-description"),
-    ).toHaveTextContent("Confirm it to keep student hours accurate.");
     expect(awaitingConfirmationHook).toHaveBeenCalledWith();
 
     await user.click(banner);

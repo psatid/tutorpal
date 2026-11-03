@@ -12,7 +12,6 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@tutorpal/ui/badge";
 import { Button } from "@tutorpal/ui/button";
 import { ResponsiveDrawer } from "@tutorpal/ui/responsive-drawer";
 import { Skeleton } from "@tutorpal/ui/skeleton";
@@ -26,7 +25,6 @@ import type { Schedule } from "@/models/schedule";
 const LOAD_MORE_THRESHOLD = 160;
 const DRAWER_CONTENT_ID = "sessions-to-confirm-drawer";
 const BANNER_TITLE_ID = "sessions-to-confirm-banner-title";
-const BANNER_DESCRIPTION_ID = "sessions-to-confirm-banner-description";
 const BANNER_ACTION_ID = "sessions-to-confirm-banner-action";
 const COMPLETE_ACTION_ID_PREFIX = "sessions-to-confirm-complete-";
 
@@ -96,17 +94,6 @@ export function SessionsToConfirm({
     [schedules],
   );
   const outstandingTotal = Math.max(total - resolvedScheduleIds.size, 0);
-  const oldestPendingDate = schedules[0]
-    ? DateTime.formatDate(
-        DateTime.fromDateOnlyString(schedules[0].getDate()),
-        {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        },
-      )
-    : null;
   const hasCachedData = awaitingConfirmationQuery.data !== undefined;
   const isInitialLoading = awaitingConfirmationQuery.isLoading && !hasCachedData;
   const isInitialError = awaitingConfirmationQuery.isError && !hasCachedData;
@@ -264,7 +251,6 @@ export function SessionsToConfirm({
       {shouldShowBanner ? (
         <button
           aria-controls={DRAWER_CONTENT_ID}
-          aria-describedby={BANNER_DESCRIPTION_ID}
           aria-expanded={isDrawerOpen}
           aria-labelledby={`${BANNER_TITLE_ID} ${BANNER_ACTION_ID}`}
           className="mx-3 mt-3 flex shrink-0 w-[calc(100%-1.5rem)] cursor-pointer flex-col gap-3 rounded-lg border border-warning/30 bg-warning-container px-3 py-3 text-left transition-colors hover:bg-warning-container/80 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-warning-container-foreground sm:mx-4 sm:w-[calc(100%-2rem)] sm:flex-row sm:items-center sm:justify-between sm:px-4 lg:mx-6 lg:w-[calc(100%-3rem)] motion-reduce:transition-none"
@@ -291,20 +277,7 @@ export function SessionsToConfirm({
                     count: outstandingTotal,
                   })}
                 </p>
-                <Badge aria-hidden="true" variant="warning">
-                  {outstandingTotal}
-                </Badge>
               </div>
-              <p
-                className="mt-0.5 text-sm leading-6 text-warning-container-foreground"
-                id={BANNER_DESCRIPTION_ID}
-              >
-                {oldestPendingDate
-                  ? t("awaitingConfirmation.banner.description", {
-                      date: oldestPendingDate,
-                    })
-                  : t("awaitingConfirmation.banner.descriptionFallback")}
-              </p>
             </div>
           </div>
           <span
