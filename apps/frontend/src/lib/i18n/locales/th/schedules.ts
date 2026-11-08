@@ -293,6 +293,7 @@ const th = {
 	weekSelector: {
 		today: "วันนี้",
 		selected: "เลือกแล้ว",
+		teachingScheduled: "มีการสอน",
 		selectedWeek: "สัปดาห์ที่เลือก",
 		containsToday: "มีวันนี้อยู่",
 		openCalendar: "เปิดปฏิทินสำหรับ {{month}}",

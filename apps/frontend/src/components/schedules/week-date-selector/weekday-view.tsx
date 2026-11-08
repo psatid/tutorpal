@@ -14,15 +14,18 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DateTime } from "@/lib/date-time";
 import type { RailCenterRequest } from "./week-date-selector";
+import type { TeachingScheduleDateRange } from "@/hooks/queries/use-teaching-schedule-dates";
 
 export interface WeekdayViewProps {
   dates: Date[];
   selectedDate: Date | null;
+  teachingScheduleDateKeys?: ReadonlySet<string>;
   onDateSelect: (date: Date) => void;
   onExtendDateBuffer: (
     direction: "previous" | "next",
     count?: number,
   ) => void;
+  onVisibleDateRangeChange?: (range: TeachingScheduleDateRange) => void;
   centerRequest: RailCenterRequest;
   isActive?: boolean;
   className?: string;
@@ -65,6 +68,10 @@ const SCROLL_SETTLE_DELAY = 150;
 const TOUCH_SWIPE_THRESHOLD = 8;
 const TOUCH_CLICK_SUPPRESSION_DELAY = 500;
 const WEEK_DAYS = 7;
+const DATE_TILE_WIDTH = 56;
+const DATE_TILE_GAP = 8;
+const DATE_TILE_STRIDE = DATE_TILE_WIDTH + DATE_TILE_GAP;
+const EMPTY_TEACHING_SCHEDULE_DATE_KEYS = new Set<string>();
 
 function hasTouchGestureExceededTapThreshold(
   gesture: TouchSelectionGesture,
@@ -113,8 +120,10 @@ function getDateByDayOffset(date: Date, dayOffset: number): Date {
 export function WeekdayView({
   dates,
   selectedDate,
+  teachingScheduleDateKeys = EMPTY_TEACHING_SCHEDULE_DATE_KEYS,
   onDateSelect,
   onExtendDateBuffer,
+  onVisibleDateRangeChange,
   centerRequest,
   isActive = true,
   className,
@@ -168,6 +177,56 @@ export function WeekdayView({
   const selectedDateKey = selectedDate
     ? DateTime.from(selectedDate).toDateOnlyString()
     : null;
+  const reportVisibleDateRange = useCallback(() => {
+    if (!isActive || !onVisibleDateRangeChange) return;
+
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const firstDateButton = container.querySelector<HTMLButtonElement>(
+      "button[data-date-key]",
+    );
+
+    if (!firstDateButton || container.clientWidth === 0) return;
+
+    const firstTileOffset = firstDateButton.offsetLeft;
+    const viewportStart = container.scrollLeft;
+    const viewportEnd = viewportStart + container.clientWidth;
+    const firstVisibleIndex = Math.max(
+      0,
+      Math.floor(
+        (viewportStart - firstTileOffset - DATE_TILE_WIDTH) /
+          DATE_TILE_STRIDE,
+      ) + 1,
+    );
+    const lastVisibleIndex = Math.min(
+      dates.length - 1,
+      Math.ceil((viewportEnd - firstTileOffset) / DATE_TILE_STRIDE) - 1,
+    );
+    const startDate = dates[firstVisibleIndex];
+    const endDate = dates[lastVisibleIndex];
+
+    if (startDate && endDate) {
+      onVisibleDateRangeChange({
+        startDate: DateTime.from(startDate).toDateOnlyString(),
+        endDate: DateTime.from(endDate).toDateOnlyString(),
+      });
+    }
+  }, [dates, isActive, onVisibleDateRangeChange]);
+
+  useLayoutEffect(() => {
+    reportVisibleDateRange();
+
+    const container = containerRef.current;
+
+    if (!container || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(reportVisibleDateRange);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [dates, reportVisibleDateRange]);
   const captureRailAnchor = useCallback((): RailAnchor | null => {
     const container = containerRef.current;
 
@@ -1402,7 +1461,10 @@ export function WeekdayView({
         role="group"
         aria-label={t("schedules:weekSelector.dateRailLabel")}
         aria-describedby={instructionsId}
-        onScroll={handleScroll}
+        onScroll={() => {
+          handleScroll();
+          reportVisibleDateRange();
+        }}
         onWheel={handleRailWheel}
         onPointerDownCapture={handleRailPointerDownCapture}
         onTouchStart={handleRailTouchStart}
@@ -1419,6 +1481,7 @@ export function WeekdayView({
               ? dateTime.isSameDay(selectedDate)
               : false;
             const isDateToday = dateTime.isToday();
+            const isTeachingScheduled = teachingScheduleDateKeys.has(dateKey);
             const dayName = DateTime.formatDate(date, { weekday: "short" });
             const dayNumber = DateTime.formatDate(date, { day: "numeric" });
             const monthName = DateTime.formatDate(date, { month: "short" });
@@ -1435,6 +1498,9 @@ export function WeekdayView({
               }),
               isDateToday ? t("schedules:weekSelector.today") : undefined,
               isSelected ? t("schedules:weekSelector.selected") : undefined,
+              isTeachingScheduled
+                ? t("schedules:weekSelector.teachingScheduled")
+                : undefined,
             ]
               .filter(Boolean)
               .join(", ");
@@ -1483,6 +1549,15 @@ export function WeekdayView({
                 >
                   {dayNumber}
                 </span>
+                {isTeachingScheduled ? (
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute bottom-1 left-1/2 h-0.5 w-3 -translate-x-1/2 rounded-full",
+                      isSelected ? "bg-primary-foreground" : "bg-primary",
+                    )}
+                  />
+                ) : null}
                 {showsMonthMarker && (
                   <span
                     className={cn(

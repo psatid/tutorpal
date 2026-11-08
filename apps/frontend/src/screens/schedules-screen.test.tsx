@@ -13,6 +13,11 @@ const queryState = vi.hoisted(() => ({
 	schedules: [] as Schedule[],
 }));
 
+const teachingScheduleDates = vi.hoisted(() => ({
+  dateKeys: new Set<string>(),
+  ranges: [] as Array<{ startDate: string; endDate: string }>,
+}));
+
 const sessionsToConfirm = vi.hoisted(() => ({
   onCloseAutoFocus: null as (() => void) | null,
 }));
@@ -34,6 +39,15 @@ vi.mock("@/hooks/queries/use-schedules", () => ({
       isLoading: false,
       refetch: queryState.refetch,
     };
+  },
+}));
+
+vi.mock("@/hooks/queries/use-teaching-schedule-dates", () => ({
+  useTeachingScheduleDates: (
+    ranges: Array<{ startDate: string; endDate: string }>,
+  ) => {
+    teachingScheduleDates.ranges = ranges;
+    return teachingScheduleDates.dateKeys;
   },
 }));
 
@@ -179,6 +193,8 @@ describe("SchedulesScreen weekly timeline integration", () => {
     queryState.calls = [];
     queryState.refetch.mockReset();
     queryState.schedules = [];
+    teachingScheduleDates.dateKeys = new Set();
+    teachingScheduleDates.ranges = [];
     sessionsToConfirm.onCloseAutoFocus = null;
     completeMutation.error = null;
     completeMutation.isError = false;
@@ -234,6 +250,38 @@ describe("SchedulesScreen weekly timeline integration", () => {
     await waitFor(() => {
       expect(queryState.calls.at(-1)).toMatchObject({ search: "algebra" });
     });
+  });
+
+  it("keeps scheduled-date indicators independent of Day search and status filters", async () => {
+    const user = userEvent.setup();
+    const markerDate = DateTime.today().addDays(1).toDateOnlyString();
+    teachingScheduleDates.dateKeys = new Set([markerDate]);
+    queryState.schedules = [
+      makeSchedule(),
+      makeSchedule({
+        id: "cancelled-schedule",
+        status: "CANCELLED",
+      }),
+    ];
+    render(<SchedulesScreen />);
+
+    const getMarker = () =>
+      screen.getByRole("button", { name: /Has a lesson/ });
+
+    expect(getMarker()).toHaveAttribute("data-date-key", markerDate);
+    expect(getMarker().querySelector('[aria-hidden="true"]')).toHaveClass(
+      "bg-primary",
+    );
+
+    await user.type(screen.getByPlaceholderText("Search by class..."), "algebra");
+    await waitFor(() => {
+      expect(queryState.calls.at(-1)).toMatchObject({ search: "algebra" });
+    });
+
+    await user.click(screen.getByRole("tab", { name: "Cancelled" }));
+
+    expect(getMarker()).toHaveAttribute("data-date-key", markerDate);
+    expect(getMarker()).toHaveAccessibleName(/Has a lesson/);
   });
 
   it("returns drawer-close focus to the Day search through SessionsToConfirm", () => {

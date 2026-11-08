@@ -4,7 +4,7 @@ import {
   Add01Icon as PlusHugeIcon,
   Search01Icon as SearchHugeIcon,
 } from "@hugeicons/core-free-icons";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -13,6 +13,10 @@ import {
   useRestoreHours,
 } from "@/hooks/mutations/use-schedules";
 import { useSchedules } from "@/hooks/queries/use-schedules";
+import {
+  useTeachingScheduleDates,
+  type TeachingScheduleDateRange,
+} from "@/hooks/queries/use-teaching-schedule-dates";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ScheduleCard } from "@/components/schedules/schedule-card";
 import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule-dialog";
@@ -79,6 +83,28 @@ export function SchedulesScreen() {
   const [noShowSchedule, setNoShowSchedule] = useState<Schedule | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("day");
+  const [teachingScheduleDateRanges, setTeachingScheduleDateRanges] =
+    useState<TeachingScheduleDateRange[]>([]);
+  const teachingScheduleDateKeys = useTeachingScheduleDates(
+    teachingScheduleDateRanges,
+  );
+
+  const handleTeachingScheduleDateRangesChange = useCallback(
+    (ranges: TeachingScheduleDateRange[]) => {
+      setTeachingScheduleDateRanges((currentRanges) => {
+        const isUnchanged =
+          currentRanges.length === ranges.length &&
+          currentRanges.every(
+            (range, index) =>
+              range.startDate === ranges[index]?.startDate &&
+              range.endDate === ranges[index]?.endDate,
+          );
+
+        return isUnchanged ? currentRanges : ranges;
+      });
+    },
+    [],
+  );
 
   const formattedDate = DateTime.from(selectedDate).toDateOnlyString();
   const weekDates = useMemo(
@@ -389,6 +415,10 @@ export function SchedulesScreen() {
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
             viewMode={viewMode}
+            teachingScheduleDateKeys={teachingScheduleDateKeys}
+            onTeachingScheduleDateRangesChange={
+              handleTeachingScheduleDateRangesChange
+            }
           >
             {({ day, week }) => (
               <TabsPanels

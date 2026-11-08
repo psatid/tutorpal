@@ -42,6 +42,9 @@ interface DateFieldProps {
   ariaLabel?: string;
   className?: string;
   trigger?: DateFieldTriggerElement;
+  calendarModifiers?: ComponentProps<typeof Calendar>["modifiers"];
+  calendarMonth?: Date;
+  onCalendarMonthChange?: (month: Date) => void;
 }
 
 function DateField({
@@ -57,6 +60,9 @@ function DateField({
   ariaLabel,
   className,
   trigger,
+  calendarModifiers,
+  calendarMonth,
+  onCalendarMonthChange,
 }: DateFieldProps) {
   const { t } = useTranslation("common");
   const resolvedPlaceholder = placeholder ?? t("form.chooseDate");
@@ -107,7 +113,10 @@ function DateField({
         onSelect={(_range, triggerDate) => handleSelect(triggerDate)}
         disabled={disabled}
         defaultMonth={date}
+        month={calendarMonth}
         weekStartsOn={1}
+        modifiers={calendarModifiers}
+        onMonthChange={onCalendarMonthChange}
       />
     ) : (
       <Calendar
@@ -115,6 +124,9 @@ function DateField({
         selected={date}
         onSelect={handleSelect}
         disabled={disabled}
+        month={calendarMonth}
+        modifiers={calendarModifiers}
+        onMonthChange={onCalendarMonthChange}
       />
     );
 
@@ -220,7 +232,10 @@ function DateField({
                 onSelect={(_range, triggerDate) => handleSelect(triggerDate)}
                 disabled={disabled}
                 defaultMonth={date}
+                month={calendarMonth}
                 weekStartsOn={1}
+                modifiers={calendarModifiers}
+                onMonthChange={onCalendarMonthChange}
               />
             ) : (
               <Calendar
@@ -230,6 +245,9 @@ function DateField({
                 selected={date}
                 onSelect={handleSelect}
                 disabled={disabled}
+                month={calendarMonth}
+                modifiers={calendarModifiers}
+                onMonthChange={onCalendarMonthChange}
               />
             )}
           </ResponsiveDrawer>

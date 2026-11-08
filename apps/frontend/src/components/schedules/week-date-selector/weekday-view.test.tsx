@@ -25,10 +25,12 @@ const originalOffsetWidth = Object.getOwnPropertyDescriptor(
 );
 const scrollToMock = vi.fn();
 let resizeObserver: ResizeObserverMock | null = null;
+let resizeObservers: ResizeObserverMock[] = [];
 
 class ResizeObserverMock {
   constructor(private readonly callback: ResizeObserverCallback) {
     resizeObserver = this;
+    resizeObservers.push(this);
   }
 
   disconnect() {}
@@ -87,10 +89,11 @@ function configureDayRail(
   {
     scrollLeft = 0,
     scrollWidth = DAY_BUFFER_LENGTH * DAY_ITEM_WIDTH,
-  }: { scrollLeft?: number; scrollWidth?: number } = {},
+    clientWidth = DAY_RAIL_WIDTH,
+  }: { scrollLeft?: number; scrollWidth?: number; clientWidth?: number } = {},
 ) {
   Object.defineProperties(rail, {
-    clientWidth: { configurable: true, value: DAY_RAIL_WIDTH },
+    clientWidth: { configurable: true, value: clientWidth },
     scrollWidth: { configurable: true, value: scrollWidth },
     scrollLeft: { configurable: true, writable: true, value: scrollLeft },
   });
@@ -100,7 +103,13 @@ function configureDayRail(
     ?.parentElement?.style.setProperty("column-gap", `${DAY_TILE_GAP}px`);
 }
 
-function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
+function DayRailFixture({
+  initialIndex = 17,
+  onVisibleDateRangeChange,
+}: {
+  initialIndex?: number;
+  onVisibleDateRangeChange?: (range: { startDate: string; endDate: string }) => void;
+}) {
   const [dates, setDates] = useState(getDayBuffer);
   const [selectedDate, setSelectedDate] = useState(() => dates[initialIndex]!);
   const [selectionCount, setSelectionCount] = useState(0);
@@ -169,6 +178,7 @@ function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
         selectedDate={selectedDate}
         onDateSelect={selectDate}
         onExtendDateBuffer={extendDateBuffer}
+        onVisibleDateRangeChange={onVisibleDateRangeChange}
         centerRequest={{
           id: 0,
           behavior: "auto",
@@ -186,6 +196,7 @@ function DayRailFixture({ initialIndex = 17 }: { initialIndex?: number }) {
 describe("WeekdayView rail behavior", () => {
   beforeEach(async () => {
     resizeObserver = null;
+    resizeObservers = [];
     scrollToMock.mockReset();
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
       configurable: true,
@@ -320,6 +331,51 @@ describe("WeekdayView rail behavior", () => {
       expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
     },
   );
+
+  it("reports partial visible date tiles on scroll and resize without changing selection", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    const onVisibleDateRangeChange = vi.fn();
+    render(
+      <DayRailFixture
+        onVisibleDateRangeChange={onVisibleDateRangeChange}
+      />,
+    );
+
+    const rail = screen.getByRole("group", {
+      name: "Schedule date selector",
+    });
+    configureDayRail(rail, { scrollLeft: 1 });
+    fireEvent.scroll(rail);
+
+    expect(onVisibleDateRangeChange).toHaveBeenLastCalledWith({
+      startDate: getDayKey(0),
+      endDate: getDayKey(5),
+    });
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(getDayKey(17));
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+
+    rail.scrollLeft = 65;
+    fireEvent.scroll(rail);
+
+    expect(onVisibleDateRangeChange).toHaveBeenLastCalledWith({
+      startDate: getDayKey(1),
+      endDate: getDayKey(6),
+    });
+
+    configureDayRail(rail, { clientWidth: 256, scrollLeft: 65 });
+    expect(rail.clientWidth).toBe(256);
+    onVisibleDateRangeChange.mockClear();
+    act(() => {
+      resizeObservers.forEach((observer) => observer.trigger());
+    });
+
+    expect(onVisibleDateRangeChange).toHaveBeenCalledWith({
+      startDate: getDayKey(1),
+      endDate: getDayKey(5),
+    });
+    expect(screen.getByTestId("selected-date")).toHaveTextContent(getDayKey(17));
+    expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+  });
 
   it("does not turn an initial programmatic center near an edge into a browse session", async () => {
     vi.useFakeTimers();

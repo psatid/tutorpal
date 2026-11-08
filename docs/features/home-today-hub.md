@@ -47,7 +47,10 @@ Schedules sidebar badge.
 - The Home screen does not poll for new ended sessions. They appear when the
   normal query lifecycle refetches, such as on a later Home visit.
 - Schedules shows a warning-token banner below the page heading when sessions
-  await confirmation. Review opens the responsive drawer: a side panel on
+  await confirmation. On mobile, its compact count label and a 44px chevron
+  review button share one row with a 32px warning icon. Desktop retains the
+  full message and “Review sessions” text action. Both expose the full count
+  and review label to assistive technology. Review opens the responsive drawer: a side panel on
   desktop and a bottom sheet on mobile. The drawer groups sessions by their
   scheduled start date, oldest first, and shows only class, time, duration, and
   Complete and No show actions. Rows neither navigate nor show learner names.

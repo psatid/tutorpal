@@ -286,6 +286,7 @@ export default {
 	weekSelector: {
 		today: "Today",
 		selected: "Selected",
+		teachingScheduled: "Has a lesson",
 		selectedWeek: "Selected week",
 		containsToday: "Contains today",
 		openCalendar: "Open calendar for {{month}}",

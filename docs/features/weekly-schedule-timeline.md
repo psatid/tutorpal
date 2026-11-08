@@ -11,6 +11,7 @@
 - Activating a blank half-hour target selects that day and opens Add New Schedule with the cell's date and exact start time prefilled; the one-time duration is left unselected and must be chosen before saving. Day toolbar Add and the Week header Add action continue to use their 09:00 default.
 - In the schedule drawer, each class result is a full-card action: choosing a class selects it and closes the picker immediately. Reopening the picker keeps the committed class visibly and accessibly marked as selected.
 - Only scheduled and completed sessions are positioned in the Week timeline. Cancelled and no-show sessions remain available in Day view and are excluded before weekly date grouping and lane allocation; overlapping displayed sessions are split into separate lanes.
+- The Day date rail and month calendar mark dates with a short theme-colored line when at least one Scheduled or Completed lesson exists. Cancelled and No Show lessons do not count. These presence indicators ignore search and status filters, remain visible on selected dates, and work in the desktop calendar and mobile drawer. Date labels announce “Has a lesson” in English or Thai; the Week rail has no aggregate indicator.
 - The Today column and its weekday header alone receive primary tint. Selecting another day in the timeline does not add a visual highlight to its header, while the selected header retains `aria-current="date"` for assistive technology.
 - A current-time line appears only in today's column when that day is in the displayed week. It follows the local time at minute boundaries, uses a 2px primary line with 8px edge dots, and ignores pointer input so cells and schedule blocks remain interactive.
 - Timeline blocks use the matching light Badge status tones: info for scheduled and success for completed. Each block keeps the class name on its first line and shows the time followed by status and delivery icons on the next line. Blocks remain above cells so they open the existing schedule details drawer when clicked or focused with the keyboard.
@@ -33,6 +34,8 @@
 `GET /v1/schedules` accepts an inclusive date range through `startDate` and `endDate` in `YYYY-MM-DD` format. The two parameters must be supplied together, cannot be combined with the exact `date` filter, must be ordered from earliest to latest, and may cover at most 31 calendar days. The weekly UI requests exactly seven days.
 
 The existing tutor scoping, class filtering, Day search behavior, exact-date filtering, and date/time ordering are unchanged.
+
+Supplemental indicator queries cover the visible Day rail span and displayed calendar's six-week grid in unfiltered, week-aligned chunks of at most 28 days. They reuse the existing schedule-list cache keys and mutation invalidation. Browsing changes these indicator queries without changing the selected date or its Day/Week results query.
 
 ## Accessibility and states
 
@@ -59,6 +62,7 @@ The existing tutor scoping, class filtering, Day search behavior, exact-date fil
 
 ## Verification
 
+- Teaching-day indicator verification: 67 targeted frontend tests and 39 shared UI tests pass, including status eligibility, filter independence, range chunking, cache invalidation, calendar navigation, and partial rail visibility on scroll/resize. Frontend build and app/test type checks, shared UI checks, and the admin build pass. Design and engineering reviews cover the change separately. Live browser visual verification was unavailable because the local app server at port 5173 refused connection.
 - Backend schema, route, and repository tests pass for range validation and filtering.
 - The frontend TypeScript check and production build pass after regenerating the local OpenAPI client.
 - Browser verification passed at 320px and 390px for the responsive toolbar, 44px Today/tab targets, a full-width Week timeline, no page overflow, and fully visible sticky time labels after vertical and horizontal scrolling. Existing coverage also passed at 768px and 1280px for the desktop inline Add action. Loading and error states were not naturally exercised, and no pixel-baseline visual regression was captured.

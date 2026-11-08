@@ -108,9 +108,15 @@ function establishInitialWeekRailLayout(rail: HTMLElement) {
 function SelectorFixture({
   initialDate = INITIAL_DATE,
   initialViewMode = "day",
+  teachingScheduleDateKeys,
+  onTeachingScheduleDateRangesChange,
 }: {
   initialDate?: Date;
   initialViewMode?: ScheduleViewMode;
+  teachingScheduleDateKeys?: ReadonlySet<string>;
+  onTeachingScheduleDateRangesChange?: (
+    ranges: Array<{ startDate: string; endDate: string }>,
+  ) => void;
 } = {}) {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [viewMode, setViewMode] = useState<ScheduleViewMode>(initialViewMode);
@@ -122,6 +128,10 @@ function SelectorFixture({
         onDateSelect={setSelectedDate}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        teachingScheduleDateKeys={teachingScheduleDateKeys}
+        onTeachingScheduleDateRangesChange={
+          onTeachingScheduleDateRangesChange
+        }
       />
       <output data-testid="selected-date">
         {DateTime.from(selectedDate).toDateOnlyString()}
@@ -786,6 +796,80 @@ describe("WeekDateSelector", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("marks outside and selected Day calendar dates while browsing another month without selecting it", async () => {
+    const user = userEvent.setup();
+    const onRangesChange = vi.fn();
+    render(
+      <SelectorFixture
+        teachingScheduleDateKeys={
+          new Set(["2026-09-28", "2026-10-14"])
+        }
+        onTeachingScheduleDateRangesChange={onRangesChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Open calendar for October 2026" }),
+    );
+
+    const outsideDay = document.querySelector<HTMLButtonElement>(
+      'button[data-day="2026-09-28"]',
+    );
+    const selectedDay = document.querySelector<HTMLButtonElement>(
+      'button[data-day="2026-10-14"]',
+    );
+    expect(outsideDay).toHaveAccessibleName(/Has a lesson/);
+    expect(outsideDay?.querySelector('[aria-hidden="true"]')).toHaveClass(
+      "bg-primary",
+    );
+    expect(selectedDay).toHaveAccessibleName(/selected, Has a lesson/);
+    expect(selectedDay?.querySelector('[aria-hidden="true"]')).toHaveClass(
+      "bg-primary-foreground",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Go to next month" }));
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent("2026-10-14");
+    await waitFor(() => {
+      expect(onRangesChange).toHaveBeenLastCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            startDate: "2026-10-26",
+            endDate: "2026-12-06",
+          }),
+        ]),
+      );
+    });
+  });
+
+  it("keeps Week calendar selection and its range-middle indicator behavior", async () => {
+    const user = userEvent.setup();
+    render(
+      <SelectorFixture
+        initialViewMode="week"
+        teachingScheduleDateKeys={new Set(["2026-10-13"])}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /Open calendar for Oct 12/ }),
+    );
+
+    const middleDay = document.querySelector<HTMLButtonElement>(
+      'button[data-day="2026-10-13"]',
+    );
+    expect(middleDay).toHaveAccessibleName(/Has a lesson/);
+    expect(middleDay?.querySelector('[aria-hidden="true"]')).toHaveClass(
+      "bg-primary",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /Wednesday, October 21, 2026/ }),
+    );
+
+    expect(screen.getByTestId("selected-date")).toHaveTextContent("2026-10-21");
   });
 
   it("smoothly centers a parent-driven Week-mode date change", async () => {

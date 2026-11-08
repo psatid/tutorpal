@@ -203,16 +203,15 @@ describe("SessionsToConfirm", () => {
     const title = document.getElementById("sessions-to-confirm-banner-title");
 
     expect(alert).toHaveClass(
-      "grid-cols-[2.5rem_minmax(0,1fr)]",
+      "grid-cols-[2rem_minmax(0,1fr)_2.75rem]",
       "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]",
     );
     expect(action).toHaveClass(
       "static",
-      "col-start-2",
-      "sm:col-start-3",
-      "sm:row-start-1",
+      "col-start-3",
+      "row-start-1",
     );
-    expect(banner).toHaveClass("h-11");
+    expect(banner).toHaveClass("size-11", "sm:w-auto");
     expect(title).toHaveClass("tabular-nums");
     expect(
       within(alert).queryByText("12", { exact: true }),
@@ -223,6 +222,9 @@ describe("SessionsToConfirm", () => {
     );
     expect(banner).not.toHaveAttribute("aria-describedby");
     expect(title).toHaveTextContent("12 sessions need confirmation");
+    expect(within(title as HTMLElement).getByText("12 sessions to confirm")).toHaveClass(
+      "sm:hidden",
+    );
     expect(
       document.getElementById("sessions-to-confirm-banner-action"),
     ).toHaveTextContent("Review sessions");
@@ -429,9 +431,16 @@ describe("SessionsToConfirm", () => {
     setPages([page([makeSchedule()], { total: 1 })], 1);
     renderSessions();
 
-    await user.click(screen.getByRole("button", {
+    const banner = screen.getByRole("button", {
       name: "มี 1 ช่วงเรียนที่ต้องยืนยัน ตรวจสอบช่วงเรียน",
-    }));
+    });
+    const compactLabel = document.querySelector(
+      "#sessions-to-confirm-banner-title span[aria-hidden='true']",
+    );
+    expect(compactLabel).toHaveTextContent("มี 1 ช่วงเรียนที่ต้องยืนยัน");
+    expect(compactLabel).toHaveClass("sm:hidden");
+
+    await user.click(banner);
     const drawer = await screen.findByRole("dialog", { name: "ช่วงเรียนที่ต้องยืนยัน" });
     expect(within(drawer).getByRole("button", {
       name: "บันทึก Algebra foundations เวลา 09:00 ระยะเวลา 1 ชม. ว่าเสร็จสิ้น",

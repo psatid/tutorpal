@@ -10,6 +10,9 @@ const responsiveDrawerProps = vi.hoisted(() => ({
 const calendarProps = vi.hoisted(() => ({
   fixedWeeks: undefined as boolean | undefined,
   fullWidth: undefined as boolean | undefined,
+  modifiers: undefined as unknown,
+  month: undefined as Date | undefined,
+  onMonthChange: undefined as ((month: Date) => void) | undefined,
 }));
 
 vi.mock("../responsive-drawer", () => ({
@@ -29,12 +32,18 @@ vi.mock("../responsive-drawer", () => ({
 }));
 
 vi.mock("../calendar", () => ({
-  Calendar: ({ fixedWeeks, fullWidth }: {
+  Calendar: ({ fixedWeeks, fullWidth, modifiers, month, onMonthChange }: {
     fixedWeeks?: boolean;
     fullWidth?: boolean;
+    modifiers?: unknown;
+    month?: Date;
+    onMonthChange?: (month: Date) => void;
   }) => {
     calendarProps.fixedWeeks = fixedWeeks;
     calendarProps.fullWidth = fullWidth;
+    calendarProps.modifiers = modifiers;
+    calendarProps.month = month;
+    calendarProps.onMonthChange = onMonthChange;
 
     return <div data-testid="calendar" />;
   },
@@ -64,6 +73,9 @@ describe("DateField", () => {
     responsiveDrawerProps.useVisualViewportSizing = undefined;
     calendarProps.fixedWeeks = undefined;
     calendarProps.fullWidth = undefined;
+    calendarProps.modifiers = undefined;
+    calendarProps.month = undefined;
+    calendarProps.onMonthChange = undefined;
   });
 
   it("uses a safe-area-aware, scrollable six-week calendar drawer on mobile", async () => {
@@ -91,4 +103,30 @@ describe("DateField", () => {
     expect(calendarProps.fullWidth).toBeUndefined();
     expect(calendarProps.fixedWeeks).toBeUndefined();
   });
+
+  it.each([false, true])(
+    "passes indicator modifiers and controlled month browsing to the %s calendar",
+    async (desktop) => {
+      mockViewport(desktop);
+      const user = userEvent.setup();
+      const month = new Date(2026, 9, 1);
+      const onMonthChange = vi.fn();
+      const modifiers = { teachingScheduled: [new Date(2026, 9, 12)] };
+      render(
+        <DateField
+          label="Date"
+          onChange={vi.fn()}
+          calendarMonth={month}
+          calendarModifiers={modifiers}
+          onCalendarMonthChange={onMonthChange}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "Date" }));
+
+      expect(calendarProps.month).toBe(month);
+      expect(calendarProps.modifiers).toBe(modifiers);
+      expect(calendarProps.onMonthChange).toBe(onMonthChange);
+    },
+  );
 });

@@ -44,19 +44,17 @@ function Calendar({
       year: "numeric",
     })
 
-    if (modifiers?.today && modifiers.selected) {
-      return t("calendar.dayTodaySelected", { date: formattedDate })
-    }
+    const label = modifiers?.today && modifiers.selected
+      ? t("calendar.dayTodaySelected", { date: formattedDate })
+      : modifiers?.today
+        ? t("calendar.dayToday", { date: formattedDate })
+        : modifiers?.selected
+          ? t("calendar.daySelected", { date: formattedDate })
+          : t("calendar.day", { date: formattedDate })
 
-    if (modifiers?.today) {
-      return t("calendar.dayToday", { date: formattedDate })
-    }
-
-    if (modifiers?.selected) {
-      return t("calendar.daySelected", { date: formattedDate })
-    }
-
-    return t("calendar.day", { date: formattedDate })
+    return modifiers?.teachingScheduled
+      ? t("calendar.dayTeachingScheduled", { date: label })
+      : label
   }
   const calendarLabels: Partial<Labels> = {
     labelNav: () => t("calendar.navigation"),
@@ -252,6 +250,7 @@ function CalendarDayButton({
   modifiers,
   locale,
   fullWidth,
+  children,
   ...props
 }: React.ComponentProps<typeof DayButton> & {
   locale?: Partial<Locale>
@@ -287,7 +286,20 @@ function CalendarDayButton({
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {modifiers.teachingScheduled ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute bottom-1 left-1/2 h-0.5 w-3 -translate-x-1/2 rounded-full",
+            modifiers.selected && !modifiers.range_middle
+              ? "bg-primary-foreground"
+              : "bg-primary",
+          )}
+        />
+      ) : null}
+    </Button>
   )
 }
 

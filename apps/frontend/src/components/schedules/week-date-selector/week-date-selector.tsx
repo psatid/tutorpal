@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
@@ -23,6 +24,7 @@ import {
 } from "@tutorpal/ui/animate-ui/components/base/tabs";
 import { DateField } from "@tutorpal/ui/form/date-field";
 import { DateTime } from "@/lib/date-time";
+import type { TeachingScheduleDateRange } from "@/hooks/queries/use-teaching-schedule-dates";
 import { WeekView } from "./week-view";
 import { WeekdayView } from "./weekday-view";
 import {
@@ -48,6 +50,10 @@ type WeekDateSelectorRails = {
 type WeekDateSelectorCommonProps = {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
+  teachingScheduleDateKeys?: ReadonlySet<string>;
+  onTeachingScheduleDateRangesChange?: (
+    ranges: TeachingScheduleDateRange[],
+  ) => void;
   className?: string;
 };
 
@@ -74,6 +80,7 @@ const BUFFER_WEEKS_BEFORE_SELECTED = 4;
 const WEEK_DAYS = 7;
 const INSTANT_CENTER: ScrollBehavior = "auto";
 const SMOOTH_CENTER: ScrollBehavior = "smooth";
+const EMPTY_TEACHING_SCHEDULE_DATE_KEYS = new Set<string>();
 
 function isScheduleViewMode(value: string): value is ScheduleViewMode {
   return value === "day" || value === "week";
@@ -169,8 +176,25 @@ function growWeekRangeToInclude(weekStarts: Date[], targetDate: Date): Date[] {
   return nextWeekStarts;
 }
 
+function getCalendarDateRange(month: Date): TeachingScheduleDateRange {
+  const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+  const start = DateTime.from(monthStart).startOfWeek();
+
+  return {
+    startDate: start.toDateOnlyString(),
+    endDate: start.addDays(41).toDateOnlyString(),
+  };
+}
+
 export function WeekDateSelector(props: WeekDateSelectorProps) {
-  const { selectedDate, onDateSelect, viewMode, className } = props;
+  const {
+    selectedDate,
+    onDateSelect,
+    viewMode,
+    className,
+    teachingScheduleDateKeys = EMPTY_TEACHING_SCHEDULE_DATE_KEYS,
+    onTeachingScheduleDateRangesChange,
+  } = props;
   const { t } = useTranslation(["schedules"]);
   const prefersReducedMotion = useReducedMotion() === true;
   const railSelectedDate = selectedDate ?? DateTime.today().toDate();
@@ -189,6 +213,9 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
   const [weekStarts, setWeekStarts] = useState<Date[]>(() =>
     createWeekBuffer(railSelectedDate),
   );
+  const [calendarMonth, setCalendarMonth] = useState(railSelectedDate);
+  const [visibleDateRange, setVisibleDateRange] =
+    useState<TeachingScheduleDateRange | null>(null);
   const [centerRequest, setCenterRequest] = useState<RailCenterRequest>({
     id: 0,
     targetDateKey: railSelectedDateKey,
@@ -220,6 +247,43 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
       return growWeekRangeToInclude(withSelectedWeek, centerTargetDate);
     });
   }, [centerTargetDate, railSelectedWeekKey, railSelectedWeekStart]);
+
+  useEffect(() => {
+    setCalendarMonth(railSelectedDate);
+  }, [railSelectedDateKey]);
+
+  const calendarDateRange = useMemo(
+    () => getCalendarDateRange(calendarMonth),
+    [calendarMonth],
+  );
+
+  useEffect(() => {
+    const ranges = [calendarDateRange];
+
+    if (viewMode === "day" && visibleDateRange) {
+      ranges.push(visibleDateRange);
+    }
+
+    onTeachingScheduleDateRangesChange?.(ranges);
+  }, [
+    calendarDateRange,
+    onTeachingScheduleDateRangesChange,
+    viewMode,
+    visibleDateRange,
+  ]);
+
+  const teachingScheduleDates = useMemo(
+    () =>
+      Array.from(teachingScheduleDateKeys, (date) =>
+        DateTime.fromDateOnlyString(date).toDate(),
+      ),
+    [teachingScheduleDateKeys],
+  );
+
+  const calendarModifiers = useMemo(
+    () => ({ teachingScheduled: teachingScheduleDates }),
+    [teachingScheduleDates],
+  );
 
   const handleExtendDateBuffer = useCallback(
     (direction: "previous" | "next", count = 1) => {
@@ -339,14 +403,28 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
     }
   };
 
+  const handleVisibleDateRangeChange = useCallback(
+    (range: TeachingScheduleDateRange) => {
+      setVisibleDateRange((currentRange) =>
+        currentRange?.startDate === range.startDate &&
+        currentRange.endDate === range.endDate
+          ? currentRange
+          : range,
+      );
+    },
+    [],
+  );
+
   const rails = {
     day: (
       <WeekdayView
         className="pb-2 pt-1"
         dates={dates}
         selectedDate={railSelectedDate}
+        teachingScheduleDateKeys={teachingScheduleDateKeys}
         onDateSelect={handleCalendarDateSelect}
         onExtendDateBuffer={handleExtendDateBuffer}
+        onVisibleDateRangeChange={handleVisibleDateRangeChange}
         centerRequest={centerRequest}
         isActive={viewMode === "day"}
       />
@@ -372,6 +450,9 @@ export function WeekDateSelector(props: WeekDateSelectorProps) {
               value={DateTime.from(railSelectedDate).toDateOnlyString()}
               onChange={handleDateFieldChange}
               selectionMode={viewMode === "week" ? "week" : "single"}
+              calendarModifiers={calendarModifiers}
+              calendarMonth={calendarMonth}
+              onCalendarMonthChange={setCalendarMonth}
               ariaLabel={
                 viewMode === "week"
                   ? t("schedules:weekSelector.openWeekCalendar", {

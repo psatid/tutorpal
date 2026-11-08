@@ -27,6 +27,14 @@ keeps its own i18n instance. Context-bearing libraries such as React,
 React Hook Form, and react-i18next must resolve to one instance in each
 portal; keep them as compatible peer dependencies when changing the package.
 
+`DateField` accepts optional `calendarModifiers`, `calendarMonth`, and
+`onCalendarMonthChange` props for callers that decorate or control the displayed
+calendar month. These apply to both the desktop popover and mobile drawer.
+The schedules screen supplies the `teachingScheduled` modifier to show a short
+theme-colored presence line; `Calendar` adds the localized “Has a lesson” phrase
+to that date's accessible label. Default date fields remain undecorated, and
+schedule fetching and status eligibility stay in the tutor app.
+
 Shared dialogs, alert dialogs, and drawers are Animate UI wrappers over Base UI.
 They keep the portal, focus, dismissal, and layering contract behind the
 `@tutorpal/ui` subpath seam; portal code must import those wrappers rather than

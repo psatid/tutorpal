@@ -2,7 +2,7 @@
 
 ## Overview
 
-`WeekDateSelector` is the persistent date navigation component for the schedules screen. Tutors can switch between a day rail and a week rail without the surrounding controls moving. Scrolling moves the rail viewport and can load adjacent ranges without changing the selected range or schedule query. Direct choices from a tile, Enter or Space on a focused tile, Today, or the calendar select a range.
+`WeekDateSelector` is the persistent date navigation component for the schedules screen. Tutors can switch between a day rail and a week rail without the surrounding controls moving. Scrolling moves the rail viewport and can load adjacent ranges without changing the selected range or its results query. Separate indicator queries load teaching dates for the browsed viewport. Direct choices from a tile, Enter or Space on a focused tile, Today, or the calendar select a range.
 
 `SchedulesScreen` owns the controlled `viewMode`; the selector reports activated tabs and can render its date rails into that outer Tabs context. Standalone use owns a local Tabs root but still requires the controlled mode and change callback. Switching modes preserves the committed date and changes the schedule query shape.
 
@@ -31,6 +31,10 @@ type ScheduleViewMode = "day" | "week";
 type WeekDateSelectorCommonProps = {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
+  teachingScheduleDateKeys?: ReadonlySet<string>;
+  onTeachingScheduleDateRangesChange?: (
+    ranges: Array<{ startDate: string; endDate: string }>,
+  ) => void;
   className?: string;
 };
 
@@ -56,6 +60,13 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 - Starts with 56 consecutive dates and grows by seven dates at the edge the user reaches. During the mounted schedules page, previously loaded dates remain in the rail; loading never removes the opposite edge. Directional scrolling loads an adjacent range when it enters the edge prefetch zone (`max(128px, one tile stride)`, capped at half the scrollable span), while selection and the schedule query stay unchanged. Wheel, mouse, and trackpad input extend at threshold crossing even when the wheel event arrives after the browser updates its scroll offset; touch queues extension until the gesture is safe to settle.
 - Loading either edge preserves a visible date's screen position using its measured position. Explicit navigation to a date outside the range grows the existing contiguous range to include it, so Today can return to a date loaded earlier in the session.
 - Date tiles remain 56px square with 8px gaps at every breakpoint. The track has screen gutters and a one-tile continuation width, does not wrap or hide dates at `md`, and intentionally exposes a partial adjacent tile at an edge.
+
+### Teaching-day indicators
+
+- Day rail tiles and the month calendar show one centered 12×2px rounded line when the date has at least one Scheduled or Completed lesson. Cancelled and No Show lessons do not qualify; search and status filters do not affect the indicators. The Week rail has no aggregate indicator.
+- Lines use `primary`, with `primary-foreground` on selected primary surfaces. Calendar range middles retain a primary line. The decoration is hidden from assistive technology; date labels include the localized “Has a lesson” phrase.
+- The selector reports the visible Day rail range, including partial tiles, and the displayed calendar's six-week grid. `SchedulesScreen` loads those ranges through `useTeachingScheduleDates` in unfiltered, week-aligned chunks of at most 28 days. It reuses schedule-list query keys so existing mutation invalidation refreshes the indicators. Calendar browsing and rail scrolling do not change the selected results query.
+- Visible rail bounds are calculated from the fixed tile width and gap using the first tile's offset, viewport width, and scroll position; reporting does not measure every buffered tile. Mobile and desktop calendars receive the same date modifiers.
 
 ### Selection and header controls
 
@@ -94,8 +105,12 @@ type WeekDateSelectorProps = WeekDateSelectorCommonProps &
 interface WeekdayViewProps {
   dates: Date[];
   selectedDate: Date | null;
+  teachingScheduleDateKeys?: ReadonlySet<string>;
   onDateSelect: (date: Date) => void;
   onExtendDateBuffer: (direction: "previous" | "next") => void;
+  onVisibleDateRangeChange?: (
+    range: { startDate: string; endDate: string },
+  ) => void;
   centerRequest: {
     id: number;
     targetDateKey: string;
@@ -113,6 +128,7 @@ weekSelector: {
   openWeekCalendar: "Open calendar for {{week}}",
   today: "Today",
   selected: "Selected",
+  teachingScheduled: "Has a lesson",
   selectedWeek: "Selected week",
   containsToday: "Contains today",
   dateRailLabel: "Schedule date selector",

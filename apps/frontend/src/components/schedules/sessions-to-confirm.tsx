@@ -1,5 +1,6 @@
 import {
   Alert01Icon as TriangleAlertHugeIcon,
+  ArrowRight01Icon as ArrowRightHugeIcon,
   Loading03Icon as Loader2HugeIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -251,9 +252,9 @@ export function SessionsToConfirm({
     <>
       {shouldShowBanner ? (
         <Alert
-          className="mx-3 mt-3 shrink-0 w-[calc(100%-1.5rem)] grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 border-warning/30 bg-warning-container px-3 py-3 text-warning-container-foreground sm:mx-4 sm:w-[calc(100%-2rem)] sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-4 lg:mx-6 lg:w-[calc(100%-3rem)]"
+          className="mx-3 mt-3 shrink-0 w-[calc(100%-1.5rem)] grid-cols-[2rem_minmax(0,1fr)_2.75rem] items-center gap-x-3 border-warning/30 bg-warning-container px-3 py-3 text-warning-container-foreground sm:mx-4 sm:w-[calc(100%-2rem)] sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-4 lg:mx-6 lg:w-[calc(100%-3rem)]"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning sm:size-10">
             <HugeiconsIcon
               aria-hidden="true"
               className="size-5"
@@ -265,23 +266,41 @@ export function SessionsToConfirm({
             className="min-w-0 line-clamp-none min-h-0 font-semibold leading-6 tabular-nums"
             id={BANNER_TITLE_ID}
           >
-            {t("awaitingConfirmation.banner.title", {
-              count: outstandingTotal,
-            })}
+            <span aria-hidden="true" className="sm:hidden">
+              {t("awaitingConfirmation.banner.label", {
+                count: outstandingTotal,
+              })}
+            </span>
+            <span aria-hidden="true" className="hidden sm:inline">
+              {t("awaitingConfirmation.banner.title", {
+                count: outstandingTotal,
+              })}
+            </span>
+            <span className="sr-only">
+              {t("awaitingConfirmation.banner.title", {
+                count: outstandingTotal,
+              })}
+            </span>
           </AlertTitle>
-          <AlertAction className="static col-start-2 mt-2 sm:col-start-3 sm:row-start-1 sm:mt-0 sm:justify-self-end">
+          <AlertAction className="static col-start-3 row-start-1 justify-self-end">
             <Button
               aria-controls={DRAWER_CONTENT_ID}
               aria-expanded={isDrawerOpen}
               aria-labelledby={`${BANNER_TITLE_ID} ${BANNER_ACTION_ID}`}
-              className="h-11 text-warning-container-foreground hover:bg-warning/10 hover:text-warning-container-foreground focus-visible:ring-warning-container-foreground"
+              className="size-11 p-0 text-warning-container-foreground hover:bg-warning/10 hover:text-warning-container-foreground focus-visible:ring-warning-container-foreground sm:w-auto sm:px-3"
               onClick={() => setIsDrawerOpen(true)}
               ref={bannerTriggerRef}
               size="sm"
               type="button"
               variant="ghost"
             >
-              <span id={BANNER_ACTION_ID}>
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-5 sm:hidden"
+                icon={ArrowRightHugeIcon}
+                strokeWidth={2}
+              />
+              <span className="sr-only sm:not-sr-only" id={BANNER_ACTION_ID}>
                 {t("awaitingConfirmation.banner.action")}
               </span>
             </Button>

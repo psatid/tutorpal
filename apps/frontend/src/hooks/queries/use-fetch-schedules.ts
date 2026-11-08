@@ -10,14 +10,20 @@ type FetchSchedulesParams<T> = {
 	filters?: ScheduleListFilters;
 } & BaseQuery<T, GetV1Schedules200Item[]>;
 
+export const getFetchSchedulesQueryOptions = (
+	filters?: ScheduleListFilters,
+) => ({
+	queryKey: schedulesQueryKeys.list(filters),
+	queryFn: async () =>
+		(await apiClient.getV1Schedules(filters as GetV1SchedulesParams)).data,
+});
+
 export function useFetchSchedules<T = GetV1Schedules200Item[]>({
 	filters,
 	...options
 }: FetchSchedulesParams<T> = {}) {
 	return useQuery({
-		queryKey: schedulesQueryKeys.list(filters),
-		queryFn: async () =>
-			(await apiClient.getV1Schedules(filters as GetV1SchedulesParams)).data,
+		...getFetchSchedulesQueryOptions(filters),
 		...options,
 	});
 }
