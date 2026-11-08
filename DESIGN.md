@@ -163,7 +163,7 @@ components:
   drawer:
     mobile: "bottom sheet, top {rounded.xl}, max-h min(85dvh, 44rem), grab handle {colors.input-hover}"
     desktop: "right panel, 26rem, square corners"
-    backdrop: "{colors.overlay-navy} / 45%"
+    backdrop: "{colors.overlay-navy} / 45% with 4px blur"
     shadow: "{shadows.transient-dialog}"
   tabs:
     track: "44px, {colors.card} pill with {colors.border}"
@@ -358,8 +358,9 @@ Inputs are never pill-shaped.
 White on cool-soft is the primary depth cue. The four `shadow-transient-*`
 tokens are blue-tinted (`rgba(31, 71, 112, …)`) and are used only on transient
 surfaces: menus (`menu`), popovers and selects (`popover`), floating cards
-(`card`), and dialogs and drawers (`dialog`). Don't use black shadows or
-backdrop blur; the jun edge-sidebar blur is explicitly disabled.
+(`card`), and dialogs and drawers (`dialog`). Don't use black shadows. A
+restrained 4px backdrop blur is reserved for modal, nested-content, and
+sidebar backdrops; active surfaces remain sharp.
 
 ## Components
 
@@ -502,9 +503,10 @@ than showing a noninteractive back control.
 - **From `md`:** a 26rem right-hand panel with square corners that slides in from
   the right.
 - **Both:** a `popover` surface with `shadow-transient-dialog` over an
-  `overlay-navy` backdrop at 45%. Headers and content use 24px horizontal
-  padding, and the footer uses 16px. The body scrolls and the footer stays
-  reachable. Nested Select and calendar surfaces portal into the active drawer.
+  `overlay-navy` backdrop at 45% with a 4px blur. Headers and content use 24px
+  horizontal padding, and the footer uses 16px. The body scrolls and the footer
+  stays reachable. Nested Select and calendar surfaces portal into the active
+  drawer.
 
 ### Toasts
 
@@ -590,7 +592,8 @@ text. Don't use remote image URLs.
 - Toasts (`sonner.css`) take their accents from the semantic tokens; don't
   give them their own palette.
 - Don't use generic gradients, external image services, or gradient text.
-- Don't use black shadows, backdrop blur, or shadows on resting cards.
+- Don't use black shadows or shadows on resting cards. Backdrop blur is
+  reserved for the shared 4px modal, nested-content, and sidebar backdrops.
 - Don't add new accent colors or invent dashboard data.
 - Don't change routes, API contracts, data models, or the existing drawer
   geometry for visual work.

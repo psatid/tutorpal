@@ -45,6 +45,12 @@ place of spatial overlay transitions. Keep caller-provided focus targets,
 pending-dismissal guards, and `overlayLayers` unchanged when composing a custom
 overlay with the exported low-level popup and viewport components.
 
+Shared modal, drawer, sheet, and alert-dialog backdrops use Tailwind's
+`backdrop-blur-xs` (4px) in addition to their existing navy tint. The blur
+applies only behind the active surface, including nested drawer content and the
+jun-layout sidebar backdrop; keep the panel itself sharp and preserve each
+primitive's existing animation, layering, focus, and dismissal behavior.
+
 Run `make ui-check` and `make ui-test` at the repository root for the package,
 then `make frontend-build` and `make admin-build` to verify both consumers.
 Portal builds use `tsc --noEmit` because the imported package source is outside

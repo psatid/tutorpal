@@ -266,7 +266,7 @@ export function ResponsiveDrawer({
             {coverContent ? (
               <div
                 aria-hidden="true"
-                className={`pointer-events-auto absolute inset-0 bg-overlay-navy/25 ${overlayLayers.nestedBackdrop}`}
+                className={`pointer-events-auto absolute inset-0 bg-overlay-navy/25 backdrop-blur-xs ${overlayLayers.nestedBackdrop}`}
               />
             ) : null}
           </DrawerPopup>

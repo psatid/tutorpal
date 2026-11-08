@@ -5,10 +5,6 @@
 }
 
 @layer utilities {
-  .jun-edgeSidebar::before {
-    backdrop-filter: none;
-  }
-
   .jun-header {
     @apply border-b border-border bg-sidebar;
   }

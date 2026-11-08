@@ -62,7 +62,7 @@ function DrawerBackdrop({
 }: React.ComponentProps<typeof DrawerPrimitive.Backdrop> & { layer?: DrawerLayer }) {
   const { style, ...backdropProps } = props;
   const backdropClassName = cn(
-    "fixed inset-0 bg-overlay-navy/45",
+    "fixed inset-0 bg-overlay-navy/45 backdrop-blur-xs",
     drawerLayerClasses[layer].backdrop,
     className,
   );

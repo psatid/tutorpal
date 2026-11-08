@@ -34,7 +34,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
-      className={cn("fixed inset-0 isolate z-50 bg-overlay-navy/45", className)}
+      className={cn("fixed inset-0 isolate z-50 bg-overlay-navy/45 backdrop-blur-xs", className)}
       exitTransition={dialogExitTransition}
       transition={dialogTransition}
       {...props}
