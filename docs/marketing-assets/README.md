@@ -63,9 +63,9 @@ create or test the landing page.
 
 ## Identity and decorative assets
 
-Reuse the existing TutorPal app icon. The 96px UI/favicon derivative preserves its
-appearance while reducing the asset from 391,358 to 6,878 bytes; organization
-metadata retains the original. Inter and Noto Sans Thai are self-hosted
+Use the refreshed TutorPal app icon ([logo guide](../brand/logo.md)). The 512px
+`app-icon.png` and 96px UI/favicon `app-icon-small.png` are exported from the SVG
+masters; organization metadata uses the 512px icon. Inter and Noto Sans Thai are self-hosted
 from their Fontsource packages, with OFL license copies in
 `apps/marketing-frontend/public/licenses/`. Optional hero entrance/floating motion uses CSS with small script coordination;
 static HTML is the default when scripts are disabled, motion is reduced, or
@@ -85,7 +85,7 @@ approved exceptions. The illustrated book's deeper spine remains independent
 of avatar colors. Indigo and all remaining-hour bars retain `#533AFD`.
 
 Social previews are original light vector compositions of the site's identity and
-product story. `social.svg` embeds the existing small logo bytes unmodified and is
+product story. `social.svg` embeds the 96px app icon bytes unmodified and is
 deterministically rasterized with Sharp. Its output and regeneration command live
 with the marketing implementation.
 

@@ -244,10 +244,10 @@ test('ships a crawlable bilingual sitemap, robots instructions, and a nonindexed
   expect(readFileSync(resolve(dist, 'social.png')).subarray(1, 4).toString()).toBe('PNG');
 });
 
-// Hashes of the pre-redesign app icons: the approved direction reuses them byte-for-byte.
-test('retains the existing logo assets', () => {
+// Hashes of the refreshed app icons (design/logo/final masters).
+test('ships the refreshed logo assets', () => {
   for (const [name, expected] of [
-    ['app-icon.png', '38334d1d1f9e26a45ff2b42d2d01ee811acc3f83697c06b5718c7898c394229a'],
-    ['app-icon-small.png', '5afdda3a3916a1264864318523e62bca4cbc76394f30483db950b87d8e223698'],
+    ['app-icon.png', 'd754104a7b08ff6cb9f22a9dcf68a654b00e1f3d313419a0e6eb4fe5bc21917c'],
+    ['app-icon-small.png', '5057af3bdc1ea737394ee3a63c0a6c6f1455c6cf16ee30b5b10bb1544fca37f7'],
   ]) expect(createHash('sha256').update(readFileSync(resolve(dist, name))).digest('hex')).toBe(expected);
 });

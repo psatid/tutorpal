@@ -183,11 +183,11 @@ and organization/site structured data. The custom 404 is excluded from indexing.
 
 ## Asset provenance
 
-`public/app-icon.png` is copied from the existing authenticated frontend identity.
-`public/app-icon-small.png` is its 96px-wide UI/favicon derivative (6,878 bytes),
-generated with Sharp `resize({width:96,withoutEnlargement:true})` and
-`png({compressionLevel:9,palette:true})`. Organization metadata retains the original.
-`public/social.svg` is an original light vector composition with the existing logo
+`public/app-icon.png` (512px) and `public/app-icon-small.png` (96px UI/favicon) are
+exported from the logo masters in `design/logo/final/`; see the
+[logo guide](../../docs/brand/logo.md). `public/favicon.svg` is the small-size cut.
+Organization metadata uses the 512px icon.
+`public/social.svg` is an original light vector composition with the 96px icon
 embedded unmodified, rasterized to `social.png`
 using Astro's installed Sharp dependency. Regenerate it with:
 

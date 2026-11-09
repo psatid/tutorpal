@@ -29,7 +29,7 @@ without scroll pinning. Min’s featured SAT Math hero/reminder lesson stays sep
 from the English schedule. Below 1200px, floating feature icons replace all four
 cards; phones hide the calendar icon. Below 1024px, the calendar shows only
 Monday–Wednesday with a matching date label and no disclosure.
-The original logo is unchanged; the bottom hero note and
+The logo is the refreshed TutorPal icon ([logo guide](../brand/logo.md)); the bottom hero note and
 motion button are omitted by the approved direction. Lightweight optional CSS
 motion honors reduced motion and suspends floating offscreen or in hidden tabs.
 One-shot heading/product reveals sequence calendar frame and event motion. Finite

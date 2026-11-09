@@ -47,6 +47,7 @@ Each application also has a local Makefile with targets suited to that app:
 - [Marketing Design Direction](../apps/marketing-frontend/DESIGN.md)
 - [Marketing Verification](../apps/marketing-frontend/VERIFICATION.md)
 - [Marketing Image Provenance](marketing-assets/README.md)
+- [TutorPal Logo](brand/logo.md)
 - [Cinematic Homepage Exploration Archive](prototypes/README.md)
 - [Authenticated Screen Layout](frontend/screen-layout.md)
 - [Backend Documentation](backend/README.md)
