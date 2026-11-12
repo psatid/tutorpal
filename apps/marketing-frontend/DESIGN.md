@@ -16,7 +16,7 @@ examples are fictional; no customer outcomes, testimonials, or pricing are inven
 
 - White `#FFFFFF` and soft `#F6F9FC` backgrounds, navy `#0D253D` primary ink,
   `#273951` secondary text, `#61718A` muted text, and indigo `#533AFD` CTAs.
-  Yellow `#FFD447` echoes the logo in small decorative accents. Desktop hero
+  Yellow `#FFD447` appears in small decorative accents. Desktop hero
   cards use opaque white surfaces with subtle rims and a soft shadow.
   The lesson card has a `#FDF6DA` Scheduled tag with `#CCA77B` text and icon;
   at 12px this exact requested pair has about 2.06:1 contrast. Other card text

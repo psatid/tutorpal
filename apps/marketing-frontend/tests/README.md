@@ -16,7 +16,7 @@ white theme metadata, app and section links, the twelve English lessons in the
 5–11 October calendar, empty Sunday, the separate featured math lesson and
 10 → 8 h balance, exact English LINE message, four native student table rows
 and their header associations, local assets, sitemap, robots, and custom 404.
-It checks the existing logo bytes and that the hero has no bottom note, pause
+It checks the refreshed logo bytes and that the hero has no bottom note, pause
 control, or canvas. Landing routes have no before-paint reveal guard. The
 shipped CSS starts finite hero entrances with distinct card origins and synchronized
 card timing; compact icons keep their stagger. Completed targets do not replay

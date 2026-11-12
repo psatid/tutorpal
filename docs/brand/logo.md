@@ -60,7 +60,9 @@ Use these copies of the exports:
   `apps/marketing-frontend/public/app-icon.png`
 - `png/app-icon-96.png`: `apps/marketing-frontend/public/app-icon-small.png`.
   It is also embedded as base64 in `apps/marketing-frontend/public/social.svg`.
-- `tutorpal-icon-small.svg`: `apps/marketing-frontend/public/favicon.svg`
+- `tutorpal-icon-small.svg`: `public/favicon.svg` in all three apps
+- `web/favicon.ico` and `web/apple-touch-icon.png`: `public/` in all three apps.
+  Each app's HTML head links these favicons.
 
 After copying, rasterise `social.png` with the command in the
 [marketing README](../../apps/marketing-frontend/README.md#asset-provenance).

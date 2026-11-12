@@ -84,7 +84,7 @@ text and icon (about 2.06:1 contrast at 12px). Hero lesson
 calendar and hourglass glyphs use neutral gray, the student group uses navy, and
 the rounded three-dot LINE chat uses LINE green. Existing avatar, hourglass, and LINE marks retain their vivid accent colors. The yellow-orange pencil and cyan book
 occupy a reserved lower band below the upper four at every compact width. The
-existing logo is reused unchanged. The hero's bottom note and visible motion
+logo is the refreshed TutorPal icon ([logo guide](../../docs/brand/logo.md)). The hero's bottom note and visible motion
 control remain absent.
 
 All primary content is visible in static HTML, including when JavaScript is
