@@ -125,22 +125,6 @@ export function LoginScreen() {
 		<AuthShell
 			title={t("auth:login.title")}
 			subtitle={t("auth:login.subtitle")}
-			headerAction={
-				publicSignupEnabled ? (
-					<p className="hidden items-center gap-1 sm:flex">
-						<span>{t("auth:login.alternatePrompt")}</span>
-						<Link
-							to={APP_ROUTES.SIGNUP}
-							className={buttonVariants({
-								variant: "link",
-								className: "h-auto p-0 font-semibold",
-							})}
-						>
-							{t("auth:login.alternateAction")}
-						</Link>
-					</p>
-				) : null
-			}
 			form={
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 					{hasSocialError ? (
@@ -276,7 +260,7 @@ export function LoginScreen() {
 			}
 			footer={
 				publicSignupEnabled ? (
-					<p className="flex flex-wrap items-center justify-center gap-1 text-center sm:hidden">
+					<p className="flex flex-wrap items-center justify-center gap-1 text-center">
 						<span>{t("auth:login.alternatePrompt")}</span>
 						<Link
 							to={APP_ROUTES.SIGNUP}

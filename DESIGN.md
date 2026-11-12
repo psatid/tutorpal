@@ -552,6 +552,7 @@ Public auth screens use a white, card-free, `min-h-dvh` shell: 24px mobile and
 column centered at every width. Mobile titles stay left aligned; desktop titles
 and subtitles center from `sm`. EN/TH selection is in the header; the desktop
 footer has a hairline and legal or copyright copy. There is no mesh or decorative background.
+The login sign-up prompt sits below the primary action at every width.
 
 ## States and accessibility
 
