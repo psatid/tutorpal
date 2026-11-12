@@ -198,20 +198,6 @@ export function SignupScreen() {
     <AuthShell
       title={currentStep.title}
       subtitle={currentStep.description}
-      headerAction={
-        <p className="hidden items-center gap-1 sm:flex">
-          <span>{t("auth:signup.alternatePrompt")}</span>
-          <Link
-            to={APP_ROUTES.LOGIN}
-            className={buttonVariants({
-              variant: "link",
-              className: "h-auto p-0 font-semibold",
-            })}
-          >
-            {t("auth:signup.alternateAction")}
-          </Link>
-        </p>
-      }
       beforeTitle={
         <>
           <div

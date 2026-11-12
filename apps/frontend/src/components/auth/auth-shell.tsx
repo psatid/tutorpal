@@ -14,7 +14,6 @@ interface AuthShellProps {
   form: ReactNode;
   footer?: ReactNode;
   ctaArea?: ReactNode;
-  headerAction?: ReactNode;
   beforeTitle?: ReactNode;
   className?: string;
   footerText?: string;
@@ -55,7 +54,6 @@ export function AuthShell({
   form,
   footer,
   ctaArea,
-  headerAction,
   beforeTitle,
   className,
   footerText,
@@ -75,10 +73,7 @@ export function AuthShell({
             TutorPal
           </span>
         </Link>
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          {headerAction}
-          <LanguageSelector />
-        </div>
+        <LanguageSelector />
       </header>
 
       <main className="flex flex-1 flex-col items-center sm:justify-center">
