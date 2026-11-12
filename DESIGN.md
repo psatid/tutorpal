@@ -188,8 +188,9 @@ navigation chrome, white and cool-soft work surfaces, navy ink, and one indigo
 action color. The visual system should help a private tutor understand today's
 workload quickly without feeling like a spreadsheet.
 
-The authenticated app stays light and task-oriented. A restrained organic mesh
-(`/stripe-auth-mesh.svg`) appears only behind the authentication shell.
+The authenticated app stays light and task-oriented. Public authentication and
+LINE-link pages use an unadorned white shell without a card, mesh, or resting
+shadow; a narrow form column supplies the hierarchy.
 
 ## Principles
 
@@ -303,7 +304,7 @@ Thai text needs a taller line height; don't apply negative tracking to Thai.
 
 | Role | Size | Weight | Tracking | Where |
 | --- | --- | --- | --- | --- |
-| Display | 36px → 48px (sm) | 300 | -0.02em | Auth shell title |
+| Display | 36px → 40px (sm) | 300 | -0.02em | Public auth shell title |
 | Overview title | 36px → 40px (sm) | 400 | -0.025em | Dashboard greeting |
 | Page title | 24–30px | 400 | -0.02em | Workspace and settings headings |
 | Section title | 20px | 500 | -0.01em | Settings cards |
@@ -313,12 +314,11 @@ Thai text needs a taller line height; don't apply negative tracking to Thai.
 | Row title | 14–16px | 600 | 0 | Student, class and schedule names |
 | Meta | 12px, line height 16px | 400 | 0 | Times, durations, notes |
 | Badge | 12px | 500 | 0 | Status and attribute badges |
-| Auth eyebrow | 14px | 600 uppercase | +0.08em | Auth shell only |
 | Numeric | any | 400–600 | 0 | `tabular-nums` on hours, times, counts |
 
 Headings use weight and tracking contrast, not bold. The mobile header page
 title is the one exception (`font-bold`, 16–18px). Tracking never goes tighter
-than -0.04em. Uppercase eyebrows are used only in the auth shell.
+than -0.04em.
 
 > `font-headline` appears on some headings but has no definition in
 > `@theme`, so it falls back to the sans stack. Either define it or remove it.
@@ -348,7 +348,7 @@ The base is `--radius: 0.5rem`. Tailwind's radius steps are multiples of it.
 | `rounded-sm` | 4.8px | Compact chrome |
 | `rounded-md` | 6.4px | Inputs, badges |
 | `rounded-lg` | 8px | Dropdown menus, inner hit areas |
-| `rounded-xl` | 11.2px | Rows, schedule cards, auth container, drawer top |
+| `rounded-xl` | 11.2px | Rows, schedule cards, drawer top |
 | `rounded-full` | pill | Buttons, icon buttons, tabs, avatars only |
 
 Inputs are never pill-shaped.
@@ -547,12 +547,11 @@ prefer an Undo action over a confirm dialog.
 
 ## Authentication shell
 
-The auth screens center a white `card` with a hairline and `rounded-xl` over
-the local mesh SVG (70% opacity). Padding is 24 × 20px, rising to 40px from
-`sm`. Inside are a 40px app icon, an optional uppercase eyebrow, and a light
-display title (36 → 48px, 300) capped at 12ch. The mesh must stay behind an
-opaque surface and must never appear in authenticated workspaces or as gradient
-text. Don't use remote image URLs.
+Public auth screens use a white, card-free, `min-h-dvh` shell: 24px mobile and
+40px desktop header gutters, an icon-only mobile brand, and a 384px content
+column centered from `sm`. Mobile titles stay left aligned; desktop titles and
+subtitles center. The desktop footer has a hairline, legal or copyright copy,
+and an EN/TH selector. There is no mesh or decorative background.
 
 ## States and accessibility
 

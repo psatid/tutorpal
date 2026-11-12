@@ -3,11 +3,13 @@
 **Overview**: Implemented LINE account linking for students. Tutors generate a magic link, send it to the student, and the student links their LINE account via OAuth flow.
 
 **Database Changes**:
+
 - Added `lineUserId String? @unique` to `Student` model
 - Added `LineLinkToken` model: `id`, `studentId`, `token` (unique), `expiresAt`, `usedAt`
 - Token expires in 24 hours, marked as used once linked
 
 **Backend Implementation**:
+
 - **Lib** (`lib/line.ts`):
   - `exchangeCodeForToken(code)` - Exchanges LINE OAuth code for access token
   - `getLineProfile(accessToken)` - Fetches LINE user profile (userId, displayName)
@@ -36,6 +38,7 @@
   - `FRONTEND_URL` - Frontend base URL for generating magic links (default: `http://localhost:3001`)
 
 **Frontend Implementation**:
+
 - **Mutation** (`use-generate-line-link.ts`):
   - `useGenerateLineLink()` - Mutation to generate LINE link for a student
 
@@ -57,22 +60,38 @@
   - Added `line.linkLabel`, `line.linkConfirm`, `line.linkGenerate`, `line.linkCopied`, `line.alreadyLinked`
 
 **Student List availability**:
+
 - The Link LINE and Reconnect LINE actions are enabled only after the tutor configures LINE.
 - While the connection is checking, or when it is unavailable, errors, or unconfigured, the action is disabled with explanatory copy and cannot generate a linking token.
 
 **Linking Flow**:
+
 1. Tutor clicks "Link LINE" on student card dropdown
 2. Confirmation dialog appears
 3. Tutor confirms → backend generates magic link token → link copied to clipboard
 4. Tutor sends link to student via any channel
-5. Student opens link → sees "Connect with LINE" page
+5. Student opens link → sees the TutorPal-to-LINE connection page, explains that
+   it enables class reminders, and chooses "Connect with LINE"
 6. Student clicks "Connect" → redirected to LINE Login
 7. Student authorizes → LINE redirects to backend callback
 8. Backend exchanges code for LINE profile, stores `lineUserId` on student
 9. Backend redirects to frontend success page
-10. Student sees "Linked Successfully!" page
+10. Student sees the localized "LINE connected" confirmation. It does not claim
+    a welcome message was delivered because that backend send is best-effort.
+
+**Public-page states (November 13, 2026)**:
+
+- The page is a responsive, card-free shell with the real TutorPal and LINE
+  provider marks. It is centered on desktop and left-aligned on mobile.
+- Expired, missing, used, unavailable-connection, and other received HTTP or
+  application failures direct the student to request a new link from their
+  tutor. Only a transport failure with no HTTP response exposes Retry.
+- The existing allowlisted LINE authorization URL validation remains in place;
+  an HTTP `INVALID_TOKEN` or `MISSING_TOKEN` response is invalid, not retryable;
+  rejected authorization URLs and other received HTTP failures are terminal too.
 
 **Files Created**:
+
 - `backend/src/lib/line.ts`
 - `backend/src/types/line.types.ts`
 - `backend/src/schemas/line.schema.ts`
@@ -85,6 +104,7 @@
 - `frontend/src/routes/line-link.tsx`
 
 **Files Modified**:
+
 - `backend/prisma/schema.prisma` - Added `lineUserId` to Student, added `LineLinkToken` model
 - `backend/src/lib/env.ts` - Added LINE env vars
 - `backend/src/types/student.types.ts` - Added `lineUserId` to StudentDTO

@@ -1,8 +1,6 @@
 import { Link, useSearch } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  LockPasswordIcon as LockHugeIcon,
-} from "@hugeicons/core-free-icons";
+import { LockPasswordIcon as LockHugeIcon } from "@hugeicons/core-free-icons";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -87,10 +85,10 @@ export function ResetPasswordScreen() {
 	if (search.error || !search.token || tokenBecameInvalid) {
 		return (
 			<AuthShell
-				eyebrow={t("auth:brand.eyebrow")}
 				title={t("auth:resetPassword.invalidTitle")}
 				subtitle={t("auth:resetPassword.invalidBody")}
 				form={null}
+				footerText={t("auth:footer.copyright")}
 				ctaArea={
 					<Link
 						to={APP_ROUTES.FORGOT_PASSWORD}
@@ -118,9 +116,9 @@ export function ResetPasswordScreen() {
 
 	return (
 		<AuthShell
-			eyebrow={t("auth:brand.eyebrow")}
 			title={t("auth:resetPassword.title")}
 			subtitle={t("auth:resetPassword.subtitle")}
+			footerText={t("auth:footer.copyright")}
 			form={
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 					<RHFPasswordField
@@ -128,6 +126,8 @@ export function ResetPasswordScreen() {
 						name="newPassword"
 						label={t("common:form.password")}
 						inputProps={{
+							id: "reset-password",
+							autoComplete: "new-password",
 							placeholder: t("auth:resetPassword.passwordPlaceholder"),
 							leftIcon: LockHugeIcon,
 						}}
@@ -137,6 +137,8 @@ export function ResetPasswordScreen() {
 						name="confirmPassword"
 						label={t("auth:resetPassword.confirmLabel")}
 						inputProps={{
+							id: "reset-confirm-password",
+							autoComplete: "new-password",
 							placeholder: t("auth:resetPassword.confirmPlaceholder"),
 							leftIcon: LockHugeIcon,
 						}}

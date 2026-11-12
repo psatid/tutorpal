@@ -1,8 +1,6 @@
 import { Link, Navigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Mail01Icon as MailHugeIcon,
-} from "@hugeicons/core-free-icons";
+import { Mail01Icon as MailHugeIcon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -45,12 +43,12 @@ export function ForgotPasswordScreen() {
 	if (submittedEmail) {
 		return (
 			<AuthShell
-				eyebrow={t("auth:brand.eyebrow")}
 				title={t("auth:forgotPassword.successTitle")}
 				subtitle={t("auth:forgotPassword.successBody", {
 					email: submittedEmail,
 				})}
 				form={null}
+				footerText={t("auth:footer.copyright")}
 				ctaArea={
 					<Link
 						to={APP_ROUTES.LOGIN}
@@ -75,9 +73,9 @@ export function ForgotPasswordScreen() {
 
 	return (
 		<AuthShell
-			eyebrow={t("auth:brand.eyebrow")}
 			title={t("auth:forgotPassword.title")}
 			subtitle={t("auth:forgotPassword.subtitle")}
+			footerText={t("auth:footer.copyright")}
 			form={
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 					<RHFInputField
@@ -86,6 +84,7 @@ export function ForgotPasswordScreen() {
 						label={t("common:form.email")}
 						inputProps={{
 							type: "email",
+							autoComplete: "email",
 							placeholder: t("auth:forgotPassword.emailPlaceholder"),
 							leftIcon: MailHugeIcon,
 						}}

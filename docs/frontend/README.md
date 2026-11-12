@@ -86,8 +86,10 @@ provider marks as SVG brand assets.
 The frontend bundles English and Thai UI resources. It uses a device-local
 preference only: a saved choice in `localStorage` under `tutorpal-language`
 takes precedence over the browser language, and unsupported browser locales
-fall back to English. The authenticated top bar is the only explicit language
-selector; language is not stored in the API or user profile.
+fall back to English. The authenticated top bar and public-auth footer are the
+explicit language selectors; language is not stored in the API or user profile.
+The public footer uses `getAppLanguage` and `setAppLanguage`, rather than a
+separate preference system.
 
 Use the shared `"Inter", "Noto Sans Thai Variable", sans-serif` font stack.
 Do not apply a Thai-only document font rule: this fallback order intentionally

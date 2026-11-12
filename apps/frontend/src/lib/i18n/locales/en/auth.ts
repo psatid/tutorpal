@@ -3,6 +3,13 @@ export default {
 		eyebrow: "TutorPal",
 	},
 	legal: "By continuing, you agree to our Terms of Service and Privacy Policy.",
+	footer: {
+		legal:
+			"By continuing, you agree to our Terms of Service and Privacy Policy.",
+		copyright: "© 2026 TutorPal. All rights reserved.",
+		languageLabel: "Language",
+		language: { en: "EN", th: "TH" },
+	},
 	errors: {
 		loginFailed: "Login failed.",
 		signupFailed: "Signup failed.",
@@ -17,7 +24,7 @@ export default {
 		passwordPlaceholder: "Enter your password",
 		forgotPassword: "Forgot password?",
 		submit: "Sign In",
-		socialDivider: "Or continue with",
+		socialDivider: "or with email",
 		continueWithGoogle: "Continue with Google",
 		continueWithLine: "Continue with LINE",
 		redirectingToGoogle: "Redirecting to Google…",
@@ -76,6 +83,7 @@ export default {
 			"That email is already in use. Try signing in or use another email.",
 		alternatePrompt: "Already have an account?",
 		alternateAction: "Sign in",
+		back: "Back",
 		steps: {
 			name: {
 				title: "What's your name?",
@@ -110,5 +118,8 @@ export default {
 		},
 		cta: "Go to sign in",
 		resend: "Send another verification email",
+		resendSuccess: "A new verification email is on its way.",
+		resendError:
+			"We couldn't resend the verification email right now. Please try again.",
 	},
 } as const;

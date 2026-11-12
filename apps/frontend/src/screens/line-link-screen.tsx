@@ -1,23 +1,103 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Loading03Icon as Loader2HugeIcon,
-  CheckmarkCircle02Icon as CheckCircle2HugeIcon,
   CancelCircleIcon as XCircleHugeIcon,
-  RotateLeft01Icon as RotateCcwHugeIcon,
+  CheckmarkCircle02Icon as CheckCircleHugeIcon,
+  RotateLeft01Icon as RetryHugeIcon,
 } from "@hugeicons/core-free-icons";
+import { isAxiosError } from "axios";
 import { useTranslation } from "react-i18next";
 import { Button } from "@tutorpal/ui/button";
+import { LineMark } from "@/components/auth/provider-marks";
+import {
+  getAppLanguage,
+  setAppLanguage,
+  type AppLanguage,
+} from "@/lib/i18n/config";
 import { apiClient } from "@/lib/api-client";
 import { validateLineAuthorizationUrl } from "@/lib/line-authorization-url";
+import { cn } from "@/lib/utils";
 
 type LinkState = "loading" | "ready" | "success" | "error";
+type LinkError =
+  | "missing_params"
+  | "link_failed"
+  | "invalid_token"
+  | "connection_unavailable"
+  | "network";
 
-type LinkError = "missing_params" | "link_failed" | "invalid_token" | "network";
+function LanguageSelector() {
+  const { t } = useTranslation("auth");
+  const activeLanguage = getAppLanguage();
+
+  return (
+    <div
+      className="flex items-center gap-1"
+      aria-label={t("footer.languageLabel")}
+    >
+      {(["en", "th"] as const).map((language) => (
+        <button
+          key={language}
+          type="button"
+          aria-pressed={activeLanguage === language}
+          className={cn(
+            "min-h-11 min-w-11 px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            activeLanguage === language
+              ? "font-semibold text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+          onClick={() => void setAppLanguage(language as AppLanguage)}
+        >
+          {t(`footer.language.${language}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ConnectionIdentity() {
+  return (
+    <div
+      className="flex items-center gap-3 sm:justify-center sm:gap-4"
+      aria-hidden="true"
+    >
+      <img src="/app-icon.png" alt="" className="size-14 shrink-0" />
+      <span className="flex gap-1">
+        <span className="size-1.5 rounded-full bg-muted-foreground/45" />
+        <span className="size-1.5 rounded-full bg-muted-foreground/45" />
+        <span className="size-1.5 rounded-full bg-muted-foreground/45" />
+      </span>
+      <span className="flex size-14 items-center justify-center rounded-xl bg-[#00C300] p-2">
+        <img
+          src="/icons/line/default.svg"
+          alt=""
+          className="size-10 brightness-0 invert"
+        />
+      </span>
+    </div>
+  );
+}
+
+function classifyLinkError(error: unknown): LinkError {
+  if (!isAxiosError(error)) {
+    return "connection_unavailable";
+  }
+
+  const payload = error.response?.data as { errorCode?: string } | undefined;
+
+  if (
+    payload?.errorCode === "INVALID_TOKEN" ||
+    payload?.errorCode === "MISSING_TOKEN"
+  ) {
+    return "invalid_token";
+  }
+
+  return error.response ? "connection_unavailable" : "network";
+}
 
 export function LineLinkScreen() {
-  const { t } = useTranslation(["students"]);
+  const { t } = useTranslation(["students", "auth"]);
   const search = useSearch({ strict: false }) as {
     token?: string;
     success?: string | boolean;
@@ -27,8 +107,8 @@ export function LineLinkScreen() {
   const [state, setState] = useState<LinkState>("loading");
   const [linkError, setLinkError] = useState<LinkError | null>(null);
   const [linkedName, setLinkedName] = useState("");
-
   const { token, success, error, name } = search;
+  const isConnecting = state === "loading" && Boolean(token);
 
   useEffect(() => {
     if (success === true || success === "true") {
@@ -36,140 +116,156 @@ export function LineLinkScreen() {
       setState("success");
       return;
     }
+
     if (error) {
-      const errorMap: Record<string, LinkError> = {
-        missing_params: "missing_params",
-        link_failed: "link_failed",
-      };
-      setLinkError(errorMap[error] || "link_failed");
+      setLinkError(
+        error === "missing_params" ? "missing_params" : "link_failed",
+      );
       setState("error");
       return;
     }
+
     if (!token) {
       setLinkError("invalid_token");
       setState("error");
       return;
     }
+
     setState("ready");
-  }, [token, success, error, name]);
+  }, [error, name, success, token]);
 
   const handleConnect = useCallback(async () => {
     if (!token) return;
+
     setState("loading");
     setLinkError(null);
+
     try {
-      const response = await apiClient.getV1LineAuthUrl({
-        token,
-      });
-      window.location.href = validateLineAuthorizationUrl(response.data.authUrl);
-    } catch {
-      setLinkError("network");
+      const response = await apiClient.getV1LineAuthUrl({ token });
+      window.location.href = validateLineAuthorizationUrl(
+        response.data.authUrl,
+      );
+    } catch (requestError) {
+      setLinkError(classifyLinkError(requestError));
       setState("error");
     }
   }, [token]);
 
-  const errorMessage = linkError
+  const errorCopy = linkError
     ? {
         missing_params: t("students:line.error.missing"),
         link_failed: t("students:line.error.expired"),
         invalid_token: t("students:line.error.invalid"),
+        connection_unavailable: t(
+          "students:line.error.connectionUnavailable",
+        ),
         network: t("students:line.error.network"),
       }[linkError]
     : "";
-
-  const canRetry = linkError === "network";
+  const errorTitle =
+    linkError === "network"
+      ? t("students:line.networkErrorTitle")
+      : linkError === "connection_unavailable"
+        ? t("students:line.connectionUnavailableTitle")
+        : t("students:line.expiredErrorTitle");
 
   return (
-    <div className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden bg-background p-6">
-      <img
-        aria-hidden="true"
-        alt=""
-        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover opacity-70 dark:opacity-25"
-        src="/stripe-auth-mesh.svg"
-      />
-      <main
-        aria-busy={state === "loading"}
-        className="relative z-10 w-full max-w-sm space-y-6 rounded-xl border border-border bg-card p-6 text-center text-card-foreground sm:p-8"
-      >
-        <div className="space-y-2">
-          <div className="flex justify-center">
-            <div className="flex size-20 items-center justify-center rounded-xl bg-primary/10">
-              <span className="text-3xl font-semibold text-primary">TP</span>
+    <div className="flex min-h-dvh flex-col bg-card px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10 sm:pt-8">
+      <main className="flex flex-1 flex-col sm:items-center sm:justify-center">
+        {state === "ready" || isConnecting ? (
+          <section className="flex w-full max-w-sm flex-1 flex-col sm:flex-none sm:min-h-[27rem] sm:text-center">
+            <ConnectionIdentity />
+            <div className="mt-8 space-y-4">
+              <h1 className="text-balance text-4xl font-light leading-tight tracking-[-0.02em] text-foreground sm:text-[2.5rem]">
+                {t("students:line.readyTitle")}
+              </h1>
+              <p className="text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
+                {t("students:line.readyDescription")}
+              </p>
+              <p className="rounded-lg bg-muted px-4 py-3 text-sm leading-6 text-secondary-foreground">
+                {t("students:line.approvalNote")}
+              </p>
             </div>
-          </div>
-          <h1 className="font-headline text-2xl font-light tracking-[-0.02em] text-foreground">
-            TutorPal
-          </h1>
-        </div>
-
-        {state === "loading" && (
-          <div aria-live="polite" className="space-y-4" role="status">
-            <HugeiconsIcon icon={Loader2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-8 h-8 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">
-              {t("students:line.connecting")}
-            </p>
-          </div>
-        )}
-
-        {state === "ready" && (
-          <div className="space-y-6">
-            <p className="text-muted-foreground leading-relaxed">
-              {t("students:line.readyDescription")}
-            </p>
             <Button
-              onClick={handleConnect}
-              size="lg"
-              className="w-full bg-success-container text-success-container-foreground hover:bg-success-container/80 active:bg-success-container/70"
+              type="button"
+              className="mt-auto h-12 w-full sm:mt-8"
+              loading={isConnecting}
+              disabled={isConnecting}
+              aria-busy={isConnecting}
+              onClick={() => void handleConnect()}
             >
-              {t("students:line.connect")}
+              <LineMark />
+              {isConnecting
+                ? t("students:line.connecting")
+                : t("students:line.connect")}
             </Button>
-          </div>
-        )}
+          </section>
+        ) : null}
 
-        {state === "success" && (
-          <div className="space-y-4">
-            <HugeiconsIcon icon={CheckCircle2HugeIcon} strokeWidth={2} aria-hidden="true" className="w-16 h-16 text-success mx-auto" />
-            <div className="space-y-1">
-              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
-                {t("students:line.successTitle")}
-              </h2>
-              {linkedName && (
-                <p className="text-muted-foreground">
-                  {t("students:line.connectedAs", { name: linkedName })}
-                </p>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">
+        {state === "success" ? (
+          <section className="flex w-full max-w-sm flex-1 flex-col pt-8 sm:flex-none sm:text-center">
+            <img src="/app-icon.png" alt="" className="size-14" />
+            <HugeiconsIcon
+              icon={CheckCircleHugeIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="mt-8 size-10 text-success sm:mx-auto"
+            />
+            <h1 className="mt-4 text-balance text-4xl font-light leading-tight tracking-[-0.02em] text-foreground sm:text-[2.5rem]">
+              {t("students:line.successTitle")}
+            </h1>
+            {linkedName ? (
+              <p className="mt-3 break-words text-muted-foreground">
+                {t("students:line.connectedAs", { name: linkedName })}
+              </p>
+            ) : null}
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
               {t("students:line.closePage")}
             </p>
-          </div>
-        )}
+          </section>
+        ) : null}
 
-        {state === "error" && (
-          <div aria-live="assertive" className="space-y-4" role="alert">
-            <HugeiconsIcon icon={XCircleHugeIcon} strokeWidth={2} aria-hidden="true" className="w-16 h-16 text-destructive mx-auto" />
-            <div className="space-y-1">
-              <h2 className="font-headline text-xl font-normal tracking-[-0.01em] text-foreground">
-                {t("students:line.errorTitle")}
-              </h2>
-              <p className="text-muted-foreground">{errorMessage}</p>
-            </div>
-            {canRetry ? (
+        {state === "error" ? (
+          <section
+            className="flex w-full max-w-sm flex-1 flex-col pt-8 sm:flex-none sm:text-center"
+            aria-live="assertive"
+            role="alert"
+          >
+            <img src="/app-icon.png" alt="" className="size-14" />
+            <HugeiconsIcon
+              icon={XCircleHugeIcon}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="mt-8 size-10 text-destructive sm:mx-auto"
+            />
+            <h1 className="mt-4 text-balance text-3xl font-light tracking-[-0.02em] text-foreground sm:text-4xl">
+              {errorTitle}
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              {errorCopy}
+            </p>
+            {linkError === "network" ? (
               <Button
-                onClick={handleConnect}
+                type="button"
+                onClick={() => void handleConnect()}
                 variant="outline"
-                rightIcon={RotateCcwHugeIcon}
+                className="mt-8 h-12 w-full"
+                rightIcon={RetryHugeIcon}
               >
                 {t("students:line.retry")}
               </Button>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-4 text-sm text-muted-foreground">
                 {t("students:line.askTutor")}
               </p>
             )}
-          </div>
-        )}
+          </section>
+        ) : null}
       </main>
+      <footer className="flex items-center justify-end border-t border-border pt-3 text-xs text-muted-foreground sm:justify-between sm:pt-5">
+        <p className="hidden sm:block">{t("auth:footer.copyright")}</p>
+        <LanguageSelector />
+      </footer>
     </div>
   );
 }

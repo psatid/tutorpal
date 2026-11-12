@@ -146,14 +146,10 @@ export function SignupScreen() {
   if (isComplete) {
     return (
       <AuthShell
-        eyebrow={t("auth:brand.eyebrow")}
         title={t("auth:signup.successTitle")}
         subtitle={t("auth:signup.successBody", { email: submittedEmail })}
-        form={
-          <div className="rounded-lg border border-border bg-primary-container px-5 py-4 text-sm leading-6 text-muted-foreground">
-            {t("auth:legal")}
-          </div>
-        }
+        footerText={t("auth:footer.copyright")}
+        form={null}
         ctaArea={
           <>
             <Button
@@ -200,17 +196,24 @@ export function SignupScreen() {
 
   return (
     <AuthShell
-      eyebrow={t("auth:brand.eyebrow")}
       title={currentStep.title}
       subtitle={currentStep.description}
-      form={
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleNext();
-          }}
-          className="space-y-6"
-        >
+      headerAction={
+        <p className="hidden items-center gap-1 sm:flex">
+          <span>{t("auth:signup.alternatePrompt")}</span>
+          <Link
+            to={APP_ROUTES.LOGIN}
+            className={buttonVariants({
+              variant: "link",
+              className: "h-auto p-0 font-semibold",
+            })}
+          >
+            {t("auth:signup.alternateAction")}
+          </Link>
+        </p>
+      }
+      beforeTitle={
+        <>
           <div
             role="progressbar"
             aria-valuemin={1}
@@ -225,13 +228,23 @@ export function SignupScreen() {
             {stepConfig.map((_, index) => (
               <div
                 key={index}
-                className={`h-1.5 flex-1 rounded-full ${
-                  index <= step ? "bg-primary" : "bg-muted-foreground/20"
-                }`}
+                className={`h-1.5 flex-1 rounded-full ${index <= step ? "bg-primary" : "bg-muted-foreground/20"}`}
               />
             ))}
           </div>
-
+          <p className="text-sm text-muted-foreground">
+            {t("auth:signup.title")}
+          </p>
+        </>
+      }
+      form={
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleNext();
+          }}
+          className="space-y-6"
+        >
           <div className="relative min-h-26">
             <div
               className={cn(
@@ -248,6 +261,7 @@ export function SignupScreen() {
                 label={t("common:form.name")}
                 inputProps={{
                   type: "text",
+                  autoComplete: "name",
                   placeholder: t("auth:signup.steps.name.placeholder"),
                   leftIcon: UserRoundHugeIcon,
                 }}
@@ -269,6 +283,7 @@ export function SignupScreen() {
                 label={t("common:form.email")}
                 inputProps={{
                   type: "email",
+                  autoComplete: "email",
                   placeholder: t("auth:signup.steps.email.placeholder"),
                   leftIcon: MailHugeIcon,
                 }}
@@ -289,6 +304,8 @@ export function SignupScreen() {
                 name="password"
                 label={t("common:form.password")}
                 inputProps={{
+                  id: "signup-password",
+                  autoComplete: "new-password",
                   placeholder: t("auth:signup.steps.password.placeholder"),
                   leftIcon: LockHugeIcon,
                 }}
@@ -300,7 +317,7 @@ export function SignupScreen() {
       }
       ctaArea={
         <>
-          <p className="text-sm leading-6 text-muted-foreground">
+          <p className="text-sm leading-6 text-muted-foreground sm:hidden">
             {t("auth:legal")}
           </p>
           <div className="flex gap-3">
@@ -310,8 +327,15 @@ export function SignupScreen() {
                 onClick={handleBack}
                 variant="outline"
                 className="h-12 px-4"
+                aria-label={t("auth:signup.back")}
               >
-                <HugeiconsIcon icon={ArrowLeftHugeIcon} strokeWidth={2} aria-hidden="true" className="size-4" />
+                <HugeiconsIcon
+                  icon={ArrowLeftHugeIcon}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                <span className="sr-only">{t("auth:signup.back")}</span>
               </Button>
             ) : null}
             <Button

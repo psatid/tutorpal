@@ -125,12 +125,20 @@ export default {
 		connect: "Connect with LINE",
 		readyDescription:
 			"Your tutor uses TutorPal to manage your classes. Connect your LINE account to receive schedule updates and notifications.",
+		readyTitle: "Get class reminders on LINE",
+		approvalNote:
+			"You'll approve the connection with LINE, then return here to TutorPal.",
+		connectingDescription: "Please wait while we open LINE securely.",
 		retry: "Try Again",
-		successTitle: "Linked Successfully!",
+		successTitle: "LINE connected",
 		connectedAs: "Connected as {{name}}",
-		closePage: "You can now close this page.",
-		errorTitle: "Linking Failed",
-		askTutor: "Please ask your tutor for a new link.",
+		closePage:
+			"Class reminders from your tutor will arrive in LINE. You can close this page.",
+		errorTitle: "This link doesn’t work anymore",
+		expiredErrorTitle: "This link doesn’t work anymore",
+		networkErrorTitle: "Couldn’t connect to LINE",
+		connectionUnavailableTitle: "This connection is no longer available",
+		askTutor: "Your tutor can send a new link from your profile in TutorPal.",
 		modal: {
 			title: "LINE Link Ready",
 			description:
@@ -145,6 +153,8 @@ export default {
 				"This link is invalid. Please request a new link from your tutor.",
 			network:
 				"Something went wrong. Please check your connection and try again.",
+			connectionUnavailable:
+				"This connection is no longer available. Ask your tutor for a new link.",
 			missing:
 				"Missing required parameters. Please request a new link from your tutor.",
 		},
