@@ -177,7 +177,7 @@ export function SignupScreen() {
           </>
         }
         footer={
-          <p className="flex flex-wrap items-center gap-1">
+          <p className="flex flex-wrap items-center justify-center gap-1 text-center">
             <span>{t("auth:signup.alternatePrompt")}</span>
             <Link
               to={APP_ROUTES.LOGIN}
@@ -354,7 +354,7 @@ export function SignupScreen() {
         </>
       }
       footer={
-        <p className="flex flex-wrap items-center gap-1">
+        <p className="flex flex-wrap items-center justify-center gap-1 text-center">
           <span>{t("auth:signup.alternatePrompt")}</span>
           <Link
             to={APP_ROUTES.LOGIN}

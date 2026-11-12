@@ -171,6 +171,9 @@ export function LineLinkScreen() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-card px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10 sm:pt-8">
+      <header className="flex min-h-11 justify-end">
+        <LanguageSelector />
+      </header>
       <main className="flex flex-1 flex-col items-center sm:justify-center">
         {state === "ready" || isConnecting ? (
           <section className="flex w-full max-w-sm flex-1 flex-col sm:flex-none sm:min-h-[27rem] sm:text-center">
@@ -262,9 +265,8 @@ export function LineLinkScreen() {
           </section>
         ) : null}
       </main>
-      <footer className="flex items-center justify-end border-t border-border pt-3 text-xs text-muted-foreground sm:justify-between sm:pt-5">
-        <p className="hidden sm:block">{t("auth:footer.copyright")}</p>
-        <LanguageSelector />
+      <footer className="hidden border-t border-border pt-5 text-xs text-muted-foreground sm:flex sm:items-center">
+        <p>{t("auth:footer.copyright")}</p>
       </footer>
     </div>
   );

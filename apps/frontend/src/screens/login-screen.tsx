@@ -276,7 +276,7 @@ export function LoginScreen() {
 			}
 			footer={
 				publicSignupEnabled ? (
-					<p className="flex flex-wrap items-center gap-1 sm:hidden">
+					<p className="flex flex-wrap items-center justify-center gap-1 text-center sm:hidden">
 						<span>{t("auth:login.alternatePrompt")}</span>
 						<Link
 							to={APP_ROUTES.SIGNUP}

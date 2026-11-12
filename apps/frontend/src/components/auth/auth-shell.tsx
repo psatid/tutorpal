@@ -75,11 +75,10 @@ export function AuthShell({
             TutorPal
           </span>
         </Link>
-        {headerAction ? (
-          <div className="shrink-0 text-sm text-muted-foreground">
-            {headerAction}
-          </div>
-        ) : null}
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          {headerAction}
+          <LanguageSelector />
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col items-center sm:justify-center">
@@ -105,7 +104,7 @@ export function AuthShell({
             <div className="mt-auto pt-8 sm:mt-5 sm:pt-0">
               {ctaArea ? <div className="space-y-4">{ctaArea}</div> : null}
               {footer ? (
-                <div className="pt-6 text-sm text-muted-foreground">
+                <div className="flex justify-center pt-6 text-center text-sm text-muted-foreground">
                   {footer}
                 </div>
               ) : null}
@@ -114,11 +113,8 @@ export function AuthShell({
         </div>
       </main>
 
-      <footer className="flex items-center justify-end border-t border-border pt-3 text-xs leading-5 text-muted-foreground sm:flex-wrap sm:justify-between sm:gap-x-4 sm:gap-y-2 sm:pt-5">
-        <p className="hidden sm:block">
-          {footerText ?? t("auth:footer.legal")}
-        </p>
-        <LanguageSelector />
+      <footer className="hidden border-t border-border pt-5 text-xs leading-5 text-muted-foreground sm:flex sm:items-center sm:justify-between">
+        <p>{footerText ?? t("auth:footer.legal")}</p>
       </footer>
     </div>
   );
