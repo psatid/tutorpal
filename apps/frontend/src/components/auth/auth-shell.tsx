@@ -82,7 +82,7 @@ export function AuthShell({
         ) : null}
       </header>
 
-      <main className="flex flex-1 flex-col sm:items-center sm:justify-center">
+      <main className="flex flex-1 flex-col items-center sm:justify-center">
         <div
           className={cn(
             "flex w-full max-w-sm flex-1 flex-col pt-8 sm:flex-none sm:pt-0 sm:text-center",

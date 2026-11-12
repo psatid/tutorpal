@@ -549,8 +549,8 @@ prefer an Undo action over a confirm dialog.
 
 Public auth screens use a white, card-free, `min-h-dvh` shell: 24px mobile and
 40px desktop header gutters, an icon-only mobile brand, and a 384px content
-column centered from `sm`. Mobile titles stay left aligned; desktop titles and
-subtitles center. The desktop footer has a hairline, legal or copyright copy,
+column centered at every width. Mobile titles stay left aligned; desktop titles
+and subtitles center from `sm`. The desktop footer has a hairline, legal or copyright copy,
 and an EN/TH selector. There is no mesh or decorative background.
 
 ## States and accessibility

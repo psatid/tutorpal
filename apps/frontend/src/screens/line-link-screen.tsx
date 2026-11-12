@@ -171,7 +171,7 @@ export function LineLinkScreen() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-card px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10 sm:pt-8">
-      <main className="flex flex-1 flex-col sm:items-center sm:justify-center">
+      <main className="flex flex-1 flex-col items-center sm:justify-center">
         {state === "ready" || isConnecting ? (
           <section className="flex w-full max-w-sm flex-1 flex-col sm:flex-none sm:min-h-[27rem] sm:text-center">
             <ConnectionIdentity />
