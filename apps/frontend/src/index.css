@@ -12,4 +12,12 @@
   .jun-header {
     @apply border-b border-border bg-sidebar;
   }
+
+  /* Keep the mobile drawer aligned to the dynamic viewport, including Safari chrome. */
+  @media (width < 48rem) {
+    .jun-edgeSidebar-drawer > .jun-edgeContent {
+      --jun-h: 100dvh;
+      --drawer-h: 100dvh;
+    }
+  }
 }

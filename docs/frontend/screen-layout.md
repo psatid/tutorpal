@@ -4,6 +4,12 @@ Screens rendered under the `/_layout` route use `ScreenLayout` from
 `apps/frontend/src/components/layout/screen-layout.tsx`. The authenticated route
 shell owns only navigation, geometry, and its background.
 
+Below `md` (`48rem`), the mobile sidebar's `.jun-edgeContent` uses `100dvh`
+for both jun-layout drawer height variables in `apps/frontend/src/index.css`.
+This keeps the white drawer aligned with Safari's changing visible viewport
+instead of leaving a gap beneath it. Keep this override scoped to mobile drawer
+content so the desktop rail and page geometry retain their existing sizing.
+
 Authenticated route content is wrapped in `ContentReveal`, which shares the
 opacity and 4px blur reveal used by Tabs panels. Each pathname change replaces
 the current `Outlet` wrapper and reveals the new page over 500 ms; the sidebar
