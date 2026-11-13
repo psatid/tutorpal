@@ -252,7 +252,7 @@ export function ClassDetailScreen({
 
   if (isLoadingClass && !classData) {
     return (
-      <div className="flex h-full flex-col gap-6 py-4">
+      <div className="flex h-full flex-col gap-6">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Skeleton className="size-11 rounded-full" />
@@ -329,7 +329,7 @@ export function ClassDetailScreen({
   }
 
   return (
-    <div className="flex h-full flex-col gap-6 py-4">
+    <div className="flex h-full flex-col gap-6">
       <ClassInfoHeader
         addHoursButtonRef={classHoursButtonRef}
         classData={classData}

@@ -39,7 +39,7 @@ describe("RecurringScheduleSection", () => {
 		).toBeVisible();
   });
 
-  it("keeps the empty-state action full width only below the parent row breakpoint", () => {
+  it("keeps the empty-state action full width below sm and natural width above", () => {
     render(
       <RecurringScheduleSection
         hasNoAvailableHours={false}

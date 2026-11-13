@@ -41,8 +41,13 @@ mutation, and localization behavior.
 
 ## Responsive behavior
 
+- The loaded workspace and loading skeleton use `ScreenLayout`'s responsive
+  page gutters without adding inner page-edge padding.
 - Desktop places Sessions on the left and stacks recurring schedule and hour
   history on the right. The highlighted next session sits inside Sessions.
+- The recurring schedule empty state places its action below the description
+  at every width, keeping the sidebar copy readable. The action fills the card
+  on mobile and uses its natural width from `sm`.
 - Mobile places the summary and two actions above a standalone next-session
   panel, recurring schedule, Sessions, and hour history. The session list does
   not repeat the highlighted next session. Upcoming and Recent share one tab

@@ -90,8 +90,8 @@ export function RecurringScheduleSection({
         aria-labelledby="recurring-schedule-title"
         className="rounded-xl border border-border bg-card p-4"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-start gap-3 sm:flex-1">
+        <div className="flex flex-col items-start gap-4">
+          <div className="flex w-full min-w-0 items-start gap-3">
             <div className="mt-0.5 rounded-full bg-surface-container-low p-2">
               <HugeiconsIcon
                 icon={Repeat2HugeIcon}
