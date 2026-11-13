@@ -1,19 +1,14 @@
 import * as React from "react";
 import { AlertDialog as AlertDialogPrimitive } from "@animate-ui/react/primitives/base-ui/alert-dialog";
-import type { Transition } from "motion/react";
 
 import { cn } from "../lib/utils";
 import { Button } from "./button";
+import {
+  modalEnterTransition,
+  modalExitTransition,
+  modalPopupFrom,
+} from "./dialog-motion";
 import { overlayLayers } from "./overlay-layers";
-
-const alertDialogTransition = {
-  duration: 0.2,
-  ease: "easeOut",
-} satisfies Transition;
-const alertDialogExitTransition = {
-  duration: 0.15,
-  ease: "easeIn",
-} satisfies Transition;
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -43,8 +38,8 @@ function AlertDialogOverlay({
         overlayLayers.alertBackdrop,
         className,
       )}
-      exitTransition={alertDialogExitTransition}
-      transition={alertDialogTransition}
+      exitTransition={modalExitTransition}
+      transition={modalEnterTransition}
       {...props}
     />
   );
@@ -73,9 +68,9 @@ function AlertDialogContent({
             "group/alert-dialog-content grid w-full gap-6 rounded-xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md",
             className,
           )}
-          exitTransition={alertDialogExitTransition}
-          from="top"
-          transition={alertDialogTransition}
+          exitTransition={modalExitTransition}
+          from={modalPopupFrom}
+          transition={modalEnterTransition}
           {...props}
         />
       </AlertDialogPrimitive.Viewport>

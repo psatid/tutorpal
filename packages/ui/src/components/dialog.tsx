@@ -1,15 +1,16 @@
 import * as React from "react"
 import { useTranslation } from "react-i18next"
 import { Dialog as DialogPrimitive } from "@animate-ui/react/primitives/base-ui/dialog"
-import type { Transition } from "motion/react"
 
 import { cn } from "../lib/utils"
 import { Button } from "./button"
+import {
+  modalEnterTransition,
+  modalExitTransition,
+  modalPopupFrom,
+} from "./dialog-motion"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
-
-const dialogTransition = { duration: 0.2, ease: "easeOut" } satisfies Transition
-const dialogExitTransition = { duration: 0.15, ease: "easeIn" } satisfies Transition
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -35,8 +36,8 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn("fixed inset-0 isolate z-50 bg-overlay-navy/45 backdrop-blur-xs", className)}
-      exitTransition={dialogExitTransition}
-      transition={dialogTransition}
+      exitTransition={modalExitTransition}
+      transition={modalEnterTransition}
       {...props}
     />
   )
@@ -66,9 +67,9 @@ function DialogPopup({
     <DialogPrimitive.Popup
       data-slot="dialog-popup"
       className={cn("relative", className)}
-      exitTransition={dialogExitTransition}
-      from="top"
-      transition={dialogTransition}
+      exitTransition={modalExitTransition}
+      from={modalPopupFrom}
+      transition={modalEnterTransition}
       {...props}
     />
   )

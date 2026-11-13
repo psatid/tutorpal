@@ -49,9 +49,15 @@ export function NoShowScheduleDialog({
 }: NoShowScheduleDialogProps) {
   const { t } = useTranslation(["schedules", "common"]);
   const [deductHours, setDeductHours] = useState<boolean | null>(null);
+  const [exitSchedule, setExitSchedule] = useState<NoShowSchedule | null>(null);
   const [note, setNote] = useState("");
   const deductHoursInputRef = useRef<HTMLInputElement>(null);
+  const openRef = useRef(open);
+  const scheduleRef = useRef(schedule);
+  openRef.current = open;
+  scheduleRef.current = schedule;
   const scheduleId = schedule?.getId();
+  const displayedSchedule = schedule ?? exitSchedule;
   const noShowMutation = useNoShowSchedule({
     onSuccess: () => {
       if (schedule) onSuccess?.(schedule);
@@ -61,30 +67,31 @@ export function NoShowScheduleDialog({
   const { reset: resetNoShowMutation } = noShowMutation;
 
   useEffect(() => {
-    resetNoShowMutation();
-
-    if (!open || !scheduleId) {
-      setDeductHours(null);
-      setNote("");
-      return;
+    if (schedule) {
+      setExitSchedule(schedule);
     }
+  }, [schedule]);
 
+  useEffect(() => {
+    if (!open || !scheduleId) return;
+
+    resetNoShowMutation();
     setDeductHours(null);
     setNote("");
   }, [open, resetNoShowMutation, scheduleId]);
 
-  if (!schedule) return null;
+  if (!displayedSchedule) return null;
 
-  const hours = DateTime.formatDurationHours(schedule.getDurationHours());
-  const startTime = schedule.getStartTimeLabel();
-  const endTime = schedule.getEndClockTimeLabel();
-  const startDate = DateTime.fromDateOnlyString(schedule.getDate());
+  const hours = DateTime.formatDurationHours(displayedSchedule.getDurationHours());
+  const startTime = displayedSchedule.getStartTimeLabel();
+  const endTime = displayedSchedule.getEndClockTimeLabel();
+  const startDate = DateTime.fromDateOnlyString(displayedSchedule.getDate());
   const date = DateTime.formatDate(startDate, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
-  const { endDate, endDayOffset } = schedule.getEndDateData();
+  const { endDate, endDayOffset } = displayedSchedule.getEndDateData();
   const endDateLabel = DateTime.formatDate(endDate, {
     weekday: "long",
     month: "long",
@@ -114,10 +121,18 @@ export function NoShowScheduleDialog({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (deductHours === null || noShowMutation.isPending) return;
+    const currentSchedule = scheduleRef.current;
+    if (
+      !openRef.current ||
+      !currentSchedule ||
+      deductHours === null ||
+      noShowMutation.isPending
+    ) {
+      return;
+    }
 
     noShowMutation.mutate({
-      id: schedule.getId(),
+      id: currentSchedule.getId(),
       deductHours,
       note: note.trim() || undefined,
     });
@@ -167,14 +182,14 @@ export function NoShowScheduleDialog({
 
           <div className="rounded-lg border border-border bg-muted px-3 py-3">
             <p className="font-medium wrap-break-word text-foreground">
-              {schedule.getClassName()}
+              {displayedSchedule.getClassName()}
             </p>
             <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm text-muted-foreground">
               <dt>{t("noShow.session.date")}</dt>
               <dd className="min-w-0 text-right text-foreground">{date}</dd>
               <dt>{t("noShow.session.time")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-                <time dateTime={`${schedule.getDate()}T${startTime}`}>
+                <time dateTime={`${displayedSchedule.getDate()}T${startTime}`}>
                   {startTime}
                 </time>
                 <span aria-hidden="true"> – </span>
@@ -198,7 +213,7 @@ export function NoShowScheduleDialog({
               </dd>
               <dt>{t("noShow.session.duration")}</dt>
               <dd className="text-right tabular-nums text-foreground">
-                {formatDuration(schedule.getDurationMinutes(), t)}
+                {formatDuration(displayedSchedule.getDurationMinutes(), t)}
               </dd>
             </dl>
           </div>

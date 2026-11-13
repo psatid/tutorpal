@@ -1,4 +1,11 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	waitForElementToBeRemoved,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type RefObject, useRef, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -196,6 +203,114 @@ describe("NoShowScheduleDialog", () => {
 				screen.getByRole("button", { name: "Return to schedules" }),
 			).toHaveFocus(),
 		);
+	});
+
+	it("keeps its content mounted until the close animation completes", async () => {
+		const { rerender } = renderDialog();
+
+		rerender(
+			<NoShowScheduleDialog
+				onOpenChange={vi.fn()}
+				open={false}
+				schedule={null}
+			/>,
+		);
+
+		expect(screen.getByRole("dialog", { hidden: true })).toBeInTheDocument();
+		await waitForElementToBeRemoved(() =>
+			screen.queryByRole("dialog", { hidden: true }),
+		);
+	});
+
+	it("resets the outcome and note when it reopens", async () => {
+		const user = userEvent.setup();
+		const { rerender } = renderDialog();
+
+		await user.click(
+			screen.getByRole("radio", { name: /Keep hours reserved/i }),
+		);
+		await user.type(screen.getByLabelText("No-show note"), "Parent notified");
+
+		rerender(
+			<NoShowScheduleDialog
+				onOpenChange={vi.fn()}
+				open={false}
+				schedule={null}
+			/>,
+		);
+		rerender(
+			<NoShowScheduleDialog
+				onOpenChange={vi.fn()}
+				open
+				schedule={schedule}
+			/>,
+		);
+
+		await waitFor(() => {
+			expect(
+				screen.getByRole("radio", { name: /Keep hours reserved/i }),
+			).not.toBeChecked();
+			expect(screen.getByLabelText("No-show note")).toHaveValue("");
+		});
+	});
+
+	it("shows a newly opened schedule instead of stale exit details", async () => {
+		const user = userEvent.setup();
+		const { rerender } = renderDialog();
+		const nextSchedule = makeSchedule({
+			className: "Class two",
+			id: "schedule-2",
+		});
+
+		await user.click(
+			screen.getByRole("radio", { name: /Keep hours reserved/i }),
+		);
+		await user.type(screen.getByLabelText("No-show note"), "Parent notified");
+
+		rerender(
+			<NoShowScheduleDialog
+				onOpenChange={vi.fn()}
+				open={false}
+				schedule={null}
+			/>,
+		);
+		rerender(
+			<NoShowScheduleDialog
+				onOpenChange={vi.fn()}
+				open
+				schedule={nextSchedule}
+			/>,
+		);
+
+		await waitFor(() => {
+			expect(screen.getByText("Class two")).toBeVisible();
+			expect(
+				screen.getByRole("radio", { name: /Keep hours reserved/i }),
+			).not.toBeChecked();
+			expect(screen.getByLabelText("No-show note")).toHaveValue("");
+		});
+	});
+
+	it("does not submit while closing after its schedule is cleared", async () => {
+		const user = userEvent.setup();
+		const { rerender } = renderDialog();
+
+		await user.click(
+			screen.getByRole("radio", { name: /Keep hours reserved/i }),
+		);
+		const form = screen.getByLabelText("No-show note").closest("form");
+		expect(form).not.toBeNull();
+
+		rerender(
+			<NoShowScheduleDialog
+				onOpenChange={vi.fn()}
+				open={false}
+				schedule={null}
+			/>,
+		);
+		fireEvent.submit(form!);
+
+		expect(mutation.mutate).not.toHaveBeenCalled();
 	});
 
 	it("submits the selected outcome with an optional, trimmed note", async () => {

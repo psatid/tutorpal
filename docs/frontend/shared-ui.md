@@ -49,6 +49,13 @@ context. For example, the no-show dialog pairs `alertBackdrop` on its overlay
 with `alertSurface` on its viewport; setting the layer only on `DialogPopup`
 leaves the dialog beneath the backdrop.
 
+Dialogs and alert dialogs share the defaults in `dialog-motion.ts`: a top-origin
+flip, scale, blur, and fade with a 200ms ease-out entrance and 150ms ease-in exit.
+Animate UI retains its reduced-motion alternative. Keep the dialog mounted when
+closing so its portal can finish the exit; the no-show dialog retains its last
+schedule for rendering while its caller clears the active schedule. Submission
+requires an open dialog with an active schedule, and reopening resets the form.
+
 Shared modal, drawer, sheet, and alert-dialog backdrops use Tailwind's
 `backdrop-blur-xs` (4px) in addition to their existing navy tint. The blur
 applies only behind the active surface, including nested drawer content and the

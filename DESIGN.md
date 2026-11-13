@@ -508,6 +508,12 @@ than showing a noninteractive back control.
   stays reachable. Nested Select and calendar surfaces portal into the active
   drawer.
 
+- **Centered dialogs:** Dialog and AlertDialog use the same top-origin flip,
+  scale, blur, and fade: 200ms ease-out on entry and 150ms ease-in on exit.
+  Their shared defaults live in `packages/ui/src/components/dialog-motion.ts`;
+  Animate UI keeps its reduced-motion alternative. Keep dialog content mounted
+  through exit so closing does not cut the animation short.
+
 ### Toasts
 
 Toasts are built on Sonner (`common/sonner.tsx`, styled in `common/sonner.css`).
