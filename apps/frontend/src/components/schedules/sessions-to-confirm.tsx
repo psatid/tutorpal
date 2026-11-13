@@ -314,9 +314,10 @@ export function SessionsToConfirm({
         onOpenChange={handleDrawerOpenChange}
         open={isDrawerOpen}
         title={t("awaitingConfirmation.drawer.title")}
+        useVisualViewportSizing
       >
         <div
-          className="h-full min-h-0"
+          className="h-full min-h-0 px-4 sm:px-0"
           id={DRAWER_CONTENT_ID}
           ref={drawerContentRef}
           tabIndex={-1}

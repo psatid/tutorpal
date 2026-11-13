@@ -101,7 +101,8 @@ sizing: its bottom follows browser-chrome changes, and its preferred height
 fits the header, full calendar, and bottom padding. The live safe-area viewport
 and 44rem cap limit the sheet; on shorter viewports, only the calendar body
 scrolls, with contained overscroll. Without `visualViewport`, the same measured
-height is capped by `85dvh` minus the safe-area insets. Other
-`ResponsiveDrawer` callers keep their default sizing. At the narrowest mobile
+height is capped by `85dvh` minus the safe-area insets. The Sessions to confirm
+drawer also uses this sizing option to constrain its paginated scroll region;
+other `ResponsiveDrawer` callers keep their default sizing. At the narrowest mobile
 widths, the calendar's reduced side inset leaves at least 44px for each
 seven-column date target.
