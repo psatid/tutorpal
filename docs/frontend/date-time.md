@@ -99,7 +99,7 @@ it opens a nested drawer with a stable six-week calendar grid so month changes
 do not alter the calendar height. This drawer opts into live visual-viewport
 sizing: its bottom follows browser-chrome changes, and its preferred height
 fits the header, full calendar, and bottom padding. The live safe-area viewport
-and 44rem cap limit the sheet; on shorter viewports, only the calendar body
+and the standard `85dvh` / `44rem` caps limit the sheet; on shorter viewports, only the calendar body
 scrolls, with contained overscroll. Without `visualViewport`, the same measured
 height is capped by `85dvh` minus the safe-area insets. The Sessions to confirm
 drawer also uses this sizing option to constrain its paginated scroll region;

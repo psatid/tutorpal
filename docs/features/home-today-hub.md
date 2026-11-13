@@ -55,7 +55,8 @@ Schedules sidebar badge.
   scheduled start date, oldest first, and shows only class, time, duration, and
   Complete and No show actions. Rows neither navigate nor show learner names.
   On mobile, this drawer opts into visual-viewport sizing so its session list
-  scrolls within the available height while the title remains visible.
+  scrolls within the available height while the title remains visible. It retains
+  the shared `85dvh` / `44rem` height cap and respects the safe visual viewport.
   The list's scroll handler loads the next cursor page near the end.
 - The Schedules sidebar badge uses the same full `pagination.total` count as
   the banner and drawer, displays `99+` above 99, and exposes the exact count in

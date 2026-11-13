@@ -115,8 +115,8 @@ export function ResponsiveDrawer({
         popupChromeHeight + contentHeight,
       )}px`;
       const nextPopupStyle = {
-        height: `min(${preferredHeight}, ${safeViewportHeight}, 44rem)`,
-        maxHeight: `min(${safeViewportHeight}, 44rem)`,
+        height: `min(${preferredHeight}, 85dvh, ${safeViewportHeight}, 44rem)`,
+        maxHeight: `min(85dvh, ${safeViewportHeight}, 44rem)`,
         ...(visualViewport
           ? {
               bottom: `${Math.max(
