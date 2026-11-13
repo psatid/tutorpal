@@ -44,6 +44,10 @@ aligned at `^1.9.0`. Animate UI's built-in reduced-motion policy uses opacity in
 place of spatial overlay transitions. Keep caller-provided focus targets,
 pending-dismissal guards, and `overlayLayers` unchanged when composing a custom
 overlay with the exported low-level popup and viewport components.
+Apply a custom surface layer to `DialogViewport`, which owns the popup's stacking
+context. For example, the no-show dialog pairs `alertBackdrop` on its overlay
+with `alertSurface` on its viewport; setting the layer only on `DialogPopup`
+leaves the dialog beneath the backdrop.
 
 Shared modal, drawer, sheet, and alert-dialog backdrops use Tailwind's
 `backdrop-blur-xs` (4px) in addition to their existing navy tint. The blur

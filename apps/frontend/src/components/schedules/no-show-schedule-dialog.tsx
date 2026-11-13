@@ -131,11 +131,10 @@ export function NoShowScheduleDialog({
             overlayLayers.alertBackdrop,
           )}
         />
-        <DialogViewport className="p-0">
+        <DialogViewport className={cn("p-0", overlayLayers.alertSurface)}>
           <DialogPopup
           aria-busy={noShowMutation.isPending}
           className={cn(
-            overlayLayers.alertSurface,
             "grid max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-lg gap-5 overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-popover-foreground shadow-transient-dialog outline-none sm:p-6 sm:pb-6",
           )}
           finalFocus={finalFocus ?? true}
