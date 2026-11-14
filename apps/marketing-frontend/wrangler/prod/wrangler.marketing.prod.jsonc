@@ -1,9 +1,23 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "tutorpal-marketing",
+  "main": "../../worker/index.ts",
   "compatibility_date": "2026-10-05",
   "workers_dev": false,
-  "assets": { "directory": "../../dist", "not_found_handling": "404-page" },
+  "assets": {
+    "directory": "../../dist",
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": ["/", "/th", "/th/"]
+  },
+  "vars": {
+    "API_URL": "https://api.tutorpal.io"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true, "head_sampling_rate": 1 }
+  },
   "routes": [
     {
       "pattern": "tutorpal.io",

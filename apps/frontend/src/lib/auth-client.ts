@@ -18,14 +18,8 @@ export type AuthClient = ReturnType<
 
 export const authClient: AuthClient = createAuthClient(authClientOptions);
 
-export function getEmailVerificationCallbackUrl(email?: string) {
-	const url = new URL("/verify-email", window.location.origin);
-
-	if (email) {
-		url.searchParams.set("email", email);
-	}
-
-	return url.toString();
+export function getEmailVerificationCallbackUrl() {
+	return new URL("/verify-email", window.location.origin).toString();
 }
 
 export function getPasswordResetCallbackUrl() {

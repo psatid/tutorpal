@@ -1,4 +1,52 @@
-# Local verification — 8 October 2026
+# Marketing verification
+
+## Beta access — 14 November 2026
+
+The beta revision adds the shared backend mode, EN/TH demo-request form,
+auth/app badges and request links, and an edge Worker that resolves the mode
+before serving prerendered HTML. Turning beta off restores the ordinary
+marketing presentation and opens configured public registration.
+
+- Marketing: `bun run build`, `bun test tests/*.test.js` (68 passing),
+  `bun run cf:worker:check`, and development/production Wrangler dry-runs pass.
+  Worker runtime declarations are regenerated locally and ignored.
+- Backend: 386 tests, formatting, API/reminder dry-runs, and final engineering
+  review pass. Coverage includes isolated public CORS and transaction-faithful
+  rollback/retry checks for auth provisioning.
+- App: targeted config/auth/login/sidebar/verification tests pass (16), along with
+  application/test type checks and the frontend build. Existing build warnings
+  about the main bundle size remain.
+  Validated launch presentation survives background refreshes and failures
+  without beta badge/link flicker; signup/provider capabilities still fail closed.
+- Browser: the real marketing Worker ran against isolated local API and
+  Turnstile doubles. Failure retained form values and required fresh
+  verification; only accepted delivery showed confirmation. Beta-off HTML
+  contained no form/beta section and restored the ordinary app CTA.
+- Conditional homepage requests cannot reuse a static asset 304 across mode
+  changes. Regression tests cover validator removal, non-cacheable rewritten
+  HTML, fresh mode changes, and unchanged caching for other assets.
+- English and Thai marketing passed width checks at 320, 390, 768, 1024,
+  and 1440px without horizontal overflow. The app passed the same widths;
+  Thai login and verification recovery were also inspected at phone widths.
+  Expanded/mobile sidebar badges and the collapsed accessible name were
+  checked, as were localized login links and beta-off signup presentation.
+- No-JavaScript and CSS-scaled 200% marketing fixtures in both locales kept
+  readable unavailable text, disabled submit, POST form semantics, and no
+  horizontal overflow. CSS scaling does not establish native browser zoom or
+  screen-reader behavior.
+- Designer audit: PASS, 18/20. No P0–P2 findings remain; one optional P3
+  observation concerns consolidating visually correct beta-only color values.
+- Final frontend engineering review: clean, with no actionable P0–P3 findings.
+  The reviewer independently reran affected marketing/app tests and frontend
+  type checks after the cache, verification, and mode-stability fixes.
+- Browser evidence is local at `/private/tmp/tutorpal-beta-evidence/`.
+
+Discord webhooks and Turnstile keys are intentionally not configured. There
+was no live Discord delivery, real-token/replay test, provider OAuth login,
+or email delivery test. These remain deployment setup checks. The unavailable
+state is intentional until setup is complete.
+
+## Earlier local verification — 8 October 2026
 
 This record tracks the approved light Concept A redesign. The user selected the
 airy perimeter hero and removed its bottom note and motion button, while requiring

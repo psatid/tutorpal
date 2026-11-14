@@ -1,9 +1,11 @@
 # TutorPal marketing
 
 The public marketing site is an Astro app in the root Bun workspace. English is served at
-`/`; Thai is served at `/th/`. Both routes are prerendered to complete HTML. There
-is no API connection, account creation form, analytics, or runtime SSR dependency.
-All app CTAs open `https://app.tutorpal.io`.
+`/`; Thai is served at `/th/`. Both routes are prerendered to complete HTML.
+A small edge Worker reads the backend's beta mode and removes the inactive
+HTML branch before serving either locale; Astro still has no runtime SSR
+dependency. In beta, visitors request a demo through the closing form. Outside
+beta, ordinary app-opening CTAs return. There is no analytics integration.
 
 ## Local development
 
@@ -28,7 +30,8 @@ Build runs Astro's strict type check before generating `dist/`.
 
 `make dev` runs Astro's source development server with hot reload. `make cf-dev`
 builds `dist` and starts Wrangler locally with the development Worker config,
-which exercises the Workers Static Assets and 404-page behavior. It does not
+which exercises the runtime beta configuration, HTML rewriting, Static Assets,
+and 404-page behavior. It does not
 deploy the `tutorpal-marketing-dev` Worker or alter Cloudflare resources.
 
 After building, run `bun test tests/static-smoke.test.js` to verify both generated
@@ -46,6 +49,45 @@ serve `dist` and use the static 404-page handler. Deployment is a separate,
 explicit action; local development/build never publish. Use `make cf-check
 ENV=dev` or `make cf-check ENV=prod` to bundle-check the corresponding config
 without publishing.
+
+## Beta access
+
+The API's single `BETA_ENABLED` setting controls the badge, beta navigation,
+hero CTA, and closing request form. The marketing Worker reads
+`GET /v1/beta/config` through its environment's `API_URL` for each homepage
+navigation, without caching the mode. It uses `ASSETS` and `HTMLRewriter` to
+remove inactive branches before returning HTML. Other assets retain static
+serving. An API failure falls back to beta mode with requests unavailable.
+Raw Astro development and static preview use the same safe beta fallback;
+use `cf:dev` to exercise runtime mode selection.
+Homepage HTML is non-cacheable and has no static ETag/Last-Modified validator;
+conditional requests cannot reuse an old mode after the switch changes.
+Hashed assets retain their normal caching.
+
+Worker commands run `cf:worker:check` first. It regenerates the ignored
+`worker/worker-configuration.d.ts` with the installed Wrangler and type-checks
+`worker/index.ts`; no generated platform declarations are committed.
+
+The form requires name and email. Subject, student-count range, and LINE
+Official Account usage are optional. Requests are sent to
+`POST /v1/beta/requests`; the API validates Turnstile action/hostname and sends
+the Discord notification. The team then emails the requester to arrange a demo
+and provisions their account through the admin portal. There is no newsletter
+checkbox or automatic account creation.
+
+Discord and Turnstile keys are configured later, on the API. Until the public
+configuration reports request availability, the form shows an unavailable
+message. Success appears only after confirmed Discord delivery. Errors retain
+all entered values; each submission attempt resets the single-use Turnstile
+widget before another attempt. There is no lead database or retry queue, and
+an interrupted response can result in duplicate notifications after retry.
+
+The marketing Worker holds no secret. `TURNSTILE_SITE_KEY` is public; the API
+keeps `TURNSTILE_SECRET_KEY` and `DISCORD_BETA_WEBHOOK_URL` private. Configure
+the exact `MARKETING_ORIGIN` on the API for CORS and hostname validation. See
+the [infrastructure guide](../../docs/infrastructure.md#beta-requests-and-full-launch)
+for setup and the launch procedure. Turning beta off and redeploying the API
+does not require rebuilding marketing.
 
 ## Content and behavior
 

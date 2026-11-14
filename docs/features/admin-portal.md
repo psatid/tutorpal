@@ -66,14 +66,57 @@ deactivation still revokes all sessions for the target.
 
 ## Signup control
 
-`PUBLIC_SIGNUP_ENABLED` is a backend-owned environment variable. It defaults to
-`false`, is set to `false` in the Cloudflare Worker variables, and controls both
-Better Auth's `disableSignUp` option and the public `/v1/config` response.
+`BETA_ENABLED` is the backend-owned launch switch. It defaults to `true` and
+is enabled in both Worker environments. In beta, email, Google, and LINE public
+registration are closed; staff create accounts through the admin portal.
+Turning the switch off opens all configured registration methods and removes
+the beta presentation. `/v1/config.publicSignupEnabled` is derived as its
+inverse, preserving the existing app configuration contract.
 
 The user portal reads that response and fails closed: it hides the signup call
 to action and redirects direct `/signup` visits to `/login` unless the server
 explicitly returns `publicSignupEnabled: true`. The server remains the final
 enforcement point, so hiding the UI is not the access control boundary.
+
+## Demo-led beta access (November 14, 2026)
+
+The English and Thai marketing pages show a beta badge, a beta hero action,
+and an access-request form after the FAQ. The login page links to the localized
+form; the auth header and expanded app sidebar show the same beta status.
+The collapsed sidebar retains an accessible beta label. One server setting
+controls all these surfaces.
+
+The form requires name and email. Teaching subject, student-count range, and
+LINE Official Account usage are optional. The team contacts the requester to
+arrange a demo, then creates their account through the existing admin portal.
+There is no automatic approval, account creation, or newsletter subscription.
+
+`GET /v1/beta/config` reports the current mode, request availability, and public
+Turnstile site key. `POST /v1/beta/requests` validates the request and a
+single-use Turnstile token before sending a Discord webhook message. Success
+is returned only after Discord confirms delivery. Requests are not saved in
+the database; failures retain form values for retry, and retries can
+occasionally produce duplicate notifications.
+
+The request payload uses `name` (1–120 characters), `email` (up to 254),
+optional `subject` (1–120), optional `studentCountRange` (`1-5`, `6-15`,
+`16-30`, or `30+`), optional `hasLineOfficialAccount` (boolean), and
+`turnstileToken` (1–2048). Unset optional fields are omitted. Names/subjects
+are trimmed and email is normalized. Unknown fields are rejected.
+Only HTTP 200 `{ "status": "accepted" }` is success. Disabled beta requests
+return 404, unavailable delivery returns 503, failed verification returns
+400, and failed Discord delivery returns 502. The form never uses native GET
+submission, which would put its fields in the URL.
+
+Discord and Turnstile setup is intentionally deferred. Missing integration
+settings keep requests unavailable instead of accepting data silently. See
+[runtime configuration](../infrastructure.md#runtime-configuration-contract)
+for the variables, secrets, and launch procedure.
+
+At full launch, new social sessions require verified email. Existing sessions
+remain valid; an older unverified social account may need verification at its
+next sign-in. Verification recovery allows email entry and resend without
+putting an email address in the callback URL.
 
 No database migration is required for user management or impersonation. The
 flow uses the existing Better Auth `Session.impersonatedBy` field and the

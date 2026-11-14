@@ -7,6 +7,10 @@ const queryState = vi.hoisted(() => ({
   isError: false,
   isLoading: false,
 }));
+const publicConfigState = vi.hoisted(() => ({
+  betaEnabled: false,
+  publicSignupEnabled: true,
+}));
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
@@ -20,6 +24,12 @@ vi.mock("@/hooks/queries/use-infinite-awaiting-confirmation-schedules", () => ({
 vi.mock("@/hooks/use-session", () => ({
   useSession: () => ({
     session: { user: { email: "tutor@example.com", name: "Tutor Test" } },
+  }),
+}));
+vi.mock("@/lib/public-config", () => ({
+  usePublicConfig: () => ({
+    betaEnabled: publicConfigState.betaEnabled,
+    publicSignupEnabled: publicConfigState.publicSignupEnabled,
   }),
 }));
 vi.mock("@/components/layout/triggers", () => ({
@@ -69,6 +79,8 @@ describe("AppSidebar awaiting-confirmation badge", () => {
     queryState.data = undefined;
     queryState.isError = false;
     queryState.isLoading = false;
+    publicConfigState.betaEnabled = false;
+    publicConfigState.publicSignupEnabled = true;
   });
 
   it("caps the visual primary badge at 99+ while retaining the exact accessible count", () => {
@@ -130,5 +142,27 @@ describe("AppSidebar awaiting-confirmation badge", () => {
       "aria-hidden",
       "true",
     );
+  });
+
+  it("exposes the beta product name when public signup is disabled", () => {
+    publicConfigState.betaEnabled = true;
+    publicConfigState.publicSignupEnabled = false;
+    renderSidebar();
+
+    expect(screen.getByText("TutorPal beta")).toHaveClass("sr-only");
+    expect(screen.getByText("Beta")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("does not restore the beta badge when a launch mode is known but config capabilities are masked", () => {
+    publicConfigState.betaEnabled = false;
+    publicConfigState.publicSignupEnabled = false;
+    renderSidebar();
+
+    expect(
+      screen
+        .getAllByText("TutorPal")
+        .some((element) => element.classList.contains("sr-only")),
+    ).toBe(true);
+    expect(screen.queryByText("Beta")).not.toBeInTheDocument();
   });
 });

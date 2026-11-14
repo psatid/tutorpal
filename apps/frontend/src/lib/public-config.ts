@@ -65,6 +65,7 @@ export function usePublicConfig() {
 
 	return {
 		...query,
+		betaEnabled: !(query.data?.publicSignupEnabled ?? false),
 		publicSignupEnabled: config.publicSignupEnabled,
 		socialLogin: config.socialLogin,
 	};

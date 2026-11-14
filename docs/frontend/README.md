@@ -63,8 +63,20 @@ The closing CTA has original filled SVG object tiles with guarded floating
 motion. Optional FAQ height/fade animation retains native multi-open details and
 reverses interrupted toggles. Disabled JavaScript and enhancement failure retain
 complete readable content and filled bars.
-The primary CTA opens `https://app.tutorpal.io`; this site does not enable
-signup, collect leads, or implement a beta endpoint. Language selection uses
+In beta, the primary CTA opens the localized demo-request form after the FAQ.
+The backend's single `BETA_ENABLED` setting controls marketing, auth-header,
+and app-sidebar badges, login's request-access link, the request endpoint, and
+public signup. The marketing edge Worker resolves the mode before serving
+HTML; the app derives it from the existing public signup configuration.
+App badges retain the last validated mode during background configuration
+refreshes; signup and social availability still fail closed. A known launch
+mode never briefly shows a beta request link while capabilities refresh.
+Outside beta, ordinary app-opening CTAs and public signup return. Discord and
+Turnstile setup can remain absent: the form reports unavailable until configured.
+The app uses `VITE_MARKETING_URL` for localized request-access links.
+Full-launch social signin requires verified email, with an editable-email
+resend form for unverified users and no email in callback URLs. Existing
+sessions continue. Language selection uses
 ordinary links, without browser-language redirects or persisted preferences.
 See [image provenance](../marketing-assets/README.md) and the
 [exploration archive](../prototypes/README.md) for source material.

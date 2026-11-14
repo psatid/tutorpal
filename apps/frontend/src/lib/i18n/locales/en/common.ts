@@ -1,5 +1,6 @@
 export default {
   appName: "TutorPal",
+  appNameWithBeta: "TutorPal beta",
   buttons: {
     save: "Save",
     cancel: "Cancel",

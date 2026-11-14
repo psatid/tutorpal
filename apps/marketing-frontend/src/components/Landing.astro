@@ -13,10 +13,10 @@ const app = 'https://app.tutorpal.io';
 <Layout lang={lang}>
   <header class="site-header">
     <div class="nav-shell">
-      <a class="brand" href={home} aria-label="TutorPal home"><img src="/app-icon-small.png" width="32" height="32" alt="" />TutorPal</a>
-      <nav class="desktop-nav" aria-label={lang === 'en' ? 'Main navigation' : 'เมนูหลัก'}><a href="#how-it-works">{c.nav[0]}</a><a href="#workspace">{c.nav[1]}</a><a href="#questions">{c.nav[2]}</a></nav>
-      <div class="nav-end"><a class="language" href={lang === 'en' ? '/th/' : '/'} lang={lang === 'en' ? 'th' : 'en'} aria-label={lang === 'en' ? 'เปลี่ยนเป็นภาษาไทย' : 'Switch to English'}>{lang === 'en' ? 'ไทย' : 'English'}</a><a class="nav-cta" href={app}>{c.open}<span aria-hidden="true">↗</span></a></div>
-      <details class="mobile-menu"><summary aria-label={c.menu}><span></span><span></span></summary><nav aria-label={c.menu}><a href="#how-it-works">{c.nav[0]}</a><a href="#workspace">{c.nav[1]}</a><a href="#questions">{c.nav[2]}</a><a class="mobile-menu-cta" href={app}>{c.open}<span aria-hidden="true">↗</span></a></nav></details>
+      <a class="brand" href={home} aria-label="TutorPal home"><img src="/app-icon-small.png" width="32" height="32" alt="" />TutorPal <span class="beta-badge" data-beta-branch="on">{c.beta.badge}</span></a>
+      <nav class="desktop-nav" aria-label={lang === 'en' ? 'Main navigation' : 'เมนูหลัก'}><a href="#how-it-works">{c.nav[0]}</a><a href="#workspace">{c.nav[1]}</a><a href="#questions">{c.nav[2]}</a><a data-beta-branch="on" href="#beta">{c.beta.nav}</a></nav>
+      <div class="nav-end"><a class="language" href={lang === 'en' ? '/th/' : '/'} lang={lang === 'en' ? 'th' : 'en'} aria-label={lang === 'en' ? 'เปลี่ยนเป็นภาษาไทย' : 'Switch to English'}>{lang === 'en' ? 'ไทย' : 'English'}</a><a class="nav-cta" data-beta-branch="on" href="#beta">{c.beta.heroAction}</a><a class="nav-cta" data-beta-branch="off" hidden href={app}>{c.open}<span aria-hidden="true">↗</span></a></div>
+      <details class="mobile-menu"><summary aria-label={c.menu}><span></span><span></span></summary><nav aria-label={c.menu}><a href="#how-it-works">{c.nav[0]}</a><a href="#workspace">{c.nav[1]}</a><a href="#questions">{c.nav[2]}</a><a data-beta-branch="on" href="#beta">{c.beta.nav}</a><a class="mobile-menu-cta" data-beta-branch="on" href="#beta">{c.beta.heroAction}</a><a class="mobile-menu-cta" data-beta-branch="off" hidden href={app}>{c.open}<span aria-hidden="true">↗</span></a></nav></details>
     </div>
   </header>
   <main id="main">
@@ -24,9 +24,10 @@ const app = 'https://app.tutorpal.io';
       <FloatingTiles placement="hero" />
       <div class="container hero-grid">
         <div class="hero-copy">
+          <p class="beta-announcement" data-beta-branch="on">{c.beta.announcement}</p>
           <h1 id="hero-heading">{c.hero[0]}<br/><span>{c.hero[1]}</span></h1>
           <p class="hero-description">{c.intro}</p>
-          <div class="actions"><a class="button primary" href={app}>{c.open}</a><a class="button secondary" href="#how-it-works">{c.explore}</a></div>
+          <div class="actions"><a class="button primary" data-beta-branch="on" href="#beta">{c.beta.heroAction}</a><a class="button primary" data-beta-branch="off" hidden href={app}>{c.open}</a><a class="button secondary" href="#how-it-works">{c.explore}</a></div>
         </div>
           <div class="hero-product" role="group" aria-label={c.workflowLabel}>
           <div class="hero-card-slot lesson-slot" data-hero-card="0">
@@ -101,11 +102,31 @@ const app = 'https://app.tutorpal.io';
 
     <section id="questions" class="faq-section section-pad" aria-labelledby="faq-heading"><div class="container faq-grid"><div><h2 id="faq-heading" data-reveal>{c.faqTitle}</h2></div><div class="faq-list">{c.faqs.map(faq=><details><summary>{faq.q}<span aria-hidden="true">+</span></summary><div class="faq-answer"><p>{faq.a}</p></div></details>)}</div></div></section>
 
-    <section class="closing" aria-labelledby="closing-heading">
+    <section class="closing" data-beta-branch="off" hidden aria-labelledby="closing-heading">
       <FloatingTiles placement="closing" />
       <div class="container"><div class="closing-copy"><h2 id="closing-heading" data-reveal>{c.closeTitle[0]}<br/><span>{c.closeTitle[1]}</span></h2><p data-reveal>{c.closeBody}</p><a class="button primary" href={app}>{c.open}<span aria-hidden="true">↗</span></a></div></div>
     </section>
+    <section id="beta" class="beta-closing" data-beta-branch="on" aria-labelledby="beta-heading">
+      <div class="container beta-closing-grid">
+        <div class="beta-closing-copy"><h2 id="beta-heading">{c.beta.closeTitle[0]}<br/><span>{c.beta.closeTitle[1]}</span></h2><p>{c.beta.closeBody}</p></div>
+        <div class="beta-form-surface">
+          <form data-beta-request-form method="post" novalidate data-api-url="" data-turnstile-sitekey="" data-request-available="false" data-unavailable={c.beta.unavailable} data-success={c.beta.success} data-validation-summary={c.beta.validationSummary} data-invalid-name={c.beta.invalidName} data-invalid-email={c.beta.invalidEmail} data-verification-unavailable={c.beta.verificationUnavailable} data-request-failed={c.beta.requestFailed} data-request-disabled={c.beta.requestDisabled}>
+            <div class="beta-form-body"><h3>{c.beta.formTitle}</h3><div class="beta-form-summary" data-beta-form-summary aria-live="polite" tabindex="-1"></div>
+              <div class="beta-field"><label for={`beta-name-${lang}`}>{c.beta.name} <span aria-hidden="true">*</span></label><input id={`beta-name-${lang}`} name="name" type="text" autocomplete="name" maxlength="120" required aria-describedby={`beta-name-error-${lang}`} /><p id={`beta-name-error-${lang}`} class="beta-field-error" data-beta-error-for="name"></p></div>
+              <div class="beta-field"><label for={`beta-email-${lang}`}>{c.beta.email} <span aria-hidden="true">*</span></label><input id={`beta-email-${lang}`} name="email" type="email" autocomplete="email" maxlength="254" required aria-describedby={`beta-email-error-${lang}`} /><p id={`beta-email-error-${lang}`} class="beta-field-error" data-beta-error-for="email"></p></div>
+              <div class="beta-field"><label for={`beta-subject-${lang}`}>{c.beta.subject} <span class="optional">{c.beta.optional}</span></label><select id={`beta-subject-${lang}`} name="subject"><option value="">{lang === 'en' ? 'Select a subject' : 'เลือกวิชา'}</option>{c.beta.subjects.map(subject => <option value={subject.value}>{subject.label}</option>)}</select></div>
+              <div class="beta-field"><label for={`beta-students-${lang}`}>{c.beta.students} <span class="optional">{c.beta.optional}</span></label><select id={`beta-students-${lang}`} name="studentCountRange"><option value="">{lang === 'en' ? 'Select a range' : 'เลือกจำนวน'}</option>{c.beta.studentRanges.map(range => <option value={range.value}>{range.label}</option>)}</select></div>
+              <fieldset class="beta-field beta-radios"><legend>{c.beta.line} <span class="optional">{c.beta.optional}</span></legend><label><input name="hasLineOfficialAccount" type="radio" value="true" /> {c.beta.lineYes}</label><label><input name="hasLineOfficialAccount" type="radio" value="false" /> {c.beta.lineNo}</label></fieldset>
+              <div class="turnstile-slot" data-turnstile-container aria-live="polite"></div><p class="beta-field-error" data-beta-verification-message aria-live="polite"></p>
+              <button class="button primary beta-submit" type="submit" disabled aria-disabled="true">{c.beta.submit}</button>
+            </div>
+            <div class="beta-form-success" data-beta-form-success hidden role="status"><p>{c.beta.success}</p></div>
+          </form>
+          <p class="beta-unavailable" data-beta-unavailable role="status">{c.beta.unavailable}</p>
+        </div>
+      </div>
+    </section>
   </main>
-  <footer class="site-footer container"><a class="brand" href={home}><img src="/app-icon-small.png" width="28" height="28" alt=""/>TutorPal</a><span>{c.footer}</span><div><span>© 2026 TutorPal</span><a href={lang === 'en' ? '/th/' : '/'} lang={lang === 'en' ? 'th' : 'en'}>{lang === 'en' ? 'ภาษาไทย' : 'English'} ↗</a></div></footer>
+  <footer class="site-footer container"><a class="brand" href={home}><img src="/app-icon-small.png" width="28" height="28" alt=""/>TutorPal <span class="beta-badge" data-beta-branch="on">{c.beta.badge}</span></a><span>{c.footer}</span><div><span>© 2026 TutorPal</span><a href={lang === 'en' ? '/th/' : '/'} lang={lang === 'en' ? 'th' : 'en'}>{lang === 'en' ? 'ภาษาไทย' : 'English'} ↗</a></div></footer>
   <script src="../scripts/main.ts"></script>
 </Layout>

@@ -26,7 +26,7 @@ export const useSignup = () => {
         name,
         email,
         password,
-        callbackURL: getEmailVerificationCallbackUrl(email),
+        callbackURL: getEmailVerificationCallbackUrl(),
       });
 
       if (result.error) {

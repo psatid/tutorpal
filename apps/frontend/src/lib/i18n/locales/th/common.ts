@@ -3,6 +3,7 @@ import type { TranslationShape } from "../types";
 
 const th = {
   appName: "TutorPal",
+  appNameWithBeta: "TutorPal เบต้า",
   buttons: {
     save: "บันทึก",
     cancel: "ยกเลิก",

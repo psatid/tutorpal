@@ -1,6 +1,7 @@
 import { setupMotion } from './motion';
 import { setupFAQ } from './faq';
 import { releaseReveals, settleHero } from './reveal-state';
+import { setupBetaRequestForm } from './beta-request';
 const menu = document.querySelector<HTMLDetailsElement>('.mobile-menu');
 const closeMenu = () => { if (menu) menu.open = false; };
 menu?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
@@ -10,6 +11,7 @@ document.addEventListener('keydown', event => {
 document.addEventListener('click', event => {
   if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) closeMenu();
 });
+setupBetaRequestForm();
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 let cleanMotion: (() => void) | undefined;
 let cleanFAQ: (() => void) | undefined;

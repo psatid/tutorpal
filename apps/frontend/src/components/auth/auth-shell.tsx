@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Badge } from "@tutorpal/ui/badge";
 import {
   getAppLanguage,
   setAppLanguage,
   type AppLanguage,
 } from "@/lib/i18n/config";
+import { usePublicConfig } from "@/lib/public-config";
 import { cn } from "@/lib/utils";
 
 interface AuthShellProps {
@@ -59,19 +61,29 @@ export function AuthShell({
   footerText,
 }: AuthShellProps) {
   const { t } = useTranslation(["auth", "common"]);
+  const { betaEnabled } = usePublicConfig();
 
   return (
     <div className="flex min-h-dvh flex-col bg-card px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10 sm:pt-8">
       <header className="flex min-h-11 items-center justify-between gap-4">
         <Link
           to="/login"
-          aria-label={t("common:appName")}
+          aria-label={
+            betaEnabled
+              ? t("common:appNameWithBeta")
+              : t("common:appName")
+          }
           className="flex min-h-11 items-center gap-2 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <img src="/app-icon.png" alt="" className="size-11 shrink-0" />
           <span className="hidden text-lg font-medium tracking-[-0.02em] sm:inline">
             TutorPal
           </span>
+          {betaEnabled ? (
+            <Badge aria-hidden="true" className="h-5" variant="primary">
+              Beta
+            </Badge>
+          ) : null}
         </Link>
         <LanguageSelector />
       </header>

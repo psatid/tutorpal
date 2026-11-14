@@ -1,7 +1,7 @@
 # Feature Implementation History
 
 - [Tutor Getting Started Checklist — October 7, 2026](tutor-getting-started-checklist.md)
-- [Admin Portal and Controlled User Provisioning — August 12, 2026](admin-portal.md)
+- [Admin Portal and Controlled User Provisioning — August 12, 2026; Beta Access — November 14, 2026](admin-portal.md)
 - [Class Detail People-First Redesign — August 12, 2026](class-detail-people-first-redesign.md)
 - [Home Today Hub — August 12, 2026](home-today-hub.md)
 - [Standalone Classes and Hour Additions — August 11, 2026](standalone-classes-and-hour-additions.md)

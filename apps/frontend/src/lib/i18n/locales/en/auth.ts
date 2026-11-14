@@ -36,10 +36,10 @@ export default {
 		retryAvailability: "Retry",
 		alternatePrompt: "Don't have an account yet?",
 		alternateAction: "Create account",
+		betaPrompt: "Want to try TutorPal?",
+		betaAction: "Request beta access",
 		success: "Welcome back! You have been logged in.",
 		invalid: "Invalid email or password. Please try again.",
-		unverified:
-			"Your email is not verified yet. We sent you a new confirmation email.",
 	},
 	forgotPassword: {
 		title: "Reset your password",
@@ -108,6 +108,10 @@ export default {
 		subtitle:
 			"Your account is ready. You can sign in and start using TutorPal.",
 		errorTitle: "Verification link unavailable",
+		verificationNeededTitle: "Verify your email",
+		verificationNeededSubtitle:
+			"Verify your email before signing in. Enter your email to receive another verification link.",
+		emailPlaceholder: "Enter your email",
 		errors: {
 			INVALID_TOKEN:
 				"That confirmation link is invalid. Request a new verification email and try again.",
@@ -117,9 +121,9 @@ export default {
 				"We couldn't verify your email with that link. Please request a new verification email.",
 		},
 		cta: "Go to sign in",
-		resend: "Send another verification email",
-		resendSuccess: "A new verification email is on its way.",
-		resendError:
-			"We couldn't resend the verification email right now. Please try again.",
+		resend: "Resend verification email",
+		resendStatus:
+			"If that address is awaiting verification, we’ve sent a link.",
+		resendError: "We couldn’t send another link. Try again.",
 	},
 } as const;

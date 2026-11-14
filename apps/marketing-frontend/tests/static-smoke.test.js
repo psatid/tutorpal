@@ -65,9 +65,9 @@ for (const [locale, path, canonical, otherLocale] of [
       expect(schema['@graph'].map(node => node['@type'])).toEqual(['Organization', 'WebSite']);
     });
 
-    test('exposes app CTAs, locale navigation, and working section links in HTML', async () => {
-      expect(await select(html, '.nav-cta[href="https://app.tutorpal.io"], .actions > .primary[href="https://app.tutorpal.io"], .closing .primary[href="https://app.tutorpal.io"]')).toHaveLength(3);
-      for (const cta of await select(html, '.nav-cta, .mobile-menu-cta, .actions > .primary, .closing .primary')) expect(cta.attributes.href).toBe('https://app.tutorpal.io');
+    test('ships edge-prunable beta and launch CTA branches, locale navigation, and working section links', async () => {
+      expect(await select(html, '[data-beta-branch="on"].nav-cta[href="#beta"], [data-beta-branch="on"].mobile-menu-cta[href="#beta"], .actions > [data-beta-branch="on"][href="#beta"]')).toHaveLength(3);
+      expect(await select(html, '[data-beta-branch="off"].nav-cta[hidden][href="https://app.tutorpal.io"], [data-beta-branch="off"].mobile-menu-cta[hidden][href="https://app.tutorpal.io"], .actions > [data-beta-branch="off"][hidden][href="https://app.tutorpal.io"], .closing[data-beta-branch="off"][hidden] .primary[href="https://app.tutorpal.io"]')).toHaveLength(4);
       expect((await select(html, '.language'))[0].attributes.href).toBe(otherLocale);
       const ids = new Set((await select(html, '[id]')).map(n => n.attributes.id));
       for (const link of await select(html, 'a[href^="#"]')) expect(ids.has(link.attributes.href.slice(1))).toBe(true);
@@ -80,6 +80,27 @@ for (const [locale, path, canonical, otherLocale] of [
       expect(await select(html, '.closing-decor a, .closing-decor button, .closing-decor [tabindex]')).toHaveLength(0);
       expect(await select(html, '.balance-track[aria-hidden="true"] > [data-balance-fill]')).toHaveLength(4);
       expect((await select(html, '[data-balance-fill]')).map(node => node.attributes.style)).toEqual(['width:48%', 'width:72%', 'width:36%', 'width:60%']);
+    });
+
+    test('ships a no-JavaScript-readable beta request form without a newsletter or preselected optional answers', async () => {
+      const forms = await select(html, 'form[data-beta-request-form]');
+      expect(forms).toHaveLength(1);
+      expect(forms[0].attributes['data-request-available']).toBe('false');
+      expect(forms[0].attributes['data-turnstile-sitekey']).toBe('');
+      expect(forms[0].attributes['data-api-url']).toBe('');
+      expect(await select(html, '#beta')).toHaveLength(1);
+      expect(await select(html, 'input[name="name"][required][autocomplete="name"], input[name="email"][required][autocomplete="email"]')).toHaveLength(2);
+      expect(await select(html, 'input[name="newsletter"], input[type="checkbox"]')).toHaveLength(0);
+      expect(await select(html, 'fieldset.beta-radios legend')).toHaveLength(1);
+      const lineAnswers = await select(html, 'input[name="hasLineOfficialAccount"]');
+      expect(lineAnswers).toHaveLength(2);
+      expect(lineAnswers.some(answer => answer.attributes.checked !== undefined)).toBe(false);
+      expect(await select(html, 'select[name="subject"] option, select[name="studentCountRange"] option')).toHaveLength(13);
+      expect(await select(html, 'button.beta-submit[disabled][aria-disabled="true"]')).toHaveLength(1);
+      // Raw Astro/preview deliberately stays safe when no Worker has supplied configuration.
+      const unavailable = await select(html, '.beta-unavailable');
+      expect(unavailable).toHaveLength(1);
+      expect(unavailable[0].attributes.hidden).toBeUndefined();
     });
 
     test('ships the featured lesson, balance, and consistent upcoming reminder without JavaScript', async () => {
@@ -204,8 +225,8 @@ for (const [locale, path, canonical, otherLocale] of [
       }
     });
 
-    test('keeps content local and static, with no forms or remote executable dependencies', async () => {
-      expect(await select(html, 'form, input, textarea, iframe, astro-island')).toHaveLength(0);
+    test('keeps raw HTML local and static, with a safe disabled beta form and no remote executable dependencies', async () => {
+      expect(await select(html, 'textarea, iframe, astro-island')).toHaveLength(0);
       expect(await select(html, 'head > script:not([type]):not([src])')).toHaveLength(0);
       expect(html).not.toContain('tutorpalRevealBoot');
       expect(html).not.toContain('reveal-preparing');

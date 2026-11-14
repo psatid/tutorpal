@@ -20,8 +20,8 @@ The current environment documented here is <code>dev</code>:
 
 The public TutorPal marketing site is a separate prerendered Astro site served
 by Cloudflare Workers Static Assets.
-Production routes the apex domain <code>tutorpal.io</code> to that Worker; it
-does not share the authenticated Pages app or its signup behavior.
+Production routes the apex domain <code>tutorpal.io</code> to that Worker. It
+shares the backend-owned beta mode with the authenticated Pages app.
 
 ## Architecture overview
 
@@ -192,10 +192,17 @@ Astro generates complete English HTML at <code>/</code> and Thai HTML at
 URL and reciprocal language alternates; English is the unprefixed default.
 The canonical origin is <code>https://tutorpal.io</code>.
 
-The Worker serves <code>apps/marketing-frontend/dist</code> as static assets, without
-a request-time Astro runtime or adapter. GSAP and a decorative Three.js light
-field enhance the HTML in the browser. No content or conversion depends on
-WebGL, and reduced-motion and mobile presentations remain in natural flow.
+The Worker serves <code>apps/marketing-frontend/dist</code> through its
+<code>ASSETS</code> binding, without a request-time Astro runtime or adapter.
+For localized homepage requests it reads the API's beta configuration and uses
+<code>HTMLRewriter</code> to remove the inactive beta or launch branch before
+returning HTML. Assets keep their normal static serving path. Configuration is
+read on each navigation without a mode cache; failure renders beta mode with
+requests unavailable. Optional browser motion respects reduced motion.
+Homepage HTML is returned with <code>Cache-Control: no-store</code> and no
+static asset validators. Conditional homepage requests retrieve a fresh body,
+so a browser cannot retain the old mode through an asset 304 response. Other
+assets preserve their normal caching.
 
 Run <code>make marketing-dev</code> for Astro development with hot reload, and
 <code>make -C apps/marketing-frontend cf-dev</code> to build assets then run the
@@ -211,11 +218,11 @@ for <code>tutorpal-marketing</code> at <code>tutorpal.io</code> and
 preview, and <code>make -C apps/marketing-frontend cf-check ENV=dev</code> do not
 publish or modify the Cloudflare account.
 
-Every primary CTA links to <code>https://app.tutorpal.io</code>. Public signup
-availability is controlled by the separate application. The marketing site has
-no signup logic, beta-interest API, forms, tracking, database, KV, Turnstile,
-Discord integration, or required secrets. Older beta-flow documentation and
-configuration no longer describe this application. See the
+In beta, the primary CTA links to the localized access-request form after the
+FAQ. The form sends data to the API, which validates Turnstile and sends a
+Discord notification. Outside beta, ordinary app-opening CTAs return. The
+marketing Worker needs <code>API_URL</code>, but holds no Discord or Turnstile
+secret. It has no database or KV lead storage. See the
 [marketing README](../apps/marketing-frontend/README.md) for commands and configuration.
 
 Both static portals intentionally exclude crawlers with both a
@@ -229,11 +236,11 @@ known URLs, which also means they may not see the page-level <code>noindex</code
 directive. Neither directive removes prior search results or restricts direct
 access to either portal.
 
-Public signup is controlled on the Worker by
-<code>PUBLIC_SIGNUP_ENABLED</code>. Keep it <code>false</code> while accounts are
-provisioned through the admin portal. The user frontend reads the server-owned
-value from <code>/v1/config</code> and fails closed if the configuration cannot
-be read. No new environment variable or database migration is needed for
+Public signup is controlled on the Worker by <code>BETA_ENABLED</code>. Keep it
+<code>true</code> while accounts are provisioned through the admin portal.
+Turning it off opens email and configured Google/LINE registration. The user
+frontend reads the inverse as <code>/v1/config.publicSignupEnabled</code> and
+fails closed if configuration cannot be read. No database migration is needed for
 admin user management or impersonation at the database layer. Impersonation
 uses the existing Better Auth <code>Session.impersonatedBy</code> field; the
 frontend build variables <code>VITE_USER_APP_URL</code> and
@@ -326,8 +333,9 @@ password-reset emails; the links return users to the user Pages frontend.
 
 ### Tutor social login
 
-Google and LINE Login are optional API Worker integrations for existing,
-admin-provisioned tutors. Configure complete credential pairs:
+Google and LINE Login are optional API Worker integrations. In beta they serve
+existing, admin-provisioned tutors; outside beta they also support public
+registration. Configure complete credential pairs:
 
 - Google: <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>
 - LINE Login: <code>LINE_LOGIN_CHANNEL_ID</code> and
@@ -335,8 +343,10 @@ admin-provisioned tutors. Configure complete credential pairs:
 
 An absent pair disables that provider; an incomplete pair fails Worker
 configuration validation. The user frontend receives only boolean provider
-flags from <code>/v1/config</code>. Social signup remains disabled, and LINE
-enrollment from Account settings uses the server-side state/PKCE/nonce flow
+flags from <code>/v1/config</code>. Outside beta, new social sessions require
+verified email; an unverified LINE user must complete email verification before
+signing in again. Existing sessions remain valid. LINE enrollment from Account
+settings uses the server-side state/PKCE/nonce flow
 with no OAuth token persistence.
 
 Register these exact callback URLs in the provider consoles, replacing
@@ -381,7 +391,8 @@ The current development Worker values in
 | <code>EMAIL_VERIFICATION_CALLBACK_URL</code> | <code>https://dev.app.tutorpal.io/verify-email</code> |
 | <code>LINE_LINK_REDIRECT_URL</code> | <code>https://dev.api.tutorpal.io/v1/line/callback</code> |
 | <code>VITE_API_URL</code> | <code>https://dev.api.tutorpal.io</code> |
-| <code>PUBLIC_SIGNUP_ENABLED</code> | <code>false</code> |
+| <code>BETA_ENABLED</code> | <code>true</code> |
+| <code>MARKETING_ORIGIN</code> | <code>https://dev.tutorpal.io</code> |
 
 The following non-secret Worker settings are also defined for the current
 environment:
@@ -397,6 +408,8 @@ Store these values as API Worker secrets and do not commit them:
 - <code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>
 - <code>GOOGLE_CLIENT_SECRET</code> (when Google sign-in is enabled)
 - <code>LINE_LOGIN_CHANNEL_SECRET</code> (when LINE Login is enabled)
+- <code>TURNSTILE_SECRET_KEY</code> (when beta request delivery is configured)
+- <code>DISCORD_BETA_WEBHOOK_URL</code> (when beta request delivery is configured)
 
 Set the corresponding provider IDs as API Worker variables:
 
@@ -410,6 +423,51 @@ Workers.
 If a hostname changes, update the frontend build variable, Worker origin
 variables, the LINE Developers callback URL, and any email-link configuration
 as one change. Authentication and CORS require exact origins.
+
+### Beta requests and full launch
+
+<code>BETA_ENABLED</code> defaults to <code>true</code> locally and in both
+Worker configs. It replaces the old public-signup variable; there is no second
+beta switch. <code>GET /v1/beta/config</code> exposes mode, request availability,
+and the public <code>TURNSTILE_SITE_KEY</code>. The marketing Worker uses its
+environment's <code>API_URL</code> to read it. The app uses the existing public
+signup configuration response.
+
+Marketing CORS is limited to <code>/v1/beta/*</code>, without credentials;
+marketing cannot read credentialed tutor APIs. The app/admin origins retain
+their separate credentialed CORS policy. Locally, set
+<code>MARKETING_ORIGIN</code> to the exact browser origin (default
+<code>http://localhost:4321</code>); <code>127.0.0.1</code> and a different
+port are different origins and require an override.
+
+Discord and Turnstile setup is deferred. To enable request delivery later:
+
+1. Create a Turnstile widget for the environment's marketing hostname. Set
+   <code>TURNSTILE_SITE_KEY</code> as an API variable and
+   <code>TURNSTILE_SECRET_KEY</code> as an API secret.
+2. Create the chosen Discord channel's incoming webhook and store
+   <code>DISCORD_BETA_WEBHOOK_URL</code> as an API secret. Never expose the URL
+   in marketing HTML, frontend variables, logs, or committed configuration.
+3. Set <code>MARKETING_ORIGIN</code> to the exact marketing origin. Siteverify
+   must return that hostname and action <code>beta_demo_request</code>. Use
+   separate development and production widgets; production must not allow
+   localhost.
+4. Redeploy and verify request availability, a fresh-token submission, token
+   replay rejection, and actual Discord delivery. No live delivery has been
+   verified until this setup is complete.
+
+Missing integration values keep the API startup-safe and the form unavailable.
+The API returns success only after Discord confirms the message. There is no
+lead database, queue, or recovery copy; failed submissions retain inputs for
+retry, and retries may duplicate a Discord message.
+
+For full launch, first verify provider credentials, email delivery, and callback
+URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config
+and redeploy the API. Marketing resolves the new mode at its next navigation,
+without a rebuild; the app refreshes public configuration. Beta requests return
+404, beta UI disappears, and public registration opens. Existing sessions are
+not revoked. To return to beta, set the same value back to <code>true</code>
+and redeploy. The existing production placeholder guard still applies.
 
 ## Operational checks
 
@@ -428,12 +486,12 @@ The health endpoint should return HTTP <code>200</code> with
   management screen, and its origin matches <code>ADMIN_FRONTEND_URL</code>.
 - Browser API requests use <code>dev.api.tutorpal.io</code> and include
   credentials.
-- With <code>PUBLIC_SIGNUP_ENABLED=false</code>, the user portal hides signup,
+- With <code>BETA_ENABLED=true</code>, the user portal hides signup,
   direct signup visits return to login, and the Better Auth signup endpoint
   rejects new accounts. Admin-created users receive verification email links.
 - With social login enabled, existing tutors can complete Google sign-in,
-  LINE sign-in, and LINE enrollment from Account settings; unlinked social
-  identities cannot create accounts.
+  LINE sign-in, and LINE enrollment from Account settings. Beta rejects new
+  identities; beta off allows registration with verified-email enforcement.
 - Existing encrypted LINE credentials can be read and the OAuth callback uses
   the custom API domain.
 - The deployed provider consoles contain the exact callback URLs documented

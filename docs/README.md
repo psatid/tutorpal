@@ -52,7 +52,7 @@ Each application also has a local Makefile with targets suited to that app:
 - [Authenticated Screen Layout](frontend/screen-layout.md)
 - [Backend Documentation](backend/README.md)
 - [Cloudflare Infrastructure](infrastructure.md)
-- [Admin Portal and Controlled User Provisioning](features/admin-portal.md)
+- [Admin Portal, Beta Access, and Controlled User Provisioning](features/admin-portal.md)
 - [Agent Team Workflow](agent-team-workflow.md)
 - [Feature Implementation History](features/README.md)
 - [Schedule Date Navigation Research](research/schedule-date-navigation.md)

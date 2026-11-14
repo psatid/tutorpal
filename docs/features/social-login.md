@@ -1,15 +1,22 @@
 # Tutor-facing Google and LINE Login (September 9, 2026)
 
 TutorPal now supports Google sign-in and LINE sign-in for existing tutors in
-the user portal. This feature does not add public social signup and does not
-change the admin portal.
+the user portal. During beta, access remains provisioned through the admin
+portal. The November 14 beta launch switch also enables public social signup
+when beta mode is turned off.
 
 ## Access boundary
 
-- Regular tutors are provisioned by the admin portal. Google and LINE social
-  signup are disabled even when `PUBLIC_SIGNUP_ENABLED=true`.
+- With `BETA_ENABLED=true`, regular tutors are provisioned by the admin portal
+  and Google, LINE, and email public signup are disabled. With it set to
+  `false`, all configured signup methods open.
 - A social account must resolve to an existing, active TutorPal user with
   exact role `user` and a `Tutor` record.
+- Outside beta, new social sessions also require verified email. Google can
+  supply a verified-email claim. LINE must return an email address and may
+  require email verification before the first successful sign-in. Existing
+  sessions remain valid, while older unverified users may need verification
+  at a future sign-in.
 - Google account linking follows Better Auth's same-email account-linking
   policy. Different email addresses are not accepted, and no trusted-provider
   bypass is configured.
@@ -80,5 +87,8 @@ schema changes.
 4. Confirm `/v1/config` reports only the deliberately enabled provider flags.
 5. Test an existing tutor's email/password sign-in, Google sign-in, LINE
    sign-in, and Account settings LINE enrollment.
-6. Confirm an unlinked LINE account cannot create a new TutorPal account and
-   that callback failures return only the generic Account settings error.
+6. In beta, confirm an unlinked social identity cannot create an account.
+   Outside beta, check email, Google, and LINE registration, including LINE
+   email verification and resend recovery. Ineligible accounts retain generic
+   callback failures; verification recovery URLs contain no email address.
+   Account settings enrollment keeps its existing generic result handling.

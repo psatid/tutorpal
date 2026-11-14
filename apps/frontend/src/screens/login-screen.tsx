@@ -1,4 +1,5 @@
-import { Link, Navigate, useSearch } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
+import type { HistoryState } from "@tanstack/history";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -18,6 +19,8 @@ import { RHFInputField, RHFPasswordField } from "@tutorpal/ui/form/rhf";
 import { APP_ROUTES } from "@/constants/routes";
 import { useLogin } from "@/hooks/mutations/use-login";
 import { authClient } from "@/lib/auth-client";
+import { ENV } from "@/lib/env";
+import { getAppLanguage } from "@/lib/i18n/config";
 import { usePublicConfig } from "@/lib/public-config";
 
 type LoginSearch = {
@@ -28,6 +31,7 @@ type SocialProvider = "google" | "line";
 
 export function LoginScreen() {
 	const { t } = useTranslation(["auth", "common"]);
+	const navigate = useNavigate();
 	const search = useSearch({ strict: false }) as LoginSearch;
 	const [socialProvider, setSocialProvider] = useState<SocialProvider | null>(
 		null,
@@ -68,14 +72,22 @@ export function LoginScreen() {
 	const {
 		isError: isPublicConfigError,
 		isFetching: isPublicConfigFetching,
+		betaEnabled,
 		publicSignupEnabled,
 		socialLogin,
 		refetch: refetchPublicConfig,
 	} = usePublicConfig();
 	const { mutate: login, isPending: isLoginPending } = useLogin({
-		onError: (error) => {
+		onError: (error, credentials) => {
 			if (error.code === "EMAIL_NOT_VERIFIED") {
-				toast.error(t("auth:login.unverified"));
+				navigate({
+					to: APP_ROUTES.VERIFY_EMAIL,
+					replace: true,
+					state: {
+						email: credentials.email,
+						verificationNeeded: true,
+					} as HistoryState,
+				});
 				return;
 			}
 
@@ -114,6 +126,10 @@ export function LoginScreen() {
 	};
 
 	const hasEnabledSocialLogin = socialLogin.google || socialLogin.line;
+	const betaRequestUrl = new URL(
+		getAppLanguage() === "th" ? "/th/#beta" : "/#beta",
+		ENV.MARKETING_URL,
+	).toString();
 	const socialLoginLoadingLabel =
 		socialProvider === "google"
 			? t("auth:login.redirectingToGoogle")
@@ -259,7 +275,20 @@ export function LoginScreen() {
 				</>
 			}
 			footer={
-				publicSignupEnabled ? (
+				betaEnabled ? (
+					<p className="flex flex-wrap items-center justify-center gap-1 text-center">
+						<span>{t("auth:login.betaPrompt")}</span>
+						<a
+							href={betaRequestUrl}
+							className={buttonVariants({
+								variant: "link",
+								className: "h-auto p-0 font-semibold",
+							})}
+						>
+							{t("auth:login.betaAction")}
+						</a>
+					</p>
+				) : publicSignupEnabled ? (
 					<p className="flex flex-wrap items-center justify-center gap-1 text-center">
 						<span>{t("auth:login.alternatePrompt")}</span>
 						<Link

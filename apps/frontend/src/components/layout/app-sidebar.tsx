@@ -14,6 +14,7 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useInfiniteAwaitingConfirmationSchedules } from "@/hooks/queries/use-infinite-awaiting-confirmation-schedules";
 import { useSession } from "@/hooks/use-session";
 import { getAppLanguage, setAppLanguage } from "@/lib/i18n/config";
+import { usePublicConfig } from "@/lib/public-config";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -51,6 +52,7 @@ export const AppSidebar = ({
 }: AppSidebarProps) => {
   const { t } = useTranslation(["common", "navigation", "settings"]);
   const { session } = useSession();
+  const { betaEnabled } = usePublicConfig();
   const location = useLocation();
   const awaitingConfirmationQuery = useInfiniteAwaitingConfirmationSchedules();
   const currentLanguage = getAppLanguage();
@@ -140,19 +142,29 @@ export const AppSidebar = ({
       >
         <div className="jun-edgeContent jun-sidebarContainer">
           <div className="flex flex-col p-2">
-            <div
-              aria-label={t("common:appName")}
-              className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0"
-            >
+            <div className="jun-sidebarMenuButton jun-sidebarMenuButton-spacing-2 jun-sidebarMenuButton-shrink-spacing-0">
               <img
                 src="/app-icon.png"
                 alt=""
                 className="jun-sidebarIcon size-8"
               />
+              <p className="sr-only">
+                {betaEnabled
+                  ? t("common:appNameWithBeta")
+                  : t("common:appName")}
+              </p>
               <div className="jun-sidebarText text-left text-sm leading-tight flex items-center">
                 <div className="flex-1">
-                  <div className="truncate font-semibold">
-                    {t("common:appName")}
+                  <div
+                    aria-hidden="true"
+                    className="flex items-center gap-2 truncate font-semibold"
+                  >
+                    <span className="truncate">{t("common:appName")}</span>
+                    {betaEnabled ? (
+                      <Badge aria-hidden="true" className="h-5" variant="primary">
+                        Beta
+                      </Badge>
+                    ) : null}
                   </div>
                   <div className="truncate text-xs">
                     {t("common:profile.greeting", {

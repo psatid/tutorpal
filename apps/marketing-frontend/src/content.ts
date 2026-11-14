@@ -8,6 +8,15 @@ interface Copy {
   lineTitle: string[]; lineBody: string; lineNotes: string[]; linePreview: string;
   faqTitle: string; faqs: { q: string; a: string }[];
   closeTitle: string[]; closeBody: string; footer: string;
+  beta: {
+    badge: string; nav: string; announcement: string; heroAction: string;
+    closeTitle: string[]; closeBody: string; formTitle: string;
+    name: string; email: string; subject: string; students: string; line: string;
+    optional: string; lineYes: string; lineNo: string; submit: string;
+    subjects: { value: string; label: string }[]; studentRanges: { value: string; label: string }[];
+    unavailable: string; success: string; validationSummary: string; invalidName: string; invalidEmail: string;
+    verificationUnavailable: string; requestFailed: string; requestDisabled: string;
+  };
 }
 export const copy: Record<Locale, Copy> = {
   en: {
@@ -24,7 +33,16 @@ export const copy: Record<Locale, Copy> = {
       {q:'Is it only for SAT or A-Level tutoring?',a:'No. Those are examples in this demonstration. You can organize tutoring for any subject, level, or learning goal.'},
       {q:'How are lesson hours counted?',a:'Hours are reserved when a lesson is scheduled. Moving or completing that same lesson does not deduct them a second time. In our example, a two-hour lesson takes a ten-hour balance to eight.'},
       {q:'What do I need for LINE reminders?',a:'Connect your LINE Official Account in TutorPal and link each student’s LINE account. Eligible linked students can then receive a reminder about one hour before their scheduled class. Messages use the connected account and are currently in English.'}
-    ], closeTitle: ['Make space for', 'the part you love.'], closeBody: 'Bring your tutoring day together with TutorPal.', footer: 'A little more room to teach.'
+    ], closeTitle: ['Make space for', 'the part you love.'], closeBody: 'Bring your tutoring day together with TutorPal.', footer: 'A little more room to teach.',
+    beta: {
+      badge: 'Beta', nav: 'Join beta', announcement: 'TutorPal is now in beta', heroAction: 'Join the beta',
+      closeTitle: ['Help shape TutorPal.', 'Teach with it first.'], closeBody: 'Tell us a little about your teaching. We’ll email you to arrange a demo.', formTitle: 'Request a beta demo',
+      name: 'Your name', email: 'Email address', subject: 'Main subject', students: 'Number of students', line: 'Do you use a LINE Official Account?',
+      optional: 'Optional', lineYes: 'Yes', lineNo: 'No', submit: 'Request a demo',
+      subjects: [{ value: 'math', label: 'Math' }, { value: 'science', label: 'Science' }, { value: 'english', label: 'English' }, { value: 'languages', label: 'Languages' }, { value: 'test-prep', label: 'Test prep' }, { value: 'music-arts', label: 'Music / arts' }, { value: 'something-else', label: 'Something else' }],
+      studentRanges: [{ value: '1-5', label: '1–5' }, { value: '6-15', label: '6–15' }, { value: '16-30', label: '16–30' }, { value: '30+', label: '30+' }],
+      unavailable: 'Beta requests aren’t available right now. Please check back soon.', success: 'Thanks—we’ve received your request. We’ll be in touch by email.', validationSummary: 'Please fix the highlighted fields.', invalidName: 'Enter your name (up to 120 characters).', invalidEmail: 'Enter a valid email address.', verificationUnavailable: 'Verification isn’t available right now. Please check back soon.', requestFailed: 'We couldn’t send your request. Please try again.', requestDisabled: 'Beta requests aren’t available right now. Please check back soon.',
+    }
   },
   th: {
     title: 'TutorPal — วางแผน จัดการ ติดตาม ครบในที่เดียว', description: 'พื้นที่ทำงานสำหรับติวเตอร์ จัดการตารางเรียน นักเรียน และชั่วโมงเรียนในที่เดียว พร้อมแจ้งเตือนผ่าน LINE ของคุณ',
@@ -39,6 +57,15 @@ export const copy: Record<Locale, Copy> = {
       {q:'ใช้ได้เฉพาะการติว SAT หรือ A-Level หรือไม่?',a:'ไม่จำกัดวิชา SAT และ A-Level เป็นเพียงตัวอย่างในหน้านี้ คุณสามารถจัดการการสอนได้ทุกวิชา ทุกระดับ และทุกเป้าหมายการเรียนรู้'},
       {q:'ระบบนับชั่วโมงเรียนอย่างไร?',a:'ระบบสำรองชั่วโมงเมื่อสร้างนัดหมาย การเลื่อนเวลาหรือจบคาบเดิมจะไม่หักชั่วโมงซ้ำ ในตัวอย่างนี้ คาบเรียน 2 ชั่วโมงทำให้ยอดจาก 10 ชั่วโมงเหลือ 8 ชั่วโมง'},
       {q:'ต้องเตรียมอะไรเพื่อใช้การแจ้งเตือนผ่าน LINE?',a:'เชื่อมต่อ LINE Official Account ใน TutorPal และเชื่อมบัญชี LINE ของนักเรียนแต่ละคน นักเรียนที่เชื่อมบัญชีและเข้าเงื่อนไขจะได้รับแจ้งเตือนก่อนเรียนประมาณ 1 ชั่วโมง ผ่านบัญชีที่คุณเชื่อมต่อ ปัจจุบันข้อความแจ้งเตือนเป็นภาษาอังกฤษ'}
-    ], closeTitle: ['คืนเวลาให้', 'การสอนที่คุณรัก'], closeBody: 'รวมทุกเรื่องของวันสอนไว้ด้วยกันกับ TutorPal', footer: 'มีเวลาให้การสอนมากขึ้น'
+    ], closeTitle: ['คืนเวลาให้', 'การสอนที่คุณรัก'], closeBody: 'รวมทุกเรื่องของวันสอนไว้ด้วยกันกับ TutorPal', footer: 'มีเวลาให้การสอนมากขึ้น',
+    beta: {
+      badge: 'เบต้า', nav: 'เข้าร่วมเบต้า', announcement: 'TutorPal เปิดให้ทดลองใช้แบบเบต้า', heroAction: 'เข้าร่วมเบต้า',
+      closeTitle: ['ช่วยสร้าง TutorPal ไปด้วยกัน', 'เริ่มสอนด้วยกันก่อนใคร'], closeBody: 'บอกเราเล็กน้อยเกี่ยวกับการสอนของคุณ แล้วเราจะส่งอีเมลเพื่อนัดเดโมให้คุณ', formTitle: 'ขอเดโมเวอร์ชันเบต้า',
+      name: 'ชื่อของคุณ', email: 'อีเมล', subject: 'วิชาหลัก', students: 'จำนวนนักเรียน', line: 'คุณใช้ LINE Official Account หรือไม่',
+      optional: 'ไม่จำเป็น', lineYes: 'ใช้', lineNo: 'ไม่ใช้', submit: 'ขอเดโม',
+      subjects: [{ value: 'math', label: 'คณิตศาสตร์' }, { value: 'science', label: 'วิทยาศาสตร์' }, { value: 'english', label: 'ภาษาอังกฤษ' }, { value: 'languages', label: 'ภาษาอื่น ๆ' }, { value: 'test-prep', label: 'เตรียมสอบ' }, { value: 'music-arts', label: 'ดนตรี / ศิลปะ' }, { value: 'something-else', label: 'อื่น ๆ' }],
+      studentRanges: [{ value: '1-5', label: '1–5 คน' }, { value: '6-15', label: '6–15 คน' }, { value: '16-30', label: '16–30 คน' }, { value: '30+', label: 'มากกว่า 30 คน' }],
+      unavailable: 'ตอนนี้ยังไม่สามารถรับคำขอเข้าร่วมเบต้าได้ โปรดลองอีกครั้งภายหลัง', success: 'ขอบคุณ เราได้รับคำขอของคุณแล้ว เราจะติดต่อทางอีเมล', validationSummary: 'โปรดตรวจสอบข้อมูลที่ระบุไว้', invalidName: 'กรุณากรอกชื่อของคุณ (ไม่เกิน 120 อักขระ)', invalidEmail: 'กรุณากรอกอีเมลที่ถูกต้อง', verificationUnavailable: 'ตอนนี้การยืนยันตัวตนยังไม่พร้อมใช้งาน โปรดลองอีกครั้งภายหลัง', requestFailed: 'เราไม่สามารถส่งคำขอได้ โปรดลองอีกครั้ง', requestDisabled: 'ตอนนี้ยังไม่สามารถรับคำขอเข้าร่วมเบต้าได้ โปรดลองอีกครั้งภายหลัง',
+    }
   }
 };

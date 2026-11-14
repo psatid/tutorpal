@@ -9,7 +9,7 @@ export const useSendVerificationEmail = () => {
     mutationFn: async (email: string) => {
       const result = await authClient.sendVerificationEmail({
         email,
-        callbackURL: getEmailVerificationCallbackUrl(email),
+        callbackURL: getEmailVerificationCallbackUrl(),
       });
 
       if (result.error) {

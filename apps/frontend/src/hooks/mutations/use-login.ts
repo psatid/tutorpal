@@ -12,7 +12,7 @@ interface LoginCredentials {
 
 interface UseLoginOptions {
   onSuccess?: () => void;
-  onError?: (error: AuthFlowError) => void;
+  onError?: (error: AuthFlowError, credentials: LoginCredentials) => void;
 }
 
 /**
@@ -44,9 +44,9 @@ export const useLogin = (options?: UseLoginOptions) => {
       navigate({ to: "/" });
       options?.onSuccess?.();
     },
-    onError: (error: AuthFlowError) => {
+    onError: (error: AuthFlowError, credentials) => {
       if (options?.onError) {
-        options.onError(error);
+        options.onError(error, credentials);
         return;
       }
 

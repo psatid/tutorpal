@@ -10,6 +10,34 @@ bun run build
 bun test tests/*.test.js
 ```
 
+## Beta flow checks
+
+Run `bun run cf:worker:check` to regenerate local Worker types and type-check
+the edge entrypoint. The suite covers mode selection through the actual
+`HTMLRewriter`, fail-closed configuration, static-asset bypass, optional form
+fields, accepted-only success, failure retention, and Turnstile token resets.
+
+For isolated browser checks, build and start:
+
+```sh
+bun run build
+bun tests/beta-browser-fixture.js
+```
+
+The default URL is `http://127.0.0.1:4324/?qa=betaOn`; override the port with
+`TUTORPAL_BETA_QA_PORT`. Both `/` and `/th/` support `betaOn`,
+`betaUnavailable`, `betaOff`, and `betaConfigFailure`. The fixture runs the
+real marketing Worker against local configuration, submission, and Turnstile
+doubles. Its controls can pass/expire verification or make submission fail.
+No real request, Discord message, or verification email is sent.
+
+Use `?qa=betaUnavailable&controls=0` for the shipped unavailable presentation
+without mock scripts or the QA panel. The fixture is test-only and excluded
+from deployed assets. Its POST log contains only the fictitious data entered
+during that fixture session; avoid entering real contact details.
+
+## Existing page regression checks
+
 The built-output smoke suite uses Bun's HTMLRewriter without extra dependencies.
 It verifies both locale pages, exact approved headline and supporting copy,
 white theme metadata, app and section links, the twelve English lessons in the
