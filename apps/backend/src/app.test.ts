@@ -67,12 +67,14 @@ function createTestApp({
 	hasTutor = true,
 	sessions = [],
 	handler,
+	configInput = {},
 }: {
 	getSession: () => Promise<unknown>;
 	lockedUser?: LockedUser | null;
 	hasTutor?: boolean;
 	sessions?: TransactionSession[];
 	handler?: NativeHandler;
+	configInput?: Parameters<typeof createAppConfig>[0];
 }) {
 	const handlerCalls: Request[] = [];
 	const rawQueries: Array<{ sql: string; values: unknown[] }> = [];
@@ -160,6 +162,7 @@ function createTestApp({
 			BETTER_AUTH_SECRET: "test-secret-with-at-least-thirty-two-characters",
 			LOG_LEVEL: "silent",
 			RESEND_API_KEY: "test-resend-key",
+			...configInput,
 		}),
 		prisma: {
 			$transaction: async (
@@ -562,5 +565,73 @@ describe("impersonation application behavior", () => {
 		expect(normal.status).toBe(200);
 		expect(await normal.json()).toEqual({ success: true });
 		expect(normalApp.handlerCalls).toHaveLength(1);
+	});
+
+	test("scopes non-credentialed CORS to marketing beta requests only", async () => {
+		const marketingOrigin = "https://marketing.example.com";
+		const testApp = createTestApp({
+			getSession: async () => null,
+			configInput: {
+				CORS_ORIGIN: "https://app.example.com",
+				FRONTEND_URL: "https://app.example.com",
+				MARKETING_ORIGIN: marketingOrigin,
+			},
+		});
+
+		const betaResponse = await testApp.app.request(
+			"https://api.example/v1/beta/requests",
+			{
+				method: "OPTIONS",
+				headers: {
+					Origin: marketingOrigin,
+					"Access-Control-Request-Headers": "Content-Type",
+					"Access-Control-Request-Method": "POST",
+				},
+			},
+		);
+		expect(betaResponse.headers.get("Access-Control-Allow-Origin")).toBe(
+			marketingOrigin,
+		);
+		expect(
+			betaResponse.headers.get("Access-Control-Allow-Credentials"),
+		).toBeNull();
+		expect(betaResponse.headers.get("Access-Control-Allow-Headers")).toBe(
+			"Content-Type",
+		);
+		expect(betaResponse.headers.get("Access-Control-Allow-Methods")).toBe(
+			"GET,POST,OPTIONS",
+		);
+
+		for (const path of [
+			"/v1/students",
+			"/v1/classes",
+			"/api/auth/get-session",
+		]) {
+			const response = await testApp.app.request(`https://api.example${path}`, {
+				method: "OPTIONS",
+				headers: {
+					Origin: marketingOrigin,
+					"Access-Control-Request-Method": "GET",
+				},
+			});
+			expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+		}
+
+		const portalResponse = await testApp.app.request(
+			"https://api.example/v1/students",
+			{
+				method: "OPTIONS",
+				headers: {
+					Origin: "https://app.example.com",
+					"Access-Control-Request-Method": "GET",
+				},
+			},
+		);
+		expect(portalResponse.headers.get("Access-Control-Allow-Origin")).toBe(
+			"https://app.example.com",
+		);
+		expect(portalResponse.headers.get("Access-Control-Allow-Credentials")).toBe(
+			"true",
+		);
 	});
 });

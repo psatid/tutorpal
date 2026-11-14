@@ -112,7 +112,9 @@ Cloudflare dashboard with deployment-specific non-secret values:
 - `LINE_LINK_REDIRECT_URL`
 - `FRONTEND_URL`
 - `EMAIL_VERIFICATION_CALLBACK_URL`
-- `PUBLIC_SIGNUP_ENABLED` (`false` keeps account creation in the admin portal)
+- `BETA_ENABLED` (defaults to `true`; keeps public registration closed while accounts are created through the admin portal)
+- `MARKETING_ORIGIN` (exact marketing origin for beta requests and Turnstile hostname validation)
+- `TURNSTILE_SITE_KEY` (optional public widget key; beta requests stay unavailable until all integration settings exist)
 - `GOOGLE_CLIENT_ID` (optional; enables Google sign-in when paired with its secret)
 - `LINE_LOGIN_CHANNEL_ID` (optional; enables LINE Login when paired with its secret)
 
@@ -124,6 +126,13 @@ values or place them in a Wrangler config:
 - `LINE_CREDENTIALS_ENCRYPTION_KEY`
 - `GOOGLE_CLIENT_SECRET` (required only when Google sign-in is enabled)
 - `LINE_LOGIN_CHANNEL_SECRET` (required only when LINE Login is enabled)
+- `TURNSTILE_SECRET_KEY` (optional until beta request setup)
+- `DISCORD_BETA_WEBHOOK_URL` (optional until beta request setup; server-only)
+
+Marketing has non-credentialed CORS access only to `/v1/beta/*`; it is not an
+authenticated portal or Better Auth trusted origin. Local `MARKETING_ORIGIN`
+defaults to `http://localhost:4321`; override it for `127.0.0.1` or another
+port. Keep the Discord and Turnstile secrets on the API Worker.
 
 Provision `LINE_CREDENTIALS_ENCRYPTION_KEY` on both deployed Workers. The
 reminder config declares it as required, but secret values are still managed
@@ -176,15 +185,25 @@ to overwrite an existing email, and sends a verification email after creation.
 The admin frontend runs on `http://localhost:5175` and the user frontend runs
 on `http://localhost:5173` by default. Both portals share this backend and
 database; only the admin portal can create regular users while
-`PUBLIC_SIGNUP_ENABLED=false`.
+`BETA_ENABLED=true`.
 
 ## Tutor social login
 
-Google and LINE Login are optional backend integrations for existing,
-admin-provisioned tutors. Set the complete provider pairs in the selected
-Worker environment; a missing pair disables that provider and an incomplete
+Google and LINE Login are optional backend integrations. In beta, only existing,
+admin-provisioned tutors can sign in. Turning `BETA_ENABLED` off opens email,
+Google, and LINE registration. New social sessions then require verified email;
+Google's verified-email claim counts, while LINE users may need to follow a
+verification email before signing in again. Existing sessions continue. Set
+the complete provider pairs in the selected Worker environment; a missing pair
+disables that provider and an incomplete
 pair fails configuration validation. Provider secrets belong in Wrangler
 secrets or the Git-ignored local `.dev.vars` file, never in the frontend.
+
+The auth-scoped Prisma adapter creates each User with its Tutor relation
+atomically. Social User/Tutor/Account creation also uses the adapter's
+transaction support, so a failed account creation can be retried without
+leaving a user stranded without a Tutor. Existing non-tutor users are not
+automatically repaired or granted access. No migration is required.
 
 Register these exact provider callback URLs, using the deployed
 `BETTER_AUTH_URL` as the API origin:

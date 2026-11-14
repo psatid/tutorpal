@@ -19,6 +19,7 @@ import {
 } from "../repositories";
 import {
 	AdminUserService,
+	BetaService,
 	ClassService,
 	CourseService,
 	LineService,
@@ -29,6 +30,7 @@ import {
 import type { AppEnv } from "../types/hono-env";
 import { createAdminUserRoutes } from "./admin-users";
 import { createBaseRoutes } from "./base-router";
+import { createBetaRoutes } from "./beta";
 import { createClassRoutes } from "./classes";
 import { createCourseRoutes } from "./courses";
 import { createLineRoutes } from "./line";
@@ -47,8 +49,10 @@ export type RouteDependencies = {
 	scheduleService: ScheduleService;
 	socialAccountService: SocialAccountService;
 	studentService: StudentService;
+	betaService: BetaService;
 	getFrontendUrl(): string;
-	isPublicSignupEnabled(): boolean;
+	isBetaEnabled(): boolean;
+	getMarketingOrigin(): string;
 	getSocialLogin(): SocialLoginConfig;
 };
 
@@ -76,8 +80,10 @@ function createDefaultRouteDependencies(): RouteDependencies {
 			config,
 		),
 		studentService: new StudentService(studentRepository),
+		betaService: new BetaService(config),
 		getFrontendUrl: () => getLocalAppConfig().FRONTEND_URL,
-		isPublicSignupEnabled: () => getLocalAppConfig().PUBLIC_SIGNUP_ENABLED,
+		isBetaEnabled: () => getLocalAppConfig().BETA_ENABLED,
+		getMarketingOrigin: () => getLocalAppConfig().MARKETING_ORIGIN,
 		getSocialLogin: () => getLocalAppConfig().SOCIAL_LOGIN,
 	};
 }
@@ -86,14 +92,27 @@ export function createRoutes(
 	dependencies: RouteDependencies = createDefaultRouteDependencies(),
 	logger?: Pick<Logger, "warn">,
 ) {
+	const fallbackConfig = getLocalAppConfig();
+	const betaService =
+		dependencies.betaService ?? new BetaService(fallbackConfig);
+	const marketingOrigin =
+		dependencies.getMarketingOrigin?.() ?? fallbackConfig.MARKETING_ORIGIN;
+
 	return new Hono<AppEnv>()
 		.basePath("/v1")
 		.route(
 			"/",
 			createBaseRoutes(
-				dependencies.isPublicSignupEnabled,
+				() => !dependencies.isBetaEnabled(),
 				dependencies.getSocialLogin,
 			),
+		)
+		.route(
+			"/beta",
+			createBetaRoutes({
+				betaService,
+				marketingOrigin,
+			}),
 		)
 		.route("/admin/users", createAdminUserRoutes(dependencies))
 		.route("/students", createStudentRoutes(dependencies))

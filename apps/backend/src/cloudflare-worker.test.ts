@@ -8,6 +8,7 @@ type FakePrisma = {
 	connectionString: string;
 	disconnectCalls: number;
 	$disconnect(): Promise<void>;
+	$extends(): FakePrisma;
 };
 
 const prismaClients: FakePrisma[] = [];
@@ -19,6 +20,9 @@ mock.module("./lib/cloudflare-prisma", () => ({
 			disconnectCalls: 0,
 			async $disconnect() {
 				client.disconnectCalls += 1;
+			},
+			$extends() {
+				return client;
 			},
 		};
 		prismaClients.push(client);
@@ -47,7 +51,7 @@ function createEnv(): CloudflareEnv {
 		FRONTEND_URL: "https://frontend.example.com",
 		EMAIL_VERIFICATION_CALLBACK_URL:
 			"https://frontend.example.com/verify-email",
-		PUBLIC_SIGNUP_ENABLED: "false",
+		BETA_ENABLED: "true",
 	};
 }
 

@@ -1,4 +1,5 @@
 export * from "./admin-user.schema";
+export * from "./beta.schema";
 export * from "./class.schema";
 export * from "./config.schema";
 export * from "./course.schema";

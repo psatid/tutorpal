@@ -62,6 +62,7 @@ type AuthDatabaseHookContext = {
 	body?: { provider?: string };
 	params?: { id?: string };
 	path?: string;
+	redirect?(url: string): unknown;
 };
 
 type AuthAccount = {
@@ -74,6 +75,24 @@ type AuthAccount = {
 	userId: string;
 	[key: string]: unknown;
 };
+
+function createAuthPrismaClient(prisma: PrismaClient) {
+	return prisma.$extends({
+		query: {
+			user: {
+				create({ args, query }) {
+					return query({
+						...args,
+						data: {
+							...args.data,
+							tutor: { create: {} },
+						},
+					});
+				},
+			},
+		},
+	});
+}
 
 async function isTutorUser(prisma: PrismaClient, userId: string) {
 	const user = await prisma.user.findUnique({
@@ -99,16 +118,73 @@ function isSocialSignInContext(context: AuthDatabaseHookContext | null) {
 	);
 }
 
-export function createTutorSocialAuthHooks(prisma: PrismaClient) {
+function getSocialCallbackProvider(context: AuthDatabaseHookContext | null) {
+	if (context?.path !== "/callback/:id") return undefined;
+	const providerId = context.params?.id;
+	return providerId === "google" || providerId === "line"
+		? providerId
+		: undefined;
+}
+
+export function createTutorSocialAuthHooks(
+	prisma: PrismaClient,
+	betaEnabled = true,
+	emailVerificationCallbackUrl?: string,
+) {
+	const newSocialUserContexts = new WeakMap<
+		object,
+		{ consumed: boolean; providerId: "google" | "line" }
+	>();
+
 	return {
+		user: {
+			create: {
+				before: async (
+					user: Record<string, unknown>,
+					context: AuthDatabaseHookContext | null,
+				) => {
+					const authContext = context;
+					const providerId = betaEnabled
+						? undefined
+						: getSocialCallbackProvider(authContext);
+					if (!providerId || !authContext) return;
+
+					newSocialUserContexts.set(authContext, {
+						providerId,
+						consumed: false,
+					});
+					return {
+						data: {
+							...user,
+							role: "user",
+							banned: false,
+							banReason: null,
+							banExpires: null,
+						},
+					};
+				},
+			},
+		},
 		account: {
 			create: {
-				before: async (account: AuthAccount) => {
+				before: async (
+					account: AuthAccount,
+					context: AuthDatabaseHookContext | null,
+				) => {
 					if (!socialProviderIds.has(account.providerId)) {
 						return;
 					}
 
-					if (!(await isTutorUser(prisma, account.userId))) {
+					const newUserMarker =
+						context === null || context === undefined
+							? undefined
+							: newSocialUserContexts.get(context);
+					const isNewSocialAccount =
+						newUserMarker?.consumed === false &&
+						newUserMarker.providerId === account.providerId;
+					if (isNewSocialAccount) {
+						newUserMarker.consumed = true;
+					} else if (!(await isTutorUser(prisma, account.userId))) {
 						return false;
 					}
 
@@ -135,7 +211,37 @@ export function createTutorSocialAuthHooks(prisma: PrismaClient) {
 						return;
 					}
 
-					return (await isTutorUser(prisma, session.userId)) || false;
+					const user = await prisma.user.findUnique({
+						where: { id: session.userId },
+						select: {
+							emailVerified: true,
+							role: true,
+							banned: true,
+							tutor: { select: { id: true } },
+						},
+					});
+
+					if (
+						user?.role !== "user" ||
+						user.banned === true ||
+						user.tutor === null
+					) {
+						return false;
+					}
+
+					if (
+						!betaEnabled &&
+						user.emailVerified !== true &&
+						context?.path === "/callback/:id" &&
+						emailVerificationCallbackUrl !== undefined &&
+						typeof context.redirect === "function"
+					) {
+						const callbackUrl = new URL(emailVerificationCallbackUrl);
+						callbackUrl.searchParams.set("error", "EMAIL_NOT_VERIFIED");
+						throw context.redirect(callbackUrl.toString());
+					}
+
+					return betaEnabled || user.emailVerified === true;
 				},
 			},
 		},
@@ -144,32 +250,28 @@ export function createTutorSocialAuthHooks(prisma: PrismaClient) {
 
 export function createAuth(config: AppConfig, prisma: PrismaClient) {
 	const sendEmail = createResendEmailSender(config);
+	const tutorSocialAuthHooks = createTutorSocialAuthHooks(
+		prisma,
+		config.BETA_ENABLED,
+		config.EMAIL_VERIFICATION_CALLBACK_URL,
+	);
 
 	return betterAuth({
 		disabledPaths: [...disabledAdminPaths],
 		baseURL: config.BETTER_AUTH_URL,
 		secret: config.BETTER_AUTH_SECRET,
-		database: prismaAdapter(prisma, {
-			provider: "postgresql",
-		}),
+		database: (options) =>
+			prismaAdapter(createAuthPrismaClient(prisma), {
+				provider: "postgresql",
+				transaction: true,
+			})(options),
 		databaseHooks: {
-			...createTutorSocialAuthHooks(prisma),
-			user: {
-				create: {
-					after: async (user) => {
-						await prisma.tutor.upsert({
-							where: { userId: user.id },
-							update: {},
-							create: { userId: user.id },
-						});
-					},
-				},
-			},
+			...tutorSocialAuthHooks,
 		},
 		emailAndPassword: {
 			enabled: true,
 			requireEmailVerification: true,
-			disableSignUp: !config.PUBLIC_SIGNUP_ENABLED,
+			disableSignUp: config.BETA_ENABLED,
 			customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
 				...coreFields,
 				role: "user",
@@ -223,7 +325,7 @@ export function createAuth(config: AppConfig, prisma: PrismaClient) {
 						google: {
 							clientId: config.GOOGLE_CLIENT_ID,
 							clientSecret: config.GOOGLE_CLIENT_SECRET,
-							disableSignUp: true,
+							disableSignUp: config.BETA_ENABLED,
 						},
 					}
 				: {}),
@@ -232,7 +334,7 @@ export function createAuth(config: AppConfig, prisma: PrismaClient) {
 						line: {
 							clientId: config.LINE_LOGIN_CHANNEL_ID,
 							clientSecret: config.LINE_LOGIN_CHANNEL_SECRET,
-							disableSignUp: true,
+							disableSignUp: config.BETA_ENABLED,
 						},
 					}
 				: {}),

@@ -2,10 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { createAppConfig, parseBooleanFlag } from "./app-config";
 
 describe("application configuration", () => {
-	test("defaults public signup to disabled", () => {
+	test("defaults beta mode to enabled", () => {
 		const config = createAppConfig({ LOG_LEVEL: "info" });
 
-		expect(config.PUBLIC_SIGNUP_ENABLED).toBe(false);
+		expect(config.BETA_ENABLED).toBe(true);
+		expect(config.MARKETING_ORIGIN).toBe("http://localhost:4321");
+		expect(config.TURNSTILE_SITE_KEY).toBe("");
+		expect(config.TURNSTILE_SECRET_KEY).toBe("");
+		expect(config.DISCORD_BETA_WEBHOOK_URL).toBe("");
 		expect(config.SOCIAL_LOGIN).toEqual({ google: false, line: false });
 	});
 
@@ -50,12 +54,37 @@ describe("application configuration", () => {
 		).toThrow(`Incomplete ${provider} OAuth configuration`);
 	});
 
-	test("parses the explicit public signup flag", () => {
+	test("parses the explicit beta flag", () => {
 		expect(parseBooleanFlag("true")).toBe(true);
 		expect(parseBooleanFlag("false")).toBe(false);
+		expect(
+			createAppConfig({ BETA_ENABLED: "false", LOG_LEVEL: "silent" })
+				.BETA_ENABLED,
+		).toBe(false);
 	});
 
-	test("rejects ambiguous public signup values", () => {
+	test("rejects ambiguous beta values", () => {
 		expect(() => parseBooleanFlag("1")).toThrow('Expected "true" or "false"');
+	});
+
+	test("accepts only an exact HTTP(S) marketing origin", () => {
+		expect(
+			createAppConfig({
+				LOG_LEVEL: "silent",
+				MARKETING_ORIGIN: "https://marketing.example.com",
+			}).MARKETING_ORIGIN,
+		).toBe("https://marketing.example.com");
+
+		for (const origin of [
+			"https://marketing.example.com/landing",
+			"https://marketing.example.com/",
+			"https://user@marketing.example.com",
+			"ftp://marketing.example.com",
+			"not a url",
+		]) {
+			expect(() =>
+				createAppConfig({ LOG_LEVEL: "silent", MARKETING_ORIGIN: origin }),
+			).toThrow("MARKETING_ORIGIN");
+		}
 	});
 });

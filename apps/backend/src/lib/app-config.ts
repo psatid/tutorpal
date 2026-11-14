@@ -25,7 +25,11 @@ export type AppConfigInput = {
 	LINE_LINK_REDIRECT_URL?: string;
 	FRONTEND_URL?: string;
 	EMAIL_VERIFICATION_CALLBACK_URL?: string;
-	PUBLIC_SIGNUP_ENABLED?: string;
+	BETA_ENABLED?: string;
+	MARKETING_ORIGIN?: string;
+	TURNSTILE_SITE_KEY?: string;
+	TURNSTILE_SECRET_KEY?: string;
+	DISCORD_BETA_WEBHOOK_URL?: string;
 	GOOGLE_CLIENT_ID?: string;
 	GOOGLE_CLIENT_SECRET?: string;
 	LINE_LOGIN_CHANNEL_ID?: string;
@@ -52,7 +56,11 @@ export type AppConfig = {
 	LINE_LINK_REDIRECT_URL: string;
 	FRONTEND_URL: string;
 	EMAIL_VERIFICATION_CALLBACK_URL: string;
-	PUBLIC_SIGNUP_ENABLED: boolean;
+	BETA_ENABLED: boolean;
+	MARKETING_ORIGIN: string;
+	TURNSTILE_SITE_KEY: string;
+	TURNSTILE_SECRET_KEY: string;
+	DISCORD_BETA_WEBHOOK_URL: string;
 	GOOGLE_CLIENT_ID: string;
 	GOOGLE_CLIENT_SECRET: string;
 	LINE_LOGIN_CHANNEL_ID: string;
@@ -95,6 +103,36 @@ function getOptionalCredential(value: string | undefined): string {
 	return value?.trim() ?? "";
 }
 
+function getDefaultMarketingOrigin(environment: string): string {
+	if (environment === "dev") return "https://dev.tutorpal.io";
+	if (environment === "prod") return "https://tutorpal.io";
+	return "http://localhost:4321";
+}
+
+function getMarketingOrigin(value: string | undefined, environment: string) {
+	const origin = value?.trim() || getDefaultMarketingOrigin(environment);
+	let url: URL;
+	try {
+		url = new URL(origin);
+	} catch {
+		throw new Error("MARKETING_ORIGIN must be a valid origin.");
+	}
+
+	if (
+		(url.protocol !== "http:" && url.protocol !== "https:") ||
+		url.username !== "" ||
+		url.password !== "" ||
+		url.pathname !== "/" ||
+		url.search !== "" ||
+		url.hash !== "" ||
+		url.origin !== origin
+	) {
+		throw new Error("MARKETING_ORIGIN must be an exact HTTP(S) origin.");
+	}
+
+	return origin;
+}
+
 function isSocialProviderConfigured(
 	provider: string,
 	clientId: string,
@@ -114,6 +152,7 @@ function isSocialProviderConfigured(
 }
 
 export function createAppConfig(input: AppConfigInput): AppConfig {
+	const environment = input.ENVIRONMENT ?? "local";
 	const googleClientId = getOptionalCredential(input.GOOGLE_CLIENT_ID);
 	const googleClientSecret = getOptionalCredential(input.GOOGLE_CLIENT_SECRET);
 	const lineLoginChannelId = getOptionalCredential(input.LINE_LOGIN_CHANNEL_ID);
@@ -130,7 +169,7 @@ export function createAppConfig(input: AppConfigInput): AppConfig {
 			"postgresql://postgres:postgres@localhost:5432/tutorpal",
 		BETTER_AUTH_URL: input.BETTER_AUTH_URL ?? "http://localhost:5174",
 		BETTER_AUTH_SECRET: input.BETTER_AUTH_SECRET ?? "secret",
-		ENVIRONMENT: input.ENVIRONMENT ?? "local",
+		ENVIRONMENT: environment,
 		LOG_LEVEL: getLogLevel(input.LOG_LEVEL),
 		RESEND_API_KEY: input.RESEND_API_KEY ?? "",
 		RESEND_FROM_EMAIL:
@@ -143,7 +182,13 @@ export function createAppConfig(input: AppConfigInput): AppConfig {
 		EMAIL_VERIFICATION_CALLBACK_URL:
 			input.EMAIL_VERIFICATION_CALLBACK_URL ??
 			"http://localhost:5173/verify-email",
-		PUBLIC_SIGNUP_ENABLED: parseBooleanFlag(input.PUBLIC_SIGNUP_ENABLED),
+		BETA_ENABLED: parseBooleanFlag(input.BETA_ENABLED, true),
+		MARKETING_ORIGIN: getMarketingOrigin(input.MARKETING_ORIGIN, environment),
+		TURNSTILE_SITE_KEY: getOptionalCredential(input.TURNSTILE_SITE_KEY),
+		TURNSTILE_SECRET_KEY: getOptionalCredential(input.TURNSTILE_SECRET_KEY),
+		DISCORD_BETA_WEBHOOK_URL: getOptionalCredential(
+			input.DISCORD_BETA_WEBHOOK_URL,
+		),
 		GOOGLE_CLIENT_ID: googleClientId,
 		GOOGLE_CLIENT_SECRET: googleClientSecret,
 		LINE_LOGIN_CHANNEL_ID: lineLoginChannelId,

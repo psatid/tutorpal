@@ -21,6 +21,7 @@ import {
 import type { RouteDependencies } from "./routes";
 import {
 	AdminUserService,
+	BetaService,
 	ClassReminderService,
 	ClassService,
 	CourseService,
@@ -82,8 +83,10 @@ export function createApplicationDependencies(
 				config,
 			),
 			studentService: new StudentService(studentRepository),
+			betaService: new BetaService(config),
 			getFrontendUrl: () => config.FRONTEND_URL,
-			isPublicSignupEnabled: () => config.PUBLIC_SIGNUP_ENABLED,
+			isBetaEnabled: () => config.BETA_ENABLED,
+			getMarketingOrigin: () => config.MARKETING_ORIGIN,
 			getSocialLogin: () => config.SOCIAL_LOGIN,
 		},
 	};

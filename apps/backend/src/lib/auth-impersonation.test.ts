@@ -26,6 +26,11 @@ mock.module("better-auth/adapters/prisma", () => ({
 
 const { createAuth } = await import("./auth-factory");
 
+function createAuthPrismaStub() {
+	const prisma = { $extends: () => prisma };
+	return prisma as never;
+}
+
 function resetDatabase() {
 	for (const records of Object.values(database)) {
 		records.length = 0;
@@ -313,7 +318,7 @@ describe("native Better Auth impersonation session transition", () => {
 				LOG_LEVEL: "silent",
 				RESEND_API_KEY: "test-resend-key",
 			}),
-			{} as never,
+			createAuthPrismaStub(),
 		);
 		const startedAt = Date.now();
 		const start = await auth.handler(

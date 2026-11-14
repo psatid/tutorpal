@@ -185,19 +185,33 @@ export function createApp(dependencies: ApplicationDependencies) {
 	app.use(createRequestLogger(apiLogger));
 	app.onError(errorHandler);
 
+	const portalCors = cors({
+		origin: [
+			config.CORS_ORIGIN,
+			config.FRONTEND_URL,
+			config.ADMIN_FRONTEND_URL,
+		],
+		allowHeaders: ["Content-Type", "Authorization", "better-auth"],
+		allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+		exposeHeaders: ["Content-Length"],
+		maxAge: 600,
+		credentials: true,
+	});
+	app.use("*", async (c, next) => {
+		if (new URL(c.req.url).pathname.startsWith("/v1/beta/")) {
+			await next();
+			return;
+		}
+		return portalCors(c, next);
+	});
 	app.use(
-		"*",
+		"/v1/beta/*",
 		cors({
-			origin: [
-				config.CORS_ORIGIN,
-				config.FRONTEND_URL,
-				config.ADMIN_FRONTEND_URL,
-			],
-			allowHeaders: ["Content-Type", "Authorization", "better-auth"],
-			allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-			exposeHeaders: ["Content-Length"],
+			origin: config.MARKETING_ORIGIN,
+			allowHeaders: ["Content-Type"],
+			allowMethods: ["GET", "POST", "OPTIONS"],
 			maxAge: 600,
-			credentials: true,
+			credentials: false,
 		}),
 	);
 

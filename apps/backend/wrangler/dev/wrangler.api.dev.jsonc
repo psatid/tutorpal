@@ -25,7 +25,8 @@
 		"LINE_LINK_REDIRECT_URL": "https://dev.api.tutorpal.io/v1/line/callback",
 		"FRONTEND_URL": "https://dev.app.tutorpal.io",
 		"EMAIL_VERIFICATION_CALLBACK_URL": "https://dev.app.tutorpal.io/verify-email",
-		"PUBLIC_SIGNUP_ENABLED": "false"
+		"BETA_ENABLED": "true",
+		"MARKETING_ORIGIN": "https://dev.tutorpal.io"
 	},
 	"routes": [
 		{
