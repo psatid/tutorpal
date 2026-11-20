@@ -112,8 +112,9 @@ Development Discord setup and a labeled test delivery were verified on
 November 20, 2026. The development Turnstile widget, secret, and public site
 key are configured and deployed. The first real-token form test showed
 unavailable; Cloudflare blocked the replay before the API. A Workerd
-fetch-receiver fix was deployed to development on November 21. Successful form
-delivery after that fix and server-side replay rejection remain unverified.
+fetch-receiver fix was deployed to development on November 21. An approved
+real-token form test then returned HTTP 200 after Discord confirmation and
+showed the success notice. Server-side replay rejection remains unverified.
 Production integration setup remains pending.
 Missing integration settings keep requests unavailable instead of accepting
 data silently. See

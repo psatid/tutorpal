@@ -445,8 +445,9 @@ port are different origins and require an override.
 Development Discord setup was completed on November 20, 2026. The development
 Turnstile widget, secret, and public site key are also configured and deployed.
 The first real-token form test showed unavailable; Cloudflare blocked the
-replay before the API. Successful form delivery and server-side replay
-rejection remain unverified. Production setup remains pending. To configure
+replay before the API. After the November 21 runtime fix, an authorized
+real-token form test confirmed end-to-end Discord delivery. Server-side replay
+rejection remains unverified. Production setup remains pending. To configure
 delivery in an environment:
 
 1. Create a Turnstile widget for the environment's marketing hostname. Set
@@ -502,8 +503,11 @@ The service now wraps that dependency before either outbound call. The fix is
 deployed to <code>tutorpal-api-dev</code> as version
 <code>f15725cb-28f0-4e38-8260-0b918754ae1f</code>; post-deploy health and config
 checks return 200 with beta enabled, requests available, and signup closed.
-Successful live delivery and server-side replay rejection remain unverified
-pending an authorized post-fix form test.
+An explicitly authorized post-fix real-token form test returned HTTP 200 in
+870 ms and displayed the success notice. The service returns 200 only after
+Turnstile hostname/action validation and Discord message confirmation, so
+development form delivery is verified. Server-side replay rejection remains
+unverified; the earlier replay was blocked by Cloudflare before the API.
 
 For full launch, first verify provider credentials, email delivery, and callback
 URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config

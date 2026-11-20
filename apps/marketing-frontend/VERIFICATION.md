@@ -24,9 +24,17 @@
   excluding unrelated Google account-linking work. Post-deploy health and
   config checks return 200; beta and request availability remain enabled,
   the expected site key is present, and public signup remains closed.
-- A successful live submission after this fix still needs authorization before
-  end-to-end delivery can be claimed. Server-side token replay rejection also
-  remains unverified. No additional Discord submission was made during the fix.
+- With explicit authorization after deployment, submitted one real-token request
+  named `TEST — Turnstile setup`, email `turnstile-test@example.com`, with no
+  optional fields. Live logs confirmed HTTP 200 in 870 ms, and the page displayed
+  “Thanks—we’ve received your request. We’ll be in touch by email.” The deployed
+  service returns 200 only after exact Turnstile hostname/action validation and
+  Discord's confirmed message ID, establishing development end-to-end delivery.
+- Server-side token replay rejection remains unverified: the earlier replay
+  was denied by Cloudflare before the API and was not retried or bypassed.
+- UI observation: the success notice appears below the still-visible inputs and
+  submit button. Delivery is verified; hiding that submitted form remains a
+  separate confirmation-state UI issue.
 
 ## Development Turnstile setup — 20 November 2026
 
