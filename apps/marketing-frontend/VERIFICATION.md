@@ -19,9 +19,14 @@
   and passed with the wrapper. All 21 focused beta service/route tests pass;
   the isolated deployment baseline also passes backend format and both Worker
   dry-runs. Final backend review found no P0–P3 issues.
-- The runtime fix still needs deployment and an authorized successful live
-  submission before end-to-end delivery can be claimed. Server-side token
-  replay rejection also remains unverified.
+- Deployed the fix to `tutorpal-api-dev` as version
+  `f15725cb-28f0-4e38-8260-0b918754ae1f` from the isolated beta baseline,
+  excluding unrelated Google account-linking work. Post-deploy health and
+  config checks return 200; beta and request availability remain enabled,
+  the expected site key is present, and public signup remains closed.
+- A successful live submission after this fix still needs authorization before
+  end-to-end delivery can be claimed. Server-side token replay rejection also
+  remains unverified. No additional Discord submission was made during the fix.
 
 ## Development Turnstile setup — 20 November 2026
 

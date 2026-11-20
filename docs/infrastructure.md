@@ -498,9 +498,12 @@ On November 21, a second authorized form test again showed unavailable. Live
 Worker logs confirmed HTTP 503 with zero elapsed milliseconds while public
 configuration remained available. A local Workerd probe identified an
 incorrect receiver when invoking a stored native <code>fetch</code> function.
-The service now wraps that dependency before either outbound call. Successful
-live delivery and server-side replay rejection remain unverified until the
-runtime fix is deployed and validated.
+The service now wraps that dependency before either outbound call. The fix is
+deployed to <code>tutorpal-api-dev</code> as version
+<code>f15725cb-28f0-4e38-8260-0b918754ae1f</code>; post-deploy health and config
+checks return 200 with beta enabled, requests available, and signup closed.
+Successful live delivery and server-side replay rejection remain unverified
+pending an authorized post-fix form test.
 
 For full launch, first verify provider credentials, email delivery, and callback
 URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config
