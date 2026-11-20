@@ -75,8 +75,9 @@ the Discord notification. The team then emails the requester to arrange a demo
 and provisions their account through the admin portal. There is no newsletter
 checkbox or automatic account creation.
 
-Discord and Turnstile keys are configured later, on the API. Until the public
-configuration reports request availability, the form shows an unavailable
+The development Discord webhook was configured on November 20, 2026;
+Turnstile and production Discord setup remain pending, on the API. Until the
+public configuration reports request availability, the form shows an unavailable
 message. Success appears only after confirmed Discord delivery. Errors retain
 all entered values; each submission attempt resets the single-use Turnstile
 widget before another attempt. There is no lead database or retry queue, and

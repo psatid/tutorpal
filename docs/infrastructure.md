@@ -440,7 +440,9 @@ their separate credentialed CORS policy. Locally, set
 <code>http://localhost:4321</code>); <code>127.0.0.1</code> and a different
 port are different origins and require an override.
 
-Discord and Turnstile setup is deferred. To enable request delivery later:
+Development Discord setup was completed on November 20, 2026. Turnstile setup
+and production Discord setup remain pending. To configure delivery in an
+environment:
 
 1. Create a Turnstile widget for the environment's marketing hostname. Set
    <code>TURNSTILE_SITE_KEY</code> as an API variable and
@@ -453,13 +455,28 @@ Discord and Turnstile setup is deferred. To enable request delivery later:
    separate development and production widgets; production must not allow
    localhost.
 4. Redeploy and verify request availability, a fresh-token submission, token
-   replay rejection, and actual Discord delivery. No live delivery has been
-   verified until this setup is complete.
+   replay rejection, and actual Discord delivery. A direct webhook test does
+   not establish end-to-end form delivery; that check needs Turnstile configured.
 
 Missing integration values keep the API startup-safe and the form unavailable.
 The API returns success only after Discord confirms the message. There is no
 lead database, queue, or recovery copy; failed submissions retain inputs for
 retry, and retries may duplicate a Discord message.
+
+Development verification on November 20, 2026:
+
+- <code>DISCORD_BETA_WEBHOOK_URL</code> is stored as an encrypted secret on
+  <code>tutorpal-api-dev</code>. The incoming webhook is named
+  <code>TutorPal Bot</code>; its URL is not committed.
+- One explicitly approved, labeled development test message was confirmed by
+  Discord with <code>wait=true</code>. It contained no beta-request data.
+- The existing beta backend was deployed to development as version
+  <code>52287c0b-bf23-42c8-99b3-31da31c3367e</code>. Health and beta config
+  return 200, beta remains enabled, and public signup remains disabled.
+- The Discord secret survived deployment. Turnstile remains unconfigured, so
+  request availability is false and submissions return
+  <code>503 BETA_REQUESTS_UNAVAILABLE</code>. No successful form submission or
+  real-token replay test has been performed.
 
 For full launch, first verify provider credentials, email delivery, and callback
 URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config

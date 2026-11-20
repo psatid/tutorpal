@@ -108,8 +108,10 @@ return 404, unavailable delivery returns 503, failed verification returns
 400, and failed Discord delivery returns 502. The form never uses native GET
 submission, which would put its fields in the URL.
 
-Discord and Turnstile setup is intentionally deferred. Missing integration
-settings keep requests unavailable instead of accepting data silently. See
+Development Discord setup and a labeled test delivery were verified on
+November 20, 2026. Turnstile and production Discord setup remain pending.
+Missing integration settings keep requests unavailable instead of accepting
+data silently. See
 [runtime configuration](../infrastructure.md#runtime-configuration-contract)
 for the variables, secrets, and launch procedure.
 

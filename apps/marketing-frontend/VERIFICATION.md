@@ -1,5 +1,18 @@
 # Marketing verification
 
+## Development Discord setup — 20 November 2026
+
+- The `TutorPal Bot` incoming webhook was verified and stored as
+  `DISCORD_BETA_WEBHOOK_URL` on `tutorpal-api-dev`; its value never entered Git.
+- One explicitly approved development test message was confirmed by Discord.
+  No real beta-request data was sent.
+- Backend checks passed again: 386 tests, Biome, and API/reminder dry-runs.
+  The existing beta backend was then deployed to development. Health and beta
+  config return 200; beta is enabled and public signup remains closed.
+- Turnstile is still unconfigured. Request availability remains false and the
+  beta submission endpoint returns `503 BETA_REQUESTS_UNAVAILABLE`. Successful
+  end-to-end form delivery and real-token replay testing remain pending.
+
 ## Beta access — 14 November 2026
 
 The beta revision adds the shared backend mode, EN/TH demo-request form,
