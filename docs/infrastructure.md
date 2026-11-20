@@ -345,14 +345,15 @@ An absent pair disables that provider; an incomplete pair fails Worker
 configuration validation. The user frontend receives only boolean provider
 flags from <code>/v1/config</code>. Outside beta, new social sessions require
 verified email; an unverified LINE user must complete email verification before
-signing in again. Existing sessions remain valid. LINE enrollment from Account
-settings uses the server-side state/PKCE/nonce flow
+signing in again. Existing sessions remain valid. Google and LINE enrollment
+from Account settings uses the server-side state/PKCE/nonce flow
 with no OAuth token persistence.
 
 Register these exact callback URLs in the provider consoles, replacing
 <code>API_ORIGIN</code> with the deployed <code>BETTER_AUTH_URL</code>:
 
 - <code>API_ORIGIN/api/auth/callback/google</code>
+- <code>API_ORIGIN/v1/auth/social-accounts/google/callback</code>
 - <code>API_ORIGIN/api/auth/callback/line</code>
 - <code>API_ORIGIN/v1/auth/social-accounts/line/callback</code>
 
@@ -393,6 +394,7 @@ The current development Worker values in
 | <code>VITE_API_URL</code> | <code>https://dev.api.tutorpal.io</code> |
 | <code>BETA_ENABLED</code> | <code>true</code> |
 | <code>MARKETING_ORIGIN</code> | <code>https://dev.tutorpal.io</code> |
+| <code>TURNSTILE_SITE_KEY</code> | <code>0x4AAAAAAGKeMfsNCwqd26ZO</code> |
 
 The following non-secret Worker settings are also defined for the current
 environment:
@@ -440,9 +442,11 @@ their separate credentialed CORS policy. Locally, set
 <code>http://localhost:4321</code>); <code>127.0.0.1</code> and a different
 port are different origins and require an override.
 
-Development Discord setup was completed on November 20, 2026. Turnstile setup
-and production Discord setup remain pending. To configure delivery in an
-environment:
+Development Discord setup was completed on November 20, 2026. The development
+Turnstile widget, secret, and public site key are also configured and deployed.
+Fresh-token/replay validation is pending browser access through Cloudflare
+Access. Production setup remains
+pending. To configure delivery in an environment:
 
 1. Create a Turnstile widget for the environment's marketing hostname. Set
    <code>TURNSTILE_SITE_KEY</code> as an API variable and
@@ -473,10 +477,18 @@ Development verification on November 20, 2026:
 - The existing beta backend was deployed to development as version
   <code>52287c0b-bf23-42c8-99b3-31da31c3367e</code>. Health and beta config
   return 200, beta remains enabled, and public signup remains disabled.
-- The Discord secret survived deployment. Turnstile remains unconfigured, so
-  request availability is false and submissions return
-  <code>503 BETA_REQUESTS_UNAVAILABLE</code>. No successful form submission or
-  real-token replay test has been performed.
+- The Discord secret survived deployment. A managed development Turnstile
+  widget now allows <code>dev.tutorpal.io</code>, <code>localhost</code>, and
+  <code>127.0.0.1</code>. Its metadata and secret passed credential validation;
+  <code>TURNSTILE_SECRET_KEY</code> is stored only on the API Worker.
+- The public site key is deployed on API version
+  <code>ef20e25b-98ab-4dc8-94ab-46a4104f3c4b</code>. Health and beta config
+  return 200; <code>requestAvailable=true</code>, beta remains enabled, and
+  public signup remains disabled.
+- The existing beta marketing Worker is deployed as version
+  <code>c02f009e-c114-4111-88f9-3f2b8ff35d8b</code>. Browser authorization for
+  the development site's Cloudflare Access sign-in is still needed before a
+  successful real form submission and token replay rejection can be verified.
 
 For full launch, first verify provider credentials, email delivery, and callback
 URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config

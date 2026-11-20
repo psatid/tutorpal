@@ -75,8 +75,10 @@ the Discord notification. The team then emails the requester to arrange a demo
 and provisions their account through the admin portal. There is no newsletter
 checkbox or automatic account creation.
 
-The development Discord webhook was configured on November 20, 2026;
-Turnstile and production Discord setup remain pending, on the API. Until the
+The development Discord webhook and Turnstile credentials were configured on
+November 20, 2026. The public site key is active and the development API reports
+request availability. Real form/replay validation still needs authorized
+browser access through Cloudflare Access; production setup is pending. Until the
 public configuration reports request availability, the form shows an unavailable
 message. Success appears only after confirmed Discord delivery. Errors retain
 all entered values; each submission attempt resets the single-use Turnstile

@@ -1,5 +1,23 @@
 # Marketing verification
 
+## Development Turnstile setup — 20 November 2026
+
+- Created a managed widget for `dev.tutorpal.io`, `localhost`, and `127.0.0.1`.
+  Widget metadata and the secret passed credential validation.
+- Stored `TURNSTILE_SECRET_KEY` on `tutorpal-api-dev`; only the public
+  `TURNSTILE_SITE_KEY` is present in development Wrangler configuration.
+- The isolated committed baseline plus this config change passed 386 backend
+  tests and the full backend check. Marketing passed 68 tests, its build,
+  Worker type check, and development dry-run before deployment.
+- The API and existing beta marketing page are deployed. Health/config checks
+  return 200, the expected public site key is present, request availability is
+  true, beta remains enabled, and public signup remains closed.
+- Live fresh-token/replay/form-delivery validation remains pending: browser
+  observation was blocked at the development site's Cloudflare Access sign-in
+  origin, which requires user approval. No live challenge or form test is
+  claimed. The API still validates the exact marketing hostname and action
+  `beta_demo_request`.
+
 ## Development Discord setup — 20 November 2026
 
 - The `TutorPal Bot` incoming webhook was verified and stored as

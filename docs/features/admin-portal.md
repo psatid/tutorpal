@@ -109,7 +109,10 @@ return 404, unavailable delivery returns 503, failed verification returns
 submission, which would put its fields in the URL.
 
 Development Discord setup and a labeled test delivery were verified on
-November 20, 2026. Turnstile and production Discord setup remain pending.
+November 20, 2026. The development Turnstile widget, secret, and public site
+key are configured and deployed. Real form/replay validation remains pending
+browser authorization through the development site's Cloudflare Access gate.
+Production integration setup remains pending.
 Missing integration settings keep requests unavailable instead of accepting
 data silently. See
 [runtime configuration](../infrastructure.md#runtime-configuration-contract)
