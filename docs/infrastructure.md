@@ -345,14 +345,15 @@ An absent pair disables that provider; an incomplete pair fails Worker
 configuration validation. The user frontend receives only boolean provider
 flags from <code>/v1/config</code>. Outside beta, new social sessions require
 verified email; an unverified LINE user must complete email verification before
-signing in again. Existing sessions remain valid. LINE enrollment from Account
-settings uses the server-side state/PKCE/nonce flow
+signing in again. Existing sessions remain valid. Google and LINE enrollment
+from Account settings uses the server-side state/PKCE/nonce flow
 with no OAuth token persistence.
 
 Register these exact callback URLs in the provider consoles, replacing
 <code>API_ORIGIN</code> with the deployed <code>BETTER_AUTH_URL</code>:
 
 - <code>API_ORIGIN/api/auth/callback/google</code>
+- <code>API_ORIGIN/v1/auth/social-accounts/google/callback</code>
 - <code>API_ORIGIN/api/auth/callback/line</code>
 - <code>API_ORIGIN/v1/auth/social-accounts/line/callback</code>
 
