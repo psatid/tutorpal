@@ -77,8 +77,9 @@ checkbox or automatic account creation.
 
 The development Discord webhook and Turnstile credentials were configured on
 November 20, 2026. The public site key is active and the development API reports
-request availability. Real form/replay validation still needs authorized
-browser access through Cloudflare Access; production setup is pending. Until the
+request availability. The first real-token form test showed unavailable, and
+Cloudflare blocked the replay before the API; successful form delivery and
+server-side replay rejection remain unverified. Production setup is pending. Until the
 public configuration reports request availability, the form shows an unavailable
 message. Success appears only after confirmed Discord delivery. Errors retain
 all entered values; each submission attempt resets the single-use Turnstile

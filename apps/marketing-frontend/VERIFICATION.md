@@ -12,11 +12,16 @@
 - The API and existing beta marketing page are deployed. Health/config checks
   return 200, the expected public site key is present, request availability is
   true, beta remains enabled, and public signup remains closed.
-- Live fresh-token/replay/form-delivery validation remains pending: browser
-  observation was blocked at the development site's Cloudflare Access sign-in
-  origin, which requires user approval. No live challenge or form test is
-  claimed. The API still validates the exact marketing hostname and action
-  `beta_demo_request`.
+- After authorized Cloudflare Access sign-in, the real widget issued a token.
+  One approved labeled form request showed the unavailable state, so successful
+  end-to-end Discord delivery is not verified. The one approved token replay
+  received Cloudflare HTTP 403/error 1010 (browser-signature denial) before the
+  API; this does not establish replay rejection by Siteverify. No alternate
+  client or user-agent retry was used to bypass that denial.
+- Historical Worker-log access returned 403 with the current credentials.
+  Form delivery and server-side replay validation remain pending diagnosis.
+  The API still validates the exact marketing hostname and action
+  `beta_demo_request`; the short-lived captured client token was removed.
 
 ## Development Discord setup — 20 November 2026
 

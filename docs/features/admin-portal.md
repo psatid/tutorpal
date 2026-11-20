@@ -110,8 +110,9 @@ submission, which would put its fields in the URL.
 
 Development Discord setup and a labeled test delivery were verified on
 November 20, 2026. The development Turnstile widget, secret, and public site
-key are configured and deployed. Real form/replay validation remains pending
-browser authorization through the development site's Cloudflare Access gate.
+key are configured and deployed. The first real-token form test showed
+unavailable; Cloudflare blocked the replay before the API. Successful form
+delivery and server-side replay rejection remain unverified.
 Production integration setup remains pending.
 Missing integration settings keep requests unavailable instead of accepting
 data silently. See

@@ -444,9 +444,10 @@ port are different origins and require an override.
 
 Development Discord setup was completed on November 20, 2026. The development
 Turnstile widget, secret, and public site key are also configured and deployed.
-Fresh-token/replay validation is pending browser access through Cloudflare
-Access. Production setup remains
-pending. To configure delivery in an environment:
+The first real-token form test showed unavailable; Cloudflare blocked the
+replay before the API. Successful form delivery and server-side replay
+rejection remain unverified. Production setup remains pending. To configure
+delivery in an environment:
 
 1. Create a Turnstile widget for the environment's marketing hostname. Set
    <code>TURNSTILE_SITE_KEY</code> as an API variable and
@@ -486,9 +487,12 @@ Development verification on November 20, 2026:
   return 200; <code>requestAvailable=true</code>, beta remains enabled, and
   public signup remains disabled.
 - The existing beta marketing Worker is deployed as version
-  <code>c02f009e-c114-4111-88f9-3f2b8ff35d8b</code>. Browser authorization for
-  the development site's Cloudflare Access sign-in is still needed before a
-  successful real form submission and token replay rejection can be verified.
+  <code>c02f009e-c114-4111-88f9-3f2b8ff35d8b</code>. After authorized
+  Cloudflare Access sign-in, the real widget issued a token, but the approved
+  labeled form test showed unavailable. The approved replay received
+  Cloudflare HTTP 403/error 1010 before the API, so server-side replay
+  rejection is not verified. Historical Worker-log access also returned 403;
+  successful form delivery remains pending diagnosis.
 
 For full launch, first verify provider credentials, email delivery, and callback
 URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config
