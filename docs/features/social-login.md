@@ -20,6 +20,10 @@ when beta mode is turned off.
 - Google account linking follows Better Auth's same-email account-linking
   policy. Different email addresses are not accepted, and no trusted-provider
   bypass is configured.
+- Existing tutors can also use **Connect Google** at `/settings/account`
+  without logging out. Google must return a verified email matching the
+  TutorPal email. Connecting preserves the current account, session, data,
+  and password sign-in.
 - LINE can be connected after password or Google sign-in from
   `/settings/account`. LINE messaging credentials are managed separately at
   `/integrations/line`; `/settings/line` redirects there for compatibility.
@@ -42,6 +46,8 @@ Register the following backend URLs in the provider consoles, replacing
 `API_ORIGIN` with the exact value of `BETTER_AUTH_URL`:
 
 - Google sign-in: `API_ORIGIN/api/auth/callback/google`
+- Google enrollment from Account settings:
+  `API_ORIGIN/v1/auth/social-accounts/google/callback`
 - LINE sign-in for an already-linked account: `API_ORIGIN/api/auth/callback/line`
 - LINE enrollment from Account settings:
   `API_ORIGIN/v1/auth/social-accounts/line/callback`
@@ -49,7 +55,21 @@ Register the following backend URLs in the provider consoles, replacing
 The existing student LINE-link flow is separate and continues to use
 `API_ORIGIN/v1/line/callback` through `LINE_LINK_REDIRECT_URL`.
 
-## LINE enrollment safeguards
+## Account settings enrollment safeguards
+
+Connect Google starts at authenticated
+`POST /v1/auth/social-accounts/google/authorization`, which returns an
+`authorizationUrl`. The public Google callback uses a one-time, ten-minute
+state tied to the initiating tutor, PKCE, and an OIDC nonce. Better Auth's
+Google provider verifies the ID token before the server accepts its identity
+and verified-email claim. The callback rechecks tutor eligibility and requires
+an exact normalized email match. Impersonated sessions cannot start enrollment.
+
+Google identities are matched by both provider and provider account ID.
+Connecting an identity already linked to the same tutor is harmless; an
+identity owned by another user cannot be reassigned. No replacement user or
+session is created, and OAuth tokens are not stored. Account settings refetches
+linked methods before showing success and clears callback results from the URL.
 
 The Account settings Connect LINE action uses an authenticated server-side
 flow with a one-time, ten-minute state value, PKCE, and an OIDC nonce. The
@@ -61,6 +81,12 @@ The callback always redirects to the fixed Account settings result page with a
 generic success or error state. OAuth access, refresh, and ID tokens are not
 persisted. Better Auth's alternate `/api/auth/link-social` endpoint is
 disabled so it cannot bypass this enrollment flow.
+
+Register the additional Google enrollment callback alongside the existing
+Google sign-in callback before rolling out Connect Google. The Google
+enrollment addition requires no new environment variables, dependencies, or
+database migration; the existing provider identity constraint must already
+be applied.
 
 ## Database rollout
 
@@ -86,7 +112,9 @@ schema changes.
 3. Run the production migration and the API/Pages dry-run checks.
 4. Confirm `/v1/config` reports only the deliberately enabled provider flags.
 5. Test an existing tutor's email/password sign-in, Google sign-in, LINE
-   sign-in, and Account settings LINE enrollment.
+   sign-in, and Account settings Google and LINE enrollment. Confirm that
+   Connect Google rejects a different or unverified email and preserves
+   password sign-in and the original tutor account.
 6. In beta, confirm an unlinked social identity cannot create an account.
    Outside beta, check email, Google, and LINE registration, including LINE
    email verification and resend recovery. Ineligible accounts retain generic

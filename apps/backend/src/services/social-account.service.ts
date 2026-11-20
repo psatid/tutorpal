@@ -1,7 +1,11 @@
+import { google } from "better-auth/social-providers";
 import type { AppConfig } from "../lib/app-config";
 import { DateTime } from "../lib/date-time";
 import { AppError } from "../lib/error";
-import { getLineEnrollmentIdentifier } from "../repositories/social-account.repository";
+import {
+	getGoogleEnrollmentIdentifier,
+	getLineEnrollmentIdentifier,
+} from "../repositories/social-account.repository";
 import type { EligibleTutorUser, ISocialAccountRepository } from "../types";
 
 const LINE_AUTHORIZATION_ENDPOINT =
@@ -10,6 +14,7 @@ const LINE_TOKEN_ENDPOINT = "https://api.line.me/oauth2/v2.1/token";
 const LINE_VERIFY_ID_TOKEN_ENDPOINT = "https://api.line.me/oauth2/v2.1/verify";
 const LINE_ID_TOKEN_ISSUER = "https://access.line.me";
 const LINE_ENROLLMENT_STATE_TTL_MINUTES = 10;
+const GOOGLE_ENROLLMENT_STATE_TTL_MINUTES = 10;
 const MAX_CALLBACK_VALUE_LENGTH = 8_192;
 
 type LineEnrollmentState = {
@@ -87,6 +92,13 @@ function invalidLineEnrollment() {
 	);
 }
 
+function invalidGoogleEnrollment() {
+	return AppError.badRequest(
+		"GOOGLE_ENROLLMENT_INVALID",
+		"Google account enrollment could not be completed.",
+	);
+}
+
 export class SocialAccountService {
 	constructor(
 		private readonly repository: ISocialAccountRepository,
@@ -98,6 +110,20 @@ export class SocialAccountService {
 			"/v1/auth/social-accounts/line/callback",
 			this.config.BETTER_AUTH_URL,
 		).toString();
+	}
+
+	private get googleCallbackUrl() {
+		return new URL(
+			"/v1/auth/social-accounts/google/callback",
+			this.config.BETTER_AUTH_URL,
+		).toString();
+	}
+
+	private getGoogleProvider() {
+		return google({
+			clientId: this.config.GOOGLE_CLIENT_ID,
+			clientSecret: this.config.GOOGLE_CLIENT_SECRET,
+		});
 	}
 
 	async startLineEnrollment(input: {
@@ -209,6 +235,145 @@ export class SocialAccountService {
 			throw AppError.conflict(
 				"LINE_SOCIAL_ACCOUNT_CONFLICT",
 				"This LINE account is already linked to another TutorPal account.",
+			);
+		}
+	}
+
+	async startGoogleEnrollment(input: {
+		userId: string;
+		impersonatedBy: unknown;
+	}) {
+		if (!this.config.SOCIAL_LOGIN.google) {
+			throw AppError.notFound(
+				"GOOGLE_SOCIAL_LOGIN_UNAVAILABLE",
+				"Google sign-in is not configured.",
+			);
+		}
+		if (input.impersonatedBy !== null && input.impersonatedBy !== undefined) {
+			throw AppError.forbidden(
+				"IMPERSONATION_NOT_ALLOWED",
+				"Google account enrollment is unavailable while impersonating.",
+			);
+		}
+
+		const user = await this.repository.findEligibleTutorUser(input.userId);
+		if (!isEligibleTutor(user)) {
+			throw AppError.forbidden(
+				"SOCIAL_ACCOUNT_ENROLLMENT_FORBIDDEN",
+				"Google account enrollment is available to active tutors only.",
+			);
+		}
+
+		const state = createRandomValue();
+		const codeVerifier = createRandomValue();
+		const nonce = createRandomValue();
+		await this.repository.createGoogleEnrollmentState({
+			state,
+			identifier: getGoogleEnrollmentIdentifier(user.id),
+			value: JSON.stringify({ userId: user.id, codeVerifier, nonce }),
+			expiresAt: DateTime.now()
+				.addMinutes(GOOGLE_ENROLLMENT_STATE_TTL_MINUTES)
+				.toDate(),
+		});
+
+		let authorizationUrl: URL;
+		try {
+			authorizationUrl = await this.getGoogleProvider().createAuthorizationURL({
+				state,
+				codeVerifier,
+				redirectURI: this.googleCallbackUrl,
+			});
+		} catch {
+			throw AppError.badGateway(
+				"GOOGLE_AUTHORIZATION_UNAVAILABLE",
+				"Google account enrollment is temporarily unavailable.",
+			);
+		}
+		authorizationUrl.searchParams.set("nonce", nonce);
+		return { authorizationUrl: authorizationUrl.toString() };
+	}
+
+	async completeGoogleEnrollment(input: { code?: string; state?: string }) {
+		if (
+			typeof input.code !== "string" ||
+			typeof input.state !== "string" ||
+			input.code.length === 0 ||
+			input.state.length === 0 ||
+			input.code.length > MAX_CALLBACK_VALUE_LENGTH ||
+			input.state.length > MAX_CALLBACK_VALUE_LENGTH
+		) {
+			throw invalidGoogleEnrollment();
+		}
+
+		const storedState = await this.repository.consumeGoogleEnrollmentState(
+			input.state,
+		);
+		const enrollmentState = storedState
+			? parseEnrollmentState(storedState.value)
+			: null;
+		if (
+			!storedState ||
+			!enrollmentState ||
+			storedState.identifier !==
+				getGoogleEnrollmentIdentifier(enrollmentState.userId)
+		) {
+			throw invalidGoogleEnrollment();
+		}
+
+		const provider = this.getGoogleProvider();
+		let tokens: Awaited<
+			ReturnType<ReturnType<typeof google>["validateAuthorizationCode"]>
+		>;
+		try {
+			tokens = await provider.validateAuthorizationCode({
+				code: input.code,
+				codeVerifier: enrollmentState.codeVerifier,
+				redirectURI: this.googleCallbackUrl,
+			});
+		} catch {
+			throw AppError.badGateway(
+				"GOOGLE_AUTHORIZATION_UNAVAILABLE",
+				"Google account enrollment is temporarily unavailable.",
+			);
+		}
+		if (
+			typeof tokens.idToken !== "string" ||
+			!(await provider.verifyIdToken(tokens.idToken, enrollmentState.nonce))
+		) {
+			throw invalidGoogleEnrollment();
+		}
+
+		const googleIdentity = await provider.getUserInfo(tokens);
+		if (
+			!googleIdentity ||
+			typeof googleIdentity.user.id !== "string" ||
+			googleIdentity.user.id.trim() === "" ||
+			typeof googleIdentity.user.email !== "string" ||
+			googleIdentity.user.email.trim() === "" ||
+			googleIdentity.user.emailVerified !== true
+		) {
+			throw invalidGoogleEnrollment();
+		}
+
+		const user = await this.repository.findEligibleTutorUser(
+			enrollmentState.userId,
+		);
+		if (
+			!isEligibleTutor(user) ||
+			normalizeEmail(user.email) === "" ||
+			normalizeEmail(user.email) !== normalizeEmail(googleIdentity.user.email)
+		) {
+			throw invalidGoogleEnrollment();
+		}
+
+		const accountResult = await this.repository.createGoogleAccount(
+			user.id,
+			googleIdentity.user.id.trim(),
+		);
+		if (accountResult === "linked-to-another-user") {
+			throw AppError.conflict(
+				"GOOGLE_SOCIAL_ACCOUNT_CONFLICT",
+				"This Google account is already linked to another TutorPal account.",
 			);
 		}
 	}

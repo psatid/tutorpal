@@ -4,10 +4,12 @@ import { prisma as defaultPrisma } from "../lib/db";
 import type {
 	EligibleTutorUser,
 	ISocialAccountRepository,
+	StoredGoogleEnrollmentState,
 	StoredLineEnrollmentState,
 } from "../types";
 
 const LINE_ENROLLMENT_IDENTIFIER_PREFIX = "social-account:line:enrollment:";
+const GOOGLE_ENROLLMENT_IDENTIFIER_PREFIX = "social-account:google:enrollment:";
 
 function isUniqueConstraintError(error: unknown) {
 	return (
@@ -20,6 +22,10 @@ function isUniqueConstraintError(error: unknown) {
 
 export function getLineEnrollmentIdentifier(userId: string) {
 	return `${LINE_ENROLLMENT_IDENTIFIER_PREFIX}${userId}`;
+}
+
+export function getGoogleEnrollmentIdentifier(userId: string) {
+	return `${GOOGLE_ENROLLMENT_IDENTIFIER_PREFIX}${userId}`;
 }
 
 export class SocialAccountRepository implements ISocialAccountRepository {
@@ -87,10 +93,64 @@ export class SocialAccountRepository implements ISocialAccountRepository {
 	}
 
 	async createLineAccount(userId: string, accountId: string) {
+		return this.createProviderAccount("line", userId, accountId);
+	}
+
+	async createGoogleEnrollmentState(input: {
+		state: string;
+		identifier: string;
+		value: string;
+		expiresAt: Date;
+	}): Promise<void> {
+		await this.prisma.verification.create({
+			data: {
+				id: input.state,
+				identifier: input.identifier,
+				value: input.value,
+				expiresAt: input.expiresAt,
+			},
+		});
+	}
+
+	async consumeGoogleEnrollmentState(
+		state: string,
+	): Promise<StoredGoogleEnrollmentState | null> {
+		return this.prisma.$transaction(async (tx) => {
+			const verification = await tx.verification.findUnique({
+				where: { id: state },
+				select: { identifier: true, value: true },
+			});
+			if (
+				!verification ||
+				!verification.identifier.startsWith(GOOGLE_ENROLLMENT_IDENTIFIER_PREFIX)
+			) {
+				return null;
+			}
+
+			const consumed = await tx.verification.deleteMany({
+				where: {
+					id: state,
+					identifier: verification.identifier,
+					expiresAt: { gt: DateTime.now().toDate() },
+				},
+			});
+			return consumed.count === 1 ? verification : null;
+		});
+	}
+
+	async createGoogleAccount(userId: string, accountId: string) {
+		return this.createProviderAccount("google", userId, accountId);
+	}
+
+	private async createProviderAccount(
+		providerId: "google" | "line",
+		userId: string,
+		accountId: string,
+	) {
 		try {
 			return await this.prisma.$transaction(async (tx) => {
 				const existingAccount = await tx.account.findFirst({
-					where: { providerId: "line", accountId },
+					where: { providerId, accountId },
 					select: { userId: true },
 				});
 				if (existingAccount) {
@@ -102,7 +162,7 @@ export class SocialAccountRepository implements ISocialAccountRepository {
 				await tx.account.create({
 					data: {
 						id: crypto.randomUUID(),
-						providerId: "line",
+						providerId,
 						accountId,
 						userId,
 					},
@@ -115,7 +175,7 @@ export class SocialAccountRepository implements ISocialAccountRepository {
 			}
 
 			const existingAccount = await this.prisma.account.findFirst({
-				where: { providerId: "line", accountId },
+				where: { providerId, accountId },
 				select: { userId: true },
 			});
 			return existingAccount?.userId === userId

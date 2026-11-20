@@ -209,12 +209,20 @@ Register these exact provider callback URLs, using the deployed
 `BETTER_AUTH_URL` as the API origin:
 
 - Google: `<BETTER_AUTH_URL>/api/auth/callback/google`
+- Google Account enrollment: `<BETTER_AUTH_URL>/v1/auth/social-accounts/google/callback`
 - LINE linked-account sign-in: `<BETTER_AUTH_URL>/api/auth/callback/line`
 - LINE Account enrollment: `<BETTER_AUTH_URL>/v1/auth/social-accounts/line/callback`
 
 The user portal exposes social actions only when the server's `/v1/config`
-response enables them. Account settings uses the controlled LINE enrollment
-endpoint. `/integrations/line` is the canonical LINE Messaging API integration
+response enables them. Account settings uses controlled Google and LINE enrollment
+endpoints. Google enrollment starts at authenticated
+`POST /v1/auth/social-accounts/google/authorization` and completes at the public,
+state-authorized callback above. It requires Google's verified email to match
+the initiating active tutor, blocks impersonation, and stores only the provider
+identity, preserving password sign-in and the current session. Keep both Google
+callback URLs registered. The native `/api/auth/link-social` endpoint remains
+disabled. See [social login](../../docs/features/social-login.md) for safeguards.
+`/integrations/line` is the canonical LINE Messaging API integration
 screen; `/settings/line` redirects there for compatibility. Run
 `make db-migrate-deploy-production` before first production enablement so the
 provider identity uniqueness migration has been applied.

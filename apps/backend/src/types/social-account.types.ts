@@ -11,6 +11,8 @@ export type StoredLineEnrollmentState = {
 	value: string;
 };
 
+export type StoredGoogleEnrollmentState = StoredLineEnrollmentState;
+
 export interface ISocialAccountRepository {
 	findEligibleTutorUser(userId: string): Promise<EligibleTutorUser | null>;
 	createLineEnrollmentState(input: {
@@ -23,6 +25,19 @@ export interface ISocialAccountRepository {
 		state: string,
 	): Promise<StoredLineEnrollmentState | null>;
 	createLineAccount(
+		userId: string,
+		accountId: string,
+	): Promise<"created" | "already-linked" | "linked-to-another-user">;
+	createGoogleEnrollmentState(input: {
+		state: string;
+		identifier: string;
+		value: string;
+		expiresAt: Date;
+	}): Promise<void>;
+	consumeGoogleEnrollmentState(
+		state: string,
+	): Promise<StoredGoogleEnrollmentState | null>;
+	createGoogleAccount(
 		userId: string,
 		accountId: string,
 	): Promise<"created" | "already-linked" | "linked-to-another-user">;
