@@ -23,7 +23,18 @@ export default {
     },
     google: {
       title: "Google",
-      description: "Sign in with the Google account linked to TutorPal.",
+      description:
+        "Use a Google account with the same verified email address as your TutorPal account.",
+      connect: "Connect Google",
+      connecting: "Connecting Google…",
+      checking: "Checking Google sign-in availability…",
+      unavailable: "Google sign-in is unavailable right now.",
+      availabilityError:
+        "We couldn't check Google sign-in availability. Please try again.",
+      retryAvailability: "Retry",
+      connected: "Google is connected to your account.",
+      connectFailed: "We couldn't connect Google. Please try again.",
+      notReflected: "Google wasn't connected. Please try again.",
     },
     line: {
       title: "LINE",

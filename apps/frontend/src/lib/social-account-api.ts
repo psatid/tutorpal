@@ -1,7 +1,9 @@
 import { isAxiosError } from "axios";
+import type { PostV1AuthSocialAccountsGoogleAuthorization200 } from "@/api/generated/models/postV1AuthSocialAccountsGoogleAuthorization200";
 import type { PostV1AuthSocialAccountsLineAuthorization200 } from "@/api/generated/models/postV1AuthSocialAccountsLineAuthorization200";
 import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/lib/api-client";
+import { validateGoogleAuthorizationUrl } from "@/lib/google-authorization-url";
 import { validateLineAuthorizationUrl } from "@/lib/line-authorization-url";
 
 export type SocialAccountStatus = {
@@ -13,6 +15,17 @@ export type SocialAccountStatus = {
 function isLineAuthorizationResponse(
   value: unknown,
 ): value is PostV1AuthSocialAccountsLineAuthorization200 {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "authorizationUrl" in value &&
+    typeof value.authorizationUrl === "string"
+  );
+}
+
+function isGoogleAuthorizationResponse(
+  value: unknown,
+): value is PostV1AuthSocialAccountsGoogleAuthorization200 {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -57,4 +70,26 @@ export async function startLineAuthorization(): Promise<string> {
   }
 
   return validateLineAuthorizationUrl(payload.authorizationUrl);
+}
+
+export async function startGoogleAuthorization(): Promise<string> {
+  let payload: unknown;
+
+  try {
+    const response =
+      await apiClient.postV1AuthSocialAccountsGoogleAuthorization();
+    payload = response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      throw new Error("Unable to start Google authorization");
+    }
+
+    throw error;
+  }
+
+  if (!isGoogleAuthorizationResponse(payload)) {
+    throw new Error("Invalid Google authorization response");
+  }
+
+  return validateGoogleAuthorizationUrl(payload.authorizationUrl);
 }

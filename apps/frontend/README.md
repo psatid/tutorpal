@@ -54,7 +54,11 @@ email/password as the primary path and shows only the providers explicitly
 enabled by the server.
 
 Existing tutors can review linked sign-in methods at `/settings/account`.
-Connect LINE there after signing in with password or Google. Messaging
+Connect Google there without logging out, using a Google account whose verified
+email matches the TutorPal email. The existing account, data, and password
+sign-in remain available. The screen confirms the actual linked status after
+authorization and shows availability, loading, and recovery states in English
+and Thai. Connect LINE there after signing in with password or Google. Messaging
 integrations live at `/integrations`; `/integrations/line` manages a tutor's
 LINE Official Account Messaging API credentials and remains separate from LINE
 sign-in. `/settings/line` redirects to the canonical integration route and

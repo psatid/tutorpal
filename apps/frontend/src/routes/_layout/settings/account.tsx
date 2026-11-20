@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { AccountSettingsScreen } from "@/screens/account-settings-screen";
 
 const accountSettingsSearch = z.object({
+  google: z.enum(["connected", "error"]).optional(),
   line: z.enum(["connected", "error"]).optional(),
 });
 
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_layout/settings/account")({
 function AccountSettingsRoute() {
   const navigate = useNavigate();
   const { isImpersonating } = useAuth();
-  const { line } = Route.useSearch();
+  const { google, line } = Route.useSearch();
 
   useEffect(() => {
     if (isImpersonating) {
@@ -33,6 +34,7 @@ function AccountSettingsRoute() {
   return (
     <ScreenLayout>
       <AccountSettingsScreen
+        googleCallback={google}
         lineCallback={line}
         onCallbackHandled={() =>
           void navigate({ to: APP_ROUTES.ACCOUNT_SETTINGS, replace: true })

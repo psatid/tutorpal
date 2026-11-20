@@ -26,7 +26,18 @@ const th = {
     },
     google: {
       title: "Google",
-      description: "เข้าสู่ระบบด้วยบัญชี Google ที่เชื่อมต่อกับ TutorPal",
+      description:
+        "ใช้บัญชี Google ที่มีอีเมลยืนยันแล้วตรงกับอีเมลในบัญชี TutorPal ของคุณ",
+      connect: "เชื่อมต่อ Google",
+      connecting: "กำลังเชื่อมต่อ Google…",
+      checking: "กำลังตรวจสอบความพร้อมใช้งานของการเข้าสู่ระบบด้วย Google…",
+      unavailable: "การเข้าสู่ระบบด้วย Google ยังไม่พร้อมใช้งานในขณะนี้",
+      availabilityError:
+        "ไม่สามารถตรวจสอบความพร้อมใช้งานของการเข้าสู่ระบบด้วย Google ได้ กรุณาลองอีกครั้ง",
+      retryAvailability: "ลองอีกครั้ง",
+      connected: "เชื่อมต่อ Google กับบัญชีของคุณแล้ว",
+      connectFailed: "ไม่สามารถเชื่อมต่อ Google ได้ กรุณาลองอีกครั้ง",
+      notReflected: "ยังไม่ได้เชื่อมต่อ Google กรุณาลองอีกครั้ง",
     },
     line: {
       title: "LINE",

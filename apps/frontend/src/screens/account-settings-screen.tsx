@@ -9,12 +9,14 @@ import { toast } from "sonner";
 import { Button } from "@tutorpal/ui/button";
 import { Skeleton } from "@tutorpal/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
+import { useStartGoogleAuthorization } from "@/hooks/mutations/use-start-google-authorization";
 import { useStartLineAuthorization } from "@/hooks/mutations/use-start-line-authorization";
 import { useSocialAccountStatus } from "@/hooks/queries/use-social-account-status";
 import type { SocialAccountStatus } from "@/lib/social-account-api";
 import { usePublicConfig } from "@/lib/public-config";
 
 type AccountSettingsScreenProps = {
+  googleCallback?: "connected" | "error";
   lineCallback?: "connected" | "error";
   onCallbackHandled: () => void;
 };
@@ -110,23 +112,39 @@ function MethodRow({ icon, title, description, linked, action }: MethodRowProps)
 
 function AccountMethods({
   accounts,
+  canConnectGoogle,
   canConnectLine,
+  isGoogleLoginEnabled,
+  isGoogleLoginChecking,
+  isGoogleLoginConfigError,
   isLineLoginEnabled,
   isLineLoginChecking,
   isLineLoginConfigError,
+  isRetryingGoogleLoginConfig,
   isRetryingLineLoginConfig,
-  isConnecting,
+  isConnectingGoogle,
+  isConnectingLine,
+  onConnectGoogle,
   onConnectLine,
+  onRetryGoogleLoginConfig,
   onRetryLineLoginConfig,
 }: {
   accounts: SocialAccountStatus;
+  canConnectGoogle: boolean;
   canConnectLine: boolean;
+  isGoogleLoginEnabled: boolean;
+  isGoogleLoginChecking: boolean;
+  isGoogleLoginConfigError: boolean;
   isLineLoginEnabled: boolean;
   isLineLoginChecking: boolean;
   isLineLoginConfigError: boolean;
+  isRetryingGoogleLoginConfig: boolean;
   isRetryingLineLoginConfig: boolean;
-  isConnecting: boolean;
+  isConnectingGoogle: boolean;
+  isConnectingLine: boolean;
+  onConnectGoogle: () => void;
   onConnectLine: () => void;
+  onRetryGoogleLoginConfig: () => void;
   onRetryLineLoginConfig: () => void;
 }) {
   const { t } = useTranslation("settings");
@@ -152,6 +170,50 @@ function AccountMethods({
           title={t("account.google.title")}
           description={t("account.google.description")}
           linked={accounts.google}
+          action={
+            accounts.google ? undefined : (
+              isGoogleLoginChecking && canConnectGoogle ? (
+                <p
+                  aria-live="polite"
+                  className="text-sm text-muted-foreground sm:text-right"
+                  role="status"
+                >
+                  {t("account.google.checking")}
+                </p>
+              ) : isGoogleLoginConfigError && canConnectGoogle ? (
+                <div className="space-y-2 sm:text-right" role="alert">
+                  <p className="text-sm text-muted-foreground">
+                    {t("account.google.availabilityError")}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    loading={isRetryingGoogleLoginConfig}
+                    onClick={onRetryGoogleLoginConfig}
+                  >
+                    {t("account.google.retryAvailability")}
+                  </Button>
+                </div>
+              ) : isGoogleLoginEnabled && canConnectGoogle ? (
+                <Button
+                  aria-busy={isConnectingGoogle}
+                  className="w-full sm:w-auto"
+                  disabled={isConnectingLine}
+                  loading={isConnectingGoogle}
+                  onClick={onConnectGoogle}
+                  type="button"
+                >
+                  {isConnectingGoogle
+                    ? t("account.google.connecting")
+                    : t("account.google.connect")}
+                </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground sm:text-right">
+                  {t("account.google.unavailable")}
+                </p>
+              )
+            )
+          }
         />
         <div className="border-t border-border" />
         <MethodRow
@@ -185,12 +247,14 @@ function AccountMethods({
                 </div>
               ) : isLineLoginEnabled && canConnectLine ? (
                 <Button
-                  aria-busy={isConnecting}
+                  aria-busy={isConnectingLine}
                   className="w-full sm:w-auto"
-                  loading={isConnecting}
+                  disabled={isConnectingGoogle}
+                  loading={isConnectingLine}
                   onClick={onConnectLine}
+                  type="button"
                 >
-                  {isConnecting
+                  {isConnectingLine
                     ? t("account.line.connecting")
                     : t("account.line.connect")}
                 </Button>
@@ -208,6 +272,7 @@ function AccountMethods({
 }
 
 export function AccountSettingsScreen({
+  googleCallback,
   lineCallback,
   onCallbackHandled,
 }: AccountSettingsScreenProps) {
@@ -224,13 +289,34 @@ export function AccountSettingsScreen({
   const isPublicConfigChecking =
     !isPublicConfigError &&
     (isPublicConfigPending || isPublicConfigFetching || isPublicConfigStale);
-  const canConnectLine =
+  const canConnectSocial =
     session !== null && user?.role === "user" && !isImpersonating;
+  const callbackProvider = googleCallback ? "google" : lineCallback ? "line" : undefined;
+  const callbackResult = googleCallback ?? lineCallback;
+  const callbackKey = callbackProvider
+    ? `${callbackProvider}:${callbackResult}`
+    : undefined;
   const handledCallback = useRef<string | undefined>(undefined);
   const accounts = useSocialAccountStatus();
+  const connectGoogle = useStartGoogleAuthorization();
   const connectLine = useStartLineAuthorization();
 
+  const handleConnectGoogle = () => {
+    if (connectLine.isPending) {
+      return;
+    }
+
+    connectGoogle.mutate(undefined, {
+      onSuccess: (authorizationUrl) => window.location.assign(authorizationUrl),
+      onError: () => toast.error(t("account.google.connectFailed")),
+    });
+  };
+
   const handleConnectLine = () => {
+    if (connectGoogle.isPending) {
+      return;
+    }
+
     connectLine.mutate(undefined, {
       onSuccess: (authorizationUrl) => window.location.assign(authorizationUrl),
       onError: () => toast.error(t("account.line.connectFailed")),
@@ -238,28 +324,62 @@ export function AccountSettingsScreen({
   };
 
   useEffect(() => {
-    if (!lineCallback || handledCallback.current === lineCallback) {
+    if (
+      !callbackProvider ||
+      !callbackResult ||
+      handledCallback.current === callbackKey
+    ) {
       return;
     }
 
-    handledCallback.current = lineCallback;
+    handledCallback.current = callbackKey;
 
     const handleCallback = async () => {
-      const result = await accounts.refetch();
+      const messages =
+        callbackProvider === "google"
+          ? {
+              connected: t("account.google.connected"),
+              connectFailed: t("account.google.connectFailed"),
+              notReflected: t("account.google.notReflected"),
+            }
+          : {
+              connected: t("account.line.connected"),
+              connectFailed: t("account.line.connectFailed"),
+              notReflected: t("account.line.notReflected"),
+            };
 
-      if (lineCallback === "connected" && result.data?.line) {
-        toast.success(t("account.line.connected"));
-      } else if (lineCallback === "connected") {
-        toast.error(t("account.line.notReflected"));
-      } else {
-        toast.error(t("account.line.connectFailed"));
+      try {
+        const result = await accounts.refetch();
+
+        if (
+          !result.isError &&
+          callbackResult === "connected" &&
+          result.data?.[callbackProvider]
+        ) {
+          toast.success(messages.connected);
+        } else if (result.isError) {
+          toast.error(messages.connectFailed);
+        } else if (callbackResult === "connected") {
+          toast.error(messages.notReflected);
+        } else {
+          toast.error(messages.connectFailed);
+        }
+      } catch {
+        toast.error(messages.connectFailed);
+      } finally {
+        onCallbackHandled();
       }
-
-      onCallbackHandled();
     };
 
     void handleCallback();
-  }, [accounts, lineCallback, onCallbackHandled, t]);
+  }, [
+    accounts,
+    callbackKey,
+    callbackProvider,
+    callbackResult,
+    onCallbackHandled,
+    t,
+  ]);
 
   return (
     <section className="mx-auto w-full max-w-2xl pb-8">
@@ -293,13 +413,21 @@ export function AccountSettingsScreen({
       {accounts.data ? (
         <AccountMethods
           accounts={accounts.data}
-          canConnectLine={canConnectLine}
+          canConnectGoogle={canConnectSocial}
+          canConnectLine={canConnectSocial}
+          isGoogleLoginEnabled={socialLogin.google}
+          isGoogleLoginChecking={isPublicConfigChecking}
+          isGoogleLoginConfigError={isPublicConfigError}
           isLineLoginEnabled={socialLogin.line}
           isLineLoginChecking={isPublicConfigChecking}
           isLineLoginConfigError={isPublicConfigError}
+          isRetryingGoogleLoginConfig={isPublicConfigFetching}
           isRetryingLineLoginConfig={isPublicConfigFetching}
-          isConnecting={connectLine.isPending}
+          isConnectingGoogle={connectGoogle.isPending}
+          isConnectingLine={connectLine.isPending}
+          onConnectGoogle={handleConnectGoogle}
           onConnectLine={handleConnectLine}
+          onRetryGoogleLoginConfig={() => void refetchPublicConfig()}
           onRetryLineLoginConfig={() => void refetchPublicConfig()}
         />
       ) : null}
