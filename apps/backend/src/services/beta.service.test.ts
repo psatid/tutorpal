@@ -152,6 +152,42 @@ describe("BetaService", () => {
 		expect(JSON.stringify(payload)).not.toContain("turnstile-token");
 	});
 
+	test("calls an unbound fetch implementation for verification and Discord confirmation", async () => {
+		const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+		const receivers: unknown[] = [];
+		const fetchFn: typeof fetch = async function (
+			this: undefined,
+			input: RequestInfo | URL,
+			init?: RequestInit,
+		) {
+			receivers.push(this);
+			expect(this).toBeUndefined();
+			calls.push({ input, init });
+
+			if (String(input) === turnstileUrl) {
+				return new Response(
+					JSON.stringify({
+						success: true,
+						action: "beta_demo_request",
+						hostname: "marketing.example.com",
+					}),
+				);
+			}
+
+			return confirmedDiscordResponse();
+		};
+
+		await expect(
+			new BetaService(createConfig(), fetchFn).submitRequest(validRequest()),
+		).resolves.toEqual({ status: "accepted" });
+
+		expect(receivers).toEqual([undefined, undefined]);
+		expect(calls.map(({ input }) => String(input))).toEqual([
+			turnstileUrl,
+			`${discordUrl}?wait=true`,
+		]);
+	});
+
 	test.each([
 		[
 			"rejected token",

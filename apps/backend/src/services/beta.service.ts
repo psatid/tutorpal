@@ -77,10 +77,14 @@ function toDiscordPayload(request: BetaRequest) {
 }
 
 export class BetaService {
+	private readonly fetchFn: Fetch;
+
 	constructor(
 		private readonly config: AppConfig,
-		private readonly fetchFn: Fetch = fetch,
-	) {}
+		fetchFn: Fetch = fetch,
+	) {
+		this.fetchFn = (...args) => fetchFn(...args);
+	}
 
 	getPublicConfig() {
 		return {

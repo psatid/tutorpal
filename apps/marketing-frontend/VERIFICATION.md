@@ -1,5 +1,28 @@
 # Marketing verification
 
+## Development beta runtime diagnosis — 21 November 2026
+
+- After the user completed Cloudflare Access verification, a second approved
+  labeled beta form submission reproduced the unavailable state. Live Worker
+  logs confirmed HTTP 503 / `BETA_REQUESTS_UNAVAILABLE` with `durationMs=0`.
+- Public configuration continued to report request availability, and both
+  integration secret bindings were present. No secret values were logged.
+- A local Workerd probe reproduced an `Illegal invocation` when native `fetch`
+  was stored as an object property and called with the service as its receiver.
+  Direct and wrapped calls, plus `AbortSignal.timeout`, succeeded locally.
+- `BetaService` now wraps the injected fetch dependency once at construction,
+  so Turnstile and Discord both call it without an incorrect receiver. The
+  request contract, exact hostname/action checks, timeouts, and delivery
+  confirmation rules are unchanged. See Cloudflare's
+  [runtime receiver guidance](https://developers.cloudflare.com/workers/observability/errors/#illegal-invocation-errors).
+- The receiver-sensitive regression failed against the original constructor
+  and passed with the wrapper. All 21 focused beta service/route tests pass;
+  the isolated deployment baseline also passes backend format and both Worker
+  dry-runs. Final backend review found no P0–P3 issues.
+- The runtime fix still needs deployment and an authorized successful live
+  submission before end-to-end delivery can be claimed. Server-side token
+  replay rejection also remains unverified.
+
 ## Development Turnstile setup — 20 November 2026
 
 - Created a managed widget for `dev.tutorpal.io`, `localhost`, and `127.0.0.1`.

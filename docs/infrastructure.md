@@ -494,6 +494,14 @@ Development verification on November 20, 2026:
   rejection is not verified. Historical Worker-log access also returned 403;
   successful form delivery remains pending diagnosis.
 
+On November 21, a second authorized form test again showed unavailable. Live
+Worker logs confirmed HTTP 503 with zero elapsed milliseconds while public
+configuration remained available. A local Workerd probe identified an
+incorrect receiver when invoking a stored native <code>fetch</code> function.
+The service now wraps that dependency before either outbound call. Successful
+live delivery and server-side replay rejection remain unverified until the
+runtime fix is deployed and validated.
+
 For full launch, first verify provider credentials, email delivery, and callback
 URLs. Change <code>BETA_ENABLED=false</code> in the target API Wrangler config
 and redeploy the API. Marketing resolves the new mode at its next navigation,
