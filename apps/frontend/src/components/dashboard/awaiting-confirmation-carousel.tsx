@@ -190,9 +190,7 @@ export function AwaitingConfirmationCarousel({
     }
   };
 
-  const handleMousePointerDown = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
+  const handleMousePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     const scrollport = event.currentTarget;
 
     if (
@@ -240,9 +238,7 @@ export function AwaitingConfirmationCarousel({
     }
   };
 
-  const handleMousePointerMove = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
+  const handleMousePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const gesture = mouseDragRef.current;
 
     if (!gesture) {
@@ -319,7 +315,6 @@ export function AwaitingConfirmationCarousel({
         <AwaitingConfirmationEmpty />
       ) : (
         <ScreenLayoutEdge
-          mobileOnly
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
           className={`mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
@@ -413,7 +408,7 @@ function AwaitingConfirmationCard({
   }`;
 
   return (
-    <li className="w-[17rem] shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72">
+    <li className="w-68 shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72">
       <p className="text-sm font-medium text-muted-foreground">
         <time dateTime={schedule.getDate()}>{date}</time>
       </p>
@@ -499,7 +494,7 @@ function AwaitingConfirmationSkeleton({
       <div className="flex min-w-max gap-3 sm:gap-4">
         {[0, 1].map((index) => (
           <div
-            className="w-[17rem] shrink-0 rounded-lg border border-border bg-card p-4 sm:w-72"
+            className="w-68 shrink-0 rounded-lg border border-border bg-card p-4 sm:w-72"
             key={index}
           >
             <Skeleton className="h-4 w-28" />
@@ -561,7 +556,7 @@ function AwaitingConfirmationLoadingMore({ label }: { label: string }) {
   return (
     <li
       aria-label={label}
-      className="w-[17rem] shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72"
+      className="w-68 shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72"
       role="status"
     >
       <span className="sr-only">{label}</span>
@@ -586,7 +581,7 @@ function AwaitingConfirmationLoadMoreError({
   onRetry: () => void;
 }) {
   return (
-    <li className="w-[17rem] shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72">
+    <li className="w-68 shrink-0 snap-start rounded-lg border border-border bg-card p-4 sm:w-72">
       <p className="text-sm text-muted-foreground" role="alert">
         {description}
       </p>
