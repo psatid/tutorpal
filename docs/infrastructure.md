@@ -361,6 +361,32 @@ The existing student LINE-link callback remains
 <code>API_ORIGIN/v1/line/callback</code>; it is separate from tutor social
 sign-in.
 
+#### Development Google OAuth readiness (November 24, 2026)
+
+Google project <code>tutorpal-dev</code> contains the
+<code>TutorPal Dev Web</code> OAuth client. Its consent screen is External in
+Testing mode, with the project owner's account added as a test user. Only
+<code>openid</code>, email, and profile scopes are configured. Both Google
+callbacks above are registered with <code>https://dev.api.tutorpal.io</code>
+as the API origin.
+
+The development API Worker, <code>tutorpal-api-dev</code>, already has the
+matching origins and deployed Google enrollment routes. Health and public
+configuration checks return 200. Google remains disabled until its credentials
+are installed; neither Google credential was present at this readiness check.
+Unauthenticated enrollment returns 401, and an invalid callback redirects to
+the fixed Account settings error URL.
+
+Install <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>
+together using one <code>wrangler secret bulk</code> request with
+<code>--config wrangler/dev/wrangler.api.dev.jsonc</code>, run from
+<code>apps/backend</code>. Supply the pair through protected JSON input or
+stdin, outside Git and command arguments. Do not activate only one value:
+incomplete pairs fail Worker configuration validation. The bulk command
+activates a new Worker deployment. After activation, verify
+<code>/v1/health</code> returns 200 and <code>/v1/config</code> reports
+<code>socialLogin.google=true</code>.
+
 ### LINE integration
 
 The API Worker handles LINE account linking and OAuth callbacks at
