@@ -1,3 +1,7 @@
+import { DateTime } from "@/lib/date-time";
+import { Schedule } from "@/models/schedule";
+import { Button } from "@tutorpal/ui/button";
+import { Skeleton } from "@tutorpal/ui/skeleton";
 import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -8,11 +12,6 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@tutorpal/ui/button";
-import { ScreenLayoutEdge } from "@/components/layout/screen-layout";
-import { Skeleton } from "@tutorpal/ui/skeleton";
-import { DateTime } from "@/lib/date-time";
-import { Schedule } from "@/models/schedule";
 
 const LOAD_MORE_THRESHOLD = 160;
 const MOUSE_DRAG_THRESHOLD = 6;
@@ -314,7 +313,7 @@ export function AwaitingConfirmationCarousel({
       ) : schedules.length === 0 ? (
         <AwaitingConfirmationEmpty />
       ) : (
-        <ScreenLayoutEdge
+        <div
           aria-describedby={instructionId}
           aria-label={t("today.awaitingConfirmation.scrollportLabel")}
           className={`mt-4 min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
@@ -363,7 +362,7 @@ export function AwaitingConfirmationCarousel({
               />
             ) : null}
           </ol>
-        </ScreenLayoutEdge>
+        </div>
       )}
     </section>
   );
@@ -481,8 +480,7 @@ function AwaitingConfirmationSkeleton({
   loadingLabel: string;
 }) {
   return (
-    <ScreenLayoutEdge
-      mobileOnly
+    <div
       aria-describedby={instructionId}
       aria-labelledby={titleId}
       className="mt-4 min-w-0 overflow-x-hidden pb-2"
@@ -507,7 +505,7 @@ function AwaitingConfirmationSkeleton({
           </div>
         ))}
       </div>
-    </ScreenLayoutEdge>
+    </div>
   );
 }
 
