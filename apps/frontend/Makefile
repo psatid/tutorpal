@@ -10,7 +10,7 @@ PAGES_PROJECT ?=
 PAGES_PROJECT_DEV := tutorpal-tutor-portal-dev
 SCRIPT ?=
 
-.PHONY: help dev generate-api build build-dev check pages-build preview run deploy deploy-dev do-deploy
+.PHONY: help dev generate-api build build-dev build-production check pages-build preview run deploy deploy-dev do-deploy
 
 help:
 	@printf '%s\n' \
@@ -19,6 +19,7 @@ help:
 		'  make check                            Type-check the app and tests' \
 		'  make build                            Type-check and build the app' \
 		'  make build-dev                        Type-check and build with dev settings' \
+		'  make build-production                 Type-check and build with production origins' \
 		'  make pages-build                      Generate API client and build for Pages' \
 		'  make preview                          Preview the built app' \
 		'  make run SCRIPT=<name> [ARGS="..."]   Run a package.json script' \
@@ -41,6 +42,9 @@ build:
 build-dev:
 	$(MAKE) pages-build ENV=dev
 
+build-production:
+	VITE_API_URL=https://api.tutorpal.io VITE_ADMIN_APP_URL=https://admin.tutorpal.io VITE_MARKETING_URL=https://tutorpal.io $(BUN) run build
+
 check:
 	$(BUNX) tsc --noEmit
 	$(BUNX) tsc --noEmit --project tsconfig.test.json
@@ -57,7 +61,7 @@ run:
 
 deploy:
 	@test -n "$(PAGES_PROJECT)" || { echo 'PAGES_PROJECT is required for a production deployment.'; exit 2; }
-	$(MAKE) build
+	$(MAKE) build-production
 	$(BUNX) wrangler pages deploy dist --project-name "$(PAGES_PROJECT)"
 
 deploy-dev:

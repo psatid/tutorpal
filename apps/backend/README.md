@@ -22,10 +22,13 @@ make reminders-deploy-dev
 make reminders-deploy
 ```
 
-`db-migrate` creates and applies a local Prisma migration. `db-migrate-local`
+`db-migrate` creates and applies a local Prisma migration using `DATABASE_URL`
+from the ignored `apps/backend/.env` file. It clears an inherited shell value
+before explicitly loading that file; this precedence applies to the
+`make db-migrate` and `bun run db:migrate` commands only. `db-migrate-local`
 applies committed migrations to the local Compose database. The
 `db-migrate-deploy-*` targets use the matching environment file; keep
-`.env.production` local and untracked. From the repository root,
+`.env.prod` local and untracked. From the repository root,
 `make db-setup` starts Postgres and applies local migrations.
 
 The backend `deploy` and `deploy-dev` targets deploy the API Worker to
@@ -81,13 +84,14 @@ secrets belong in `wrangler/dev/.dev.vars` (ignored by Git).
 
 ### Grafana logs and traces
 
-The API and reminder Workers export OpenTelemetry logs and traces to the
-account-level Cloudflare destinations `tutorpal-grafana-logs` and
-`tutorpal-grafana-traces` in dev and production. Configure these two destinations
-in the Cloudflare dashboard under **Observability → Destinations**. Create one
-Logs destination and one Traces destination, using the Grafana Cloud OTLP endpoint
-with `/v1/logs` and `/v1/traces` respectively, plus Grafana's `Authorization`
-header. Keep the endpoint credentials in Cloudflare; do not commit them here.
+Each Worker config declares its own OpenTelemetry Grafana destinations. The API
+configs use `grafana-cloud-logs` and `grafana-cloud-traces`; the reminder configs
+use `tutorpal-grafana-logs` and `tutorpal-grafana-traces`. Verify that each named
+destination exists in Cloudflare under **Observability → Destinations** before
+deploying; destination-list access has not independently confirmed those names.
+Configure Logs and Traces destinations with Grafana Cloud OTLP `/v1/logs` and
+`/v1/traces` endpoints and its `Authorization` header. Keep those credentials in
+Cloudflare, not this repository.
 
 The Workers currently sample 100% of logs and traces and persist them in
 Cloudflare as well as exporting them to Grafana, matching Chuayjum. Traces include
@@ -160,14 +164,77 @@ Wrangler's scheduled-test route to invoke it locally. Deployment remains an
 explicit external operation. The existing `cf:check`, `cf:deploy`, and
 reminder aliases continue to target `dev`.
 
-Before any production deployment, replace every
-`REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID` and `.invalid` value in both production
-configs and provision the production Worker secrets. `make deploy` and
-`make reminders-deploy` refuse to run while either placeholder is present. The
-direct `bun run cf:deploy:prod` and
-`bun run cf:reminders:deploy:prod` scripts run the same placeholder guard before
-Wrangler. Production dry-run checks remain usable with placeholders; they do
-not deploy and do not run the deployment guard.
+The current production Hyperdrive ID is bound in both configs. Before deploying,
+run `bun run check:prod:config`; `make deploy`, `make reminders-deploy`, and the
+direct production deployment scripts also reject
+`REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID` if a placeholder is reintroduced.
+Production dry-run checks do not deploy and do not run the deployment guard.
+
+### Production bootstrap
+
+Production Workers are deployed: API version `13fedb76-8b01-498d-8bfb-0f8689835c51`
+is attached to `https://api.tutorpal.io` with no Cron, and reminder version
+`54dbc024-256b-4445-b26b-09c84ce2d927` runs every fifteen minutes. Both disable
+`workers.dev` and previews, share the cache-disabled TLS Hyperdrive
+`tutorpal-prod-postgres` (`a46e2a0ffe424e02b9f2132af7fc821c`), and retain their
+required secret scopes. The strict-TLS production Supabase database
+`db.gdfdugborezajlptbqrz.supabase.co` has all 21 committed migrations applied.
+Grafana export delivery, the first Cron invocation, and end-to-end email, admin,
+LINE, social, beta-form, and authenticated frontend validation remain pending. Future deploys
+use `make deploy APP=backend` from the repository root; remote secrets are
+preserved. Do not reuse the development Hyperdrive.
+
+Live HTTP smoke checks pass: health and configuration return `200`; signup stays
+disabled, Google and LINE login are disabled, and beta requests are unavailable.
+The app and admin origins receive credentialed CORS while a hostile origin does
+not. Unauthenticated admin access and a nonexistent-user sign-in both return
+`401`, exercising the deployed authentication database path. Email, browser
+admin sessions, LINE delivery, and the first reminder Cron invocation are not
+yet end-to-end verified.
+
+1. Configure the ignored `apps/backend/.env.prod` with `DATABASE_URL` set to
+   the production direct or session-mode PostgreSQL URI on port 5432 (use
+   session mode when the local machine cannot reach the Direct endpoint over
+   IPv6). For strict TLS, reference the ignored local Supabase CA file
+   `.env.prod.ca.crt`; do not commit certificate paths or credential values.
+   Run committed migrations before either Worker:
+
+   ```sh
+   cd apps/backend
+   bun run db:migrate:deploy:production
+   ```
+
+2. The distinct cache-disabled TLS Hyperdrive `tutorpal-prod-postgres` uses the
+   Supabase Direct origin `db.gdfdugborezajlptbqrz.supabase.co:5432`, not a
+   pooled origin; Hyperdrive owns Worker connection pooling. See Cloudflare's
+   [Supabase Hyperdrive guidance](https://developers.cloudflare.com/hyperdrive/examples/connect-to-postgres/postgres-database-providers/supabase/).
+   Its ID `a46e2a0ffe424e02b9f2132af7fc821c` is bound in both production configs;
+   confirm `bun run check:prod:config` passes before deployment.
+3. All required secrets are already remote: the API Worker has
+   `RESEND_API_KEY`, `BETTER_AUTH_SECRET`, and
+   `LINE_CREDENTIALS_ENCRYPTION_KEY`; the reminder Worker has only the shared
+   encryption key. Preserve that encryption key once tenant credentials are
+   encrypted, because regenerating it makes stored LINE credentials unreadable.
+   From the repository root, run the active deployment path:
+
+   ```sh
+   make backend-build && make deploy APP=backend
+   ```
+
+   Regular deployment preserves the remote secrets and deploys the reminder
+   Worker before the API Worker.
+
+Optional Resend rotation, not deployment setup: from `apps/backend`, run the
+following command and paste the key only into Wrangler's hidden prompt. It
+immediately releases the current Worker version.
+
+```sh
+bunx wrangler secret put RESEND_API_KEY --config wrangler/prod/wrangler.api.prod.jsonc
+```
+
+Keep `BETA_ENABLED=true`. Google, LINE Login, Turnstile, and Discord beta
+requests remain disabled until production credentials are supplied; do not add
+only one side of an OAuth credential pair.
 
 ## Local account provisioning
 

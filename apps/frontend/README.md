@@ -15,14 +15,15 @@ make dev
 make check
 make build
 make build-dev
+make build-production
 make pages-build
 make deploy-dev
-make deploy PAGES_PROJECT=<production-project>
+make deploy PAGES_PROJECT=tutorpal-tutor-portal-prod
 ```
 
 The development deployment uses the fixed Pages project
 `tutorpal-tutor-portal-dev`. Production deployments require the production
-Pages project name.
+Pages project name, `tutorpal-tutor-portal-prod`.
 
 ## Cloudflare Pages
 
@@ -32,19 +33,26 @@ Pages Functions, a Worker runtime, `_worker.js`, or Workers Static Assets.
 The current development Pages project uses direct upload. From the repository
 root, run `make workspace-install`, then
 `make deploy-dev APP=tutor-portal` to build and upload `apps/frontend/dist`.
-Production uses `make deploy APP=tutor-portal PAGES_PROJECT=<production-project>`.
-To check the build without uploading, run `make frontend-build-dev`.
+Production uses
+`make deploy APP=tutor-portal PAGES_PROJECT=tutorpal-tutor-portal-prod`.
+To check the production build without uploading, run
+`make -C apps/frontend build-production`. To check the development build without uploading, run
+`make frontend-build-dev`.
 
-Set `VITE_API_URL=<BACKEND_API_ORIGIN>` and
-`VITE_ADMIN_APP_URL=<ADMIN_PORTAL_ORIGIN>` in the build environment. The Vite
-build generates the ignored API client, type-checks with `tsc --noEmit`, and
-compiles the linked UI package source into the static output. This project has
-no Pages Git build root or build command to configure.
+`make build-production` and `make deploy` build with these public origins:
+`VITE_API_URL=https://api.tutorpal.io`,
+`VITE_ADMIN_APP_URL=https://admin.tutorpal.io`, and
+`VITE_MARKETING_URL=https://tutorpal.io`. These inline values take precedence
+over exported or local `.env` values. The generic `make build` remains for
+local/custom configurations. The Vite build generates the ignored API client,
+type-checks with `tsc --noEmit`, and compiles the linked UI package source into
+the static output. This project has no Pages Git build root or build command to
+configure.
 
-`VITE_API_URL` and `VITE_ADMIN_APP_URL` are compiled into the browser bundle.
-They must be public origins and must never contain secrets. The admin origin is
-used for impersonation stop/recovery navigation. The `.env.example` file
-provides the local placeholder with the same build-time contract.
+All `VITE_*` values are compiled into the browser bundle. They must be public
+origins and must never contain secrets. The admin origin is used for
+impersonation stop/recovery navigation. The `.env.example` file provides the
+local placeholder with the same build-time contract.
 
 ## Tutor social login
 

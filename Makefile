@@ -24,7 +24,8 @@ endif
 	frontend-run admin-run marketing-run backend-run script frontend-deploy frontend-deploy-dev \
 	admin-deploy admin-deploy-dev marketing-deploy marketing-deploy-dev backend-deploy backend-deploy-dev \
 	backend-reminders-deploy backend-reminders-deploy-dev deploy deploy-dev \
-	db-up db-down db-logs db-shell db-setup db-migrate docker-build docker-push release do-deploy
+	db-up db-down db-logs db-shell db-setup db-migrate db-migrate-local db-migrate-deploy-dev db-migrate-deploy-production \
+	docker-build docker-push release do-deploy
 
 help:
 	@printf '%s\n' \
@@ -51,12 +52,14 @@ help:
 		'' \
 		'Database:' \
 		'  make db-setup                         Start local Postgres and apply committed migrations' \
+		'  make db-migrate                       Create/apply a migration (development only)' \
+		'  make db-migrate-local                 Apply committed migrations to local Postgres' \
 		'  make db-up                           Start local Postgres and wait until healthy' \
 		'  make db-down                         Stop local Postgres (keep data)' \
 		'  make db-logs                         Follow local Postgres logs' \
 		'  make db-shell                        Open psql in the local database' \
-		'  make -C apps/backend db-migrate-deploy-dev Apply committed migrations to dev' \
-		'  make -C apps/backend db-migrate-deploy-production Apply committed migrations to production' \
+		'  make db-migrate-deploy-dev           Apply committed migrations to dev' \
+		'  make db-migrate-deploy-production    Apply committed migrations to production' \
 		'' \
 		'Deployment:' \
 		'  make backend-build                     Bundle-check production Workers' \
@@ -255,8 +258,17 @@ db-setup: db-up
 db-migrate:
 	+$(MAKE) -C apps/backend db-migrate
 
+db-migrate-local:
+	+$(MAKE) -C apps/backend db-migrate-local
+
 db-migrate-deploy:
 	+$(MAKE) -C apps/backend db-migrate-deploy
+
+db-migrate-deploy-dev:
+	+$(MAKE) -C apps/backend db-migrate-deploy-dev
+
+db-migrate-deploy-production:
+	+$(MAKE) -C apps/backend db-migrate-deploy-production
 
 db-generate:
 	+$(MAKE) -C apps/backend db-generate

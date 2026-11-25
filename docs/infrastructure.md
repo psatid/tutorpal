@@ -6,7 +6,7 @@ Cloudflare Pages and a stateful API/runtime on Cloudflare Workers. PostgreSQL
 and the external messaging and email providers remain managed services that
 the Worker accesses through their supported integrations.
 
-The current environment documented here is <code>dev</code>:
+Development configuration:
 
 - Web application: <code>https://dev.app.tutorpal.io</code>
 - API: <code>https://dev.api.tutorpal.io</code>
@@ -17,6 +17,13 @@ The current environment documented here is <code>dev</code>:
 - Cloudflare marketing Worker: <code>tutorpal-marketing-dev</code>
 - Marketing Worker custom domain: <code>dev.tutorpal.io</code>
 - Cloudflare DNS zone: <code>tutorpal.io</code>
+
+Production origins:
+
+- Tutor portal: <code>https://app.tutorpal.io</code>
+- Admin portal: <code>https://admin.tutorpal.io</code>
+- API: <code>https://api.tutorpal.io</code>
+- Marketing: <code>https://tutorpal.io</code> and <code>https://tutorpal.io/th/</code>
 
 The public TutorPal marketing site is a separate prerendered Astro site served
 by Cloudflare Workers Static Assets.
@@ -76,6 +83,8 @@ polling. Both use Hyperdrive for database access.
 | --- | --- | --- |
 | DNS zone | <code>tutorpal.io</code> | Authoritative DNS, proxying, and TLS for application hostnames |
 | User portal Pages project | <code>tutorpal-tutor-portal-dev</code> | Static frontend deployment from <code>apps/frontend/dist</code> |
+| Production user portal Pages project | <code>tutorpal-tutor-portal-prod</code> | Direct-upload tutor portal at <code>app.tutorpal.io</code> |
+| Production admin portal Pages project | <code>tutorpal-admin-portal-prod</code> | Direct-upload admin portal at <code>admin.tutorpal.io</code> |
 | Production marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
 | Production marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
 | Development marketing Worker | <code>tutorpal-marketing-dev</code> | Prerendered Astro marketing pages and public assets |
@@ -86,6 +95,10 @@ polling. Both use Hyperdrive for database access.
 | Reminder Worker | <code>tutorpal-reminders-dev</code> | Scheduled reminder discovery, claiming, and LINE delivery; no public route |
 | Worker custom domain | <code>dev.api.tutorpal.io</code> | Public API and authentication origin attached to the API Worker |
 | API Worker development URL | <code>tutorpal-api-dev.psatid32.workers.dev</code> | Cloudflare-provided API endpoint for operational testing |
+| Production API Worker | <code>tutorpal-api-prod</code> at <code>api.tutorpal.io</code> | Hono API, Better Auth, email, and LINE account linking; no Cron |
+| Production reminder Worker | <code>tutorpal-reminders-prod</code> | Scheduled reminder discovery, claiming, and LINE delivery; no public route |
+| Production Hyperdrive binding | <code>tutorpal-prod-postgres</code> | Cache-disabled TLS database connection shared by both production Workers |
+| Production Cron Trigger | <code>*/15 * * * *</code> UTC | Invokes the production reminder Worker at quarter-hour marks |
 | Hyperdrive binding | <code>HYPERDRIVE_CACHE_DISABLED</code> | Same cache-disabled database connection bound to both Workers |
 | Cron Trigger | <code>*/15 * * * *</code> UTC | Invokes the reminder Worker at minutes <code>00</code>, <code>15</code>, <code>30</code>, and <code>45</code> of every hour |
 
@@ -104,6 +117,12 @@ associations:
   <code>tutorpal-tutor-portal-dev.pages.dev</code>.
 - <code>dev.api.tutorpal.io</code> is attached to the
   <code>tutorpal-api-dev</code> Worker through a Worker Custom Domain.
+- <code>app.tutorpal.io</code> is associated with the
+  <code>tutorpal-tutor-portal-prod</code> Pages project, with a proxied CNAME to
+  <code>tutorpal-tutor-portal-prod.pages.dev</code>.
+- <code>admin.tutorpal.io</code> is associated with the
+  <code>tutorpal-admin-portal-prod</code> Pages project, with a proxied CNAME to
+  <code>tutorpal-admin-portal-prod.pages.dev</code>.
 - <code>tutorpal.io</code> is attached to the <code>tutorpal-marketing</code>
   Worker through a Worker Custom Domain. Configure the apex as a Worker Custom
   Domain; do not point it at the authenticated Pages application or a
@@ -159,6 +178,46 @@ own static output.
 The API URL is public because it is compiled into the browser bundle. Never
 put a secret in a <code>VITE_*</code> variable.
 
+### Production portal deployment
+
+The production projects are <code>tutorpal-tutor-portal-prod</code> and
+<code>tutorpal-admin-portal-prod</code>, both direct-upload Pages projects with
+<code>main</code> as their production branch. Their custom domains are
+<code>app.tutorpal.io</code> and <code>admin.tutorpal.io</code>; each has a proxied
+CNAME to its corresponding <code>*.pages.dev</code> hostname and is also
+associated with its Pages project.
+
+Both portals are deployed with active HTTPS. The tutor deployment is
+<code>5e379604-7d3f-4780-820b-22d6b34cfb13</code>; the admin deployment is
+<code>33c74844-c932-40f7-b53a-33fbe7b62672</code>. Browser verification confirmed
+both login screens render without console errors and unauthenticated protected
+routes return to login. No production accounts were created for these checks;
+authenticated admin/user management, impersonation, and email verification still
+require a provisioned production account.
+
+From the repository root:
+
+~~~bash
+make deploy APP=tutor-portal PAGES_PROJECT=tutorpal-tutor-portal-prod
+make deploy APP=admin-portal PAGES_PROJECT=tutorpal-admin-portal-prod
+~~~
+
+These deploy targets call <code>build-production</code>. The tutor build injects
+<code>VITE_API_URL=https://api.tutorpal.io</code>,
+<code>VITE_ADMIN_APP_URL=https://admin.tutorpal.io</code>, and
+<code>VITE_MARKETING_URL=https://tutorpal.io</code>. The admin build injects
+<code>VITE_API_URL=https://api.tutorpal.io</code> and
+<code>VITE_USER_APP_URL=https://app.tutorpal.io</code>. Explicit command
+environment values prevent Bun's local <code>.env</code> loading from compiling
+localhost origins into a production deployment. Generic and development build
+targets keep their existing behavior. No frontend production secret file is
+required; all of these origins are public build-time configuration.
+
+Both production builds passed with conflicting exported <code>VITE_*</code>
+values. Admin tests passed 9/9; the tutor suite passed 353/356, with two existing
+carousel class assertions and a signup test missing its QueryClient provider.
+Those test/source files were not changed by the deployment configuration work.
+
 The admin portal is a separate static Pages application from
 <code>apps/admin-frontend</code>. Locally it runs on <code>http://localhost:5175</code>
 and uses <code>VITE_API_URL</code> plus <code>VITE_USER_APP_URL</code>. Its route
@@ -199,6 +258,13 @@ For localized homepage requests it reads the API's beta configuration and uses
 returning HTML. Assets keep their normal static serving path. Configuration is
 read on each navigation without a mode cache; failure renders beta mode with
 requests unavailable. Optional browser motion respects reduced motion.
+
+Production marketing is deployed as Worker version
+<code>a21c7cff-489b-4807-8c1c-fd3d294d2907</code>, with
+<code>API_URL=https://api.tutorpal.io</code>. The English homepage and Thai
+language navigation render without browser console errors. Beta mode remains
+enabled, and beta demo requests remain unavailable until production Turnstile
+and Discord credentials are configured.
 Homepage HTML is returned with <code>Cache-Control: no-store</code> and no
 static asset validators. Conditional homepage requests retrieve a fresh body,
 so a browser cannot retain the old mode through an asset 304 response. Other
@@ -295,23 +361,92 @@ files.
 
 Local database setup follows the repository workflow:
 <code>make db-setup</code> starts the Compose Postgres service and applies
-committed migrations. For remote dev migrations, run
-<code>make -C apps/backend db-migrate-deploy-dev</code>; for production, prepare the
-ignored <code>apps/backend/.env.production</code> file and run
-<code>make -C apps/backend db-migrate-deploy-production</code>.
+committed migrations. If local Postgres is already running,
+<code>make db-migrate-local</code> applies committed migrations while explicitly
+targeting <code>127.0.0.1:5444/tutorpal_db</code>, regardless of environment files.
+For remote dev migrations, run
+<code>make db-migrate-deploy-dev</code>; for production, prepare the
+ignored <code>apps/backend/.env.prod</code> file and run
+<code>make db-migrate-deploy-production</code>.
 
 Backend Worker checks default to <code>dev</code>; deployment environment is
 selected with the root <code>deploy-dev</code> or <code>deploy</code> target.
-For production, replace every
-<code>REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID</code> and <code>.invalid</code>
-placeholder in both production configs, provision the production secrets, then
-run <code>make backend-build</code> and
-<code>make deploy APP=backend</code>. The backend Makefile blocks a
-production deployment while any of those placeholders remain. Direct Wrangler
-package scripts remain explicit and must not be used for production until the
-placeholders have been replaced. Local Wrangler `.dev.vars` files are resolved
-next to the selected config; use the Git-ignored
+The current production Hyperdrive ID is bound in both configs. Before deploying,
+run <code>bun run check:prod:config</code>, then
+<code>make deploy APP=backend</code>. The backend Makefile and direct production
+deployment scripts reject <code>REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID</code> if a
+placeholder is reintroduced. Local Wrangler `.dev.vars` files are resolved next
+to the selected config; use the Git-ignored
 <code>apps/backend/wrangler/dev/.dev.vars</code> for local development secrets.
+
+### Production backend bootstrap status
+
+API version <code>13fedb76-8b01-498d-8bfb-0f8689835c51</code> is deployed at
+<code>https://api.tutorpal.io</code> with its custom domain attached and no Cron.
+Reminder version <code>54dbc024-256b-4445-b26b-09c84ce2d927</code> runs every
+fifteen minutes. Both Workers disable <code>workers.dev</code> and previews,
+share the cache-disabled TLS Hyperdrive <code>tutorpal-prod-postgres</code>
+(<code>a46e2a0ffe424e02b9f2132af7fc821c</code>), and retain their required
+secret scopes: API <code>RESEND_API_KEY</code>, <code>BETTER_AUTH_SECRET</code>,
+and <code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>; reminder only the shared
+encryption key. The strict-TLS production Supabase database
+<code>db.gdfdugborezajlptbqrz.supabase.co</code> has all 21 committed migrations
+applied. The configured observability destinations are active in Worker settings,
+but Grafana export delivery remains unverified because destination listing is
+still unavailable. The first Cron invocation and end-to-end email, admin, LINE,
+social, beta-form, and authenticated frontend validation remain pending. Future deploys use
+<code>make deploy APP=backend</code> from the repository root and preserve remote
+secrets.
+
+Live HTTP smoke checks pass: health and configuration return <code>200</code>;
+signup remains disabled, Google and LINE login are disabled, and beta requests
+are unavailable. The app and admin origins receive credentialed CORS while a
+hostile origin does not. Unauthenticated admin access and a nonexistent-user
+sign-in both return <code>401</code>, exercising the deployed authentication
+database path. Email, browser admin sessions, LINE delivery, and the first
+reminder Cron invocation are not yet end-to-end verified.
+
+Use an ignored <code>apps/backend/.env.prod</code> with
+<code>DATABASE_URL</code> set to the production direct or session-mode
+PostgreSQL URI on port 5432; use session mode when the local machine cannot
+reach the Direct endpoint over IPv6. For strict TLS, it references the ignored
+local Supabase CA file <code>.env.prod.ca.crt</code>; do not commit certificate
+paths or credential values. Apply committed Prisma migrations with
+<code>make db-migrate-deploy-production</code> before either
+Worker is deployed. The distinct cache-disabled TLS Hyperdrive
+<code>tutorpal-prod-postgres</code> uses the Supabase Direct origin
+<code>db.gdfdugborezajlptbqrz.supabase.co:5432</code>, not a pooled origin:
+Hyperdrive owns Worker connection pooling. See [Cloudflare's Supabase Hyperdrive guidance](https://developers.cloudflare.com/hyperdrive/examples/connect-to-postgres/postgres-database-providers/supabase/).
+Its ID <code>a46e2a0ffe424e02b9f2132af7fc821c</code> is bound to both Workers;
+never reuse the development resource.
+
+All required secrets are already remote: the API Worker has
+<code>RESEND_API_KEY</code>, <code>BETTER_AUTH_SECRET</code>, and
+<code>LINE_CREDENTIALS_ENCRYPTION_KEY</code>; the reminder Worker has only the
+shared encryption key. Preserve that encryption key once tenant credentials are
+encrypted, because regenerating it makes stored LINE credentials unreadable.
+From the repository root, run the active deployment path:
+
+~~~bash
+make backend-build && make deploy APP=backend
+~~~
+
+Regular deployment preserves the remote secrets and deploys the reminder Worker
+before the API Worker. Optional Resend rotation, not deployment setup: from
+<code>apps/backend</code>, run the following command and paste the key only into
+Wrangler's hidden prompt. It immediately releases the current Worker version.
+
+~~~bash
+bunx wrangler secret put RESEND_API_KEY --config wrangler/prod/wrangler.api.prod.jsonc
+~~~
+
+Keep beta enabled.
+Google, LINE Login, Turnstile, and Discord beta requests stay unavailable until
+their complete production credentials are provided. Verify each configured
+Grafana destination before production use: the API config names
+<code>grafana-cloud-logs</code>/<code>grafana-cloud-traces</code>, while the
+reminder config names <code>tutorpal-grafana-logs</code>/<code>tutorpal-grafana-traces</code>;
+the remote destination listing was not available to confirm them.
 
 ## Data and integration flows
 
@@ -478,7 +613,7 @@ Turnstile widget, secret, and public site key are also configured and deployed.
 The first real-token form test showed unavailable; Cloudflare blocked the
 replay before the API. After the November 21 runtime fix, an authorized
 real-token form test confirmed end-to-end Discord delivery. Server-side replay
-rejection remains unverified. Production setup remains pending. To configure
+rejection remains unverified. Production beta-request setup remains pending. To configure
 delivery in an environment:
 
 1. Create a Turnstile widget for the environment's marketing hostname. Set

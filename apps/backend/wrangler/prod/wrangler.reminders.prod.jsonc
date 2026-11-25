@@ -8,11 +8,10 @@
 	"triggers": {
 		"crons": ["*/15 * * * *"]
 	},
-	// Replace the Hyperdrive ID before production deployment.
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE_CACHE_DISABLED",
-			"id": "REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID"
+			"id": "a46e2a0ffe424e02b9f2132af7fc821c"
 		}
 	],
 	"observability": {

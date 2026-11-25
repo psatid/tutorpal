@@ -24,7 +24,7 @@ help:
 		'  make db-migrate-local                  Apply committed migrations to local Compose Postgres' \
 		'  make db-migrate                        Create/apply a local Prisma migration' \
 		'  make db-migrate-deploy-dev             Apply committed migrations from .env.dev' \
-		'  make db-migrate-deploy-production      Apply committed migrations from .env.production' \
+		'  make db-migrate-deploy-production      Apply committed migrations from .env.prod' \
 		'  make deploy                            Deploy the production API Worker' \
 		'  make deploy-dev                        Deploy the dev API Worker' \
 		'  make reminders-deploy                  Deploy the production reminder Worker' \

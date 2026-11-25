@@ -8,27 +8,34 @@
 	"triggers": {
 		"crons": []
 	},
-	// Replace every REPLACE_ value and .invalid URL before production deployment.
-	// Configure the production custom domain/route in the deployment environment.
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE_CACHE_DISABLED",
-			"id": "REPLACE_WITH_PRODUCTION_HYPERDRIVE_ID"
+			"id": "a46e2a0ffe424e02b9f2132af7fc821c"
 		}
 	],
 	"vars": {
-		"CORS_ORIGIN": "https://app.example.invalid",
-		"ADMIN_FRONTEND_URL": "https://admin.example.invalid",
-		"BETTER_AUTH_URL": "https://api.example.invalid",
+		"CORS_ORIGIN": "https://app.tutorpal.io",
+		"ADMIN_FRONTEND_URL": "https://admin.tutorpal.io",
+		"BETTER_AUTH_URL": "https://api.tutorpal.io",
 		"ENVIRONMENT": "prod",
 		"LOG_LEVEL": "info",
-		"RESEND_FROM_EMAIL": "TutorPal <no-reply@example.invalid>",
-		"LINE_LINK_REDIRECT_URL": "https://api.example.invalid/v1/line/callback",
-		"FRONTEND_URL": "https://app.example.invalid",
-		"EMAIL_VERIFICATION_CALLBACK_URL": "https://app.example.invalid/verify-email",
+		"RESEND_FROM_EMAIL": "TutorPal <no-reply@tutorpal.io>",
+		"LINE_LINK_REDIRECT_URL": "https://api.tutorpal.io/v1/line/callback",
+		"FRONTEND_URL": "https://app.tutorpal.io",
+		"EMAIL_VERIFICATION_CALLBACK_URL": "https://app.tutorpal.io/verify-email",
 		"BETA_ENABLED": "true",
 		"MARKETING_ORIGIN": "https://tutorpal.io"
 	},
+	"routes": [
+		{
+			"pattern": "api.tutorpal.io",
+			"zone_name": "tutorpal.io",
+			"custom_domain": true,
+			"enabled": true,
+			"previews_enabled": false
+		}
+	],
 	"observability": {
 		"enabled": true,
 		"head_sampling_rate": 1,

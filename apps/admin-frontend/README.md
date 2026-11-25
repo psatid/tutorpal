@@ -28,14 +28,15 @@ make generate-api
 make check
 make build
 make build-dev
+make build-production
 make test
 make deploy-dev
-make deploy PAGES_PROJECT=<production-project>
+make deploy PAGES_PROJECT=tutorpal-admin-portal-prod
 ```
 
 The development deployment uses the fixed Pages project
 `tutorpal-admin-portal-dev`. Production deployments require the production
-Pages project name.
+Pages project name, `tutorpal-admin-portal-prod`.
 
 ## Local development
 
@@ -71,14 +72,22 @@ no new environment variables or database migration are required.
 The development Pages project uses direct upload. From the repository root,
 run `make workspace-install`, then `make deploy-dev APP=admin-portal` to build
 and upload `apps/admin-frontend/dist`. Production uses
-`make deploy APP=admin-portal PAGES_PROJECT=<production-project>`. To check
-the build without uploading, run `make admin-build-dev`.
+`make deploy APP=admin-portal PAGES_PROJECT=tutorpal-admin-portal-prod`.
+To check the production build without uploading, run
+`make -C apps/admin-frontend build-production`.
+To check the development build without uploading, run `make admin-build-dev`.
 
-Set `VITE_API_URL` to the public backend origin and `VITE_USER_APP_URL` to the
-public user portal origin in the build environment. The build generates the
-API client, type-checks with `tsc --noEmit`, and compiles the linked
-`@tutorpal/ui` source into the static output. The project has no Pages Git
-build root or build command to configure.
+`make build-production` and `make deploy` build with
+`VITE_API_URL=https://api.tutorpal.io` and
+`VITE_USER_APP_URL=https://app.tutorpal.io`. These inline values take
+precedence over exported or local `.env` values. The generic `make build`
+remains for local/custom configurations. The build generates the API client,
+type-checks with `tsc --noEmit`, and compiles the linked `@tutorpal/ui` source
+into the static output. The project has no Pages Git build root or build command
+to configure.
+
+All `VITE_*` values are compiled into the browser bundle. They must be public
+origins and must never contain secrets.
 
 The backend must include this Pages origin in `ADMIN_FRONTEND_URL` so Better
 Auth cookies, CORS, and trusted origins work across both portals.
