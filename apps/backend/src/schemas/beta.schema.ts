@@ -13,6 +13,7 @@ export const CreateBetaRequestSchema = z
 	.object({
 		name: z.string().trim().min(1).max(120),
 		email: z.string().trim().toLowerCase().email().max(254),
+		message: z.string().trim().min(1).max(2000).optional(),
 		subject: z.string().trim().min(1).max(120).optional(),
 		studentCountRange: z.enum(["1-5", "6-15", "16-30", "30+"]).optional(),
 		hasLineOfficialAccount: z.boolean().optional(),

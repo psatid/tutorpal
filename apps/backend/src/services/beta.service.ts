@@ -70,6 +70,9 @@ function toDiscordPayload(request: BetaRequest) {
 		embeds: [
 			{
 				title: "Beta demo request",
+				...(request.message !== undefined
+					? { description: escapeDiscordMarkdown(request.message) }
+					: {}),
 				fields,
 			},
 		],

@@ -142,6 +142,7 @@ describe("BetaService", () => {
 		expect(webhookUrl.searchParams.get("wait")).toBe("true");
 		const payload = JSON.parse(String(calls[1]?.init?.body));
 		expect(payload.allowed_mentions).toEqual({ parse: [] });
+		expect(payload.embeds[0].description).toBeUndefined();
 		expect(payload.embeds[0].fields).toEqual([
 			{ name: "Name", value: "@everyone \\*Ada\\*" },
 			{ name: "Email", value: "ADA@EXAMPLE\\.COM" },
@@ -150,6 +151,35 @@ describe("BetaService", () => {
 			{ name: "LINE Official Account", value: "Yes" },
 		]);
 		expect(JSON.stringify(payload)).not.toContain("turnstile-token");
+	});
+
+	test("preserves a complete escaped 2,000-character message in the Discord description", async () => {
+		const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+		const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
+			calls.push({ input, init });
+			if (String(input) === turnstileUrl) {
+				return new Response(
+					JSON.stringify({
+						success: true,
+						action: "beta_demo_request",
+						hostname: "marketing.example.com",
+					}),
+				);
+			}
+			return confirmedDiscordResponse();
+		}) as typeof fetch;
+
+		await expect(
+			new BetaService(createConfig(), fetchFn).submitRequest({
+				...validRequest(),
+				message: "*".repeat(2000),
+			}),
+		).resolves.toEqual({ status: "accepted" });
+
+		const payload = JSON.parse(String(calls[1]?.init?.body));
+		expect(payload.allowed_mentions).toEqual({ parse: [] });
+		expect(payload.embeds[0].description).toBe("\\*".repeat(2000));
+		expect(payload.embeds[0].description).toHaveLength(4000);
 	});
 
 	test("calls an unbound fetch implementation for verification and Discord confirmation", async () => {

@@ -67,6 +67,15 @@ function validBody() {
 	};
 }
 
+function canonicalBody() {
+	return {
+		name: "  Ada Lovelace  ",
+		email: " ADA@EXAMPLE.COM ",
+		message: "  Hello @everyone\n*Please* visit https://example.com/a-b!  ",
+		turnstileToken: "turnstile-token",
+	};
+}
+
 describe("beta routes", () => {
 	test("returns the server-owned beta configuration without secret values", async () => {
 		const { app } = createApp();
@@ -80,7 +89,26 @@ describe("beta routes", () => {
 		});
 	});
 
-	test("accepts only a strict valid beta request from the exact marketing origin", async () => {
+	test("accepts and normalizes the canonical message payload from the exact marketing origin", async () => {
+		const { app, requests } = createApp();
+
+		const response = await post(app, canonicalBody());
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ status: "accepted" });
+		expect(requests).toHaveLength(2);
+		const webhookPayload = JSON.parse(String(requests[1]?.init?.body));
+		expect(webhookPayload.allowed_mentions).toEqual({ parse: [] });
+		expect(webhookPayload.embeds[0]).toMatchObject({
+			description:
+				"Hello @everyone\n\\*Please\\* visit https://example\\.com/a\\-b\\!",
+		});
+		expect(webhookPayload.embeds[0].fields).toEqual([
+			{ name: "Name", value: "Ada Lovelace" },
+			{ name: "Email", value: "ada@example\\.com" },
+		]);
+	});
+
+	test("keeps accepting the legacy optional fields and an omitted message", async () => {
 		const { app, requests } = createApp();
 
 		const response = await post(app, validBody());
@@ -96,6 +124,7 @@ describe("beta routes", () => {
 			name: "Name",
 			value: "Ada Lovelace",
 		});
+		expect(webhookPayload.embeds[0]).not.toHaveProperty("description");
 	});
 
 	test.each([
@@ -103,6 +132,13 @@ describe("beta routes", () => {
 		["invalid email", { ...validBody(), email: "invalid" }],
 		["invalid student range", { ...validBody(), studentCountRange: "31+" }],
 		["missing Turnstile token", { ...validBody(), turnstileToken: "" }],
+		["blank message", { ...canonicalBody(), message: " \n\t " }],
+		[
+			"message over 2,000 characters",
+			{ ...canonicalBody(), message: "m".repeat(2001) },
+		],
+		["null message", { ...canonicalBody(), message: null }],
+		["non-string message", { ...canonicalBody(), message: 42 }],
 		["unknown input", { ...validBody(), unexpected: true }],
 	])("rejects %s before contacting external services", async (_description, body) => {
 		const { app, requests } = createApp();
