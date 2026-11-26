@@ -43,6 +43,21 @@ test('shipped CSS starts finite synchronized card entrances and staggered icons 
   expect(css).not.toContain('.reveal-preparing');
 });
 
+test('shipped beta controls retain shared input dimensions, states, and responsive type', async () => {
+  const html = read('index.html');
+  const href = (await select(html, 'link[rel="stylesheet"]'))[0].attributes.href;
+  const css = read(href.slice(1));
+  expect(css).toContain('--beta-input-border:#e3ebf4');
+  expect(css).toContain('--beta-input-border-hover:#c4d3e2');
+  expect(css).toContain('--beta-input-ring:#533afd59');
+  expect(css).toContain('.beta-field input{height:44px;padding:4px 12px}');
+  expect(css).toContain('.beta-field textarea{resize:vertical;min-height:120px;padding:12px}');
+  expect(css).toContain('.beta-field input:hover,.beta-field textarea:hover{border-color:var(--beta-input-border-hover)}');
+  expect(css).toContain('.beta-field input:focus-visible,.beta-field textarea:focus-visible{border-color:var(--indigo);box-shadow:0 0 0 3px var(--beta-input-ring);outline:0}');
+  expect(css).toContain('.beta-field [aria-invalid=true]{box-shadow:0 0 0 3px var(--beta-destructive-ring);border-color:var(--beta-destructive)!important}');
+  expect(css).toContain('@media (width>=768px){.beta-field input,.beta-field textarea{font-size:14px}}');
+});
+
 for (const [locale, path, canonical, otherLocale] of [
   ['en', 'index.html', 'https://tutorpal.io/', '/th/'],
   ['th', 'th/index.html', 'https://tutorpal.io/th/', '/'],
@@ -82,7 +97,7 @@ for (const [locale, path, canonical, otherLocale] of [
       expect((await select(html, '[data-balance-fill]')).map(node => node.attributes.style)).toEqual(['width:48%', 'width:72%', 'width:36%', 'width:60%']);
     });
 
-    test('ships a no-JavaScript-readable beta request form without a newsletter or preselected optional answers', async () => {
+    test('ships a no-JavaScript-readable beta request form with only the optional localized message', async () => {
       const forms = await select(html, 'form[data-beta-request-form]');
       expect(forms).toHaveLength(1);
       expect(forms[0].attributes['data-request-available']).toBe('false');
@@ -91,11 +106,12 @@ for (const [locale, path, canonical, otherLocale] of [
       expect(await select(html, '#beta')).toHaveLength(1);
       expect(await select(html, 'input[name="name"][required][autocomplete="name"], input[name="email"][required][autocomplete="email"]')).toHaveLength(2);
       expect(await select(html, 'input[name="newsletter"], input[type="checkbox"]')).toHaveLength(0);
-      expect(await select(html, 'fieldset.beta-radios legend')).toHaveLength(1);
-      const lineAnswers = await select(html, 'input[name="hasLineOfficialAccount"]');
-      expect(lineAnswers).toHaveLength(2);
-      expect(lineAnswers.some(answer => answer.attributes.checked !== undefined)).toBe(false);
-      expect(await select(html, 'select[name="subject"] option, select[name="studentCountRange"] option')).toHaveLength(13);
+      const messages = await select(html, 'textarea[name="message"][maxlength="2000"][aria-describedby]');
+      expect(messages).toHaveLength(1);
+      expect(messages[0].attributes['aria-describedby']).toContain(`beta-message-helper-${locale}`);
+      expect(messages[0].attributes['aria-describedby']).toContain(`beta-message-error-${locale}`);
+      expect(await select(html, `.beta-field-hint#beta-message-helper-${locale}, .beta-field-error[data-beta-error-for="message"]#beta-message-error-${locale}`)).toHaveLength(2);
+      expect(await select(html, 'select, fieldset.beta-radios, input[name="hasLineOfficialAccount"], input[name="subject"], input[name="studentCountRange"]')).toHaveLength(0);
       expect(await select(html, 'button.beta-submit[disabled][aria-disabled="true"]')).toHaveLength(1);
       // Raw Astro/preview deliberately stays safe when no Worker has supplied configuration.
       const unavailable = await select(html, '.beta-unavailable');
@@ -226,7 +242,7 @@ for (const [locale, path, canonical, otherLocale] of [
     });
 
     test('keeps raw HTML local and static, with a safe disabled beta form and no remote executable dependencies', async () => {
-      expect(await select(html, 'textarea, iframe, astro-island')).toHaveLength(0);
+      expect(await select(html, 'iframe, astro-island')).toHaveLength(0);
       expect(await select(html, 'head > script:not([type]):not([src])')).toHaveLength(0);
       expect(html).not.toContain('tutorpalRevealBoot');
       expect(html).not.toContain('reveal-preparing');

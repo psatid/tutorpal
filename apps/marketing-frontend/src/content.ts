@@ -11,10 +11,8 @@ interface Copy {
   beta: {
     badge: string; nav: string; announcement: string; heroAction: string;
     closeTitle: string[]; closeBody: string; formTitle: string;
-    name: string; email: string; subject: string; students: string; line: string;
-    optional: string; lineYes: string; lineNo: string; submit: string;
-    subjects: { value: string; label: string }[]; studentRanges: { value: string; label: string }[];
-    unavailable: string; success: string; validationSummary: string; invalidName: string; invalidEmail: string;
+    name: string; email: string; message: string; messageHelper: string; optional: string; submit: string;
+    unavailable: string; success: string; validationSummary: string; invalidName: string; invalidEmail: string; invalidMessage: string;
     verificationUnavailable: string; requestFailed: string; requestDisabled: string;
   };
 }
@@ -37,11 +35,8 @@ export const copy: Record<Locale, Copy> = {
     beta: {
       badge: 'Beta', nav: 'Join beta', announcement: 'TutorPal is now in beta', heroAction: 'Join the beta',
       closeTitle: ['Help shape TutorPal.', 'Teach with it first.'], closeBody: 'Tell us a little about your teaching. We’ll email you to arrange a demo.', formTitle: 'Request a beta demo',
-      name: 'Your name', email: 'Email address', subject: 'Main subject', students: 'Number of students', line: 'Do you use a LINE Official Account?',
-      optional: 'Optional', lineYes: 'Yes', lineNo: 'No', submit: 'Request a demo',
-      subjects: [{ value: 'math', label: 'Math' }, { value: 'science', label: 'Science' }, { value: 'english', label: 'English' }, { value: 'languages', label: 'Languages' }, { value: 'test-prep', label: 'Test prep' }, { value: 'music-arts', label: 'Music / arts' }, { value: 'something-else', label: 'Something else' }],
-      studentRanges: [{ value: '1-5', label: '1–5' }, { value: '6-15', label: '6–15' }, { value: '16-30', label: '16–30' }, { value: '30+', label: '30+' }],
-      unavailable: 'Beta requests aren’t available right now. Please check back soon.', success: 'Thanks—we’ve received your request. We’ll be in touch by email.', validationSummary: 'Please fix the highlighted fields.', invalidName: 'Enter your name (up to 120 characters).', invalidEmail: 'Enter a valid email address.', verificationUnavailable: 'Verification isn’t available right now. Please check back soon.', requestFailed: 'We couldn’t send your request. Please try again.', requestDisabled: 'Beta requests aren’t available right now. Please check back soon.',
+      name: 'Your name', email: 'Email address', message: 'Message', messageHelper: 'Up to 2,000 characters', optional: 'Optional', submit: 'Request a demo',
+      unavailable: 'Beta requests aren’t available right now. Please check back soon.', success: 'Thanks—we’ve received your request. We’ll be in touch by email.', validationSummary: 'Please fix the highlighted fields.', invalidName: 'Enter your name (up to 120 characters).', invalidEmail: 'Enter a valid email address.', invalidMessage: 'Enter a message of up to 2,000 characters.', verificationUnavailable: 'Verification isn’t available right now. Please check back soon.', requestFailed: 'We couldn’t send your request. Please try again.', requestDisabled: 'Beta requests aren’t available right now. Please check back soon.',
     }
   },
   th: {
@@ -61,11 +56,8 @@ export const copy: Record<Locale, Copy> = {
     beta: {
       badge: 'เบต้า', nav: 'เข้าร่วมเบต้า', announcement: 'TutorPal เปิดให้ทดลองใช้แบบเบต้า', heroAction: 'เข้าร่วมเบต้า',
       closeTitle: ['ช่วยสร้าง TutorPal ไปด้วยกัน', 'เริ่มสอนด้วยกันก่อนใคร'], closeBody: 'บอกเราเล็กน้อยเกี่ยวกับการสอนของคุณ แล้วเราจะส่งอีเมลเพื่อนัดเดโมให้คุณ', formTitle: 'ขอเดโมเวอร์ชันเบต้า',
-      name: 'ชื่อของคุณ', email: 'อีเมล', subject: 'วิชาหลัก', students: 'จำนวนนักเรียน', line: 'คุณใช้ LINE Official Account หรือไม่',
-      optional: 'ไม่จำเป็น', lineYes: 'ใช้', lineNo: 'ไม่ใช้', submit: 'ขอเดโม',
-      subjects: [{ value: 'math', label: 'คณิตศาสตร์' }, { value: 'science', label: 'วิทยาศาสตร์' }, { value: 'english', label: 'ภาษาอังกฤษ' }, { value: 'languages', label: 'ภาษาอื่น ๆ' }, { value: 'test-prep', label: 'เตรียมสอบ' }, { value: 'music-arts', label: 'ดนตรี / ศิลปะ' }, { value: 'something-else', label: 'อื่น ๆ' }],
-      studentRanges: [{ value: '1-5', label: '1–5 คน' }, { value: '6-15', label: '6–15 คน' }, { value: '16-30', label: '16–30 คน' }, { value: '30+', label: 'มากกว่า 30 คน' }],
-      unavailable: 'ตอนนี้ยังไม่สามารถรับคำขอเข้าร่วมเบต้าได้ โปรดลองอีกครั้งภายหลัง', success: 'ขอบคุณ เราได้รับคำขอของคุณแล้ว เราจะติดต่อทางอีเมล', validationSummary: 'โปรดตรวจสอบข้อมูลที่ระบุไว้', invalidName: 'กรุณากรอกชื่อของคุณ (ไม่เกิน 120 อักขระ)', invalidEmail: 'กรุณากรอกอีเมลที่ถูกต้อง', verificationUnavailable: 'ตอนนี้การยืนยันตัวตนยังไม่พร้อมใช้งาน โปรดลองอีกครั้งภายหลัง', requestFailed: 'เราไม่สามารถส่งคำขอได้ โปรดลองอีกครั้ง', requestDisabled: 'ตอนนี้ยังไม่สามารถรับคำขอเข้าร่วมเบต้าได้ โปรดลองอีกครั้งภายหลัง',
+      name: 'ชื่อของคุณ', email: 'อีเมล', message: 'ข้อความ', messageHelper: 'สูงสุด 2,000 อักขระ', optional: 'ไม่จำเป็น', submit: 'ขอเดโม',
+      unavailable: 'ตอนนี้ยังไม่สามารถรับคำขอเข้าร่วมเบต้าได้ โปรดลองอีกครั้งภายหลัง', success: 'ขอบคุณ เราได้รับคำขอของคุณแล้ว เราจะติดต่อทางอีเมล', validationSummary: 'โปรดตรวจสอบข้อมูลที่ระบุไว้', invalidName: 'กรุณากรอกชื่อของคุณ (ไม่เกิน 120 อักขระ)', invalidEmail: 'กรุณากรอกอีเมลที่ถูกต้อง', invalidMessage: 'กรุณากรอกข้อความไม่เกิน 2,000 อักขระ', verificationUnavailable: 'ตอนนี้การยืนยันตัวตนยังไม่พร้อมใช้งาน โปรดลองอีกครั้งภายหลัง', requestFailed: 'เราไม่สามารถส่งคำขอได้ โปรดลองอีกครั้ง', requestDisabled: 'ตอนนี้ยังไม่สามารถรับคำขอเข้าร่วมเบต้าได้ โปรดลองอีกครั้งภายหลัง',
     }
   }
 };

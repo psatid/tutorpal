@@ -17,12 +17,12 @@ function contentType(path) {
   return 'application/octet-stream';
 }
 
-function assetResponse(request) {
+async function assetResponse(request) {
   const url = new URL(request.url);
   const candidate = resolve(root, `.${decodeURIComponent(url.pathname)}`, url.pathname.endsWith('/') ? 'index.html' : '');
   if (!candidate.startsWith(root + sep)) return new Response('Forbidden', { status: 403 });
   const path = existsSync(candidate) ? candidate : resolve(root, '404.html');
-  return new Response(Bun.file(path), { status: path === candidate ? 200 : 404, headers: { 'content-type': contentType(path), 'cache-control': 'no-store' } });
+  return new Response(await Bun.file(path).arrayBuffer(), { status: path === candidate ? 200 : 404, headers: { 'content-type': contentType(path), 'cache-control': 'no-store' } });
 }
 
 function modeForHost(hostname) {

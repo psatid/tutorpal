@@ -64,6 +64,9 @@ motion. Optional FAQ height/fade animation retains native multi-open details and
 reverses interrupted toggles. Disabled JavaScript and enhancement failure retain
 complete readable content and filled bars.
 In beta, the primary CTA opens the localized demo-request form after the FAQ.
+The form requires name and email and offers an optional message of up to 2,000
+characters. Its Astro fields mirror the tutor portal's shared React input
+styling, and the explanatory copy aligns to the top beside the desktop form.
 The backend's single `BETA_ENABLED` setting controls marketing, auth-header,
 and app-sidebar badges, login's request-access link, the request endpoint, and
 public signup. The marketing edge Worker resolves the mode before serving

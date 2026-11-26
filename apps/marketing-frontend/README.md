@@ -68,8 +68,11 @@ Worker commands run `cf:worker:check` first. It regenerates the ignored
 `worker/worker-configuration.d.ts` with the installed Wrangler and type-checks
 `worker/index.ts`; no generated platform declarations are committed.
 
-The form requires name and email. Subject, student-count range, and LINE
-Official Account usage are optional. Requests are sent to
+The form requires name and email and offers an optional free-text message of
+up to 2,000 characters. Astro fields mirror the tutor portal's shared React
+input styling, with top-aligned explanatory copy beside the desktop form.
+Blank messages are omitted; nonblank messages are trimmed and delivered in
+full as the Discord embed description. Requests are sent to
 `POST /v1/beta/requests`; the API validates Turnstile action/hostname and sends
 the Discord notification. The team then emails the requester to arrange a demo
 and provisions their account through the admin portal. There is no newsletter

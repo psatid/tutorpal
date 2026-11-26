@@ -14,8 +14,9 @@ bun test tests/*.test.js
 
 Run `bun run cf:worker:check` to regenerate local Worker types and type-check
 the edge entrypoint. The suite covers mode selection through the actual
-`HTMLRewriter`, fail-closed configuration, static-asset bypass, optional form
-fields, accepted-only success, failure retention, and Turnstile token resets.
+`HTMLRewriter`, fail-closed configuration, static-asset bypass, an optional
+message (blank omission, trimming, and the 2,000-character limit), accepted-only
+success, failure retention, and Turnstile token resets.
 
 For isolated browser checks, build and start:
 

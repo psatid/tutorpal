@@ -39,12 +39,7 @@ function loadTurnstile(): Promise<Turnstile> {
 
 function value(form: HTMLFormElement, name: string): string {
   const field = form.elements.namedItem(name);
-  return field instanceof HTMLInputElement || field instanceof HTMLSelectElement ? field.value : '';
-}
-
-function radioValue(form: HTMLFormElement, name: string): string {
-  const field = form.elements.namedItem(name);
-  return field instanceof RadioNodeList ? field.value : '';
+  return field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement ? field.value : '';
 }
 
 export function setupBetaRequestForm() {
@@ -118,18 +113,20 @@ export function setupBetaRequestForm() {
   }).catch(() => verificationError(form.dataset.verificationUnavailable ?? ''));
 
   form.addEventListener('input', event => {
-    if (event.target instanceof HTMLInputElement && (event.target.name === 'name' || event.target.name === 'email')) clearError(event.target.name);
+    if ((event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) && (event.target.name === 'name' || event.target.name === 'email' || event.target.name === 'message')) clearError(event.target.name);
   });
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (submitting) return;
-    clearError('name'); clearError('email');
+    clearError('name'); clearError('email'); clearError('message');
     if (summary) summary.textContent = '';
     const name = value(form, 'name').trim();
     const email = value(form, 'email').trim().toLowerCase();
+    const message = value(form, 'message').trim();
     const invalid = [
       !name || name.length > 120 ? setError('name', form.dataset.invalidName ?? '') : undefined,
       !email || email.length > 254 || !emailPattern.test(email) ? setError('email', form.dataset.invalidEmail ?? '') : undefined,
+      message.length > 2000 ? setError('message', form.dataset.invalidMessage ?? '') : undefined,
     ].filter((field): field is HTMLElement => Boolean(field));
     if (invalid.length) {
       if (summary) summary.textContent = form.dataset.validationSummary ?? '';
@@ -143,13 +140,8 @@ export function setupBetaRequestForm() {
       return;
     }
 
-    const subject = value(form, 'subject').trim();
-    const studentCountRange = value(form, 'studentCountRange');
-    const lineAccount = radioValue(form, 'hasLineOfficialAccount');
-    const payload: Record<string, string | boolean> = { name, email, turnstileToken: token };
-    if (subject) payload.subject = subject;
-    if (studentCountRange) payload.studentCountRange = studentCountRange;
-    if (lineAccount) payload.hasLineOfficialAccount = lineAccount === 'true';
+    const payload: Record<string, string> = { name, email, turnstileToken: token };
+    if (message) payload.message = message;
 
     submitting = true;
     form.setAttribute('aria-busy', 'true');

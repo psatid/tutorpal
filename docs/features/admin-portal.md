@@ -86,8 +86,9 @@ form; the auth header and expanded app sidebar show the same beta status.
 The collapsed sidebar retains an accessible beta label. One server setting
 controls all these surfaces.
 
-The form requires name and email. Teaching subject, student-count range, and
-LINE Official Account usage are optional. The team contacts the requester to
+The form requires name and email and offers an optional free-text message of
+up to 2,000 characters in place of the teaching-subject, student-count, and
+LINE Official Account questions. The team contacts the requester to
 arrange a demo, then creates their account through the existing admin portal.
 There is no automatic approval, account creation, or newsletter subscription.
 
@@ -99,10 +100,14 @@ the database; failures retain form values for retry, and retries can
 occasionally produce duplicate notifications.
 
 The request payload uses `name` (1–120 characters), `email` (up to 254),
-optional `subject` (1–120), optional `studentCountRange` (`1-5`, `6-15`,
-`16-30`, or `30+`), optional `hasLineOfficialAccount` (boolean), and
-`turnstileToken` (1–2048). Unset optional fields are omitted. Names/subjects
-are trimmed and email is normalized. Unknown fields are rejected.
+optional `message` (1–2,000), and `turnstileToken` (1–2048). The message is
+trimmed; the form omits it when blank. Discord receives the complete escaped
+message as the embed description. For compatibility with already-open pages,
+the API also accepts optional `subject` (1–120), `studentCountRange` (`1-5`,
+`6-15`, `16-30`, or `30+`), and `hasLineOfficialAccount` (boolean).
+Names/subjects are trimmed and email is normalized. Unknown fields are rejected.
+Deploy the backend's message support before the updated marketing form so the
+strict request schema accepts the new field.
 Only HTTP 200 `{ "status": "accepted" }` is success. Disabled beta requests
 return 404, unavailable delivery returns 503, failed verification returns
 400, and failed Discord delivery returns 502. The form never uses native GET
