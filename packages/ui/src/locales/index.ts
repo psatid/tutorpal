@@ -11,6 +11,9 @@ export const en = {
     requiredLabel: "required",
     showPassword: "Show password",
   },
+  dataTable: {
+    noResults: "No results.",
+  },
   accessibility: {
     breadcrumb: "Breadcrumb",
     close: "Close",
@@ -56,6 +59,9 @@ export const th = {
     hidePassword: "ซ่อนรหัสผ่าน",
     requiredLabel: "จำเป็น",
     showPassword: "แสดงรหัสผ่าน",
+  },
+  dataTable: {
+    noResults: "ไม่พบผลลัพธ์",
   },
   accessibility: {
     breadcrumb: "เส้นทางนำทาง",

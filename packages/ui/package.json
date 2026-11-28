@@ -18,6 +18,7 @@
     "./calendar": "./src/components/calendar.tsx",
     "./checkbox": "./src/components/checkbox.tsx",
     "./dialog": "./src/components/dialog.tsx",
+    "./data-table": "./src/components/data-table.tsx",
     "./drawer": "./src/components/drawer.tsx",
     "./dropdown-menu": "./src/components/dropdown-menu.tsx",
     "./field": "./src/components/field.tsx",
@@ -68,6 +69,7 @@
   },
   "peerDependencies": {
     "@tanstack/react-router": "^1.168.7",
+    "@tanstack/react-table": "^9.3.1",
     "framer-motion": "^12.38.0",
     "i18next": "^26.0.3",
     "react": "^19.2.4",
@@ -78,6 +80,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
+    "@tanstack/react-table": "^9.3.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

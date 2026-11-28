@@ -27,6 +27,53 @@ keeps its own i18n instance. Context-bearing libraries such as React,
 React Hook Form, and react-i18next must resolve to one instance in each
 portal; keep them as compatible peer dependencies when changing the package.
 
+## Data tables
+
+`@tutorpal/ui/data-table` contains the shared TanStack Table v9 surface. The
+Table primitive comes from the official shadcn CLI; the data table follows its
+recipe, so the package owns only semantic table markup and styling. It renders
+a bordered `bg-card` surface, muted headers, divider rows, visible cells when
+column visibility is enabled, selected-row state when selection is enabled,
+and a localized “No results.” row by default. Header groups keep their native
+spans and scopes, while sortable leaf columns receive native `aria-sort`.
+
+Consumers pass a complete native `TableOptions` object to `DataTable`; the
+shared component does not wrap, fetch, filter, sort, paginate, or own domain
+state. Configure only the native features the screen needs directly from
+`@tanstack/react-table`.
+
+```tsx
+import {
+  rowSortingFeature,
+  tableFeatures,
+  type ColumnDef,
+} from "@tanstack/react-table"
+import { DataTable } from "@tutorpal/ui/data-table"
+
+const features = tableFeatures({ rowSortingFeature })
+
+const columns: ColumnDef<typeof features, Student>[] = [/* native columns */]
+
+<DataTable
+  ariaLabel="Students"
+  config={{
+    features,
+    columns,
+    data: students,
+    manualSorting: true,
+    state: { sorting },
+    onSortingChange: setSorting,
+  }}
+/>
+```
+
+The tutor portal declares `@tanstack/react-table` directly. It is a compatible
+peer of the shared package, so any app that configures `DataTable` must also
+declare the native Table dependency and resolve to the same runtime. App-owned
+toolbars, pagination controls, loading skeletons, and query state remain
+outside the shared base. Use `emptyContent` when a screen needs a
+domain-specific no-results message.
+
 `DateField` accepts optional `calendarModifiers`, `calendarMonth`, and
 `onCalendarMonthChange` props for callers that decorate or control the displayed
 calendar month. These apply to both the desktop popover and mobile drawer.
