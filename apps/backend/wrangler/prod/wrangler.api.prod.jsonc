@@ -25,7 +25,8 @@
 		"FRONTEND_URL": "https://app.tutorpal.io",
 		"EMAIL_VERIFICATION_CALLBACK_URL": "https://app.tutorpal.io/verify-email",
 		"BETA_ENABLED": "true",
-		"MARKETING_ORIGIN": "https://tutorpal.io"
+		"MARKETING_ORIGIN": "https://tutorpal.io",
+		"TURNSTILE_SITE_KEY": "0x4AAAAAAGUHoeh4qYr9xeF6"
 	},
 	"routes": [
 		{

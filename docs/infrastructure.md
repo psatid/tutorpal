@@ -27,8 +27,9 @@ Production origins:
 
 The public TutorPal marketing site is a separate prerendered Astro site served
 by Cloudflare Workers Static Assets.
-Production routes the apex domain <code>tutorpal.io</code> to that Worker. It
-shares the backend-owned beta mode with the authenticated Pages app.
+Production public ingress is currently disabled; the intended apex domain is
+<code>tutorpal.io</code>. The Worker shares the backend-owned beta mode with the
+authenticated Pages app when public ingress is restored.
 
 ## Architecture overview
 
@@ -86,7 +87,7 @@ polling. Both use Hyperdrive for database access.
 | Production user portal Pages project | <code>tutorpal-tutor-portal-prod</code> | Direct-upload tutor portal at <code>app.tutorpal.io</code> |
 | Production admin portal Pages project | <code>tutorpal-admin-portal-prod</code> | Direct-upload admin portal at <code>admin.tutorpal.io</code> |
 | Production marketing Worker | <code>tutorpal-marketing</code> | Prerendered Astro marketing pages and public assets |
-| Production marketing Worker custom domain | <code>tutorpal.io</code> | Apex public marketing origin attached through a Worker Custom Domain |
+| Production marketing Worker custom domain | <code>tutorpal.io</code> | Intended apex origin; no Worker Custom Domain is currently attached |
 | Development marketing Worker | <code>tutorpal-marketing-dev</code> | Prerendered Astro marketing pages and public assets |
 | Development marketing Worker custom domain | <code>dev.tutorpal.io</code> | Development public marketing origin attached through a Worker Custom Domain |
 | Pages custom domain | <code>dev.app.tutorpal.io</code> | Public web application origin |
@@ -260,29 +261,40 @@ read on each navigation without a mode cache; failure renders beta mode with
 requests unavailable. Optional browser motion respects reduced motion.
 
 Production marketing is deployed as Worker version
-<code>a21c7cff-489b-4807-8c1c-fd3d294d2907</code>, with
-<code>API_URL=https://api.tutorpal.io</code>. The English homepage and Thai
-language navigation render without browser console errors. Beta mode remains
-enabled, and beta demo requests remain unavailable until production Turnstile
-and Discord credentials are configured.
-Homepage HTML is returned with <code>Cache-Control: no-store</code> and no
-static asset validators. Conditional homepage requests retrieve a fresh body,
-so a browser cannot retain the old mode through an asset 304 response. Other
-assets preserve their normal caching.
+<code>7c7c6640-aab7-43e7-85e8-18c3507def38</code>, with
+<code>API_URL=https://api.tutorpal.io</code>. Its English homepage, Thai
+navigation, and beta-request results are successful past delivery evidence, not
+current website publication. Production public ingress is currently disabled:
+the Worker Custom Domain list is empty, the apex English/Thai pages and a known
+CSS asset fail DNS resolution, and the Worker has no <code>workers.dev</code> or
+preview URL. The repository production configuration also sets
+<code>workers_dev=false</code>, <code>preview_urls=false</code>, and
+<code>routes=[]</code>; the deployment reports no public targets. When public ingress is
+restored, homepage HTML is returned with
+<code>Cache-Control: no-store</code> and no static asset validators. Conditional
+homepage requests retrieve a fresh body, so a browser cannot retain the old mode
+through an asset 304 response. Other assets preserve their normal caching.
 
 Run <code>make marketing-dev</code> for Astro development with hot reload, and
 <code>make -C apps/marketing-frontend cf-dev</code> to build assets then run the
 development Worker locally through Wrangler. Use
-<code>make marketing-build</code> to check and build. Publish production with
-<code>make deploy APP=marketing-frontend</code> and development with
-<code>make deploy-dev APP=marketing-frontend</code>. The configs are
-<code>apps/marketing-frontend/wrangler/prod/wrangler.marketing.prod.jsonc</code>
-for <code>tutorpal-marketing</code> at <code>tutorpal.io</code> and
+<code>make marketing-build</code> to check and build. Deploy the disabled
+production configuration with <code>make deploy APP=marketing-frontend</code>
+and development with <code>make deploy-dev APP=marketing-frontend</code>. The
+configs are <code>apps/marketing-frontend/wrangler/prod/wrangler.marketing.prod.jsonc</code>
+for <code>tutorpal-marketing</code> and
 <code>apps/marketing-frontend/wrangler/dev/wrangler.marketing.dev.jsonc</code> for
 <code>tutorpal-marketing-dev</code> at <code>dev.tutorpal.io</code>. Both serve
 <code>apps/marketing-frontend/dist</code> with the static 404-page handler. Build,
 preview, and <code>make -C apps/marketing-frontend cf-check ENV=dev</code> do not
 publish or modify the Cloudflare account.
+
+When ready to launch, restore production ingress with exactly
+<code>{"pattern":"tutorpal.io","zone_name":"tutorpal.io","custom_domain":true}</code>
+in the production route list, then run
+<code>make deploy APP=marketing-frontend</code>. Deploying an empty route list
+does not itself detach an existing Worker Custom Domain; manage that attachment
+separately.
 
 In beta, the primary CTA links to the localized access-request form after the
 FAQ. The form sends data to the API, which validates Turnstile and sends a
@@ -394,13 +406,13 @@ encryption key. The strict-TLS production Supabase database
 applied. The configured observability destinations are active in Worker settings,
 but Grafana export delivery remains unverified because destination listing is
 still unavailable. The first Cron invocation and end-to-end email, admin, LINE,
-social, beta-form, and authenticated frontend validation remain pending. Future deploys use
+social, and authenticated frontend validation remain pending. Future deploys use
 <code>make deploy APP=backend</code> from the repository root and preserve remote
 secrets.
 
 Live HTTP smoke checks pass: health and configuration return <code>200</code>;
 signup remains disabled, Google and LINE login are disabled, and beta requests
-are unavailable. The app and admin origins receive credentialed CORS while a
+are available. The app and admin origins receive credentialed CORS while a
 hostile origin does not. Unauthenticated admin access and a nonexistent-user
 sign-in both return <code>401</code>, exercising the deployed authentication
 database path. Email, browser admin sessions, LINE delivery, and the first
@@ -440,9 +452,8 @@ Wrangler's hidden prompt. It immediately releases the current Worker version.
 bunx wrangler secret put RESEND_API_KEY --config wrangler/prod/wrangler.api.prod.jsonc
 ~~~
 
-Keep beta enabled.
-Google, LINE Login, Turnstile, and Discord beta requests stay unavailable until
-their complete production credentials are provided. Verify each configured
+Keep beta enabled. Google and LINE Login stay unavailable until their complete
+production credential pairs are provided. Verify each configured
 Grafana destination before production use: the API config names
 <code>grafana-cloud-logs</code>/<code>grafana-cloud-traces</code>, while the
 reminder config names <code>tutorpal-grafana-logs</code>/<code>tutorpal-grafana-traces</code>;
@@ -613,8 +624,18 @@ Turnstile widget, secret, and public site key are also configured and deployed.
 The first real-token form test showed unavailable; Cloudflare blocked the
 replay before the API. After the November 21 runtime fix, an authorized
 real-token form test confirmed end-to-end Discord delivery. Server-side replay
-rejection remains unverified. Production beta-request setup remains pending. To configure
-delivery in an environment:
+rejection remains unverified. The separate production `TutorPal Beta Prod`
+Turnstile widget is restricted to <code>tutorpal.io</code>, and its public site
+key is configured in the production API config. API version
+<code>eefe199d-5b08-472c-aa39-1fbc95c310fb</code> reports
+<code>requestAvailable=true</code>, and the runtime marketing HTML has the
+production API URL and site key without a marketing rebuild. Exact marketing
+CORS is non-credentialed. A fictitious invalid-token submission returned
+<code>400 TURNSTILE_VERIFICATION_FAILED</code> before Discord. One
+user-approved, clearly labeled fictitious English request completed marketing →
+managed Turnstile → API → confirmed Discord webhook delivery and showed the
+success notice. The beta service creates no account or automatic email. Real
+replay remains unverified. To configure delivery in an environment:
 
 1. Create a Turnstile widget for the environment's marketing hostname. Set
    <code>TURNSTILE_SITE_KEY</code> as an API variable and

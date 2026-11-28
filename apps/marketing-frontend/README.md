@@ -42,13 +42,18 @@ See the [verification record](VERIFICATION.md) for results and coverage limits.
 
 `bun run deploy` (or `make deploy`) builds and deploys Workers Static Assets
 using `wrangler/prod/wrangler.marketing.prod.jsonc` to the
-`tutorpal-marketing` Worker at `tutorpal.io`. `bun run deploy:dev` (or
+`tutorpal-marketing` Worker. Production public ingress is intentionally
+disabled: the config has no routes and disables both `workers.dev` and preview
+URLs, so public ingress stays disabled until launch. `bun run deploy:dev` (or
 `make deploy-dev`) uses `wrangler/dev/wrangler.marketing.dev.jsonc` to deploy
 the distinct `tutorpal-marketing-dev` Worker at `dev.tutorpal.io`. Both configs
 serve `dist` and use the static 404-page handler. Deployment is a separate,
-explicit action; local development/build never publish. Use `make cf-check
-ENV=dev` or `make cf-check ENV=prod` to bundle-check the corresponding config
-without publishing.
+explicit action; local development/build never publish. Removing the production
+route from a deployment does not detach an already-attached Worker Custom Domain;
+detach it separately. Use `make cf-check ENV=dev` or `make cf-check ENV=prod` to
+bundle-check the corresponding config without publishing. See the
+[infrastructure guide](../../docs/infrastructure.md#marketing-site) for the
+production restoration procedure.
 
 ## Beta access
 
@@ -84,12 +89,18 @@ request availability. The first real-token form test showed unavailable, and
 Cloudflare blocked the replay before the API. A Workerd fetch-receiver fix was
 deployed to development on November 21. An approved real-token form test then
 returned 200 after Discord confirmation and displayed the success notice.
-Server-side replay rejection remains unverified; production setup is pending. Until the
-public configuration reports request availability, the form shows an unavailable
-message. Success appears only after confirmed Discord delivery. Errors retain
-all entered values; each submission attempt resets the single-use Turnstile
-widget before another attempt. There is no lead database or retry queue, and
-an interrupted response can result in duplicate notifications after retry.
+Server-side replay rejection remains unverified. Production API version
+`eefe199d-5b08-472c-aa39-1fbc95c310fb` reports the form available with the
+separate `TutorPal Beta Prod` widget for `tutorpal.io`; the runtime marketing
+HTML receives the production API URL and site key without a marketing rebuild.
+A fictitious invalid token returns `400 TURNSTILE_VERIFICATION_FAILED` before
+Discord. One user-approved, clearly labeled fictitious English request completed
+marketing → managed Turnstile → API → confirmed Discord webhook delivery and
+showed the success notice. The beta service creates no account or automatic
+email. Real replay remains unverified. Errors retain all entered values; each
+submission attempt resets the single-use Turnstile widget before another attempt.
+There is no lead database or retry queue, and an interrupted response can result
+in duplicate notifications after retry.
 
 The marketing Worker holds no secret. `TURNSTILE_SITE_KEY` is public; the API
 keeps `TURNSTILE_SECRET_KEY` and `DISCORD_BETA_WEBHOOK_URL` private. Configure

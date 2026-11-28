@@ -138,6 +138,18 @@ authenticated portal or Better Auth trusted origin. Local `MARKETING_ORIGIN`
 defaults to `http://localhost:4321`; override it for `127.0.0.1` or another
 port. Keep the Discord and Turnstile secrets on the API Worker.
 
+The production API config has the public site key for the separate `TutorPal
+Beta Prod` Turnstile widget, restricted to `tutorpal.io`; `BETA_ENABLED` remains
+`true`. API version `eefe199d-5b08-472c-aa39-1fbc95c310fb` reports beta requests
+available with the production key; the exact marketing origin receives
+non-credentialed CORS. A fictitious invalid token returns
+`400 TURNSTILE_VERIFICATION_FAILED` before Discord. One user-approved, clearly
+labeled fictitious English request completed marketing → managed Turnstile → API
+→ confirmed Discord webhook delivery and showed the success notice. The beta
+service creates no account or automatic email. Real replay remains unverified.
+The API deployment updates the marketing form configuration; it does not require
+a marketing rebuild.
+
 Provision `LINE_CREDENTIALS_ENCRYPTION_KEY` on both deployed Workers. The
 reminder config declares it as required, but secret values are still managed
 separately by Wrangler or the Cloudflare dashboard.
@@ -180,12 +192,12 @@ is attached to `https://api.tutorpal.io` with no Cron, and reminder version
 required secret scopes. The strict-TLS production Supabase database
 `db.gdfdugborezajlptbqrz.supabase.co` has all 21 committed migrations applied.
 Grafana export delivery, the first Cron invocation, and end-to-end email, admin,
-LINE, social, beta-form, and authenticated frontend validation remain pending. Future deploys
+LINE, social, and authenticated frontend validation remain pending. Future deploys
 use `make deploy APP=backend` from the repository root; remote secrets are
 preserved. Do not reuse the development Hyperdrive.
 
 Live HTTP smoke checks pass: health and configuration return `200`; signup stays
-disabled, Google and LINE login are disabled, and beta requests are unavailable.
+disabled, Google and LINE login are disabled, and beta requests are available.
 The app and admin origins receive credentialed CORS while a hostile origin does
 not. Unauthenticated admin access and a nonexistent-user sign-in both return
 `401`, exercising the deployed authentication database path. Email, browser
@@ -232,9 +244,9 @@ immediately releases the current Worker version.
 bunx wrangler secret put RESEND_API_KEY --config wrangler/prod/wrangler.api.prod.jsonc
 ```
 
-Keep `BETA_ENABLED=true`. Google, LINE Login, Turnstile, and Discord beta
-requests remain disabled until production credentials are supplied; do not add
-only one side of an OAuth credential pair.
+Keep `BETA_ENABLED=true`. Google and LINE Login remain disabled until complete
+production credential pairs are supplied; do not add only one side of an OAuth
+credential pair.
 
 ## Local account provisioning
 
