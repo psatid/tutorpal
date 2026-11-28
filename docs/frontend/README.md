@@ -1,6 +1,7 @@
 # Frontend Documentation
 
 - [Shared UI package](shared-ui.md)
+- [Common-component styling audit](common-component-styling-audit.md)
 - [Error Handling](error-handling.md)
 - [Authenticated Screen Layout](screen-layout.md)
 - [Form Handling](form-handling.md)

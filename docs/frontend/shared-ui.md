@@ -27,6 +27,60 @@ keeps its own i18n instance. Context-bearing libraries such as React,
 React Hook Form, and react-i18next must resolve to one instance in each
 portal; keep them as compatible peer dependencies when changing the package.
 
+## Component styling and review
+
+Common components own their visual language. Express visual size and appearance
+through shared `size` and `variant` props wherever those differences exist.
+Use an existing supported prop when it expresses the intent. A component that
+has no visual variation does not need meaningless size or variant options;
+native input `size`, for example, is a character-width attribute, not a visual
+size API.
+
+Before introducing a caller styling override, flag the need for a decision:
+use an existing shared option, adjust the common component's API, or approve a
+specific exception. The user decides whether the shared component should change.
+Keep positioning and surrounding layout on a caller-owned wrapper where
+practical. Do not add ad hoc size or appearance classes to bypass the component
+API while that decision is pending.
+
+Frontend reviews must include a **Common-component styling** section covering
+every changed call site that passes `className`, `style`, styling slot props
+such as `positionerClassName` or `classNames`, or custom styling to variant
+helpers such as `buttonVariants`. Inspect computed values and prop spreads as
+well as literal classes. Include descendant selectors on wrappers that restyle
+common-component internals. Scope includes `@tutorpal/ui`, admin-local UI
+primitives and form wrappers, and reusable app compositions such as workspaces
+and screen layouts; common-component implementation styles belong to their
+owner and must be distinguished from caller overrides.
+
+For each flag, record:
+
+- File and line, component, exact styling, and intended behavior.
+- Whether it affects size, appearance, internal descendants, dynamic content,
+  or outer placement only. Flag placement-only styling too; classification is
+  not approval.
+- Existing shared props that could express it, or the missing shared capability.
+- The proposed decision and its status: pending, or an explicit user-approved
+  exception with a reference to that decision.
+
+Flag redundant defaults, legitimate skeleton geometry, dialog surface
+composition, tokenized avatar colors, and accessibility hit-target adjustments
+for the same review; none is automatically a defect or an approved exception.
+Do not remove styles, invent variants, or waive touch targets just to clear a
+flag. Keep pending styling decisions separate from P0–P3 functional defects.
+An existing exception applies only to its documented scope. If no custom
+styling is present, state that explicitly. A review is incomplete when it omits
+this check or silently accepts an override; an unreviewed new override must be
+resolved before the implementation gate passes. Existing audit candidates
+remain a decision queue rather than authorization for a broad rewrite.
+Record accepted API adjustments or scoped exceptions in the relevant design or
+convention doc so later reviews can cite the decision; existing code alone is
+not evidence of approval.
+
+See the [project styling audit](common-component-styling-audit.md) for the
+current inventory and proposed decision groups. This is a manual review rule;
+no lint or CI enforcement is installed by this convention.
+
 ## Alerts
 
 Use `@tutorpal/ui/alert` for bordered notification boxes in either portal.

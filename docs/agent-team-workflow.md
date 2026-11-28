@@ -134,6 +134,15 @@ P0-P3 priority, cite files and lines, explain impact and evidence, and name the
 remediation owner. A clean review explicitly states that no actionable findings
 remain and records residual validation risks.
 
+Every frontend review also includes a **Common-component styling** section
+using the [shared UI review checklist](frontend/shared-ui.md#component-styling-and-review).
+Account for custom styling on components, variant helpers, slot props, and
+wrappers that target internals. Report placement-only cases and existing
+exceptions explicitly, and route pending component-API or exception decisions
+through the root to the user. State explicitly when none are present. This
+check applies to every frontend pipeline, including invisible work that
+modifies shared-component calls.
+
 ## Baseline validation
 
 - Frontend: run `bun run build` from `apps/frontend/`, then perform targeted browser

@@ -45,6 +45,14 @@ Solve today's problem. Do not accidentally design tomorrow's system.
 
 Leave the surrounding code recognizable.
 
+### Common component consistency
+
+Before writing or reviewing frontend UI, read the
+[common-component styling and review rules](docs/frontend/shared-ui.md#component-styling-and-review).
+Every frontend review must explicitly flag caller-provided custom styling for
+shared components and record the decision needed; do not silently treat it as
+an approved exception.
+
 ## 4. Define success and verify it.
 
 **Turn the request into a checkable outcome before calling work done.**

@@ -64,6 +64,7 @@ targets retain their existing environment selection.
 
 - [Frontend Documentation](frontend/README.md)
 - [Shared UI Package](frontend/shared-ui.md)
+- [Common-Component Styling Audit](frontend/common-component-styling-audit.md)
 - [Frontend Domain Model Conventions](frontend/domain-models.md)
 - [Astro Marketing Site](../apps/marketing-frontend/README.md)
 - [Marketing Design Direction](../apps/marketing-frontend/DESIGN.md)
