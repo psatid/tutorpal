@@ -1,4 +1,11 @@
 import { useTranslation } from "react-i18next";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon as AlertCircleHugeIcon } from "@hugeicons/core-free-icons";
+import {
+	Alert,
+	AlertDescription,
+	AlertIcon,
+} from "@tutorpal/ui/alert";
 import type { Course } from "@/models/course";
 import {
 	AlertDialog,
@@ -49,12 +56,14 @@ export function CourseDeleteDialog({
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				{error === "unknown" ? (
-					<p
-						className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-						role="alert"
-					>
+					<Alert size="compact" variant="destructive">
+						<AlertIcon>
+							<HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+						</AlertIcon>
+						<AlertDescription>
 						{t("courses:deleteError.unknown")}
-					</p>
+						</AlertDescription>
+					</Alert>
 				) : null}
 				{isPending ? (
 					<p className="text-sm text-muted-foreground" role="status">

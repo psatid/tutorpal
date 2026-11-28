@@ -71,7 +71,9 @@ identity owned by another user cannot be reassigned. No replacement user or
 session is created, and OAuth tokens are not stored. Account settings refetches
 linked methods before showing success and clears callback results from the URL.
 Account settings bundles decorative Google and LINE provider logos locally from
-[theSVG](https://thesvg.org/), reusing the LINE asset from Integrations.
+[theSVG](https://thesvg.org/), reusing the LINE asset from Integrations. The
+Google and LINE marks and the password key use bare 20px icons without
+background circles, aligned consistently across sign-in methods.
 
 The Account settings Connect LINE action uses an authenticated server-side
 flow with a one-time, ten-minute state value, PKCE, and an OIDC nonce. The

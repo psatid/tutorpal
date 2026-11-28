@@ -27,6 +27,21 @@ keeps its own i18n instance. Context-bearing libraries such as React,
 React Hook Form, and react-i18next must resolve to one instance in each
 portal; keep them as compatible peer dependencies when changing the package.
 
+## Alerts
+
+Use `@tutorpal/ui/alert` for bordered notification boxes in either portal.
+`Alert` owns colors, spacing, and the layout of `AlertIcon`, `AlertTitle`,
+`AlertDescription`, and `AlertAction`. Choose `variant="default"`, `"warning"`,
+or `"destructive"` and `size="default"` or `"compact"`; both props default to
+`"default"`. Compact alerts use 12px horizontal and 6px vertical padding.
+
+Place a decorative Hugeicon inside `AlertIcon`, which supplies a bare 20px
+footprint and hides it from assistive technology. Text wraps, and actions stay
+in the grid beside the content. Title and description are independently
+optional. Keep page margins and positioning on an outer wrapper rather than
+overriding Alert parts with color, padding, or grid classes. Field-validation
+text, full-page error states, and alert dialogs remain separate patterns.
+
 ## Data tables
 
 `@tutorpal/ui/data-table` contains the shared TanStack Table v9 surface. The

@@ -7,6 +7,12 @@ import {
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@tutorpal/ui/button";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertIcon,
+} from "@tutorpal/ui/alert";
 import { Skeleton } from "@tutorpal/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 import { useStartGoogleAuthorization } from "@/hooks/mutations/use-start-google-authorization";
@@ -33,7 +39,7 @@ function AccountMethodsSkeleton() {
       </div>
       {[0, 1, 2].map((row) => (
         <div className="flex items-center gap-3 border-t border-border p-5" key={row}>
-          <Skeleton className="size-10 rounded-full" />
+          <Skeleton className="size-6" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-56 max-w-full" />
@@ -59,7 +65,10 @@ function MethodRow({ icon, title, description, linked, action }: MethodRowProps)
   return (
     <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+        <span
+          aria-hidden="true"
+          className="flex size-6 shrink-0 items-center justify-center text-foreground"
+        >
           {icon}
         </span>
         <div className="min-w-0">
@@ -374,19 +383,17 @@ export function AccountSettingsScreen({
       {accounts.isLoading ? <AccountMethodsSkeleton /> : null}
 
       {accounts.isError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4" role="alert">
-          <div className="flex items-start gap-2 text-sm text-destructive">
-            <HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <p>{t("account.fetchError")}</p>
-          </div>
-          <Button
-            className="mt-4"
-            variant="outline"
-            onClick={() => void accounts.refetch()}
-          >
-            {t("account.retry")}
-          </Button>
-        </div>
+        <Alert size="compact" variant="destructive">
+          <AlertIcon>
+            <HugeiconsIcon icon={AlertCircleHugeIcon} strokeWidth={2} />
+          </AlertIcon>
+          <AlertDescription>{t("account.fetchError")}</AlertDescription>
+          <AlertAction>
+            <Button variant="outline" onClick={() => void accounts.refetch()}>
+              {t("account.retry")}
+            </Button>
+          </AlertAction>
+        </Alert>
       ) : null}
 
       {accounts.data ? (

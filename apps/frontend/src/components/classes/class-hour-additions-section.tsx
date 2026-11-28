@@ -2,10 +2,17 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  AlertCircleIcon as AlertCircleHugeIcon,
   Clock03Icon as Clock3HugeIcon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@tutorpal/ui/button";
 import { Skeleton } from "@tutorpal/ui/skeleton";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertIcon,
+} from "@tutorpal/ui/alert";
 import { useInfiniteClassHourAdditions } from "@/hooks/queries/use-infinite-class-hour-additions";
 
 export function ClassHourAdditionsSection({ classId }: { classId: string }) {
@@ -47,19 +54,25 @@ export function ClassHourAdditionsSection({ classId }: { classId: string }) {
 					<Skeleton className="h-14 w-full" />
 				</div>
 			) : additionsQuery.isError ? (
-				<div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-					<p className="text-sm text-destructive" role="alert">
+				<div className="mt-4">
+					<Alert size="compact" variant="destructive">
+						<AlertIcon>
+							<HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+						</AlertIcon>
+						<AlertDescription>
 						{t("classes:hourAdditions.historyError")}
-					</p>
-					<Button
-						className="mt-3"
-						onClick={() => additionsQuery.refetch()}
-						size="md"
-						type="button"
-						variant="outline"
-					>
-						{t("common:retry")}
-					</Button>
+						</AlertDescription>
+						<AlertAction>
+							<Button
+								onClick={() => additionsQuery.refetch()}
+								size="md"
+								type="button"
+								variant="outline"
+							>
+								{t("common:retry")}
+							</Button>
+						</AlertAction>
+					</Alert>
 				</div>
 			) : additions.length === 0 ? (
 				<p className="py-4 text-sm text-muted-foreground">

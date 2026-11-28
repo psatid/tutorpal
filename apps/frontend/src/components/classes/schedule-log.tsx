@@ -15,6 +15,12 @@ import { Button } from "@tutorpal/ui/button";
 import { Badge } from "@tutorpal/ui/badge";
 import { Skeleton } from "@tutorpal/ui/skeleton";
 import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertIcon,
+} from "@tutorpal/ui/alert";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -335,22 +341,19 @@ export function ClassSessions({
       return <ScheduleListSkeleton label={t("common:loading")} />;
     if (isError && !hasData)
       return (
-        <div
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-3"
-          role="alert"
-        >
-          <p className="text-sm text-destructive">
+        <Alert size="compact" variant="destructive">
+          <AlertIcon>
+            <HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+          </AlertIcon>
+          <AlertDescription>
             {t("classDetail.schedulesError")}
-          </p>
-          <Button
-            className="mt-3"
-            onClick={onRetry}
-            type="button"
-            variant="outline"
-          >
-            {t("common:retry")}
-          </Button>
-        </div>
+          </AlertDescription>
+          <AlertAction>
+            <Button onClick={onRetry} type="button" variant="outline">
+              {t("common:retry")}
+            </Button>
+          </AlertAction>
+        </Alert>
       );
     if (schedules.length === 0)
       return (
@@ -453,16 +456,20 @@ export function ClassSessions({
           </TabsList>
         </div>
         {isError && hasData ? (
-          <div
-            className="mt-4 flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning-container p-3 sm:flex-row sm:items-center sm:justify-between"
-            role="alert"
-          >
-            <p className="text-sm text-warning-container-foreground">
+          <div className="mt-4">
+            <Alert size="compact" variant="warning">
+              <AlertIcon>
+                <HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+              </AlertIcon>
+              <AlertDescription>
               {t("classDetail.schedulesRefreshError")}
-            </p>
-            <Button onClick={onRetry} type="button" variant="outline">
-              {t("common:retry")}
-            </Button>
+              </AlertDescription>
+              <AlertAction>
+                <Button onClick={onRetry} type="button" variant="outline">
+                  {t("common:retry")}
+                </Button>
+              </AlertAction>
+            </Alert>
           </div>
         ) : null}
         <TabsPanels className="mt-4">

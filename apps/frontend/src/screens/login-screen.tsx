@@ -14,6 +14,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { GoogleMark, LineMark } from "@/components/auth/provider-marks";
+import {
+	Alert,
+	AlertAction,
+	AlertDescription,
+	AlertIcon,
+} from "@tutorpal/ui/alert";
 import { Button, buttonVariants } from "@tutorpal/ui/button";
 import { RHFInputField, RHFPasswordField } from "@tutorpal/ui/form/rhf";
 import { APP_ROUTES } from "@/constants/routes";
@@ -144,34 +150,36 @@ export function LoginScreen() {
 			form={
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 					{hasSocialError ? (
-						<div
-							className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-							role="alert"
-						>
-							<HugeiconsIcon
-								icon={AlertCircleHugeIcon}
-								strokeWidth={2}
-								className="mt-0.5 size-4 shrink-0"
-								aria-hidden="true"
-							/>
-							<p>{t("auth:login.socialError")}</p>
-						</div>
+						<Alert size="compact" variant="destructive">
+							<AlertIcon>
+								<HugeiconsIcon
+									icon={AlertCircleHugeIcon}
+									strokeWidth={2}
+								/>
+							</AlertIcon>
+							<AlertDescription>{t("auth:login.socialError")}</AlertDescription>
+						</Alert>
 					) : null}
 					{isPublicConfigError ? (
-						<div
-							className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
-							role="alert"
-						>
-							<p>{t("auth:login.socialConfigError")}</p>
-							<Button
-								type="button"
-								variant="link"
-								loading={isPublicConfigFetching}
-								onClick={() => void refetchPublicConfig()}
-							>
-								{t("auth:login.retryAvailability")}
-							</Button>
-						</div>
+						<Alert size="compact">
+							<AlertIcon>
+								<HugeiconsIcon
+									icon={AlertCircleHugeIcon}
+									strokeWidth={2}
+								/>
+							</AlertIcon>
+							<AlertDescription>{t("auth:login.socialConfigError")}</AlertDescription>
+							<AlertAction>
+								<Button
+									type="button"
+									variant="link"
+									loading={isPublicConfigFetching}
+									onClick={() => void refetchPublicConfig()}
+								>
+									{t("auth:login.retryAvailability")}
+								</Button>
+							</AlertAction>
+						</Alert>
 					) : null}
 					{hasEnabledSocialLogin ? (
 						<div className="space-y-3">

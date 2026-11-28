@@ -159,7 +159,7 @@ function IntegrationCard({
 }) {
   return (
     <article className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center">
-      <div className="flex min-w-0 flex-1 items-start gap-4">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <ProviderMark provider={provider} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -220,12 +220,12 @@ function ProviderMark({ provider }: { provider: Provider }) {
   };
 
   return (
-    <span
+    <img
+      alt=""
       aria-hidden="true"
-      className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted p-2"
-    >
-      <img alt="" className="size-8 object-contain" src={src[provider]} />
-    </span>
+      className="size-8 shrink-0 object-contain"
+      src={src[provider]}
+    />
   );
 }
 
@@ -237,8 +237,8 @@ function IntegrationCardSkeleton({ label }: { label: string }) {
       className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
       role="status"
     >
-      <div className="flex min-w-0 flex-1 items-start gap-4">
-        <Skeleton className="size-12 shrink-0 rounded-xl" />
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <Skeleton className="size-8 shrink-0 rounded-sm" />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Skeleton className="h-5 w-24" />

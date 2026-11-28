@@ -202,17 +202,14 @@ describe("SessionsToConfirm", () => {
     const action = alert.querySelector('[data-slot="alert-action"]');
     const title = document.getElementById("sessions-to-confirm-banner-title");
 
-    expect(alert).toHaveClass(
-      "grid-cols-[2rem_minmax(0,1fr)_2.75rem]",
-      "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]",
+    expect(alert).toHaveAttribute("data-variant", "warning");
+    expect(alert).toHaveAttribute("data-size", "compact");
+    expect(alert.querySelector('[data-slot="alert-icon"]')).toHaveAttribute(
+      "aria-hidden",
+      "true",
     );
-    expect(action).toHaveClass(
-      "static",
-      "col-start-3",
-      "row-start-1",
-    );
+    expect(action).toBeInTheDocument();
     expect(banner).toHaveClass("size-11", "sm:w-auto");
-    expect(title).toHaveClass("tabular-nums");
     expect(
       within(alert).queryByText("12", { exact: true }),
     ).not.toBeInTheDocument();

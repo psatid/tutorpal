@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BookOpen01Icon as BookOpenHugeIcon,
   Add01Icon as PlusHugeIcon,
+  AlertCircleIcon as AlertCircleHugeIcon,
 } from "@hugeicons/core-free-icons";
 import {
 	type ReactNode,
@@ -27,6 +28,11 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@tutorpal/ui/alert-dialog";
+import {
+	Alert,
+	AlertDescription,
+	AlertIcon,
+} from "@tutorpal/ui/alert";
 import { Button } from "@tutorpal/ui/button";
 import { ResponsiveDrawer } from "@tutorpal/ui/responsive-drawer";
 import {
@@ -454,12 +460,14 @@ export function ClassesScreen({
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					{deleteError === "unknown" ? (
-						<p
-							className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-							role="alert"
-						>
+						<Alert size="compact" variant="destructive">
+							<AlertIcon>
+								<HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+							</AlertIcon>
+							<AlertDescription>
 							{t("classes:delete.error")}
-						</p>
+							</AlertDescription>
+						</Alert>
 					) : null}
 					{deleteClass.isPending ? (
 						<p className="text-sm text-muted-foreground" role="status">

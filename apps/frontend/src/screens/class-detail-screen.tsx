@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AlertCircleIcon as AlertCircleHugeIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
@@ -30,6 +32,12 @@ import { CompleteScheduleDialog } from "@/components/schedules/complete-schedule
 import { NoShowScheduleDialog } from "@/components/schedules/no-show-schedule-dialog";
 import { Button } from "@tutorpal/ui/button";
 import { Skeleton } from "@tutorpal/ui/skeleton";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertIcon,
+} from "@tutorpal/ui/alert";
 import { DateTime } from "@/lib/date-time";
 import type { Schedule } from "@/models/schedule";
 
@@ -340,24 +348,26 @@ export function ClassDetailScreen({
       />
 
       {isClassError ? (
-        <div
-          className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning-container px-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-          role="alert"
-        >
-          <p className="text-sm text-warning-container-foreground">
+        <Alert size="compact" variant="warning">
+          <AlertIcon>
+            <HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+          </AlertIcon>
+          <AlertDescription>
             {t("classDetail.refreshError")}
-          </p>
-          <Button
-            className="w-full sm:w-auto"
-            onClick={() => {
-              void refetchClass();
-            }}
-            type="button"
-            variant="outline"
-          >
-            {t("common:retry")}
-          </Button>
-        </div>
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => {
+                void refetchClass();
+              }}
+              type="button"
+              variant="outline"
+            >
+              {t("common:retry")}
+            </Button>
+          </AlertAction>
+        </Alert>
       ) : null}
 
       <ClassNextSession

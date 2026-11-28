@@ -13,7 +13,13 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, AlertAction, AlertTitle } from "@tutorpal/ui/alert";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@tutorpal/ui/alert";
 import { Button } from "@tutorpal/ui/button";
 import { ResponsiveDrawer } from "@tutorpal/ui/responsive-drawer";
 import { Skeleton } from "@tutorpal/ui/skeleton";
@@ -252,37 +258,34 @@ export function SessionsToConfirm({
     <>
       {shouldShowBanner ? (
         <Alert
-          className="mx-3 mt-3 shrink-0 w-[calc(100%-1.5rem)] grid-cols-[2rem_minmax(0,1fr)_2.75rem] items-center gap-x-3 border-warning/30 bg-warning-container px-3 py-3 text-warning-container-foreground sm:mx-4 sm:w-[calc(100%-2rem)] sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-4 lg:mx-6 lg:w-[calc(100%-3rem)]"
+          className="mx-3 mt-3 shrink-0 w-[calc(100%-1.5rem)] sm:mx-4 sm:w-[calc(100%-2rem)] lg:mx-6 lg:w-[calc(100%-3rem)]"
+          size="compact"
+          variant="warning"
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning sm:size-10">
+          <AlertIcon>
             <HugeiconsIcon
-              aria-hidden="true"
-              className="size-5"
               icon={TriangleAlertHugeIcon}
               strokeWidth={2}
             />
-          </span>
-          <AlertTitle
-            className="min-w-0 line-clamp-none min-h-0 font-semibold leading-6 tabular-nums"
-            id={BANNER_TITLE_ID}
-          >
-            <span aria-hidden="true" className="sm:hidden">
+          </AlertIcon>
+          <AlertTitle id={BANNER_TITLE_ID}>
+            <span aria-hidden="true" className="tabular-nums sm:hidden">
               {t("awaitingConfirmation.banner.label", {
                 count: outstandingTotal,
               })}
             </span>
-            <span aria-hidden="true" className="hidden sm:inline">
+            <span aria-hidden="true" className="hidden tabular-nums sm:inline">
               {t("awaitingConfirmation.banner.title", {
                 count: outstandingTotal,
               })}
             </span>
-            <span className="sr-only">
+            <span className="sr-only tabular-nums">
               {t("awaitingConfirmation.banner.title", {
                 count: outstandingTotal,
               })}
             </span>
           </AlertTitle>
-          <AlertAction className="static col-start-3 row-start-1 justify-self-end">
+          <AlertAction>
             <Button
               aria-controls={DRAWER_CONTENT_ID}
               aria-expanded={isDrawerOpen}
@@ -565,18 +568,16 @@ function SessionsToConfirmLoadMoreError({
   retryLabel: string;
 }) {
   return (
-    <div className="rounded-lg border border-warning/30 bg-warning-container p-3">
-      <p className="text-sm text-warning-container-foreground" role="alert">
-        {description}
-      </p>
-      <Button
-        className="mt-3"
-        onClick={onRetry}
-        type="button"
-        variant="outline"
-      >
-        {retryLabel}
-      </Button>
-    </div>
+    <Alert size="compact" variant="warning">
+      <AlertIcon>
+        <HugeiconsIcon icon={TriangleAlertHugeIcon} strokeWidth={2} />
+      </AlertIcon>
+      <AlertDescription>{description}</AlertDescription>
+      <AlertAction>
+        <Button onClick={onRetry} type="button" variant="outline">
+          {retryLabel}
+        </Button>
+      </AlertAction>
+    </Alert>
   );
 }

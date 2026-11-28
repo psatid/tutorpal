@@ -6,6 +6,11 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { AdminUser } from "@/types/admin-user";
 import {
+	Alert,
+	AlertDescription,
+	AlertIcon,
+} from "@tutorpal/ui/alert";
+import {
 	Dialog,
 	DialogClose,
 	DialogDescription,
@@ -69,13 +74,15 @@ export function AdminUserImpersonationDialog({
 							{isPending ? t("users.impersonation.openingStatus") : null}
 						</p>
 						{isError ? (
-							<div
-								className="mt-4 rounded-lg border border-warning/30 bg-warning-container p-3"
-								role="alert"
-							>
-								<p className="text-sm text-warning-container-foreground">
+							<div className="mt-4">
+								<Alert size="compact" variant="warning">
+									<AlertIcon>
+										<HugeiconsIcon aria-hidden="true" icon={AlertTriangleHugeIcon} strokeWidth={2} />
+									</AlertIcon>
+									<AlertDescription>
 									{t("users.impersonation.error")}
-								</p>
+									</AlertDescription>
+								</Alert>
 							</div>
 						) : null}
 						<div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

@@ -9,6 +9,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  AlertCircleIcon as AlertCircleHugeIcon,
   CheckmarkCircle02Icon as CheckCircle2HugeIcon,
   CircleIcon as CircleHugeIcon,
   Key01Icon as KeyRoundHugeIcon,
@@ -27,6 +28,7 @@ import { Button } from "@tutorpal/ui/button";
 import { Input } from "@tutorpal/ui/input";
 import { Label } from "@tutorpal/ui/label";
 import { Skeleton } from "@tutorpal/ui/skeleton";
+import { Alert, AlertDescription, AlertIcon } from "@tutorpal/ui/alert";
 import { IntegrationConfigLayout } from "@/components/integrations/integration-config-layout";
 import { lineQueryKeys } from "@/constants/query-keys/line-query-keys";
 import { APP_ROUTES } from "@/constants/routes";
@@ -625,12 +627,14 @@ function ActionFeedback({ message }: { message: string | null }) {
   if (!message) return null;
 
   return (
-    <p
-      className="mt-5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-6 text-destructive"
-      role="alert"
-    >
-      {message}
-    </p>
+    <div className="mt-5">
+      <Alert size="compact" variant="destructive">
+        <AlertIcon>
+          <HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+        </AlertIcon>
+        <AlertDescription>{message}</AlertDescription>
+      </Alert>
+    </div>
   );
 }
 

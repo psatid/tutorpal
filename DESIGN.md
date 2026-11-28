@@ -409,6 +409,15 @@ variants are `primary`, `neutral`, `info`, `success`, `warning` and
 container-foreground text and a border of their foreground at 25%. `neutral`
 uses a `muted` fill, `secondary-foreground` text and a `border` hairline.
 
+### Alerts
+
+Bordered notifications use the shared Alert with `default`, `warning`, or
+`destructive` variants. The default size uses 16px horizontal and 12px vertical
+padding; compact uses 12px and 6px. AlertIcon is a bare decorative 20px mark.
+Titles and descriptions wrap, and AlertAction stays centered beside the text
+in the shared grid. Page placement belongs to an outer wrapper. The compact
+Schedules warning retains its 44px review action.
+
 ### Rows and cards
 
 - **Student row:** a white card with a `border` hairline, `rounded-xl`, at least
@@ -456,9 +465,10 @@ with an indigo initials avatar. The mobile header is a white `jun-header` bar
 with a bottom hairline.
 
 The Integrations screen uses a centered 960px content column inside the shared
-screen gutter. Provider cards use a neutral 48px mark tile containing the
-bundled [theSVG](https://github.com/GLINCKER/thesvg) LINE, Zoom 2025, or Google
-Meet 2026 mark beside its title and description. Each card has a text-plus-icon
+screen gutter. Provider cards use bare 32px bundled
+[theSVG](https://github.com/GLINCKER/thesvg) LINE, Zoom 2025, or Google Meet 2026
+marks beside their titles and descriptions, without a surrounding tile.
+Each card has a text-plus-icon
 status badge beside its title and an optional 44px action.
 Titles, badges, and descriptions wrap without clipping in narrow cards. The
 LINE action sits below the content on narrow screens and trails it from `sm`.

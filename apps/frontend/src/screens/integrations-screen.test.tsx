@@ -191,7 +191,7 @@ describe("IntegrationsScreen", () => {
       const card = await getIntegrationCard(provider);
       const heading = within(card).getByRole("heading", { name: provider });
       const content = card.firstElementChild;
-      const providerMark = within(card).getByAltText("").closest("span");
+      const providerMark = within(card).getByAltText("");
       const nameRow = heading.parentElement;
       const badge = within(card).getByText(
         provider === "LINE" ? "Not connected" : "Coming soon",
@@ -206,7 +206,7 @@ describe("IntegrationsScreen", () => {
         "sm:items-center",
       );
       expect(content).toHaveClass("flex", "min-w-0", "flex-1", "items-start");
-      expect(providerMark).toHaveClass("size-12", "shrink-0");
+      expect(providerMark).toHaveAttribute("aria-hidden", "true");
       expect(content).toContainElement(providerMark);
       expect(content).toContainElement(heading);
       expect(nameRow).toHaveClass("flex", "flex-wrap", "items-center", "gap-2");

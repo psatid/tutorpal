@@ -9,6 +9,12 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@tutorpal/ui/button";
 import {
+	Alert,
+	AlertAction,
+	AlertDescription,
+	AlertIcon,
+} from "@tutorpal/ui/alert";
+import {
 	Field,
 	FieldDescription,
 	FieldError,
@@ -398,24 +404,25 @@ export function ClassHourAdditionsDrawer({
 							</span>
 						</label>
 						{hasCourseLoadError ? (
-							<div
-								className="rounded-lg border border-destructive/30 bg-destructive/10 p-3"
-								role="alert"
-							>
-								<p className="text-sm text-destructive">
+							<Alert size="compact" variant="destructive">
+								<AlertIcon>
+									<HugeiconsIcon aria-hidden="true" icon={CircleAlertHugeIcon} strokeWidth={2} />
+								</AlertIcon>
+								<AlertDescription>
 									{t("classes:hourAdditions.coursePresetLoadError")}
-								</p>
-								<Button
-									className="mt-3"
-									loading={coursesQuery.isFetching}
-									onClick={() => void coursesQuery.refetch()}
-									size="sm"
-									type="button"
-									variant="outline"
-								>
-									{t("common:retry")}
-								</Button>
-							</div>
+								</AlertDescription>
+								<AlertAction>
+									<Button
+										loading={coursesQuery.isFetching}
+										onClick={() => void coursesQuery.refetch()}
+										size="sm"
+										type="button"
+										variant="outline"
+									>
+										{t("common:retry")}
+									</Button>
+								</AlertAction>
+							</Alert>
 						) : null}
 					</div>
 				</FieldSet>
@@ -543,13 +550,12 @@ export function ClassHourAdditionsDrawer({
 				</FieldGroup>
 
 				{submitError ? (
-					<p
-						className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-						role="alert"
-					>
-						<HugeiconsIcon icon={CircleAlertHugeIcon} strokeWidth={2} aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-						<span>{submitError}</span>
-					</p>
+					<Alert size="compact" variant="destructive">
+						<AlertIcon>
+							<HugeiconsIcon aria-hidden="true" icon={CircleAlertHugeIcon} strokeWidth={2} />
+						</AlertIcon>
+						<AlertDescription>{submitError}</AlertDescription>
+					</Alert>
 				) : null}
 			</form>
 		</ResponsiveDrawer>

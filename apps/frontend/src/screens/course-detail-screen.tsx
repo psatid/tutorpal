@@ -1,5 +1,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  AlertCircleIcon as AlertCircleHugeIcon,
   ArrowLeft01Icon as ArrowLeftHugeIcon,
   PencilEdit01Icon as PencilHugeIcon,
 } from "@hugeicons/core-free-icons";
@@ -10,6 +11,12 @@ import { useTranslation } from "react-i18next";
 import { CourseFormDrawer } from "@/components/courses/course-form-drawer";
 import { Button } from "@tutorpal/ui/button";
 import { Skeleton } from "@tutorpal/ui/skeleton";
+import {
+	Alert,
+	AlertAction,
+	AlertDescription,
+	AlertIcon,
+} from "@tutorpal/ui/alert";
 import { APP_ROUTES } from "@/constants/routes";
 import { useCourseDetails } from "@/hooks/queries/use-course-details";
 
@@ -164,24 +171,26 @@ export function CourseDetailScreen({ courseId }: CourseDetailScreenProps) {
 			</header>
 
 			{isError ? (
-				<div
-					className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning-container px-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-					role="alert"
-				>
-					<p className="text-sm text-warning-container-foreground">
+				<Alert size="compact" variant="warning">
+					<AlertIcon>
+						<HugeiconsIcon aria-hidden="true" icon={AlertCircleHugeIcon} strokeWidth={2} />
+					</AlertIcon>
+					<AlertDescription>
 						{t("courses:detail.refreshError")}
-					</p>
-					<Button
-						className="w-full sm:w-auto"
-						onClick={() => {
-							void refetch();
-						}}
-						type="button"
-						variant="outline"
-					>
-						{t("common:retry")}
-					</Button>
-				</div>
+					</AlertDescription>
+					<AlertAction>
+						<Button
+							className="w-full sm:w-auto"
+							onClick={() => {
+								void refetch();
+							}}
+							type="button"
+							variant="outline"
+						>
+							{t("common:retry")}
+						</Button>
+					</AlertAction>
+				</Alert>
 			) : null}
 
 			<CourseFormDrawer
